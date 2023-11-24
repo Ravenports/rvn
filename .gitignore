@@ -3,3 +3,10 @@
 
 # Ada Library Information
 *.ali
+
+# object files
+obj/
+
+# clang-format ?
+.clang-format
+
