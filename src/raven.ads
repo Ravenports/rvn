@@ -27,7 +27,7 @@ package Raven is
    --  Global Types  --
    --------------------
    subtype Text is SU.Unbounded_String;
-   subtype A_Debug_Level is Natural range 0 .. 3;
+   type A_Debug_Level is (silent, high_level, moderate, low_level);
    type int64 is range -(2**63) .. +(2**63 - 1);
 
    

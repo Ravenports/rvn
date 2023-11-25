@@ -110,7 +110,7 @@ private
 
    type Cldata is
       record
-         global_debug           : A_Debug_Level := 0;
+         global_debug           : A_Debug_Level := silent;
          global_chroot          : Text;
          global_config_file     : Text;
          global_repo_config_dir : Text;

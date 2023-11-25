@@ -174,9 +174,12 @@ package body Raven.Cmd.Line is
                   --  global options
                   if datum = "-d" or else datum = "--debug"
                   then
-                     if result.global_debug < A_Debug_Level'Last then
-                        result.global_debug := result.global_debug + 1;
-                     end if;
+                     case result.global_debug is
+                        when silent     => result.global_debug := high_level;
+                        when high_level => result.global_debug := moderate;
+                        when moderate   => result.global_debug := low_level;
+                        when low_level  => null;
+                     end case;
                   elsif datum = "-v" or else datum = "--version"
                   then
                      case result.unset_version is
