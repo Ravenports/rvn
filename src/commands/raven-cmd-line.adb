@@ -20,6 +20,8 @@ package body Raven.Cmd.Line is
       procedure set_error (error_msg : String);
       procedure handle_trailing_pkgname (datum : String; datumtxt : Text);
       function aCgix (datum : String; datumtxt : Text; use_all : Boolean := True) return Boolean;
+      procedure check_create_incompatibilities;
+      procedure check_implied_info_all;
 
       expanded_args : string_crate.Vector;
       result        : Cldata;
@@ -91,6 +93,43 @@ package body Raven.Cmd.Line is
          end if;
          return True;
       end aCgix;
+
+
+      --------------------------------------
+      --  check_create_incompatibilities  --
+      --------------------------------------
+      procedure check_create_incompatibilities
+      is
+         --  This is kind of a legacy check for pkg users.  Probably not really necessary.
+      begin
+         if result.command = cv_create then
+            if result.common_options.all_installed_pkgs or else
+              result.common_options.shell_glob or else
+              result.common_options.regex
+            then
+               set_error ("Switches -a, -g, -x invalid - create requires descrete filename");
+            end if;
+         end if;
+      end check_create_incompatibilities;
+
+
+      ------------------------------
+      --  check_implied_info_all  --
+      ------------------------------
+      procedure check_implied_info_all is
+      begin
+         --  These command imply -a
+         --  rvn info
+         --  any rvn info missing the pkg-name / pattern argument
+         if result.command = cv_info then
+            if not result.common_options.all_installed_pkgs then
+               if IsBlank (result.cmd_info.path_archive_file) then
+                  result.common_options.all_installed_pkgs := True;
+               end if;
+            end if;
+         end if;
+      end check_implied_info_all;
+
 
       ------------------------
       --  translate_switch  --
@@ -293,6 +332,25 @@ package body Raven.Cmd.Line is
       end translate_switch;
    begin
       expand_command_line (expanded_args);
+      expanded_args.Iterate (translate_switch'Access);
+
+      --  TODO: when annotated implemented:
+      --  check_annotate_stdin;
+
+      --  TODO: when version re-implemented:
+      --  check_version_stdin;
+
+      --  TODO: when rquery implemented:
+      --  check_implied_rquery_all;
+
+      --  TODO: when query implemented:
+      --  check_implied_query_all;
+
+      --  TODO:  check_stats_default ??
+
+      check_create_incompatibilities;
+      check_implied_info_all;
+
       return result;
    end parse_command_line;
 
@@ -365,8 +423,8 @@ package body Raven.Cmd.Line is
         (
          ("NOTFOUND  ", cv_unset),
          ("create    ", cv_create),
-         ("info      ", cv_info),
-         ("help      ", cv_help)
+         ("help      ", cv_help),
+         ("info      ", cv_info)
          --  ("add       ", cv_add),
          --  ("alias     ", cv_alias),
          --  ("annotate  ", cv_annotate),

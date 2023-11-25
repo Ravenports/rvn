@@ -4,9 +4,10 @@
 with Ada.Command_Line;
 with Raven.Cmd.Line;
 with Raven.Cmd.Usage;
+with Raven.Cmd.Bahnhof;
 with GNAT.Exception_Traces;
 
-procedure Main is
+procedure Rvn is
    package CLI renames Ada.Command_Line;
 
    comline_inputs : Raven.Cmd.Cldata;
@@ -18,5 +19,9 @@ begin
       CLI.Set_Exit_Status (Code => CLI.Failure);
       return;
    end if;
-   CLI.Set_Exit_Status (Code => CLI.Success);
-end Main;
+   if Raven.Cmd.Bahnhof.execute_command (comline_inputs) then
+      CLI.Set_Exit_Status (Code => CLI.Success);
+   else
+      CLI.Set_Exit_Status (Code => CLI.Failure);
+   end if;
+end Rvn;

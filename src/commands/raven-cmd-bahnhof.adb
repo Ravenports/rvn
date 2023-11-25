@@ -1,7 +1,11 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Raven.Cmd.Unset;
+
 package body Raven.Cmd.Bahnhof is
+
+   package C00 renames Raven.Cmd.Unset;
 
    --------------------------------------------------------------------
    --  execute_command
@@ -12,13 +16,14 @@ package body Raven.Cmd.Bahnhof is
          when cv_unset |
               cv_help  => null;
          when others =>
-            if not C00.Initialize_ravensw (comline) then
+            if not C00.initialize_program (comline) then
                return False;
             end if;
       end case;
 
       case comline.command is
-         when cv_unset    => return (C00.execute_no_command (comline));
+         when cv_unset    =>
+            return (C00.execute_no_command (comline));
          --  when cv_help     => return (C01.execute_help_command (comline));
          --  when cv_version  => return (C02.execute_version_command (comline));
          when others =>

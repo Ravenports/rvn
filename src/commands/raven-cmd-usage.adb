@@ -35,12 +35,12 @@ package body Raven.Cmd.Usage is
    ---------------------
    procedure display_usage (usage_msg : String; first_line : Boolean)
    is
-      tray : String := "Usage: ";
+      tray : String := "Usage: " & progname & " ";
    begin
       if not first_line then
          tray := (others => ' ');
       end if;
-      TIO.Put_Line (TIO.Standard_Error, tray & progname & " " & usage_msg);
+      TIO.Put_Line (TIO.Standard_Error, tray & usage_msg);
    end display_usage;
    
    
@@ -81,13 +81,14 @@ package body Raven.Cmd.Usage is
       function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
-         msg : constant String := "[-v] [-d] [-l] [--status-check] " &
-           "[-c <chroot path>|-r <rootdir>] " &
-           "[-C <configuration file>] [-R <repo config dir>] " &
-           "[-o var=value] <command> [<args>]";
+         m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>|-r <rootdir>]";
+         m2 : constant String := "[-C <configuration file>] [-R <repo config dir>] [-o var=value]";
+         m3 : constant String := "<command> [<args>]";
       begin
          display_error (error_msg);
-         display_usage (msg, True);
+         display_usage (m1, True);
+         display_usage (m2, False);
+         display_usage (m3, False);
          display_help_suggestion (cv_unset);
          return False;
       end alert;
@@ -97,9 +98,10 @@ package body Raven.Cmd.Usage is
       end if;
       
       --  check if no arguments given
-      if comline.global_debug = A_Debug_Level'First and then
+      if comline.unset_version = not_shown and then       
         not comline.unset_list_cmd and then
         not comline.unset_status_check and then
+        comline.global_debug = A_Debug_Level'First and then
         IsBlank (comline.global_chroot) and then
         IsBlank (comline.global_config_file) and then
         IsBlank (comline.global_repo_config_dir) and then

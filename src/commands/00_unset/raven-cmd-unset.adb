@@ -61,59 +61,48 @@ package body Raven.Cmd.Unset is
    ------------------------------
    function list_available_commands return Boolean
    is
+      -- start with support for 15 commands (not including unset)
+      -- As this is exceeded add an additional row of 5 columns
+      type rows is range 1 .. 3;
       type cols is range 1 .. 5;
-
-      numwords    : constant Natural := Command_verb'Range_Length - 1;
-      minlength   : constant Natural := numwords / cols'Range_Length;
-
-      col_length  : constant array (cols) of Natural := (others => minlength);
-      print_order : array (1 .. numwords) of Command_verb;
-
-      column : cols := cols'First;
+      type A_column is array (rows) of Command_verb;
+      matrix : array (cols) of A_column;
+      index : Natural := 0;
    begin
-      --  Loop will not execute when total commands - 1 is divisible by 5
-      --  Currently at this point, uncomment when new commands are added
---        for N in 1 .. cols_minus1 loop
---           col_length (cols (N)) := minlength + 1;
---        end loop;
-
-      declare
-         po_index : Natural := 1;  --  Zero-indexed, but we want to skip the first command
-      begin
-         for N in cols'Range loop
-            declare
-               index : Positive := Positive (N);
-            begin
-               for Q in 1 .. col_length (N) loop
-                  print_order (index) := Command_verb'Val (po_index);
-                  po_index := po_index + 1;
-                  index := index + Positive (cols'Last);
-               end loop;
-            end;
+      for x in cols loop
+         for y in rows loop
+            matrix (x)(y) := cv_unset;
          end loop;
-      end;
-
-      for cindex in print_order'Range loop
-         declare
-            command : constant Command_verb := print_order (cindex);
-            C : constant String := convert_command_enum_to_label (command);
-         begin
-            case command is
+      end loop;
+      declare
+         row : rows := 1;
+         col : cols := 1;
+      begin
+         for cv in Command_verb'Range loop
+            case cv is
                when cv_unset => null;
                when others =>
-                  TIO.Put (pad_right (C, 15));
-                  if column = cols'Last then
-                     column := cols'First;
-                     TIO.Put_Line ("");
+                  matrix (col)(row) := cv;
+                  if row = rows'Last then
+                     row := rows'First;
+                     col := col + 1;
                   else
-                     column := column + 1;
+                     row := row + 1;
                   end if;
             end case;
-         end;
-      end loop;
-      if column > cols'First then
+         end loop;
+      end;
+      
+      for y in rows loop
+         for x in cols loop
+            declare
+               c : constant String := convert_command_enum_to_label (matrix (x)(y));
+            begin
+               TIO.Put (pad_right (C, 15));
+            end;
+         end loop;
          TIO.Put_Line ("");
-      end if;
+      end loop;
       return True;
    end list_available_commands;
    
