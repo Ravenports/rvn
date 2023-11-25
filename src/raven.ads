@@ -19,7 +19,7 @@ package Raven is
    progversion    : constant String := "0.0.1";
    progname       : constant String := "rvn";
    platform       : constant Operating_System := Operating_System'First;   
-   DB_SCHEMA_VER  : constant Natural := 1;
+   db_schema_ver  : constant Natural := 1;
    local_rvn_db   : constant String := "local.sqlite";
 
    --------------------
