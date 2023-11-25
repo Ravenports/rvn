@@ -81,7 +81,7 @@ package body Raven.Cmd.Usage is
       function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
-         msg : constant String := "[-v] [-d] [-l] " &
+         msg : constant String := "[-v] [-d] [-l] [--status-check] " &
            "[-c <chroot path>|-r <rootdir>] " &
            "[-C <configuration file>] [-R <repo config dir>] " &
            "[-o var=value] <command> [<args>]";
@@ -98,7 +98,8 @@ package body Raven.Cmd.Usage is
       
       --  check if no arguments given
       if comline.global_debug = A_Debug_Level'First and then
-        not comline.global_list_cmd and then
+        not comline.unset_list_cmd and then
+        not comline.unset_status_check and then
         IsBlank (comline.global_chroot) and then
         IsBlank (comline.global_config_file) and then
         IsBlank (comline.global_repo_config_dir) and then
@@ -108,9 +109,10 @@ package body Raven.Cmd.Usage is
          return alert ("Not enough arguments");
       end if;
 
-      --  Only two switches are used without a command verb
-      if comline.global_version = not_shown and then 
-        not comline.global_list_cmd
+      --  Only three switches are used without a command verb
+      if comline.unset_version = not_shown and then 
+        not comline.unset_list_cmd and then
+        not comline.unset_status_check
       then
          return alert ("No commands specified");
       end if;

@@ -16,6 +16,7 @@ package body Raven.Cmd is
          when cv_unset      => return "";
          when cv_create     => return "create";
          when cv_info       => return "info";
+         when cv_help       => return "help";
          --  when cv_add        => return "add";
          --  when cv_alias      => return "alias";
          --  when cv_annotate   => return "annotate";

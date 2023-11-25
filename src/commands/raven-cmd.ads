@@ -111,13 +111,15 @@ private
    type Cldata is
       record
          global_debug           : A_Debug_Level := 0;
-         global_version         : version_depth := not_shown;
          global_chroot          : Text;
          global_config_file     : Text;
          global_repo_config_dir : Text;
          global_root_dir        : Text;
          global_options         : Text;
-         global_list_cmd        : Boolean := False;
+
+         unset_version          : version_depth := not_shown;
+         unset_list_cmd         : Boolean := False;
+         unset_status_check     : Boolean := False;
 
          command                : Command_verb := cv_unset;
          parse_error            : Boolean := False;

@@ -140,14 +140,17 @@ package body Raven.Cmd.Line is
                      end if;
                   elsif datum = "-v" or else datum = "--version"
                   then
-                     case result.global_version is
-                        when not_shown          => result.global_version := just_version;
-                        when just_version       => result.global_version := dump_configuration;
+                     case result.unset_version is
+                        when not_shown          => result.unset_version := just_version;
+                        when just_version       => result.unset_version := dump_configuration;
                         when dump_configuration => null;
                      end case;
                   elsif datum = "-l" or else datum = "--list"
                   then
-                     result.global_list_cmd := True;
+                     result.unset_list_cmd := True;
+                  elsif datum = "--status-check"
+                  then
+                     result.unset_status_check := True;
                   elsif datum = "-c" or else datum = "--chroot"
                   then
                      last_cmd := global_chroot;
