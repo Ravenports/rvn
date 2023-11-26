@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with Ada.Directories;
 with GNAT.OS_Lib;
+with Archive.Unix;
 
 with Raven.Strings; use Raven.Strings;
 
@@ -13,9 +14,9 @@ package body Raven.Cmd.Help is
    package DIR renames Ada.Directories;
    package OSL renames GNAT.OS_Lib;
 
-   --------------------------------------------------------------------
-   --  execute_help_command
-   --------------------------------------------------------------------
+   ----------------------------
+   --  execute_help_command  --
+   ----------------------------
    function execute_help_command (comline : Cldata) return Boolean
    is
       manprefix : constant String := install_loc & "/share/man";
@@ -35,23 +36,21 @@ package body Raven.Cmd.Help is
          case comline.help_command2 is
             when cv2_unset =>
                return show_man_page
-                 (manprefix & "/man8/ravensw-" &
-                    convert_command_enum_to_label (comline.help_command) & ".8.gz");
+                 (progname & "-" & convert_command_enum_to_label (comline.help_command), '8');
             when cv2_main =>
-               return show_man_page (manprefix & "/man8/" & progname & ".8.gz");
+               return show_man_page (progname, '8');
             when cv2_main_conf =>
-               return show_man_page
-                 (manprefix & "/man5/" & progname & "-" & progname & ".conf.5.gz");
+               return show_man_page (progname & "-" & progname & ".conf", '5');
             when cv2_repository =>
-               return show_man_page (manprefix & "/man5/" & progname & "-repository.5.gz");
+               return show_man_page (progname & "-repository", '5');
          end case;
       end if;
    end execute_help_command;
 
 
-   --------------------------------------------------------------------
-   --  print_global_options
-   --------------------------------------------------------------------
+   ----------------------------
+   --  print_global_options  --
+   ----------------------------
    procedure print_global_options
    is
       prog : constant String := progname & "(8) ";
@@ -68,9 +67,9 @@ package body Raven.Cmd.Help is
    end print_global_options;
 
 
-   --------------------------------------------------------------------
-   --  print_command_summary
-   --------------------------------------------------------------------
+   -----------------------------
+   --  print_command_summary  --
+   -----------------------------
    procedure print_command_summary is
    begin
       TIO.Put_Line ("");
@@ -124,9 +123,9 @@ package body Raven.Cmd.Help is
    end print_command_summary;
 
 
-   --------------------------------------------------------------------
-   --  PL
-   --------------------------------------------------------------------
+   ----------
+   --  PL  --
+   ----------
    procedure PL (name, value : String)
    is
       width     : constant Natural := 14;
@@ -141,12 +140,13 @@ package body Raven.Cmd.Help is
    end PL;
 
 
-   --------------------------------------------------------------------
-   --  show_man_page
-   --------------------------------------------------------------------
-   function show_man_page (manpage : String) return Boolean
+   ---------------------
+   --  show_man_page  --
+   ---------------------
+   function show_man_page (manpage : String; section : Character) return Boolean
    is
       function manprog return String;
+      function manpage_location return String;
 
       mandoc     : constant String := install_loc & "/bin/man";
       sysman     : constant String := "/usr/bin/man";
@@ -156,10 +156,23 @@ package body Raven.Cmd.Help is
       begin
          if use_mandoc then
             return mandoc;
-         else
-            return sysman;
          end if;
+         return sysman;
       end manprog;
+
+      function manpage_location return String
+      is
+         --  search priority
+         --  realpath (../share/man/<manpage>.gz)
+         --  realpath (../share/man/<manpage>)
+         base : constant String := "../share/man/man" & section & "/" & manpage & "." & section;
+         first_choice : constant String := Archive.Unix.real_path (base & ".gz");
+      begin
+         if isBlank (first_choice) then
+            return Archive.Unix.real_path (base);
+         end if;
+         return first_choice;
+      end manpage_location;
 
    begin
       if DIR.Exists (mandoc) then
@@ -168,8 +181,9 @@ package body Raven.Cmd.Help is
          TIO.Put_Line (TIO.Standard_Error, progname & ": No man program found");
          return False;
       end if;
-      if not DIR.Exists (manpage) then
-         TIO.Put_Line (TIO.Standard_Error, progname & ": missing manpage: " & manpage);
+      if IsBlank (manpage_location) then
+         TIO.Put_Line (TIO.Standard_Error, progname & ": missing manpage: " & manpage
+                       & "(" & section & ")");
          return False;
       end if;
 

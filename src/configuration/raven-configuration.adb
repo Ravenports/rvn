@@ -476,7 +476,8 @@ package body Raven.Configuration is
          d_type : constant ThickUCL.Leaf_type := temp_conf.get_data_type (name);
       begin
          if d_type /= citype then
-            EV.emit_notice ("Configuration file value ignored due to type mismatch. " & 
+            EV.emit_notice ("Configuration file value of " & name & 
+                              " ignored due to type mismatch. " & 
                               type2str (citype) & " type expected but " & 
                               type2str (d_type) & " type provided.");
             return;
