@@ -6,7 +6,7 @@ project Rvn is
    for Languages use ("Ada", "C");
 
    package Linker is
-      for Switches ("ada") use ("-lucl_pic");
+      for Switches ("ada") use ("-lucl_pic", "-lm");
    end Linker;
 
 end Rvn;
