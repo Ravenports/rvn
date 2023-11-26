@@ -40,6 +40,9 @@ package Raven.Strings is
    --  Returns true if the given string can be converted to a floating point number
    function IsNumeric (S : String) return Boolean;
 
+   --  Returns true if the given string can be converted to a boolean value
+   function IsBoolean (S : String) return Boolean;
+
    --  Replace substring with another string
    function replace_substring (US : Text;
                                old_string : String;

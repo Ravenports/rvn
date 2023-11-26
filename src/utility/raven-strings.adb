@@ -624,4 +624,20 @@ package body Raven.Strings is
          return False;
    end IsNumeric;
 
+
+   -----------------
+   --  IsBoolean  --
+   -----------------
+   function IsBoolean (S : String) return Boolean
+   is
+      Dummy : Boolean;
+   begin
+      Dummy := Boolean'Value (S);
+      return True;
+   exception
+      when others =>
+         return False;
+   end IsBoolean;
+
+
 end Raven.Strings;
