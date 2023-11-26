@@ -5,5 +5,9 @@ project Rvn is
    for Main use ("rvn.adb");
    for Languages use ("Ada", "C");
 
+   package Linker is
+      for Switches ("ada") use ("-lucl_pic");
+   end Linker;
+
 end Rvn;
 
