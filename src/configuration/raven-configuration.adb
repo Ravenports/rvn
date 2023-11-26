@@ -275,9 +275,12 @@ package body Raven.Configuration is
    --  set_command_line_options  --
    --------------------------------
    procedure set_command_line_options 
-      (options  : String;
-       session_configuration : in out ThickUCL.UclTree)
+     (options               : String;
+      debug_level_cli       : A_Debug_Level;
+      session_configuration : in out ThickUCL.UclTree)
    is
+      --  if debug level is set by both -d command line option and the -o command line option,
+      --  the -o value takes priority, although -d is in effect for the event emissions.
        numfields : Natural;
    begin
       if IsBlank (options) then
@@ -337,6 +340,25 @@ package body Raven.Configuration is
             end if;
          end;
       end loop;
+            
+      if not session_configuration.key_exists (get_ci_key (debug_level)) then
+         declare
+            name : constant String := get_ci_key (debug_level);
+         begin
+            case debug_level_cli is
+               when silent => null;
+               when high_level =>
+                  session_configuration.insert (name, 1);
+                  ENV.Set (Name, "1");
+               when moderate =>
+                  session_configuration.insert (name, 2);
+                  ENV.Set (Name, "2");
+               when low_level =>
+                  session_configuration.insert (name, 3);
+                  ENV.Set (Name, "3");               
+            end case;
+         end;
+      end if;
       
    end set_command_line_options;
    
@@ -687,10 +709,11 @@ package body Raven.Configuration is
    procedure establish_configuration 
      (configuration_file    : String;
       command_line_options  : String;
+      debug_level_cli       : A_Debug_Level;
       session_configuration : in out ThickUCL.UclTree)
    is
    begin
-      set_command_line_options (command_line_options, session_configuration);
+      set_command_line_options (command_line_options, debug_level_cli, session_configuration);
       set_environment_options (session_configuration);
       set_configuration_from_file (configuration_file, session_configuration);
       set_defaults_on_remaining_settings (session_configuration);

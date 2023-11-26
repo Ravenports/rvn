@@ -1,10 +1,20 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+with Ada.Environment_Variables;
+with Raven.Context;
+with Raven.Configuration;
+with Raven.Event;
+with Raven.Unix;
 with Raven.Strings; use Raven.Strings;
+with Ucl;
 
 package body Raven.Cmd.Unset is
-
+   
+   package ENV renames Ada.Environment_Variables;
+   package CFG renames Raven.Configuration;
+   package EV  renames Raven.Event;
+   
    --------------------------
    --  execute_no_command  --
    --------------------------
@@ -110,10 +120,106 @@ package body Raven.Cmd.Unset is
    --------------------------
    --  initialize_program  --
    --------------------------
-   function initialize_program (comline : Cldata) return Boolean is
+   function initialize_program (comline : Cldata) return Boolean 
+   is
+      function config_file_path return String;
+      
+      --  establish configuration
+      --  set environment 
+      --  set context
+      --  special debug handling (if specified in command line:
+      --          * set context early
+      --          * passes to establish_configuration
+      --          * reset context
+      
+      function config_file_path return String 
+      is
+         default_location : constant String := install_loc & "/etc/" & progname & ".conf";
+      begin
+         if IsBlank (comline.global_config_file) then
+            return default_location;
+         end if;
+         return USS (comline.global_config_file);
+      end config_file_path;
    begin
-      --  TODO: Implement
-      return False;
+      Context.register_debug_level (comline.global_debug);
+      CFG.establish_configuration 
+        (configuration_file    => config_file_path, 
+         command_line_options  => USS (comline.global_options), 
+         debug_level_cli       => comline.global_debug, 
+         session_configuration => program_configuration);
+      
+      declare
+         key1 : constant String := CFG.get_ci_key (CFG.debug_level);
+         key2 : constant String := CFG.get_ci_key (CFG.dbdir);
+         key3 : constant String := CFG.get_ci_key (CFG.cachedir);
+         key4 : constant String := CFG.get_ci_key (CFG.event_pipe);
+         key5 : constant String := CFG.get_ci_key (CFG.dev_mode);
+         
+         conf_debug : constant Ucl.ucl_integer := program_configuration.get_base_value (key1);
+         db_dir     : constant String := program_configuration.get_base_value (key2); 
+         cache_dir  : constant String := program_configuration.get_base_value (key3);
+         event_pipe : constant String := program_configuration.get_base_value (key4);
+         dev_mode   : constant Boolean := program_configuration.get_base_value (key5);   
+         
+         mechanism  : Unix.Unix_Pipe;
+      begin
+         case conf_debug is
+            when 0 => Context.register_debug_level (silent);
+            when 1 => Context.register_debug_level (high_level);
+            when 2 => Context.register_debug_level (moderate);
+            when 3 => Context.register_debug_level (low_level);
+            when others => null;
+         end case;
+         Context.register_db_directory (db_dir);
+         Context.register_cache_directory (cache_dir);
+         Context.register_dev_mode (dev_mode);
+         if not isBlank (event_pipe) then
+            mechanism := Unix.IPC_mechanism (event_pipe);
+            case mechanism is
+               when Unix.named_pipe =>
+                  if Context.register_event_pipe_via_file (event_pipe) then
+                     EV.emit_debug (moderate, "FIFO Event pipe " & SQ (event_pipe) & " opened.");
+                  else
+                     EV.emit_errno ("open event pipe (FIFO)", event_pipe, Unix.errno);
+                  end if;
+               when Unix.unix_socket =>
+                  case Context.register_event_pipe_via_socket (event_pipe) is
+                     when Unix.connected =>
+                        EV.emit_debug 
+                          (moderate, "Event pipe " & SQ (event_pipe) & " socket opened.");
+                     when Unix.failed_creation
+                        | Unix.failed_connection =>
+                        EV.emit_errno ( "open event pipe (socket)", event_pipe, Unix.errno);
+                     when Unix.failed_population =>
+                        EV.emit_error ("Socket path too long: " & event_pipe);
+                  end case;
+               when Unix.something_else =>
+                  EV.emit_error (event_pipe & " is not a fifo or socket");
+            end case;
+         end if;
+      end;
+      
+      declare
+         procedure upsert (Position : ThickUCL.jar_string.Cursor);
+         
+         nkey : constant String := CFG.get_ci_key (CFG.environ);
+         keys : ThickUCL.jar_string.Vector;
+         vndx : ThickUCL.object_index := program_configuration.get_index_of_base_ucl_object (nkey);
+         
+         procedure upsert (Position : ThickUCL.jar_string.Cursor) 
+         is
+            name : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+            val  : constant String := program_configuration.get_object_value (vndx, name);
+         begin
+            ENV.Set (name, val);
+         end upsert;
+      begin
+         program_configuration.get_object_object_keys (vndx, keys); 
+         keys.Iterate (upsert'Access);
+      end;
+      
+      return True;
    end initialize_program;
    
    

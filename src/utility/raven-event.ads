@@ -7,10 +7,16 @@ package Raven.Event is
    procedure emit_error          (message : String);
    procedure emit_notice         (message : String);
    procedure emit_message        (message : String);
+   
    procedure emit_debug          
      (debug_level : A_Debug_Level;
       debug_msg   : String);
 
+   procedure emit_errno          
+     (err_function : String;
+      err_argument : String;
+      err_number   : Integer);
+   
 private
    
    --  warnx prints the message to stdout verbatim

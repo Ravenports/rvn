@@ -1,6 +1,9 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../License.txt
 
+
+private with ThickUCL;
+
 package Raven.Cmd.Unset is
 
    --  This routine covers the case of ravensw executed without a command verb
@@ -11,6 +14,8 @@ package Raven.Cmd.Unset is
    function initialize_program (comline : Cldata) return Boolean;
 
 private
+
+   program_configuration : ThickUCL.UclTree;
 
    --  rvn -v
    function basic_version_info return Boolean;

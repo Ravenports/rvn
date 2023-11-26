@@ -54,6 +54,15 @@ package Raven.Unix is
    function getpid return Process_ID;
    pragma Import (C, getpid, "getpid");
 
+   --  call C function to determine if FIFO or Socket or something else
+   function IPC_mechanism (filename : String) return Unix_Pipe;
+
+   --  Last seen error number by C function
+   function errno return Integer;
+
+   --  strerror from libc
+   function strerror (errno : Integer) return String;
+
 private
 
    last_errno : Integer;
@@ -81,5 +90,10 @@ private
    function C_dprint (fd : IC.int; msg : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_dprint, "dprint");
 
+   function C_IPC (path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_IPC, "detect_IPC");
+
+   function C_Strerror (Errnum : IC.int) return IC.Strings.chars_ptr;
+   pragma Import (C, C_Strerror, "strerror");
 
 end Raven.Unix;

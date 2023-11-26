@@ -130,4 +130,53 @@ package body Raven.Unix is
       IC.Strings.Free (msg);
    end push_to_event_pipe;
 
+
+   ---------------------
+   --  IPC_mechanism  --
+   ---------------------
+   function IPC_mechanism (filename : String) return Unix_Pipe
+   is
+      result : IC.int;
+      name   : IC.Strings.chars_ptr;
+   begin
+      name := IC.Strings.New_String (filename);
+      result := C_IPC (path => name);
+      IC.Strings.Free (name);
+
+      case result is
+         when 1 => return named_pipe;
+         when 2 => return unix_socket;
+         when others => return something_else;
+      end case;
+
+   end IPC_mechanism;
+
+
+   -------------
+   --  errno  --
+   -------------
+   function errno return Integer is
+   begin
+      return last_errno;
+   end errno;
+
+
+   ----------------
+   --  strerror  --
+   ----------------
+   function strerror (errno : Integer) return String
+   is
+      use type IC.Strings.chars_ptr;
+
+      C_Msg : IC.Strings.chars_ptr;
+   begin
+      C_Msg := C_Strerror (IC.int (errno));
+
+      if C_Msg = IC.Strings.Null_Ptr then
+         return "Unknown system error";
+      else
+         return IC.Strings.Value (C_Msg);
+      end if;
+   end strerror;
+
 end Raven.Unix;

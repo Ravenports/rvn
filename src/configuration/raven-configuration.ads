@@ -17,6 +17,7 @@ package Raven.Configuration is
    procedure establish_configuration 
      (configuration_file    : String;
       command_line_options  : String;
+      debug_level_cli       : A_Debug_Level;
       session_configuration : in out ThickUCL.UclTree);
    
    
@@ -132,6 +133,7 @@ private
    --  Any valid command line options are set in the environment
    procedure set_command_line_options 
      (options               : String;
+      debug_level_cli       : A_Debug_Level;
       session_configuration : in out ThickUCL.UclTree);
    
    --  Delegate the logic that sets some configuration parameters via the environment

@@ -124,5 +124,26 @@ package body Raven.Event is
       end if;
    end emit_debug;
 
+   
+   ------------------
+   --  emit_errno  --
+   ------------------
+   procedure emit_errno (err_function : String;
+                         err_argument : String;
+                         err_number   : Integer)
+   is
+      info : constant String := err_function & '(' & err_argument & "): " &
+                                Unix.strerror (err_number);
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "ERROR"),
+            json_objectpair ("data",
+              CC (json_pair ("msg", info),
+                  json_pair ("errno", int2str (err_number))))));
+   begin
+      check_progress;
+      pipe_event (jmsg);
+      warnx (info);
+   end emit_errno;
 
 end Raven.Event;
