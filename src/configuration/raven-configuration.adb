@@ -63,6 +63,11 @@ package body Raven.Configuration is
          when base_shlibs    => return "ALLOW_BASE_SHLIBS";
          when size_limit     => return "WARN_SIZE_LIMIT";
          when metalog_file   => return "METALOG";
+         when skip_dev       => return "SKIP_DEV_SUBPKG";
+         when skip_nls       => return "SKIP_NLS_SUBPKG";
+         when skip_man       => return "SKIP_MAN_SUBPKG";
+         when skip_doc       => return "SKIP_DOC_SUBPKG";
+         when skip_examples  => return "SKIP_EXAM_SUBPKG";
       end case;
    end get_ci_key;
    
@@ -90,6 +95,11 @@ package body Raven.Configuration is
               create_verbose |
               autoclean      |
               no_timestamp   |
+              skip_dev       |
+              skip_doc       |
+              skip_examples  |
+              skip_man       |
+              skip_nls       |
               base_shlibs    => return ThickUCL.data_boolean;
          when
               fetch_retry    |
@@ -144,6 +154,11 @@ package body Raven.Configuration is
          when autoclean      => return False;
          when no_timestamp   => return False;
          when base_shlibs    => return False;
+         when skip_dev       => return True;
+         when skip_nls       => return False;
+         when skip_man       => return False;
+         when skip_doc       => return False;       
+         when skip_examples  => return True;
          when others => 
             raise config_type_mismatch with ci'Img & " is not of type boolean";
       end case;
