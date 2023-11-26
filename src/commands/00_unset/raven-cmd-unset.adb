@@ -7,6 +7,7 @@ with Raven.Configuration;
 with Raven.Event;
 with Raven.Unix;
 with Raven.Strings; use Raven.Strings;
+with ThickUCL.Emitter;
 with Ucl;
 
 package body Raven.Cmd.Unset is
@@ -14,6 +15,7 @@ package body Raven.Cmd.Unset is
    package ENV renames Ada.Environment_Variables;
    package CFG renames Raven.Configuration;
    package EV  renames Raven.Event;
+   
    
    --------------------------
    --  execute_no_command  --
@@ -229,9 +231,7 @@ package body Raven.Cmd.Unset is
    function extended_version_info return Boolean is
    begin
       TIO.Put_Line ("Version: " & progversion);
-      --  TODO: Finish
-      --  TIO.Put_Line (Config.Read.config_dump);
-
+      TIO.Put_Line (ThickUCL.Emitter.emit_ucl (program_configuration));
       show_repository_info;
 
       return True;
