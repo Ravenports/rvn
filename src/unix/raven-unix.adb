@@ -2,8 +2,11 @@
 --  Reference: ../../License.txt
 
 
+with Ada.Characters.Latin_1;
+
 package body Raven.Unix is
 
+   package LAT renames Ada.Characters.Latin_1;
 
    ------------------------
    --  close_file_blind  --
@@ -60,9 +63,9 @@ package body Raven.Unix is
    end connect_unix_socket;
 
 
-   --------------------------------------------------------------------
-   --  open_file #1
-   --------------------------------------------------------------------
+   --------------------
+   --  open_file #1  --
+   --------------------
    function open_file (filename : String; flags : T_Open_Flags) return File_Descriptor
    is
       result         : File_Descriptor;
@@ -112,5 +115,19 @@ package body Raven.Unix is
       end if;
       return result;
    end open_file;
+
+
+   --------------------------
+   --  push_to_event_pipe  --
+   --------------------------
+   procedure push_to_event_pipe (fd : File_Descriptor; message : String)
+   is
+      msg    : IC.Strings.chars_ptr;
+      result : IC.int;
+   begin
+      msg := IC.Strings.New_String (message & LAT.LF);
+      result := C_dprint (IC.int (fd), msg);  -- returns #chars printed
+      IC.Strings.Free (msg);
+   end push_to_event_pipe;
 
 end Raven.Unix;

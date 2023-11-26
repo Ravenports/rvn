@@ -47,6 +47,13 @@ package Raven.Unix is
    --  Return True if fd /= -1
    function file_connected (fd : File_Descriptor) return Boolean;
 
+   --  Send log down file descriptor of event pipe
+   procedure push_to_event_pipe (fd : File_Descriptor; message : String);
+
+   --  Get Process ID
+   function getpid return Process_ID;
+   pragma Import (C, getpid, "getpid");
+
 private
 
    last_errno : Integer;
@@ -70,5 +77,9 @@ private
       creat     : IC.int;
       trunc     : IC.int) return IC.int;
    pragma Import (C, C_Open, "try_open");
+
+   function C_dprint (fd : IC.int; msg : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_dprint, "dprint");
+
 
 end Raven.Unix;
