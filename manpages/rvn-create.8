@@ -1,0 +1,360 @@
+.Dd November 26, 2023
+.Dt RVN-CREATE 8
+.Os
+.\" ---------------------------------------------------------------------------
+.Sh NAME
+.Nm "rvn create"
+.Nd a utility for creating software package distributions
+.\" ---------------------------------------------------------------------------
+.Sh SYNOPSIS
+.Nm
+.Op Fl qv
+.Op Fl o Ar outdir
+.Op Fl r Ar rootdir
+.Op Fl p Ar prefix
+.Op Fl w Ar whitelist
+.Op Fl m Ar metadata
+.Op Fl t Ar timestamp
+.Ar pkg-name
+.\" ---------------------------------------------------------------------------
+.Pp
+.Nm
+.Op Cm --quiet
+.Op Cm --verbose
+.Op Cm --out-dir Ar outdir
+.Op Cm --root-dir Ar rootdir
+.Op Cm --prefix Ar prefix
+.Op Cm --whitelist Ar whitelist
+.Op Cm --metadata Ar metadata
+.Op Cm --timestamp Ar timestamp
+.Ar pkg-name
+.\" ---------------------------------------------------------------------------
+.Sh DESCRIPTION
+.Nm
+is used to create packages from Ravenports builds.
+This command is not normally invoked by users, but rather the ravenadm tool
+of Ravenports calls it to assemble its packages.
+.Pp
+Packages thus created can be distributed and subsequently installed on
+other machines using the
+.Cm rvn add
+command.
+.\" ---------------------------------------------------------------------------
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width xxxxxxxxxxxxxxx
+.It Fl m Ar metadata , Cm --metadata Ar metadata
+Provide all of the package metadata with the
+.Ar metadata
+file.
+This file must be in a format readable by the UCL
+library (ucl, json, yaml, nginx).
+See
+.Sx "METADATA FORMAT"
+for details on the supported fields of this file.
+.It Fl o Ar outdir , Cm --out-dir Ar outdir
+Set
+.Ar outdir
+as the output directory.
+If this option is not given, all created packages will
+be saved in the current directory.
+.It Fl p Ar prefix , Cm --prefix Ar prefix
+The
+.Ar prefix
+is written into the generated metadata of the package.
+It is also used in conjunction with the relative paths
+of the
+.Ar whitelist
+file for the generated package manifest.
+.It Fl q , Cm --quiet
+Force quiet output.
+This is the default, unless
+.Cm CREATE_VERBOSE
+is set to
+.Ar yes
+in
+.Pa rvn.conf .
+.It Fl r Ar rootdir , Cm --root-dir Ar rootdir
+.Ar rootdir
+specifies the top-level directory to be treated as the root of the
+filesystem hierarchy containing the package files.
+File paths in generated packages will be relative to
+.Ar rootdir .
+This allows a package to be generated from content offset from its
+intended final location, which allows a package building without
+disturbing similar content already on the system.
+If unspecified, the default is effectively
+.Pa / ,
+the actual root directory.
+.It Fl t Ar timestamp , Cm --timestamp Ar timestamp
+Set the timestamp of the files within the archive.
+.It Fl v , Cm --verbose
+Force verbose output, the opposite of
+.Cm --quiet .
+.It Fl w Ar whitelist , Cm --whitelist Ar whitelist
+The
+.Ar whitelist
+is the package manifest.
+The most basic version contains the list of files within the
+.Ar root-dir
+that are to be packaged.
+If this file is not provided, all files contained in the
+.Ar root-dir
+will be packaged.
+.Sx "WHITELIST FORMAT"
+for details of this file.
+.El
+.\" ---------------------------------------------------------------------------
+.Sh METADATA FORMAT
+.Bl -tag -width xxxxxxxxxx
+.It Cm namebase Ar pkg-namebase
+This entry sets the package's namebase to
+.Ar pkg-name .
+Among other things, this name is used - with the subpackage, variant,
+and version of the concerned package - to identify a dependency.
+.It Cm subpackage Ar pkg-subpackage
+This entry sets the package's subpackage to
+.Ar pkg-subpackage .
+This is the second part of the package name
+triplet along with the namebase and the variant.
+.It Cm variant Ar pkg-variant
+This entry sets the package's variant to
+.Ar pkg-variant .
+This is the third part of the package name
+triplet along with the namebase and the subpackage.
+.It Cm version Ar pkg-version
+This entry sets the package's version to
+.Ar pkg-version .
+.It Cm origin Ar pkg-origin
+This entry sets the package's origin to
+.Ar comment-string
+is a one-line description of this package.
+It is the equivalent of the
+.Dv COMMENT
+variable for a port, not a way to put comments in a
+.Pa +MANIFEST
+file.
+.It Cm desc Ar description
+.Ar description
+is a much longer description of the package than the comment.
+It may vary in length from one line to a few paragraphs.
+For example:
+.Bd -literal -offset indent
+desc = <<EOD
+   This is a longer description of the package.
+   It can span multiple lines.
+
+   It can also span multiple paragraphs.
+EOD
+.Ed
+.It Cm arch Ar cpu-type
+The architecture of the machine the package was built on.
+.Ar cpu-type
+takes values like x86, amd64...
+.It Cm www Ar url
+The software's official website.
+.It Cm maintainer Ar mail-address
+The maintainer's mail address.
+.It Cm prefix Ar path-prefix
+The path where the files contained in this package are installed
+.Pq usually Pa /raven .
+This field is automatically inserted in the metadata if it doesn't
+already exist.
+The best practice is to omit this field.
+.It Cm flatsize Ar size
+The size that the files contained in this package will occupy on your system
+once uncompressed.
+This value does not take into account files stored in the
+package database, nor does it account the space needed to support the
+directory and file entities.
+This field is automatically generated during package creation, so do not
+provide it.
+.It Cm abi Ar abi
+This value is inserted into the metadata automatically so do not define it.
+The
+.Ar abi
+is tuplet representing the operating system, the major OS release and
+the architecture to indicate what for which system the package is intended.
+.It Cm deps Ar dep-name dep-origin dep-version
+Associative array of package dependencies, keyed on
+.Ar dep-name
+and with values
+.Cm version Ar dep-version
+and
+.Cm origin Ar dep-origin .
+For example:
+.Bd -literal -offset indent
+deps: {
+   pstree: {
+      version: "2.36"
+      origin: "pstree:standard"
+   }
+   cdiff: {
+      version: "0.9.6.20140711,1"
+      origin: "cdiff:standard"
+   }
+}
+.Ed
+.It Cm option Ar ucl-object
+This field is of type ucl-object.
+Each element contains a name-value pair.
+The
+.Ar name
+is the option-name and the
+.Ar value
+is the option-value (e.g. ON/OFF, True/False).
+.It Cm categories Ar array
+This field is of type array.
+Each element of the array is a string which represents the category of
+the package, e.g. math, graphics, french, etc.
+.It Cm licenselogic Ar logic
+This field is an enumeration.
+The allowed values are
+.Ar dual ,
+.Ar multi ,
+and
+.Ar single .
+.It Cm licenses Ar array
+This field is of type array.
+Each element of the array is a string which represents the license
+of the package, e.g. MIT, BSD3CLAUSE, APACHE20, etc.
+.It Cm annotations Ar ucl-object
+This field is of type ucl-object.
+Each element contains a name-value pair.
+The
+.Ar name
+is the key for defined annotation and the
+.Ar value
+is the actual note.
+.It Cm users Ar array
+This field is of type array.
+Each element of the array is a string which represents a user that
+the package requires.
+.It Cm groups Ar array
+This field is of type array.
+Each element of the array is a string which represents a group that
+the package requires.
+.It Cm shlibs_provided Ar Array
+This field is of type array.
+Each element of the array is a string which represents dynamically
+linked library (the ELF SONAME) that is contained in the package
+(to be re-evaluated).
+This array is generated by
+.Nm
+and thus should not be provided.
+.It Cm shlibs_required Ar Array
+This field is of type array.
+Each element of the array is a string which represents a unique list
+of SONAME of libraries that files in the package are linked with.
+This array is generated by
+.Nm
+and thus should not be provided.
+.It Cm scripts Ar ucl-object
+This field is of type ucl-object.
+Each element contains a name-value pair.
+The
+.Ar name
+is an enumeration of pre-install, post-install, pre-deinstall, post-deinstall,
+pre-install-lua, post-install-lua, pre-deinstall-lua, post-deinstall-lua.
+The
+.Ar value
+is an array which contains strings of scripts to be executated at the
+indicated package phase.
+.It Cm directories Ar Array
+This field is of type array.
+Each element of the array is a ucl-object to describe empty directories
+that must be created and destroyed during package operations.
+For example:
+.Bd -literal -offset indent
+directories: [
+  {
+    group: false
+    owner: false
+    path: 'share/fonts/nicefont'
+    perms: false
+  }
+  {
+    group: false
+    owner: false
+    path: 'share/theora/data'
+    perms: 2413
+  }
+]
+.Ed
+This field is created automatically from whitelist keywords and thus
+should not be provided.
+.El
+.Sh WHITELIST FORMAT
+The following describes the whitelist format:
+.Pp
+The whitelist is a sequential list of lines which can have keywords prepended.
+A keyword starts with an
+.Sq @ .
+Lines not starting with a keyword are considered as paths to a file.
+If started with a
+.Sq /
+then it is considered an absolute path.
+Otherwise the file is considered as relative to
+.Ev prefix .
+.Pp
+Keyword lines are formed as follows:
+.Ar @keyword
+.Ar line
+.Pp
+Available keywords are the following:
+.Pp
+.Bl -tag -width indent -compact
+.It Cm @comment Ar string
+The line will be ignored when packing.
+.It Cm @(x,y,z) Ar (owner, group, mode) path
+This keyword sets any combination of ownership, group member,
+and permission modes for the given file, but at least one of them
+must be defined.
+These values override the attributes of the file.
+An alternative to using this keyword is having the port set them
+directly in the stage directory.
+.It Cm @dir Ar path
+Declare directory
+.Pa path
+to be created at install time and attempt to delete it at deinstall time.
+By default, most directories created by a package installation are
+deleted automatically when the package is deinstalled, so this directive is
+only needed for empty directories or directories outside of
+.Ev prefix .
+.It Cm @dir(x,y,z) Ar (owner, group, mode) path
+This is similar to
+.Pa @dir
+but it sets the attributes of the directory after its creation.
+.It Cm @keyword arg1 arg2
+All other
+.Pa keyword
+actions are defined in files named
+.Pa <keyword>.ucl
+located in the keywords directory defined in the configuration.
+.El
+.\" ---------------------------------------------------------------------------
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev DBDIR
+.It Ev KEYWORDS_DIR
+.It Ev SOURCE_DATE_EPOCH
+Set the timestamp for every single file in the archive to the one
+specified in the environment variable (same as the
+.Pa timestamp
+switch).
+.El
+.\" ---------------------------------------------------------------------------
+.Sh FILES
+See
+.Xr rvn.conf 5 .
+.\" ---------------------------------------------------------------------------
+.Sh SEE ALSO
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-info 8

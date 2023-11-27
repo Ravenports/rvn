@@ -131,11 +131,12 @@ package body Raven.Cmd.Usage is
       function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
-         msg : constant String := "create [-qv] [-o outdir] [-r rootdir] [-w whitelist] " &
-           "[-m metadata] [-t timestamp] pkg-name";
+         m1 : constant String := "create [-qv] [-o outdir] [-r rootdir] [-p prefix] ";
+         m2 : constant String := "       [-w whitelist] [-m metadata] [-t timestamp] pkg-name";
       begin
          display_error (error_msg);
-         display_usage (msg, True);
+         display_usage (m1, True);
+         display_usage (m2, False);
          display_help_suggestion (cv_create);
          return False;
       end alert;

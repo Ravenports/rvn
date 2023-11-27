@@ -70,6 +70,7 @@ private
          metadata_file   : Text;
          whitelist_file  : Text;
          timestamp       : Text;
+         prefix          : Text;
       end record;
 
    type switches_common is

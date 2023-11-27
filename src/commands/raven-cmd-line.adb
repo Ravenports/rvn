@@ -225,6 +225,8 @@ package body Raven.Cmd.Line is
                      result.common_options.quiet := True;
                   elsif datum = sws_verb or else datum = swl_verb then
                      result.common_options.verbose := True;
+                  elsif datum = "-p" or else datum = "--prefix" then
+                     last_cmd := create_prefix;
                   elsif datum = "-r" or else datum = "--root-dir" then
                      last_cmd := global_rootdir;
                   elsif datum = "-m" or else datum = "--metadata" then
@@ -309,6 +311,7 @@ package body Raven.Cmd.Line is
                when create_whitelist   => result.cmd_create.whitelist_file  := datumtxt;
                when create_outdir      => result.cmd_create.output_dir      := datumtxt;
                when create_timestamp   => result.cmd_create.timestamp       := datumtxt;
+               when create_prefix      => result.cmd_create.prefix          := datumtxt;
                when info_archive_file  => result.cmd_info.path_archive_file := datumtxt;
                when global_option =>
                   if IsBlank (result.global_options) then
