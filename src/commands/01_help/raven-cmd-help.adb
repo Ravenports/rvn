@@ -3,6 +3,7 @@
 
 with Ada.Characters.Latin_1;
 with Ada.Directories;
+with Ada.Command_Line;
 with GNAT.OS_Lib;
 with Archive.Unix;
 
@@ -19,7 +20,6 @@ package body Raven.Cmd.Help is
    ----------------------------
    function execute_help_command (comline : Cldata) return Boolean
    is
-      manprefix : constant String := install_loc & "/share/man";
    begin
       --  There's no man page rvn-help.8.  Trying "rvn help help" will result
       --  in a manpage not found error.
@@ -61,9 +61,11 @@ package body Raven.Cmd.Help is
       PL ("-c", "Execute " & prog & "inside a chroot(8)");
       PL ("-C", "Use the specified configuration file");
       PL ("-R", "Directory to search for individual repository configurations");
+      PL ("-o", "Override configuration option from the command line");
       PL ("-l", "List available commands and exit");
       PL ("-v", "Display " & prog & "version");
-      PL ("-o", "Override configuration option from the command line");
+      PL ("-v -v", "Display all configuration settings");
+      PL ("--status-check", "Check " & prog & " functionality non-invasively");
    end print_global_options;
 
 
@@ -165,7 +167,8 @@ package body Raven.Cmd.Help is
          --  search priority
          --  realpath (../share/man/<manpage>.gz)
          --  realpath (../share/man/<manpage>)
-         base : constant String := "../share/man/man" & section & "/" & manpage & "." & section;
+         zero : constant String := head (Ada.Command_Line.Command_Name, "/") & "/../share/man/man";
+         base : constant String := zero & section & "/" & manpage & "." & section;
          first_choice : constant String := Archive.Unix.real_path (base & ".gz");
       begin
          if isBlank (first_choice) then
@@ -189,7 +192,7 @@ package body Raven.Cmd.Help is
 
       declare
          Result    : Integer;
-         Arguments : OSL.Argument_List := (1 => new String'(manpage));
+         Arguments : OSL.Argument_List := (1 => new String'(manpage_location));
       begin
          OSL.Spawn (Program_Name           => manprog,
                     Args                   => Arguments,
