@@ -32,7 +32,9 @@ package body Raven.Cmd.Line is
          datumtxt : Text renames string_crate.Element (position);
          datum : constant String := USS (datumtxt);
       begin
-         if result.parse_error then
+         if result.parse_error or else
+           not IsBlank (result.next_argument)
+         then
             return;
          end if;
 
