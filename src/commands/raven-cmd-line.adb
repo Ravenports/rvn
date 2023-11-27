@@ -17,118 +17,10 @@ package body Raven.Cmd.Line is
    function parse_command_line return Cldata
    is
       procedure translate_switch (position : string_crate.Cursor);
-      procedure set_error (error_msg : String);
-      procedure handle_trailing_pkgname (datum : String; datumtxt : Text);
-      function aCgix (datum : String; datumtxt : Text; use_all : Boolean := True) return Boolean;
-      procedure check_create_incompatibilities;
-      procedure check_implied_info_all;
 
       expanded_args : string_crate.Vector;
       result        : Cldata;
       last_cmd      : Clswitch := nothing_pending;
-
-      sws_all    : constant String := "-a";
-      swl_all    : constant String := "--all";
-      sws_case   : constant String := "-C";
-      swl_case   : constant String := "--case-sensitive";
-      sws_icase  : constant String := "-i";
-      swl_icase  : constant String := "--case-insensitive";
-      sws_glob   : constant String := "-g";
-      swl_glob   : constant String := "--glob";
-      sws_regex  : constant String := "-x";
-      swl_regex  : constant String := "--regex";
-
-      -----------------
-      --  set_error  --
-      -----------------
-      procedure set_error (error_msg : String) is
-      begin
-         --  Don't overwrite previous errors
-         if not result.parse_error then
-            result.parse_error := True;
-            result.error_message := SUS (error_msg);
-         end if;
-      end set_error;
-
-      -------------------------------
-      --  handle_trailing_pkgname  --
-      -------------------------------
-      procedure handle_trailing_pkgname (datum : String; datumtxt : Text)
-      is
-         hyphen : constant Character := '-';
-      begin
-         if datum (datum'First) = hyphen then
-            set_error ("Unexpected switch: " & datum);
-         else
-            if result.common_options.all_installed_pkgs then
-               set_error ("Unexpected file pattern with --all option: " & datum);
-            elsif not IsBlank (result.common_options.name_pattern) then
-               set_error ("Attempt to redefine file name pattern from "
-                          & SQ (USS (result.common_options.name_pattern)) & " to " & DQ (datum));
-            else
-               result.common_options.name_pattern := datumtxt;
-            end if;
-         end if;
-      end handle_trailing_pkgname;
-
-      -------------
-      --  aCgix  --
-      -------------
-      function aCgix (datum : String; datumtxt : Text; use_all : Boolean := True) return Boolean
-      is
-         pragma Unreferenced (datumtxt);
-      begin
-         if use_all and then (datum = sws_all or else datum = swl_all) then
-            result.common_options.all_installed_pkgs := True;
-         elsif datum = sws_case or else datum = swl_case then
-            result.common_options.case_sensitive := True;
-         elsif datum = sws_icase or else datum = swl_icase then
-            result.common_options.case_insensitive := True;
-         elsif datum = sws_glob or else datum = swl_glob then
-            result.common_options.shell_glob := True;
-         elsif datum = sws_regex or else datum = swl_regex then
-            result.common_options.regex := True;
-         else
-            return False;
-         end if;
-         return True;
-      end aCgix;
-
-
-      --------------------------------------
-      --  check_create_incompatibilities  --
-      --------------------------------------
-      procedure check_create_incompatibilities
-      is
-         --  This is kind of a legacy check for pkg users.  Probably not really necessary.
-      begin
-         if result.command = cv_create then
-            if result.common_options.all_installed_pkgs or else
-              result.common_options.shell_glob or else
-              result.common_options.regex
-            then
-               set_error ("Switches -a, -g, -x invalid - create requires descrete filename");
-            end if;
-         end if;
-      end check_create_incompatibilities;
-
-
-      ------------------------------
-      --  check_implied_info_all  --
-      ------------------------------
-      procedure check_implied_info_all is
-      begin
-         --  These command imply -a
-         --  rvn info
-         --  any rvn info missing the pkg-name / pattern argument
-         if result.command = cv_info then
-            if not result.common_options.all_installed_pkgs then
-               if IsBlank (result.cmd_info.path_archive_file) then
-                  result.common_options.all_installed_pkgs := True;
-               end if;
-            end if;
-         end if;
-      end check_implied_info_all;
 
 
       ------------------------
@@ -216,7 +108,7 @@ package body Raven.Cmd.Line is
                      --  we've got an unrecognized option
                      result.command := get_command (datum);
                      if result.command = cv_unset then
-                        set_error (error_rec & datum);
+                        set_error (result, error_rec & datum);
                      elsif result.command = cv_help then
                         last_cmd := help;
                      end if;
@@ -241,7 +133,7 @@ package body Raven.Cmd.Line is
                   elsif datum = "-t" or else datum = "--timestamp" then
                      last_cmd := create_timestamp;
                   else
-                     handle_trailing_pkgname (datum, datumtxt);
+                     handle_trailing_pkgname (result, datum, datumtxt);
                   end if;
 
                when cv_help =>
@@ -250,13 +142,13 @@ package body Raven.Cmd.Line is
                   then
                      last_cmd := help;
                   else
-                     set_error ("The help command only takes one argument");
+                     set_error (result, "The help command only takes one argument");
                   end if;
 
                when cv_info =>
                   if datum = sws_quiet or else datum = swl_quiet then
                      result.common_options.quiet := True;
-                  elsif aCgix (datum, datumtxt) then
+                  elsif aCgix (result, datum) then
                      null;
                   elsif datum = "-A" or else datum = "--annotations" then
                      result.cmd_info.annotations := True;
@@ -295,9 +187,9 @@ package body Raven.Cmd.Line is
                   elsif datum = "-F" or else datum = "--file" then
                      last_cmd := info_archive_file;
                   else
-                     handle_trailing_pkgname (datum, datumtxt);
+                     handle_trailing_pkgname (result, datum, datumtxt);
                      if not IsBlank (result.cmd_info.path_archive_file) then
-                        set_error ("Use of -F switch with pkg-name is not permitted.");
+                        set_error (result, "Use of -F switch with pkg-name is not permitted.");
                      end if;
                   end if;
 
@@ -332,7 +224,7 @@ package body Raven.Cmd.Line is
                      elsif datum = "repository" then
                         result.help_command2 := cv2_repository;
                      else
-                        set_error (SQ (datum) & " is not a recognized command");
+                        set_error (result, SQ (datum) & " is not a recognized command");
                      end if;
                   end if;
             end case;
@@ -357,8 +249,8 @@ package body Raven.Cmd.Line is
 
       --  TODO:  check_stats_default ??
 
-      check_create_incompatibilities;
-      check_implied_info_all;
+      check_create_incompatibilities (result);
+      check_implied_info_all (result);
 
       return result;
    end parse_command_line;
@@ -495,5 +387,108 @@ package body Raven.Cmd.Line is
    end get_command;
 
 
+   -----------------
+   --  set_error  --
+   -----------------
+   procedure set_error (self : in out Cldata; error_msg : String)
+   is
+   begin
+      --  Don't overwrite previous errors
+      if not self.parse_error then
+         self.parse_error := True;
+         self.error_message := SUS (error_msg);
+      end if;
+   end set_error;
+
+
+   -------------------------------
+   --  handle_trailing_pkgname  --
+   -------------------------------
+   procedure handle_trailing_pkgname (self : in out Cldata; datum : String; datumtxt : Text)
+   is
+      hyphen : constant Character := '-';
+   begin
+      if datum (datum'First) = hyphen then
+         set_error (self, "Unexpected switch: " & datum);
+      else
+         if self.common_options.all_installed_pkgs then
+            set_error (self, "Unexpected file pattern with --all option: " & datum);
+         elsif not IsBlank (self.common_options.name_pattern) then
+            set_error (self, "Attempt to redefine file name pattern from "
+                       & SQ (USS (self.common_options.name_pattern)) & " to " & DQ (datum));
+         else
+            self.common_options.name_pattern := datumtxt;
+         end if;
+      end if;
+   end handle_trailing_pkgname;
+
+
+   -------------
+   --  aCgix  --
+   -------------
+   function aCgix (self : in out Cldata; datum : String; use_all : Boolean := True) return Boolean
+   is
+      sws_all    : constant String := "-a";
+      swl_all    : constant String := "--all";
+      sws_case   : constant String := "-C";
+      swl_case   : constant String := "--case-sensitive";
+      sws_icase  : constant String := "-i";
+      swl_icase  : constant String := "--case-insensitive";
+      sws_glob   : constant String := "-g";
+      swl_glob   : constant String := "--glob";
+      sws_regex  : constant String := "-x";
+      swl_regex  : constant String := "--regex";
+   begin
+      if use_all and then (datum = sws_all or else datum = swl_all) then
+         self.common_options.all_installed_pkgs := True;
+      elsif datum = sws_case or else datum = swl_case then
+         self.common_options.case_sensitive := True;
+      elsif datum = sws_icase or else datum = swl_icase then
+         self.common_options.case_insensitive := True;
+      elsif datum = sws_glob or else datum = swl_glob then
+         self.common_options.shell_glob := True;
+      elsif datum = sws_regex or else datum = swl_regex then
+         self.common_options.regex := True;
+      else
+         return False;
+      end if;
+      return True;
+   end aCgix;
+
+
+   --------------------------------------
+   --  check_create_incompatibilities  --
+   --------------------------------------
+   procedure check_create_incompatibilities (self : in out Cldata)
+   is
+      --  This is kind of a legacy check for pkg users.  Probably not really necessary.
+   begin
+      if self.command = cv_create then
+         if self.common_options.all_installed_pkgs or else
+           self.common_options.shell_glob or else
+           self.common_options.regex
+         then
+            set_error (self, "Switches -a, -g, -x invalid - create requires descrete filename");
+         end if;
+      end if;
+   end check_create_incompatibilities;
+
+
+   ------------------------------
+   --  check_implied_info_all  --
+   ------------------------------
+   procedure check_implied_info_all (self : in out Cldata) is
+   begin
+      --  These command imply -a
+      --  rvn info
+      --  any rvn info missing the pkg-name / pattern argument
+      if self.command = cv_info then
+         if not self.common_options.all_installed_pkgs then
+            if IsBlank (self.cmd_info.path_archive_file) then
+               self.common_options.all_installed_pkgs := True;
+            end if;
+         end if;
+      end if;
+   end check_implied_info_all;
 
 end Raven.Cmd.Line;

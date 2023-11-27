@@ -10,7 +10,7 @@ package Raven.Cmd is
    package TIO renames Ada.Text_IO;
    package CON renames Ada.Containers;
 
-   type Cldata is private;
+   type Cldata is tagged private;
 
 private
 
@@ -122,7 +122,7 @@ private
          option_nvpairs     : Text;
       end record;
 
-   type Cldata is
+   type Cldata is tagged
       record
          command                : Command_verb := cv_unset;
          help_command           : Command_verb := cv_unset;

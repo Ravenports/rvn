@@ -9,6 +9,11 @@ private
 
    procedure expand_command_line (expanded_args : in out string_crate.Vector);
    function get_command (component : String) return Command_verb;
+   procedure set_error (self : in out Cldata; error_msg : String);
+   procedure handle_trailing_pkgname (self : in out Cldata; datum : String; datumtxt : Text);
+   function aCgix (self : in out Cldata; datum : String; use_all : Boolean := True) return Boolean;
+   procedure check_create_incompatibilities (self : in out Cldata);
+   procedure check_implied_info_all (self : in out Cldata);
 
    type Clswitch is
         (nothing_pending,
