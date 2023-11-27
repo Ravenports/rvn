@@ -579,6 +579,7 @@ package body Raven.Cmd.Line is
       next_command  : String)
    is
       function concatenate (full : String; first_chunk, last_chunk : Positive) return text;
+      procedure push (S : String);
 
       verb : constant Command_verb := get_command (next_command);
       arg_index : Positive := 1;
@@ -600,6 +601,26 @@ package body Raven.Cmd.Line is
             return (SUS (resultstr (resultstr'First + 1 .. resultstr'Last - 1)));
          end;
       end concatenate;
+
+      procedure push (S : String)
+      is
+         --  not intended for concatenated chunks
+         --  It is to handle cases like "-sq" which needs two pushes, e.g. "-s" and "-q"
+         --  It only applies with a single leading hyphen.
+         len : Natural := S'Length;
+      begin
+         if len > 2 then
+            if S (S'First) = LAT.Hyphen and then
+              S (S'First + 1) /= LAT.Hyphen
+            then
+               for char in S'First + 1 .. S'Last loop
+                  expanded_args.Append (SUS ('-' & S (char)));
+               end loop;
+               return;
+            end if;
+         end if;
+         expanded_args.Append (SUS (s));
+      end push;
    begin
       --  The next_command must match one of the arguments (fatal error if it doesn't)
       loop
@@ -667,7 +688,7 @@ package body Raven.Cmd.Line is
                               open_quote := 2;
                               mark_chunk := chunk;
                            when others =>
-                              expanded_args.Append (SUS (word));
+                              push (word);
                         end case;
                      when 1 =>
                         char := word (word'Last);
