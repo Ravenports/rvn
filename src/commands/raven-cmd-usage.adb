@@ -5,13 +5,57 @@ with Raven.Strings; use Raven.Strings;
 
 package body Raven.Cmd.Usage is
 
+   -----------------------------
+   --  precheck_command_line  --
+   -----------------------------
+   function precheck_command_line (comline : Cldata) return precheck_result 
+   is
+      procedure alert (error_msg : String)
+      is
+         m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>|-r <rootdir>]";
+         m2 : constant String := "[-C <configuration file>] [-R <repo config dir>] [-o var=value]";
+         m3 : constant String := "<command> [<args>]";
+      begin
+         display_error (error_msg);
+         display_usage (m1, True);
+         display_usage (m2, False);
+         display_usage (m3, False);
+         display_help_suggestion (cv_unset);
+      end alert;
+   begin
+      if comline.parse_error then
+         alert (USS (comline.error_message));
+         return error_found;
+      end if;
+      
+      if comline.pending_argument then
+         alert ("The last switch requires an argument");
+         return error_found;
+      end if;
+      
+      if comline.pre_command.status_check or else
+        comline.pre_command.list_commands or else
+        comline.pre_command.version_setting /= not_shown
+      then
+         return action_needed;
+      end if;       
+      
+      if IsBlank (comline.next_argument) then
+         alert ("No commands specified");
+         return nothing_to_do;
+      end if;
+      return command_pending;
+      
+   end precheck_command_line;
+   
+   
    --------------------------
    --  command_line_valid  --
    --------------------------
    function command_line_valid (comline : Cldata) return Boolean is
    begin
       case comline.command is
-         when cv_unset  => return no_command_verb (comline);
+         when cv_unset  => return True;  -- already verified
          when cv_create => return verb_create (comline);
          when cv_help   => return verb_help (comline);
          when cv_info   => return verb_info (comline);
@@ -72,57 +116,7 @@ package body Raven.Cmd.Usage is
       TIO.Put_Line (TIO.Standard_Error, "");
    end insert_carriage_return;
    
-   
-   -----------------------
-   --  no_command_verb  --
-   -----------------------
-   function no_command_verb (comline : Cldata) return Boolean
-   is
-      function alert (error_msg : String) return Boolean;
-      function alert (error_msg : String) return Boolean
-      is
-         m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>|-r <rootdir>]";
-         m2 : constant String := "[-C <configuration file>] [-R <repo config dir>] [-o var=value]";
-         m3 : constant String := "<command> [<args>]";
-      begin
-         display_error (error_msg);
-         display_usage (m1, True);
-         display_usage (m2, False);
-         display_usage (m3, False);
-         display_help_suggestion (cv_unset);
-         return False;
-      end alert;
-   begin
-      if comline.parse_error then
-         return alert (USS (comline.error_message));
-      end if;
-      
-      --  check if no arguments given
-      if comline.pre_command.version_setting = not_shown and then
-        not comline.pre_command.list_commands and then
-        not comline.pre_command.status_check and then
-        comline.pre_command.debug_setting = silent and then
-        IsBlank (comline.pre_command.chroot_first) and then
-        IsBlank (comline.pre_command.custom_configfile) and then
-        IsBlank (comline.pre_command.custom_repos_dir) and then
-        IsBlank (comline.pre_command.install_rootdir) and then
-        IsBlank (comline.pre_command.option_nvpairs)
-      then
-         return alert ("Not enough arguments");
-      end if;
 
-      --  Only three switches are used without a command verb
-      if comline.pre_command.version_setting = not_shown and then
-        not comline.pre_command.list_commands and then
-        not comline.pre_command.status_check
-      then
-         return alert ("No commands specified");
-      end if;
-
-      return True;
-   end no_command_verb;
-
-   
    -------------------
    --  verb_create  --
    -------------------
@@ -223,5 +217,16 @@ package body Raven.Cmd.Usage is
          return True;
       end if;
    end verb_info;
+   
+   
+   ----------------------------------
+   --  alert_command_unrecognized  --
+   ----------------------------------
+   procedure alert_command_unrecognized (comline : Cldata)
+   is
+      msg : constant String := "unrecognized command: " & USS (comline.next_argument);
+   begin
+      display_error (msg);
+   end alert_command_unrecognized;
    
 end Raven.Cmd.Usage;

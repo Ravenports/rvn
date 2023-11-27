@@ -29,9 +29,7 @@ package body Raven.Cmd.Unset is
                return list_available_commands;
             end if;
             if comline.pre_command.status_check then
-               if not initialize_program (comline) then
-                  return False;
-               end if;
+               initialize_program (comline);
                return do_status_check;
             end if;
             return False;
@@ -40,9 +38,7 @@ package body Raven.Cmd.Unset is
             return basic_version_info;          
          when dump_configuration =>
             --  switch -vv
-            if not initialize_program (comline) then
-               return False;
-            end if;
+            initialize_program (comline);
             return extended_version_info;
       end case;
    end execute_no_command;
@@ -122,7 +118,7 @@ package body Raven.Cmd.Unset is
    --------------------------
    --  initialize_program  --
    --------------------------
-   function initialize_program (comline : Cldata) return Boolean 
+   procedure initialize_program (comline : Cldata) 
    is
       function config_file_path return String;
       
@@ -220,8 +216,6 @@ package body Raven.Cmd.Unset is
          program_configuration.get_object_object_keys (vndx, keys); 
          keys.Iterate (upsert'Access);
       end;
-      
-      return True;
    end initialize_program;
    
    
@@ -246,5 +240,29 @@ package body Raven.Cmd.Unset is
       --  TODO: Re-implement
       null;
    end show_repository_info;
+   
+   
+   ------------------------
+   --  alias_definition  --
+   ------------------------
+   function alias_definition (alias : String) return String 
+   is
+      key : constant String := CFG.get_ci_key (CFG.alias);
+      vndx : ThickUCL.object_index;
+      dtype : ThickUCL.Leaf_type;
+   begin
+      if program_configuration.key_exists (key) then
+         vndx := program_configuration.get_index_of_base_ucl_object (key);
+         dtype := program_configuration.get_object_data_type (vndx, alias);
+         case dtype is
+            when ThickUCL.data_string =>
+               return program_configuration.get_object_value (vndx, alias);
+            when others =>
+               null;
+         end case;
+      end if;
+      return "";
+   end alias_definition;
+   
    
 end Raven.Cmd.Unset;

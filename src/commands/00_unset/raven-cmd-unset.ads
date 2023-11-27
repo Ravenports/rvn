@@ -10,8 +10,13 @@ package Raven.Cmd.Unset is
    --  For example, to get version information or perform the activation status check
    function execute_no_command (comline : Cldata) return Boolean;
 
-   --  Return False if initialization fails
-   function initialize_program (comline : Cldata) return Boolean;
+   --  Set configuration, context, environment
+   --  The event pipe opening is best effort.  It's failure is not fatal.
+   procedure initialize_program (comline : Cldata);
+
+   --  Returns empty string if alias is not defined, otherwise it
+   --  returns the definition of the alias
+   function alias_definition (alias : String) return String;
 
 private
 

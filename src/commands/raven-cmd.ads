@@ -67,6 +67,7 @@ private
    type switches_create_cmd is
       record
          output_dir      : Text;
+         rootdir_dir     : Text;
          metadata_file   : Text;
          whitelist_file  : Text;
          timestamp       : Text;
@@ -130,6 +131,8 @@ private
 
          parse_error            : Boolean := False;
          error_message          : Text;
+         next_argument          : Text;
+         pending_argument       : Boolean := False;
          common_options         : switches_common;
 
          pre_command            : pre_command_switches;

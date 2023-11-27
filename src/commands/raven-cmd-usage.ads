@@ -3,9 +3,19 @@
 
 package Raven.Cmd.Usage is
 
+   type precheck_result is (error_found, action_needed, command_pending, nothing_to_do);
+
    --  Check if error occurred during command line parsing
    --  If not, return true.   If so, show error and dynamic usage.
    function command_line_valid (comline : Cldata) return Boolean;
+
+   --  Usually the command line has to be parsed twice.
+   --  This function analyzes how the first parse went.
+   --  On error_found and nothing_to_do results, notices/errors are emitted.
+   function precheck_command_line (comline : Cldata) return precheck_result;
+
+   --  Prints the pending command with an unrecognized error message
+   procedure alert_command_unrecognized (comline : Cldata);
 
 private
 
@@ -23,7 +33,6 @@ private
 
    --  Break each command into individual routines.  Any additional
    --  validation checks (if no parsing error exists) can be done here.
-   function no_command_verb (comline : Cldata) return Boolean;
    function verb_create (comline : Cldata) return Boolean;
    function verb_help (comline : Cldata) return Boolean;
    function verb_info (comline : Cldata) return Boolean;
