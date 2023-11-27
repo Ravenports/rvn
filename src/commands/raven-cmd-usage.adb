@@ -98,23 +98,23 @@ package body Raven.Cmd.Usage is
       end if;
       
       --  check if no arguments given
-      if comline.unset_version = not_shown and then       
-        not comline.unset_list_cmd and then
-        not comline.unset_status_check and then
-        comline.global_debug = A_Debug_Level'First and then
-        IsBlank (comline.global_chroot) and then
-        IsBlank (comline.global_config_file) and then
-        IsBlank (comline.global_repo_config_dir) and then
-        IsBlank (comline.global_root_dir) and then
-        IsBlank (comline.global_options)
+      if comline.pre_command.version_setting = not_shown and then
+        not comline.pre_command.list_commands and then
+        not comline.pre_command.status_check and then
+        comline.pre_command.debug_setting = silent and then
+        IsBlank (comline.pre_command.chroot_first) and then
+        IsBlank (comline.pre_command.custom_configfile) and then
+        IsBlank (comline.pre_command.custom_repos_dir) and then
+        IsBlank (comline.pre_command.install_rootdir) and then
+        IsBlank (comline.pre_command.option_nvpairs)
       then
          return alert ("Not enough arguments");
       end if;
 
       --  Only three switches are used without a command verb
-      if comline.unset_version = not_shown and then 
-        not comline.unset_list_cmd and then
-        not comline.unset_status_check
+      if comline.pre_command.version_setting = not_shown and then
+        not comline.pre_command.list_commands and then
+        not comline.pre_command.status_check
       then
          return alert ("No commands specified");
       end if;

@@ -174,25 +174,28 @@ package body Raven.Cmd.Line is
                   --  global options
                   if datum = "-d" or else datum = "--debug"
                   then
-                     case result.global_debug is
-                        when silent     => result.global_debug := high_level;
-                        when high_level => result.global_debug := moderate;
-                        when moderate   => result.global_debug := low_level;
+                     case result.pre_command.debug_setting is
+                        when silent     => result.pre_command.debug_setting := high_level;
+                        when high_level => result.pre_command.debug_setting := moderate;
+                        when moderate   => result.pre_command.debug_setting := low_level;
                         when low_level  => null;
                      end case;
                   elsif datum = "-v" or else datum = "--version"
                   then
-                     case result.unset_version is
-                        when not_shown          => result.unset_version := just_version;
-                        when just_version       => result.unset_version := dump_configuration;
-                        when dump_configuration => null;
+                     case result.pre_command.version_setting is
+                        when not_shown  =>
+                           result.pre_command.version_setting := just_version;
+                        when just_version  =>
+                           result.pre_command.version_setting := dump_configuration;
+                        when dump_configuration =>
+                           null;
                      end case;
                   elsif datum = "-l" or else datum = "--list"
                   then
-                     result.unset_list_cmd := True;
+                     result.pre_command.list_commands := True;
                   elsif datum = "--status-check"
                   then
-                     result.unset_status_check := True;
+                     result.pre_command.status_check := True;
                   elsif datum = "-c" or else datum = "--chroot"
                   then
                      last_cmd := global_chroot;
@@ -303,10 +306,10 @@ package body Raven.Cmd.Line is
             --  insert second part of last seen command
             case last_cmd is
                when nothing_pending    => null;   --  impossible
-               when global_chroot      => result.global_chroot              := datumtxt;
-               when global_config      => result.global_config_file         := datumtxt;
-               when global_repoconfdir => result.global_repo_config_dir     := datumtxt;
-               when global_rootdir     => result.global_root_dir            := datumtxt;
+               when global_chroot      => result.pre_command.chroot_first      := datumtxt;
+               when global_config      => result.pre_command.custom_configfile := datumtxt;
+               when global_repoconfdir => result.pre_command.custom_repos_dir  := datumtxt;
+               when global_rootdir     => result.pre_command.install_rootdir   := datumtxt;
                when create_metadata    => result.cmd_create.metadata_file   := datumtxt;
                when create_whitelist   => result.cmd_create.whitelist_file  := datumtxt;
                when create_outdir      => result.cmd_create.output_dir      := datumtxt;
@@ -314,10 +317,10 @@ package body Raven.Cmd.Line is
                when create_prefix      => result.cmd_create.prefix          := datumtxt;
                when info_archive_file  => result.cmd_info.path_archive_file := datumtxt;
                when global_option =>
-                  if IsBlank (result.global_options) then
-                     result.global_options := datumtxt;
+                  if IsBlank (result.pre_command.option_nvpairs) then
+                     result.pre_command.option_nvpairs := datumtxt;
                   else
-                     SU.Append (result.global_options, LAT.Vertical_Line & datum);
+                     SU.Append (result.pre_command.option_nvpairs, LAT.Vertical_Line & datum);
                   end if;
                when help =>
                   result.help_command := get_command (datum);

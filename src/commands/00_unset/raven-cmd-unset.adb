@@ -22,13 +22,13 @@ package body Raven.Cmd.Unset is
    --------------------------
    function execute_no_command (comline : Cldata) return Boolean is
    begin
-      case comline.unset_version is
+      case comline.pre_command.version_setting is
          when not_shown =>
             --  switch --list
-            if comline.unset_list_cmd then     
+            if comline.pre_command.list_commands then   
                return list_available_commands;
             end if;
-            if comline.unset_status_check then
+            if comline.pre_command.status_check then
                if not initialize_program (comline) then
                   return False;
                end if;
@@ -138,17 +138,17 @@ package body Raven.Cmd.Unset is
       is
          default_location : constant String := install_loc & "/etc/" & progname & ".conf";
       begin
-         if IsBlank (comline.global_config_file) then
+         if IsBlank (comline.pre_command.custom_configfile) then
             return default_location;
          end if;
-         return USS (comline.global_config_file);
+         return USS (comline.pre_command.custom_configfile);
       end config_file_path;
    begin
-      Context.register_debug_level (comline.global_debug);
+      Context.register_debug_level (comline.pre_command.debug_setting);
       CFG.establish_configuration 
         (configuration_file    => config_file_path, 
-         command_line_options  => USS (comline.global_options), 
-         debug_level_cli       => comline.global_debug, 
+         command_line_options  => USS (comline.pre_command.option_nvpairs), 
+         debug_level_cli       => comline.pre_command.debug_setting, 
          session_configuration => program_configuration);
       
       declare

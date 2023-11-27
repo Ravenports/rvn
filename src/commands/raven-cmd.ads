@@ -109,30 +109,32 @@ private
          path_archive_file  : Text;
       end record;
 
+   type pre_command_switches is
+      record
+         debug_setting      : A_Debug_Level := silent;
+         version_setting    : version_depth := not_shown;
+         list_commands      : Boolean := False;
+         status_check       : Boolean := False;
+         chroot_first       : Text;   -- mutually exclusive to install_rootdir
+         install_rootdir    : Text;   -- mutulaly exclusive to chroot_first
+         custom_configfile  : Text;
+         custom_repos_dir   : Text;
+         option_nvpairs     : Text;
+      end record;
+
    type Cldata is
       record
-         global_debug           : A_Debug_Level := silent;
-         global_chroot          : Text;
-         global_config_file     : Text;
-         global_repo_config_dir : Text;
-         global_root_dir        : Text;
-         global_options         : Text;
-
-         unset_version          : version_depth := not_shown;
-         unset_list_cmd         : Boolean := False;
-         unset_status_check     : Boolean := False;
-
          command                : Command_verb := cv_unset;
-         parse_error            : Boolean := False;
-         common_options         : switches_common;
-
          help_command           : Command_verb := cv_unset;
          help_command2          : Command2_verb := cv2_unset;
 
+         parse_error            : Boolean := False;
+         error_message          : Text;
+         common_options         : switches_common;
+
+         pre_command            : pre_command_switches;
          cmd_create             : switches_create_cmd;
          cmd_info               : switches_info_cmd;
-
-         error_message          : Text;
       end record;
 
    --  Provide string equivalent to given command enumeration
