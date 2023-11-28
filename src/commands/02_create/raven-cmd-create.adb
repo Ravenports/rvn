@@ -5,6 +5,7 @@ with Raven.Cmd.Unset;
 with Raven.Event;
 with Raven.Strings; use Raven.Strings;
 with Ada.Directories;
+with Ada.Environment_Variables;
 with Archive.Pack;
 with Archive.Unix;
 
@@ -13,6 +14,7 @@ package body Raven.Cmd.Create is
 
    package RCU renames Raven.Cmd.Unset;
    package DIR renames Ada.Directories;
+   package ENV renames Ada.Environment_Variables;
    
    
    ------------------------------
@@ -117,7 +119,10 @@ package body Raven.Cmd.Create is
    -------------------------
    function provide_timestamp (arg : text) return Archive.filetime
    is
+      --  Priority #1: command line setting
+      --  Priority #2: SOURCE_DATE_EPOCH in the environment
       result : Archive.filetime := 0;
+      SDEKEY : constant String := "SOURCE_DATE_EPOCH";
    begin
       if SU.Length (arg) > 0 then
          declare
@@ -130,6 +135,19 @@ package body Raven.Cmd.Create is
             when Constraint_Error =>
                Raven.Event.emit_error ("Dev error (provide_timestamp), should be impossible");
          end;
+      else
+         if ENV.Exists (SDEKEY) then
+            declare
+               val : constant String := ENV.Value (SDEKEY);
+               tmpres : Archive.filetime;
+            begin
+               tmpres := Archive.filetime'Value (val);
+               result := tmpres;
+            exception
+               when Constraint_Error =>
+                  Raven.Event.emit_message ("SOURCE_DATE_EPOCH is not numeric, ignored.");
+            end;
+         end if;
       end if;
       return result;
    end provide_timestamp;
