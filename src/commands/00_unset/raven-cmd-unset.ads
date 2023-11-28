@@ -2,9 +2,12 @@
 --  Reference: ../../License.txt
 
 
+with Raven.Configuration;
 private with ThickUCL;
 
 package Raven.Cmd.Unset is
+
+   package CFG renames Raven.Configuration;
 
    --  This routine covers the case of ravensw executed without a command verb
    --  For example, to get version information or perform the activation status check
@@ -17,6 +20,15 @@ package Raven.Cmd.Unset is
    --  Returns empty string if alias is not defined, otherwise it
    --  returns the definition of the alias
    function alias_definition (alias : String) return String;
+
+   --  Return configurating setting value (string)
+   function config_setting (setting : CFG.Configuration_Item) return String;
+
+      --  Return configurating setting value (Boolean)
+   function config_setting (setting : CFG.Configuration_Item) return Boolean;
+
+      --  Return configurating setting value (int64)
+   function config_setting (setting : CFG.Configuration_Item) return int64;
 
 private
 

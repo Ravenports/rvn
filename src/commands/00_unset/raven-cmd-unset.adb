@@ -3,7 +3,6 @@
 
 with Ada.Environment_Variables;
 with Raven.Context;
-with Raven.Configuration;
 with Raven.Event;
 with Raven.Unix;
 with Raven.Strings; use Raven.Strings;
@@ -13,7 +12,6 @@ with Ucl;
 package body Raven.Cmd.Unset is
    
    package ENV renames Ada.Environment_Variables;
-   package CFG renames Raven.Configuration;
    package EV  renames Raven.Event;
    
    
@@ -263,6 +261,62 @@ package body Raven.Cmd.Unset is
       end if;
       return "";
    end alias_definition;
+   
+   
+   -------------------------
+   --  config_setting #1  --
+   -------------------------
+   function config_setting (setting : CFG.Configuration_Item) return String 
+   is
+      key   : constant String := CFG.get_ci_key (setting);
+      dtype : ThickUCL.Leaf_type;
+   begin
+      dtype := program_configuration.get_data_type (key);
+      case dtype is
+         when ThickUCL.data_string =>
+            return program_configuration.get_base_value (key);
+         when others =>
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type string";  
+      end case;
+   end config_setting;
+   
+   
+   -------------------------
+   --  config_setting #2  --
+   -------------------------
+   function config_setting (setting : CFG.Configuration_Item) return Boolean
+   is
+      key   : constant String := CFG.get_ci_key (setting);
+      dtype : ThickUCL.Leaf_type;
+   begin
+      dtype := program_configuration.get_data_type (key);
+      case dtype is
+         when ThickUCL.data_boolean =>
+            return program_configuration.get_base_value (key);
+         when others =>
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type boolean";  
+      end case;
+   end config_setting;
+   
+   
+   -------------------------
+   --  config_setting #3  --
+   -------------------------
+   function config_setting (setting : CFG.Configuration_Item) return int64 
+   is
+      key   : constant String := CFG.get_ci_key (setting);
+      dtype : ThickUCL.Leaf_type;
+      value : Ucl.ucl_integer;
+   begin
+      dtype := program_configuration.get_data_type (key);
+      case dtype is
+         when ThickUCL.data_integer =>
+            value := program_configuration.get_base_value (key);
+            return int64 (value);
+         when others =>
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type int64";  
+      end case;
+   end config_setting;
    
    
 end Raven.Cmd.Unset;

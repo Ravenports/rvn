@@ -140,7 +140,7 @@ package body Raven.Cmd.Usage is
       end if;
       
       if IsBlank (comline.common_options.name_pattern) then
-         return alert ("The pkg-name information is required.");
+         return alert ("The pkg-name argument is required.");
       end if;
       
       if not IsBlank (comline.cmd_create.timestamp) then
