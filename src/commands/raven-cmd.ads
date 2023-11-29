@@ -25,7 +25,7 @@ private
       cv_config,
       cv_create,
       cv_help,
-      cv_info,
+      cv_info
      );
 
      --   cv_alias,
