@@ -178,6 +178,13 @@ package body Raven.Cmd.Line is
                      last_cmd := help;
                   end if;
 
+               when cv_config =>
+                  if IsBlank (data.cmd_config.key) then
+                     data.cmd_config.key := datumtxt;
+                  else
+                     set_error (data, "Only one config key is permitted.");
+                  end if;
+
                when cv_create =>
                   if datum = sws_quiet or else datum = swl_quiet then
                      data.common_options.quiet := True;
@@ -378,6 +385,7 @@ package body Raven.Cmd.Line is
       all_keywords : constant array (1 .. total_keywords) of keyword_pair :=
         (
          ("NOTFOUND  ", cv_unset),
+         ("config    ", cv_config),
          ("create    ", cv_create),
          ("help      ", cv_help),
          ("info      ", cv_info)

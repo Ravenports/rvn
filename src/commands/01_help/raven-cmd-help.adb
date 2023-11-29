@@ -82,17 +82,14 @@ package body Raven.Cmd.Help is
          begin
             case command is
                when cv_unset   => null;
+               when cv_config  => PL (C, "Display the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
                when cv_help    => PL (C, "Displays help information");
                when cv_info    => PL (C, "Displays information about installed packages");
-               --  when cv_add     => PL (C, "Compatibility interface to install a package");
                --  when cv_alias   => PL (C, "List the command line aliases");
                --  when cv_clean   => PL (C, "Cleans old packages from the cache");
-               --  when cv_config  => PL (C, "Display the value of the configuration options");
-               --  when cv_delete  |
-               --       cv_remove  => PL (C, "Deletes packages from the database and the system");
+               --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
                --  when cv_fetch   => PL (C, "Fetches packages from a remote repository");
-               --  when cv_lock    => PL (C, "Locks package against modifications or deletion");
                --  when cv_query   => PL (C, "Queries information about installed packages");
                --  when cv_repo    => PL (C, "Creates a package repository catalog");
                --  when cv_rquery  => PL (C, "Queries information in repository catalogs");
@@ -101,7 +98,6 @@ package body Raven.Cmd.Help is
                --  when cv_stats   => PL (C, "Displays package database statistics");
                --  when cv_update  => PL (C, "Updates package repository catalogs");
                --  when cv_upgrade => PL (C, "Performs upgrades of packaged software distributions");
-               --  when cv_unlock  => PL (C, "Unlocks a package, allowing modification or deletion");
                --  when cv_version => PL (C, "Displays the versions of installed packages");
                --  when cv_which   => PL (C, "Displays which package installed a specific file");
                --  when cv_shell   => PL (C, "Opens a debug shell");
@@ -117,8 +113,6 @@ package body Raven.Cmd.Help is
                --     PL (C, "Checks for missing dependencies and database consistency");
                --  when cv_annotate =>
                --     PL (C, "Add, modify or delete tag-value style annotations on packages");
-               --  when cv_register =>
-               --     PL (C, "Registers a package into the local package database");
             end case;
          end;
       end loop;

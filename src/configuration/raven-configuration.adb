@@ -585,7 +585,7 @@ package body Raven.Configuration is
          return;
       end if;
       begin
-         ThickUCL.Files.parse_ucl_file (temp_conf, file_path);         
+         ThickUCL.Files.parse_ucl_file (temp_conf, file_path, "");         
       exception
          when ThickUCL.Files.ucl_file_unparseable =>
             EV.emit_notice ("Failed to parse " & file_path & "; configuration unchanged.");

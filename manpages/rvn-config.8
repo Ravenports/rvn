@@ -1,0 +1,26 @@
+.Dd November 29, 2023
+.Dt RVN-CONFIG 8
+.Os
+.Sh NAME
+.Nm "rvn config"
+.Nd retrieve the value of a given configuration option
+.Sh SYNOPSIS
+.Nm
+.Ar name
+.Sh DESCRIPTION
+.Nm
+retrieve the value of a given configuration option.
+For lists,
+one line per entry will be printed, key/values will be printed
+as one line per key/value pair.
+.Sh FILES
+See
+.Xr rvn.conf 5 .
+.Sh EXAMPLES
+Getting the ABI:
+.Dl % rvn config abi
+Getting the directories where the repositories configuration are read:
+.Dl % rvn config repos_dir
+.Sh SEE ALSO
+.Xr pkg-create 8 ,
+.Xr pkg-which 8

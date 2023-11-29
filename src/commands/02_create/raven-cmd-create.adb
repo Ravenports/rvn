@@ -32,6 +32,7 @@ package body Raven.Cmd.Create is
       whitelist    : constant String := USS (comline.cmd_create.whitelist_file);
       basename     : constant String := USS (comline.common_options.name_pattern);
       rvn_filename : constant String := rvn_file (basename, creation_directory (output_dir));
+      package_abi  : constant String := RCU.config_setting (RCU.CFG.abi);
       keywords_dir : constant String := RCU.config_setting (RCU.CFG.keywords_dir);
       verbosity    : constant Boolean := RCU.config_setting (RCU.CFG.create_verbose);
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
@@ -90,6 +91,7 @@ package body Raven.Cmd.Create is
                                      metadata_file       => metadata,
                                      manifest_file       => whitelist,
                                      prefix              => reveal_prefix,
+                                     abi                 => package_abi,
                                      keyword_dir         => keywords_dir,
                                      fixed_timestamp     => timestamp,
                                      output_file         => rvn_filename,

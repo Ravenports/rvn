@@ -33,6 +33,7 @@ private
 
    --  Break each command into individual routines.  Any additional
    --  validation checks (if no parsing error exists) can be done here.
+   function verb_config (comline : Cldata) return Boolean;
    function verb_create (comline : Cldata) return Boolean;
    function verb_help (comline : Cldata) return Boolean;
    function verb_info (comline : Cldata) return Boolean;

@@ -24,11 +24,15 @@ package Raven.Cmd.Unset is
    --  Return configurating setting value (string)
    function config_setting (setting : CFG.Configuration_Item) return String;
 
-      --  Return configurating setting value (Boolean)
+   --  Return configurating setting value (Boolean)
    function config_setting (setting : CFG.Configuration_Item) return Boolean;
 
-      --  Return configurating setting value (int64)
+   --  Return configurating setting value (int64)
    function config_setting (setting : CFG.Configuration_Item) return int64;
+
+   --  Return configuration setting as string.  Booleans and integers are converted.
+   --  arrays and objects are concatenated with null characters.
+   function config_setting_as_string (setting : CFG.Configuration_Item) return String;
 
 private
 

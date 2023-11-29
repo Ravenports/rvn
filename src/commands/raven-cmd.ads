@@ -21,23 +21,19 @@ private
 
    type Command_verb is
      (cv_unset,
+      cv_config,
       cv_create,
       cv_info,
       cv_help
      );
 
-     --   cv_add,
      --   cv_alias,
      --   cv_annotate,
      --   cv_autoremove,
      --   cv_check,
      --   cv_clean,
-     --   cv_config,
-     --   cv_delete,
      --   cv_fetch,
-     --   ,
      --   cv_install,
-     --   cv_lock,
      --   cv_query,
      --   cv_remove,
      --   cv_repo,
@@ -48,7 +44,6 @@ private
      --   cv_shlib,
      --   cv_ssh,
      --   cv_stats,
-     --   cv_unlock,
      --   cv_update,
      --   cv_upgrade,
      --   cv_version,
@@ -64,16 +59,6 @@ private
    type version_depth is (not_shown, just_version, dump_configuration);
    subtype ST_Version is Natural range 0 .. 2;
 
-   type switches_create_cmd is
-      record
-         output_dir      : Text;
-         rootdir_dir     : Text;
-         metadata_file   : Text;
-         whitelist_file  : Text;
-         timestamp       : Text;
-         prefix          : Text;
-      end record;
-
    type switches_common is
       record
          verbose            : Boolean := False;
@@ -86,6 +71,21 @@ private
          assume_yes         : Boolean := False;  --  -y, --yes
          all_installed_pkgs : Boolean := False;  --  -a, --all
          name_pattern       : Text;
+      end record;
+
+   type switches_config_cmd is
+      record
+         key : Text;
+      end record;
+
+   type switches_create_cmd is
+      record
+         output_dir      : Text;
+         rootdir_dir     : Text;
+         metadata_file   : Text;
+         whitelist_file  : Text;
+         timestamp       : Text;
+         prefix          : Text;
       end record;
 
    type switches_info_cmd is
@@ -136,6 +136,7 @@ private
          common_options         : switches_common;
 
          pre_command            : pre_command_switches;
+         cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
          cmd_info               : switches_info_cmd;
       end record;

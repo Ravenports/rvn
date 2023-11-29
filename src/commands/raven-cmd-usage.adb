@@ -56,6 +56,7 @@ package body Raven.Cmd.Usage is
    begin
       case comline.command is
          when cv_unset  => return True;  -- already verified
+         when cv_config => return verb_config (comline);
          when cv_create => return verb_create (comline);
          when cv_help   => return verb_help (comline);
          when cv_info   => return verb_info (comline);
@@ -115,6 +116,28 @@ package body Raven.Cmd.Usage is
    begin
       TIO.Put_Line (TIO.Standard_Error, "");
    end insert_carriage_return;
+   
+   
+   -------------------
+   --  verb_config  --
+   -------------------
+   function verb_config (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "config <name>";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+      return True;
+   end verb_config;
    
 
    -------------------

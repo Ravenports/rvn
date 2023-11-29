@@ -318,5 +318,90 @@ package body Raven.Cmd.Unset is
       end case;
    end config_setting;
    
+   --------------------------------
+   --  config_setting_as_string  --
+   --------------------------------
+   function config_setting_as_string (setting : CFG.Configuration_Item) return String 
+   is
+      key   : constant String := CFG.get_ci_key (setting);
+      dtype : ThickUCL.Leaf_type;
+   begin
+      dtype := program_configuration.get_data_type (key);
+      case dtype is
+         when ThickUCL.data_string => 
+            return config_setting (setting);
+         when ThickUCL.data_boolean =>
+            declare
+               val : boolean;
+            begin
+               val := config_setting (setting);
+               return val'Img;
+            end;
+         when ThickUCL.data_integer =>
+            declare
+               val : int64;
+            begin
+               val := config_setting (setting);
+               return trim (val'Img);
+            end;
+         when ThickUCL.data_not_present =>
+            return "DEVERR_data_not_present";
+         when ThickUCL.data_time =>
+            return "DEVERR_time_not_supported";
+         when ThickUCL.data_float =>
+            return "DEVERR_float_not_supported";
+         when ThickUCL.data_array =>
+            declare
+               key    : constant String := CFG.get_ci_key (setting);
+               vndx   : ThickUCL.array_index;
+               restxt : Text;
+               delim  : Character := Character'Val (0);
+               num_elements : Natural;
+            begin
+               vndx := program_configuration.get_index_of_base_array (key);
+               num_elements := program_configuration.get_number_of_array_elements (vndx);
+               for index in 0 .. num_elements - 1 loop
+                  declare
+                     val : String := program_configuration.get_array_element_value (vndx, index);
+                  begin
+                     if index = 0 then
+                        restxt := SUS (val);
+                     else
+                        SU.Append (restxt, delim & val);
+                     end if;
+                  end;
+               end loop;
+               return USS (restxt);
+            end;
+         when ThickUCL.data_object =>
+            declare
+               procedure scan (Position : ThickUCL.jar_string.Cursor); 
+                 
+               key    : constant String := CFG.get_ci_key (setting);
+               vndx   : ThickUCL.object_index;
+               delim  : Character := Character'Val (0);
+               okeys  : ThickUCL.jar_string.Vector;
+               restxt : Text;
+               
+               procedure scan (Position : ThickUCL.jar_string.Cursor) 
+               is
+                  dkey : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+                  val  : constant String := program_configuration.get_object_value (vndx, dkey);
+               begin
+                  if IsBlank (restxt) then
+                     restxt := SUS (dkey & ": " & val);
+                  else
+                     SU.Append (restxt, delim & ": " & val);
+                  end if;
+               end scan;
+            begin
+               vndx := program_configuration.get_index_of_base_ucl_object (key);
+               program_configuration.get_object_object_keys (vndx, okeys);
+               okeys.Iterate (scan'Access);
+               return USS (restxt);
+            end;
+      end case;
+   end config_setting_as_string;
+   
    
 end Raven.Cmd.Unset;

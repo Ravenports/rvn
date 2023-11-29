@@ -14,6 +14,7 @@ package body Raven.Cmd is
    begin
       case command is
          when cv_unset      => return "";
+         when cv_config     => return "config";
          when cv_create     => return "create";
          when cv_info       => return "info";
          when cv_help       => return "help";
