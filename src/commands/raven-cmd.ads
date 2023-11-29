@@ -19,12 +19,13 @@ private
       Index_Type   => Natural,
       "="          => SU."=");
 
+   --  Keep this in alphabetical order after cv_unset
    type Command_verb is
      (cv_unset,
       cv_config,
       cv_create,
+      cv_help,
       cv_info,
-      cv_help
      );
 
      --   cv_alias,
