@@ -391,7 +391,7 @@ package body Raven.Cmd.Unset is
                   if IsBlank (restxt) then
                      restxt := SUS (dkey & ": " & val);
                   else
-                     SU.Append (restxt, delim & ": " & val);
+                     SU.Append (restxt, delim & dkey & ": " & val);
                   end if;
                end scan;
             begin
