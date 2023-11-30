@@ -82,11 +82,11 @@ package body Raven.Cmd.Help is
          begin
             case command is
                when cv_unset   => null;
+               when cv_alias   => PL (C, "List the command line aliases");
                when cv_config  => PL (C, "Display the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
                when cv_help    => PL (C, "Displays help information");
                when cv_info    => PL (C, "Displays information about installed packages");
-               --  when cv_alias   => PL (C, "List the command line aliases");
                --  when cv_clean   => PL (C, "Cleans old packages from the cache");
                --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
                --  when cv_fetch   => PL (C, "Fetches packages from a remote repository");

@@ -178,6 +178,19 @@ package body Raven.Cmd.Line is
                      last_cmd := help;
                   end if;
 
+               when cv_alias =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = "-l" or else datum = "--list" then
+                     data.cmd_alias.without_args := True;
+                  else
+                     if IsBlank (data.cmd_alias.alias) then
+                        data.cmd_alias.alias := datumtxt;
+                     else
+                        SU.Append (data.cmd_alias.alias, Character'Val (0) & datum);
+                     end if;
+                  end if;
+
                when cv_config =>
                   if IsBlank (data.cmd_config.key) then
                      data.cmd_config.key := datumtxt;
@@ -385,6 +398,7 @@ package body Raven.Cmd.Line is
       all_keywords : constant array (1 .. total_keywords) of keyword_pair :=
         (
          ("NOTFOUND  ", cv_unset),
+         ("alias     ", cv_alias),
          ("config    ", cv_config),
          ("create    ", cv_create),
          ("help      ", cv_help),

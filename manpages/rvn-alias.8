@@ -1,0 +1,43 @@
+.Dd November 29, 2023
+.Dt RVN-ALIAS 8
+.Os
+.Sh NAME
+.Nm "rvn alias"
+.Nd display configured aliases
+.Sh SYNOPSIS
+.Nm
+.Op Fl q
+.Op Fl l
+.Op Ar alias
+.Pp
+.Nm "rvn alias"
+.Op Fl -quiet
+.Op Fl -list
+.Op Ar alias
+.Sh DESCRIPTION
+.Nm
+displays configured aliases.
+The alias list can be displayed with or without arguments and column headers.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width quiet
+.It Fl l , Fl -list
+Print all aliases, one alias per line, without their arguments.
+.It Fl q , Fl -quiet
+Force quiet output (suppress column headers).
+.El
+.Sh FILES
+.Xr rvn.conf 5
+.Sh EXAMPLES
+Display all aliases:
+.Dl % rvn alias
+.Pp
+Display
+.Xr rvn 8
+for alias
+.Dq Li size :
+.Dl % rvn alias size
+.Sh SEE ALSO
+.Xr pkg_create 3 ,
+.Xr pkg-which 8

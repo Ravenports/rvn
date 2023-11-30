@@ -56,6 +56,7 @@ package body Raven.Cmd.Usage is
    begin
       case comline.command is
          when cv_unset  => return True;  -- already verified
+         when cv_alias  => return verb_alias (comline);
          when cv_config => return verb_config (comline);
          when cv_create => return verb_create (comline);
          when cv_help   => return verb_help (comline);
@@ -138,6 +139,28 @@ package body Raven.Cmd.Usage is
       end if;
       return True;
    end verb_config;
+   
+      
+   -------------------
+   --  verb_alias  --
+   -------------------
+   function verb_alias (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean;
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "alias [-ql] [alias]";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+      return True;
+   end verb_alias;
    
 
    -------------------

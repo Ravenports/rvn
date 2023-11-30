@@ -34,6 +34,11 @@ package Raven.Cmd.Unset is
    --  arrays and objects are concatenated with null characters.
    function config_setting_as_string (setting : CFG.Configuration_Item) return String;
 
+   --  Return configuration object key value as a string (for example, an alias)
+   function config_setting_map_value
+     (setting : CFG.Configuration_Item;
+      map_key : String) return String;
+
 private
 
    program_configuration : ThickUCL.UclTree;

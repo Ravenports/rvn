@@ -403,5 +403,59 @@ package body Raven.Cmd.Unset is
       end case;
    end config_setting_as_string;
    
+   --------------------------------
+   --  config_setting_map_value  --
+   --------------------------------
+   function config_setting_map_value
+     (setting : CFG.Configuration_Item;
+      map_key : String) return String
+   is
+      key   : constant String := CFG.get_ci_key (setting);
+      dtype : ThickUCL.Leaf_type;
+   begin
+      dtype := program_configuration.get_data_type (key);
+      case dtype is
+         when ThickUCL.data_object =>
+            declare
+               key   : constant String := CFG.get_ci_key (setting);
+               vndx  : ThickUCL.object_index;
+               mtype : ThickUCL.Leaf_type;
+            begin
+               vndx := program_configuration.get_index_of_base_ucl_object (key);
+               mtype := program_configuration.get_object_data_type (vndx, map_key);
+               case mtype is
+                  when ThickUCL.data_not_present =>
+                     return progname & ": No such alias: '" & map_key & "'";
+                  when ThickUCL.data_string =>
+                     return map_key & ": " & program_configuration.get_object_value (vndx, map_key);
+                  when ThickUCL.data_boolean =>
+                     declare
+                        val : Boolean;
+                     begin
+                        val := program_configuration.get_object_value (vndx, map_key);
+                        return map_key & ": " & val'Img;
+                     end;
+                  when ThickUCL.data_integer =>
+                     declare
+                        val : Ucl.ucl_integer;
+                     begin
+                        val := program_configuration.get_object_value (vndx, map_key);
+                        return map_key & ": " & trim (Int64 (val)'Img);
+                     end;
+                  when ThickUCL.data_time =>
+                     return "DEVERR2_time_not_supported";
+                  when ThickUCL.data_float =>
+                     return "DEVERR2_float_not_supported";
+                  when ThickUCL.data_array =>
+                     return "DEVERR2_array_not_supported";
+                  when ThickUCL.data_object =>
+                     return "DEVERR2_object_not_supported";
+               end case;
+            end;
+         when others =>
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type object";  
+      end case;
+   end config_setting_map_value;
+   
    
 end Raven.Cmd.Unset;

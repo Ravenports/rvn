@@ -22,13 +22,13 @@ private
    --  Keep this in alphabetical order after cv_unset
    type Command_verb is
      (cv_unset,
+      cv_alias,
       cv_config,
       cv_create,
       cv_help,
       cv_info
      );
 
-     --   cv_alias,
      --   cv_annotate,
      --   cv_autoremove,
      --   cv_check,
@@ -72,6 +72,12 @@ private
          assume_yes         : Boolean := False;  --  -y, --yes
          all_installed_pkgs : Boolean := False;  --  -a, --all
          name_pattern       : Text;
+      end record;
+
+   type switches_config_alias is
+      record
+         without_args : Boolean;
+         alias        : text;
       end record;
 
    type switches_config_cmd is
@@ -137,6 +143,7 @@ private
          common_options         : switches_common;
 
          pre_command            : pre_command_switches;
+         cmd_alias              : switches_config_alias;
          cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
          cmd_info               : switches_info_cmd;
