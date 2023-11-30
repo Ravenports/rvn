@@ -4,12 +4,12 @@ all:
 	gprbuild -p -P src/rvn-format/programs/rvnprogs
 
 install:
-	${BSD_INSTALL_PROGRAM} obj/rvn ${DESTDIR}${PREFIX}/sbin/
-	${BSD_INSTALL_PROGRAM} src/rvn-format/programs/rvnprogs/obj/xrvn \
+	${BSD_INSTALL_PROGRAM} ${WRKSRC}/obj/rvn ${DESTDIR}${PREFIX}/sbin/
+	${BSD_INSTALL_PROGRAM} ${WRKSRC}/src/rvn-format/programs/obj/xrvn \
 		${DESTDIR}${PREFIX}/bin/
-	${BSD_INSTALL_MAN} manpages/*.5 ${STAGEDIR}${PREFIX}/share/man/man5/
-	${BSD_INSTALL_MAN} manpages/*.8 ${STAGEDIR}${PREFIX}/share/man/man8/
-	${BSD_INSTALL_DATA} extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
+	#${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.5 ${DESTDIR}${PREFIX}/share/man/man5/
+	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.8 ${DESTDIR}${PREFIX}/share/man/man8/
+	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
 	mkdir -p ${STAGEDIR}${PREFIX}/etc/rvn/repos
 
 # future installation perhaps
