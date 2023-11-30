@@ -76,7 +76,7 @@ private
 
    type switches_config_alias is
       record
-         without_args : Boolean;
+         without_args : Boolean := False;
          alias        : text;
       end record;
 

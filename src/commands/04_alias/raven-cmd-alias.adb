@@ -39,11 +39,11 @@ package body Raven.Cmd.Alias is
                declare
                   line : constant String := specific_field (setting, field_number, delim2);
                begin
-                  TIO.Put (pad_right (part_1 (line, ":"), 25));
+                  TIO.Put (pad_right (part_1 (line, ": "), 26));
                   if comline.cmd_alias.without_args then
                      TIO.Put_Line("");
                   else
-                     TIO.Put_Line (part_2 (line, ":"));
+                     TIO.Put_Line (part_2 (line, ": "));
                   end if;
                end;
             end loop;

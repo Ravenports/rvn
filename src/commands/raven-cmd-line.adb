@@ -152,6 +152,7 @@ package body Raven.Cmd.Line is
          sws_help   : constant String := "-h";
          swl_help   : constant String := "--help";
          AME        : constant String := " switches are mutually exclusive.";
+         error_ill  : constant String := "Illegal option -- ";
          error_rec  : constant String := "Unrecognized option: ";
          error_exp  : constant String := "Unexpected argument: ";
          error_chk  : constant String := "Attempt to redefine check action: ";
@@ -183,6 +184,15 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = "-l" or else datum = "--list" then
                      data.cmd_alias.without_args := True;
+                  elsif datum (datum'First) = '-' then
+                     --  -x (illegal) --xx (unrecognized)  - (unrecognized) -- (unrecognized)
+                     if datum'Length = 1 or else
+                       datum (datum'First .. datum'First + 1) = "--"
+                     then
+                        set_error (data, error_rec & datum);
+                     else
+                        set_error (data, error_ill & datum (datum'First + 1 .. datum'Last));
+                     end if;
                   else
                      if IsBlank (data.cmd_alias.alias) then
                         data.cmd_alias.alias := datumtxt;
