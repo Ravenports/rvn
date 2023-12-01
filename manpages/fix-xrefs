@@ -1,13 +1,15 @@
 #!/usr/bin/env perl
 #
 # run as: ./fix-xrefs rvn*.[58]
+#
+# requires perl 5.18 minimum
 
 use strict;
 use warnings;
 use autodie;
 use feature qw(switch);
-
-require 5.10.1;
+no warnings qw(experimental::smartmatch);
+no warnings 'once';
 
 $0 =~ s@.*/@@;
 

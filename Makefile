@@ -12,6 +12,9 @@ install:
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
 	mkdir -p ${STAGEDIR}${PREFIX}/etc/rvn/repos
 
+manpage-footers:
+	@(cd ${.CURDIR}/manpages && perl fix-xrefs rvn*.[58]) && echo "done"
+
 # future installation perhaps
 # etc/bash_completion.d/_rvn.bash
 # etc/periodic/daily/490.status-rvn-changes
