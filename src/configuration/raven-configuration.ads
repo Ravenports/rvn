@@ -19,12 +19,12 @@ package Raven.Configuration is
       command_line_options  : String;
       debug_level_cli       : A_Debug_Level;
       session_configuration : in out ThickUCL.UclTree);
-   
-   
+
+
    type Configuration_Item is
      (ci_not_found,   --  NOTFOUND
-      dbdir,          --  DBDIR (/var/db/rvn)
-      cachedir,       --  CACHEDIR (/var/cache/rvn)
+      dbdir,          --  RVN_DBDIR (/var/db/rvn)
+      cachedir,       --  RVN_CACHEDIR (/var/cache/rvn)
       rc_scripts,     --  HANDLE_RC_SCRIPTS (false)   ??
       always_yes,     --  DEFAULT_ALWAYS_YES (false)
       assume_yes,     --  ASSUME_ALWAYS_YES (false)

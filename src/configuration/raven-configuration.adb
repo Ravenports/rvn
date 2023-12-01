@@ -16,18 +16,18 @@ package body Raven.Configuration is
    package LAT renames Ada.Characters.Latin_1;
    package ENV renames Ada.Environment_Variables;
    package EV  renames Raven.Event;
-   
-   
+
+
    ------------------
    --  get_ci_key  --
    ------------------
    function get_ci_key (ci : Configuration_Item) return String
    is
    begin
-      case ci is 
+      case ci is
          when ci_not_found   => return "NOTFOUND";
-         when dbdir          => return "DBDIR";
-         when cachedir       => return "CACHEDIR";      
+         when dbdir          => return "RVN_DBDIR";
+         when cachedir       => return "RVN_CACHEDIR";
          when rc_scripts     => return "HANDLE_RC_SCRIPTS";
          when always_yes     => return "DEFAULT_ALWAYS_YES";
          when assume_yes     => return "ASSUME_ALWAYS_YES";
@@ -40,7 +40,7 @@ package body Raven.Configuration is
          when fetch_timeout  => return "FETCH_TIMEOUT";
          when debug_scripts  => return "DEBUG_SCRIPTS";
          when permissive     => return "PERMISSIVE";
-         when autoupdate     => return "REPO_AUTOUPDATE"; 
+         when autoupdate     => return "REPO_AUTOUPDATE";
          when nameserver     => return "NAMESERVER";
          when user_agent     => return "HTTP_USER_AGENT";
          when event_pipe     => return "EVENT_PIPE";
@@ -70,15 +70,15 @@ package body Raven.Configuration is
          when skip_examples  => return "SKIP_EXAM_SUBPKG";
       end case;
    end get_ci_key;
-   
-   
+
+
    -------------------
    --  get_ci_type  --
    -------------------
    function get_ci_type (ci : Configuration_Item) return ThickUCL.Leaf_type is
    begin
       case ci is
-         when 
+         when
               rc_scripts     |
               always_yes     |
               assume_yes     |
@@ -129,8 +129,8 @@ package body Raven.Configuration is
               ci_not_found   => return ThickUCL.data_not_present;
       end case;
    end get_ci_type;
-   
-   
+
+
    ----------------------------
    --  get_default_value #1  --
    ----------------------------
@@ -157,14 +157,14 @@ package body Raven.Configuration is
          when skip_dev       => return True;
          when skip_nls       => return False;
          when skip_man       => return False;
-         when skip_doc       => return False;       
+         when skip_doc       => return False;
          when skip_examples  => return True;
-         when others => 
+         when others =>
             raise config_type_mismatch with ci'Img & " is not of type boolean";
       end case;
    end get_default_value;
 
-      
+
    ----------------------------
    --  get_default_value #2  --
    ----------------------------
@@ -177,12 +177,12 @@ package body Raven.Configuration is
          when lock_wait      => return 1;
          when lock_retries   => return 5;
          when size_limit     => return 1048576;
-         when others => 
+         when others =>
             raise config_type_mismatch with ci'Img & " is not of type integer";
       end case;
    end get_default_value;
-   
-   
+
+
    ----------------------------
    --  get_default_value #3  --
    ----------------------------
@@ -199,12 +199,12 @@ package body Raven.Configuration is
          when restrict_dir   => return "";
          when ssh_args       => return "";
          when metalog_file   => return "";
-         when others => 
+         when others =>
             raise config_type_mismatch with ci'Img & " is not of type string";
       end case;
    end get_default_value;
-   
-   
+
+
    ----------------------------
    --  get_default_value #4  --
    ----------------------------
@@ -215,18 +215,18 @@ package body Raven.Configuration is
          when repos_dir =>
             crate.append (SUS ("/etc/" & progname));
             crate.Append (SUS (install_loc & "/etc/" & progname & "/repos"));
-         when valid_scheme => 
+         when valid_scheme =>
             crate.Append (SUS ("https"));
             crate.Append (SUS ("http"));
             crate.Append (SUS ("file"));
             crate.Append (SUS ("ssh"));
             crate.Append (SUS ("tcp"));
-         when others => 
+         when others =>
             raise config_type_mismatch with ci'Img & " is not of type array of string.";
       end case;
    end get_default_value;
-   
-   
+
+
    ----------------------------
    --  get_default_value #5  --
    ----------------------------
@@ -235,9 +235,9 @@ package body Raven.Configuration is
    begin
       crate.Clear;
       case ci is
-         when environ => 
+         when environ =>
             --  by default, the environment variants are empty
-            null;  
+            null;
          when alias =>
             --  The aliases are only defined in the /raven/etc/rvn.conf file
             null;
@@ -245,8 +245,8 @@ package body Raven.Configuration is
             raise config_type_mismatch with ci'Img & " is not of type UCL object";
       end case;
    end get_default_value;
-   
-   
+
+
    ----------------
    --  map_hash  --
    ----------------
@@ -254,12 +254,12 @@ package body Raven.Configuration is
    begin
       return Ada.Strings.Hash (USS (key));
    end map_hash;
-   
-   
+
+
    ------------------------------
    --  get_configuration_item  --
    ------------------------------
-   function get_configuration_item (key : String) return Configuration_Item 
+   function get_configuration_item (key : String) return Configuration_Item
    is
    begin
       for ci in Configuration_Item'Range loop
@@ -269,12 +269,12 @@ package body Raven.Configuration is
       end loop;
       return ci_not_found;
    end get_configuration_item;
-   
-   
+
+
    --------------------------------
    --  set_command_line_options  --
    --------------------------------
-   procedure set_command_line_options 
+   procedure set_command_line_options
      (options               : String;
       debug_level_cli       : A_Debug_Level;
       session_configuration : in out ThickUCL.UclTree)
@@ -287,7 +287,7 @@ package body Raven.Configuration is
          return;
       end if;
       numfields := count_char (options, LAT.Vertical_Line) + 1;
-      
+
       for F in 1 .. numfields loop
          declare
             delimiter : constant String := LAT.Vertical_Line & "";
@@ -327,7 +327,7 @@ package body Raven.Configuration is
                      when ThickUCL.data_array =>
                         EV.emit_debug (high_level, "array option " & name & " can not be set " &
                                          "via the command line.");
-                     when ThickUCL.data_object =>  
+                     when ThickUCL.data_object =>
                         EV.emit_debug (high_level, "object option " & name & " can not be set " &
                                          "via the command line.");
                      when ThickUCL.data_time | ThickUCL.data_float =>
@@ -340,7 +340,7 @@ package body Raven.Configuration is
             end if;
          end;
       end loop;
-            
+
       if not session_configuration.key_exists (get_ci_key (debug_level)) then
          declare
             name : constant String := get_ci_key (debug_level);
@@ -355,24 +355,24 @@ package body Raven.Configuration is
                   ENV.Set (Name, "2");
                when low_level =>
                   session_configuration.insert (name, 3);
-                  ENV.Set (Name, "3");               
+                  ENV.Set (Name, "3");
             end case;
          end;
       end if;
-      
+
    end set_command_line_options;
-   
-   
+
+
    -------------------------------
    --  set_environment_options  --
    -------------------------------
    procedure set_environment_options (session_configuration : in out ThickUCL.UclTree)
    is
-      function variable_present (key : String) return Boolean;  
+      function variable_present (key : String) return Boolean;
       procedure set_configuration (name : String; ci : Configuration_Item);
-      
+
       UA_seen : Boolean := False;
-      
+
       function variable_present (key : String) return Boolean is
       begin
          declare
@@ -384,8 +384,8 @@ package body Raven.Configuration is
          when Constraint_Error =>
             return False;
       end variable_present;
-      
-      procedure set_configuration (name : String; ci : Configuration_Item) 
+
+      procedure set_configuration (name : String; ci : Configuration_Item)
       is
          val : constant String := ENV.Value (name);
          citype : ThickUCL.Leaf_type := get_ci_type (ci);
@@ -396,7 +396,7 @@ package body Raven.Configuration is
                session_configuration.insert (name, val);
             when ThickUCL.data_integer =>
                if IsNumeric (val) then
-                  session_configuration.insert (name, Ucl.ucl_integer'Value (val));                           
+                  session_configuration.insert (name, Ucl.ucl_integer'Value (val));
                else
                   EV.emit_debug (high_level, "env value of " & name & " could not " &
                                    "be converted to integer, variable unset");
@@ -414,7 +414,7 @@ package body Raven.Configuration is
                EV.emit_debug (high_level, "array option " & name & " can not be set " &
                                 "via the environment, variable unset");
                ENV.Clear (name);
-            when ThickUCL.data_object =>  
+            when ThickUCL.data_object =>
                EV.emit_debug (high_level, "object option " & name & " can not be set " &
                                 "via the environment, variable unset");
                ENV.Clear (name);
@@ -427,25 +427,25 @@ package body Raven.Configuration is
    begin
       for ci in Configuration_Item'Range loop
          case ci is
-            when ci_not_found => null;               
+            when ci_not_found => null;
             when others =>
                declare
-                  name : constant String := get_ci_key (ci);                  
+                  name : constant String := get_ci_key (ci);
                begin
-                  if variable_present (name) and then 
-                    not session_configuration.key_exists (name) 
-                  then 
+                  if variable_present (name) and then
+                    not session_configuration.key_exists (name)
+                  then
                      set_configuration (name, ci);
                   end if;
                end;
          end case;
       end loop;
    end set_environment_options;
-   
+
    -----------------------------------
    --  set_configuration_from_file  --
    -----------------------------------
-   procedure set_configuration_from_file 
+   procedure set_configuration_from_file
      (configuration_file : String;
       session_configuration : in out ThickUCL.UclTree)
    is
@@ -454,7 +454,7 @@ package body Raven.Configuration is
 
       temp_conf : ThickUCL.UclTree;
       file_path : constant String := Archive.Unix.real_path (configuration_file);
-      
+
       function type2str (T : ThickUCL.Leaf_type) return String is
       begin
          case T is
@@ -468,22 +468,22 @@ package body Raven.Configuration is
             when ThickUCL.data_not_present => return "NULL";
          end case;
       end type2str;
-      
-      procedure set_configuration (name : String; ci : Configuration_Item) 
+
+      procedure set_configuration (name : String; ci : Configuration_Item)
       is
          use type ThickUCL.Leaf_type;
          citype : constant ThickUCL.Leaf_type := get_ci_type (ci);
          d_type : constant ThickUCL.Leaf_type := temp_conf.get_data_type (name);
       begin
          if d_type /= citype then
-            EV.emit_notice ("Configuration file value of " & name & 
-                              " ignored due to type mismatch. " & 
-                              type2str (citype) & " type expected but " & 
+            EV.emit_notice ("Configuration file value of " & name &
+                              " ignored due to type mismatch. " &
+                              type2str (citype) & " type expected but " &
                               type2str (d_type) & " type provided.");
             return;
          end if;
          case citype is
-            when ThickUCL.data_not_present => null;               
+            when ThickUCL.data_not_present => null;
             when ThickUCL.data_string =>
                declare
                   val : constant String := temp_conf.get_base_value (name);
@@ -520,7 +520,7 @@ package body Raven.Configuration is
                   end loop;
                   if not valid then
                      EV.emit_notice ("array of " & name & " invalid because at least one " &
-                                       "element is not of type string; setting ignored");                     
+                                       "element is not of type string; setting ignored");
                      return;
                   end if;
                   session_configuration.start_array (name);
@@ -539,24 +539,24 @@ package body Raven.Configuration is
                declare
                   procedure check (Position : ThickUCL.jar_string.Cursor);
                   procedure set_nvpair (Position : ThickUCL.jar_string.Cursor);
-                  
+
                   vndx : ThickUCL.object_index := temp_conf.get_index_of_base_ucl_object (name);
                   keys : ThickUCL.jar_string.Vector;
                   valid : Boolean := True;
-                  
-                  procedure check (Position : ThickUCL.jar_string.Cursor) 
+
+                  procedure check (Position : ThickUCL.jar_string.Cursor)
                   is
-                     keyname : constant String := 
+                     keyname : constant String :=
                        USS (ThickUCL.jar_string.Element (Position).payload);
                   begin
                      if temp_conf.get_object_data_type (vndx, keyname) /= ThickUCL.data_string then
                         valid := False;
                      end if;
                   end check;
-                  
+
                   procedure set_nvpair (Position : ThickUCL.jar_string.Cursor)
                   is
-                     keyname : constant String := 
+                     keyname : constant String :=
                        USS (ThickUCL.jar_string.Element (Position).payload);
                      value : constant String := temp_conf.get_object_value (vndx, keyname);
                   begin
@@ -567,7 +567,7 @@ package body Raven.Configuration is
                   keys.Iterate (check'Access);
                   if not valid then
                      EV.emit_notice ("object of " & name & " invalid because at least one " &
-                                       "element is not of type string; setting ignored");                     
+                                       "element is not of type string; setting ignored");
                      return;
                   end if;
                   session_configuration.start_object (name);
@@ -585,35 +585,35 @@ package body Raven.Configuration is
          return;
       end if;
       begin
-         ThickUCL.Files.parse_ucl_file (temp_conf, file_path, "");         
+         ThickUCL.Files.parse_ucl_file (temp_conf, file_path, "");
       exception
          when ThickUCL.Files.ucl_file_unparseable =>
             EV.emit_notice ("Failed to parse " & file_path & "; configuration unchanged.");
             return;
       end;
-      
+
       for ci in Configuration_Item'Range loop
          case ci is
-            when ci_not_found => null;               
+            when ci_not_found => null;
             when others =>
                declare
-                  name : constant String := get_ci_key (ci);                  
+                  name : constant String := get_ci_key (ci);
                begin
                   if temp_conf.key_exists (name) and then
-                    not session_configuration.key_exists (name) 
-                  then 
+                    not session_configuration.key_exists (name)
+                  then
                      set_configuration (name, ci);
                   end if;
                end;
          end case;
       end loop;
    end set_configuration_from_file;
-   
-   
+
+
    ------------------------------------------
    --  set_defaults_on_remaining_settings  --
    ------------------------------------------
-   procedure set_defaults_on_remaining_settings (session_configuration : in out ThickUCL.UclTree) 
+   procedure set_defaults_on_remaining_settings (session_configuration : in out ThickUCL.UclTree)
    is
       procedure set_configuration (name : String; ci : Configuration_Item);
       procedure set_configuration (name : String; ci : Configuration_Item)
@@ -621,7 +621,7 @@ package body Raven.Configuration is
          citype : constant ThickUCL.Leaf_type := get_ci_type (ci);
       begin
          case citype is
-            when ThickUCL.data_not_present => null;               
+            when ThickUCL.data_not_present => null;
             when ThickUCL.data_string =>
                declare
                   val : constant String := get_default_value (ci);
@@ -630,7 +630,7 @@ package body Raven.Configuration is
                   ENV.Set (name, val);
                end;
             when ThickUCL.data_integer =>
-               declare                  
+               declare
                   val : constant int64 := get_default_value (ci);
                begin
                   session_configuration.insert (name, Ucl.ucl_integer (val));
@@ -650,8 +650,8 @@ package body Raven.Configuration is
                   procedure push (Position : string_crate.Cursor);
 
                   array_values : string_crate.Vector;
-                  
-                  procedure push (Position : string_crate.Cursor) 
+
+                  procedure push (Position : string_crate.Cursor)
                   is
                      val : constant String := USS (string_crate.Element (Position));
                   begin
@@ -669,11 +669,11 @@ package body Raven.Configuration is
                   procedure push (Position : object_crate.Cursor);
 
                   nvpairs : object_crate.Map;
-                  
-                  procedure push (Position : object_crate.Cursor) 
+
+                  procedure push (Position : object_crate.Cursor)
                   is
                      key : constant String := USS (object_crate.Key (Position));
-                     val : constant String := USS (object_crate.Element (Position)); 
+                     val : constant String := USS (object_crate.Element (Position));
                   begin
                      session_configuration.insert (key, val);
                   end push;
@@ -690,10 +690,10 @@ package body Raven.Configuration is
    begin
       for ci in Configuration_Item'Range loop
          case ci is
-            when ci_not_found => null;               
+            when ci_not_found => null;
             when others =>
                declare
-                  name : constant String := get_ci_key (ci);                  
+                  name : constant String := get_ci_key (ci);
                begin
                   if not session_configuration.key_exists (name) then
                      set_configuration (name, ci);
@@ -702,12 +702,12 @@ package body Raven.Configuration is
          end case;
       end loop;
    end set_defaults_on_remaining_settings;
-   
-   
+
+
    -------------------------------
    --  establish_configuration  --
    -------------------------------
-   procedure establish_configuration 
+   procedure establish_configuration
      (configuration_file    : String;
       command_line_options  : String;
       debug_level_cli       : A_Debug_Level;
@@ -719,6 +719,6 @@ package body Raven.Configuration is
       set_configuration_from_file (configuration_file, session_configuration);
       set_defaults_on_remaining_settings (session_configuration);
    end establish_configuration;
-   
-   
+
+
 end Raven.Configuration;
