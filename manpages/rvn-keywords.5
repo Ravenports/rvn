@@ -1,0 +1,135 @@
+.Dd November 30, 2023
+.Dt RVN-KEYWORDS 5
+.Os
+.Sh NAME
+.Nm Keywords
+.Nd Keyword definition files
+.Sh DESCRIPTION
+.Xr rvn-create 8
+optionally processes a whitelist file which provides a manifest for the package.
+This whitelist format is documented in the
+.Xr rvn-create 8
+manpage.
+.Pp
+.Nm
+are UCL-formatted files that extend the functionality of the whitelist.
+These extensions can affect file and directory attributes or run custom scripts
+and specific phases of package management.
+.Pp
+All arguments of the keyword are tokenized and referenced by \%%0 (entire
+argument string) or \%%<number> for the tokens created by a space delimiter.
+These variables are expanded by shell and lua scripts.
+.Pp
+The format is the following:
+.Bl -tag -width Ds
+.It Cm actions
+Array of actions which defines what do to the argument(s) of the keywords.
+Valid actions are:
+.Bl -tag -width Ds
+.It Va dir
+Consider the argument of the keyword as a directory and register it as such in
+the package
+.It Va file
+Consider the argument of the keyword as a regular file and register it as such
+in the package
+.El
+.It Cm attributes
+attributes that can be set to a file or a directory depending if actions has
+been set.
+It will take the precedence over the attributes that may have been set when
+calling the keyword.
+Attributes can be:
+.Bl -tag -width Ds
+.It Cm owner Ar string
+Name of the owner of the file or directory.
+.It Cm group Ar string
+Name of the group of the file or directory.
+.It Cm mode Ar string
+octal mode of the file or directory
+.El
+.It Cm deprecated
+Boolean to mark a keyword as deprecated
+.It Cm deprecation_message
+Message to be show if the keyword is used and mark as deprecated
+.It Cm preformat_arguments
+Boolean to activate the preformating the arguemnts of the keywords repescting
+the escape sequences described below.
+.It Cm prepackaging
+lua script which is executed at the packaging time.
+Useful to add some input validation.
+.It Cm pre-install
+shell script to be run during the pre-install phase.
+It will be merged with any existing pre-install scripts.
+The script will be formatted respecting the escape sequences define later.
+.It Cm post-install
+shell script to be run during the post-install phase.
+It will be merged with any existing post-install scripts.
+The script will be formatted respecting the escape sequences define later.
+.It Cm pre-deinstall
+shell script to be run during the pre-deinstall phase.
+It will be merged with any existing pre-deinstall scripts.
+The script will be formatted respecting the escape sequences define later.
+.It Cm post-deinstall
+shell script to be run during the post-deinstall phase.
+It will be merged with any existing post-deinstall scripts.
+The script will be formatted respecting the escape sequences define later.
+.It Cm pre-install-lua
+Lua script to be run during the pre-install phase.
+It will be appended with any existing array of lua pre-install scripts
+The script will be formatted respecting the escape sequences define later.
+.It Cm post-install-lua
+Lua script to be run during the post-install phase.
+It will be appended with any existing array of lua post-install scripts
+The script will be formatted respecting the escape sequences define later.
+.It Cm pre-deinstall-lua
+Lua script to be run during the pre-deinstall phase.
+It will be appended with any existing array of lua pre-deinstall scripts
+The script will be formatted respecting the escape sequences define later.
+.It Cm post-deinstall-lua
+Lua script to be run during the post-deinstall phase.
+It will be appended with any existing array of lua post-deinstall scripts
+The script will be formatted respecting the escape sequences define later.
+.It Cm messages
+Array of test messages that can be passed to the users.
+Valid information by entry in the array are:
+.Bl -tag -width xxxx
+.It Cm message Ar string
+actual message to be shown to the users.
+.It Cm type Op Ar upgrade | Ar remove | Ar install
+defines in which contect the message should be shown to the users.
+If not set, the message will always be printed
+.El
+.El
+.Sh ESCAPE SEQUENCE
+If
+.Ar line
+contains any of the following sequences, they will be expanded inline.
+For the following examples, assume that the
+.Cm prefix
+is set to
+.Pa /raven
+and the last extracted file was
+.Pa bin/emacs .
+.Bl -tag -width indent -compact
+.It Cm "\&%D"
+Expand to the top-level prefix of the package.
+In the example case it will get expanded to
+.Pa /raven .
+.It Cm "\&%B"
+Expand to the
+.Dq basename
+which is the fully qualified filename minus the trailing filename.
+In the example case, that would be
+.Pa /raven/bin .
+.It Cm "%f"
+Expand to the filename part of the fully qualified name (the inverse of
+.Cm \&%B ).
+In the example case that would be
+.Pa emacs .
+.El
+.Sh SEE ALSO
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8
