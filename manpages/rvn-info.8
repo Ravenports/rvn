@@ -1,4 +1,4 @@
-.Dd November 26, 2023
+.Dd December 1, 2023
 .Dt RVN-INFO 8
 .Os
 .Sh NAME
@@ -10,11 +10,11 @@
 .Nm
 .Fl a
 .Nm
-.Op Fl ABbMDdefIlpqRrsNSV
+.Op Fl ABbMDdefIjlpqRrsNSV
 .Op Fl Cgix
 .Ar pkg-name
 .Nm
-.Op Fl ABbMDdfIlpqRrsNSV
+.Op Fl ABbMDdfIjlpqRrsNSV
 .Fl F Ar pkg-file
 .Pp
 .Nm
@@ -24,14 +24,14 @@
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
 .Op Cm --{pkg-message,description,dependencies,exists}
-.Op Cm --{full,comment,list-files,prefix,quiet,raw}
+.Op Cm --{full,comment,adjacent-shlibs,list-files,prefix,quiet,raw}
 .Op Cm --{required-by,size,namebase,subpackage,variant}
 .Op Cm --{case-sensitive,glob,case-insensitive,regex}
 .Ar pkg-name
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
 .Op Cm --{pkg-message,description,dependencies}
-.Op Cm --{full,comment,list-files,prefix,quiet,raw}
+.Op Cm --{full,comment,adjacent-shlibs,list-files,prefix,quiet,raw}
 .Op Cm --{required-by,size,namebase,subpackage,variant}
 .Op Cm --{case-sensitive,glob,case-insensitive,regex}
 .Cm --file Ar pkg-file
@@ -92,6 +92,11 @@ This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
 .Pa rvn.conf .
+.It Fl j , Cm --adjacent-shlibs
+Display all libraries that were present in the stage directory but not
+present in this package.
+They are likely packaged in a sister subpackage so any missing required shared
+library on this list should not cause a notice to be emitted during packaging.
 .It Fl l , Cm --list-files
 Display all files installed by
 .Ar pkg-name .
