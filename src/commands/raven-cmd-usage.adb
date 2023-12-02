@@ -257,13 +257,13 @@ package body Raven.Cmd.Usage is
             end if;
          end if;
 
-         if not comline.common_options.all_installed_pkgs and then
-           IsBlank (comline.common_options.name_pattern)
-         then
-            return alert ("Missing <pkg-name>");
-         end if;
-         
-         if not IsBlank (comline.cmd_info.path_archive_file) then
+         if IsBlank (comline.cmd_info.path_archive_file) then
+            if not comline.common_options.all_installed_pkgs and then
+              IsBlank (comline.common_options.name_pattern)
+            then
+               return alert ("Missing <pkg-name>");
+            end if;
+         else
             if comline.cmd_info.installed then
                return alert ("--exists switch invalid when used with pkg-file (-F)");
             end if;
