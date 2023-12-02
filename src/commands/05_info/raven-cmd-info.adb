@@ -4,6 +4,7 @@
 
 with Ada.Command_Line;
 with Archive.Unix;
+with Archive.Unpack;
 with ThickUCL.Files;
 with ThickUCL.Emitter;
 with Raven.Cmd.Unset;
@@ -120,10 +121,10 @@ package body Raven.Cmd.Info is
          --  if it's a single attribute, just print the value
          --  If it's two or more attributes, use format "<attr>      : <value>"
 
-         display_individual_attributes (operation => operation,
-                                        metatree  => metatree,
+         display_individual_attributes (metatree  => metatree,
                                         comline   => comline,
-                                        num_attr  => num_attr_selected);
+                                        num_attr  => num_attr_selected,
+                                        rvn_path  => resolved_path);
          return True;
       end;
    end execute_info_command;
@@ -133,10 +134,10 @@ package body Raven.Cmd.Info is
    --  display_individual_attributes  --
    -------------------------------------
    procedure display_individual_attributes
-     (operation : in out Archive.Unpack.Darc;
-      metatree  : ThickUCL.UclTree;
+     (metatree  : ThickUCL.UclTree;
       comline   : Cldata;
-      num_attr  : Natural)
+      num_attr  : Natural;
+      rvn_path  : String)
    is
       single : Boolean := num_attr = 1;
    begin
@@ -153,7 +154,7 @@ package body Raven.Cmd.Info is
       display_dependencies    (metatree, comline.cmd_info.dependencies, single);
       display_annotations     (metatree, comline.cmd_info.annotations, single);
       display_install_message (metatree, comline.cmd_info.install_message, single);
-      list_files              (operation, comline.cmd_info.list_files, single);
+      list_files              (rvn_path, comline.cmd_info.list_files, single);
    end display_individual_attributes;
 
 
@@ -436,11 +437,12 @@ package body Raven.Cmd.Info is
    --  list_files  --
    ------------------
    procedure list_files
-     (operation : in out Archive.Unpack.Darc;
+     (rvn_path  : String;
       active    : Boolean;
       single    : Boolean)
    is
       this_label : constant attr_label := format_label ("files");
+      operation  : Archive.Unpack.Darc;
    begin
       if not active then
          return;
@@ -450,7 +452,9 @@ package body Raven.Cmd.Info is
       end if;
       --  Perhaps we will want to update the Archive.Unpack class to configure a 4-character
       --  long indent for the files list.  Right now they aren't indented.
+      operation.open_rvn_archive (rvn_path, Archive.normal);
       operation.print_manifest (False, False);
+      operation.close_rvn_archive;
    end list_files;
 
    --------------------------------

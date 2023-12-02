@@ -1,7 +1,7 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../../License.txt
 
-private with Archive.Unpack;
+
 private with ThickUCL;
 private with Raven.Metadata;
 
@@ -26,10 +26,10 @@ private
       pkg_path : String);
 
    procedure display_individual_attributes
-     (operation : in out Archive.Unpack.Darc;
-      metatree  : ThickUCL.UclTree;
+     (metatree  : ThickUCL.UclTree;
       comline   : Cldata;
-      num_attr  : Natural);
+      num_attr  : Natural;
+      rvn_path  : String);
 
    procedure display_string
      (metatree : ThickUCL.UclTree;
@@ -68,7 +68,7 @@ private
       single   : Boolean);
 
    procedure list_files
-     (operation : in out Archive.Unpack.Darc;
+     (rvn_path  : String;
       active    : Boolean;
       single    : Boolean);
 
