@@ -580,6 +580,14 @@ package body Raven.Cmd.Line is
          else
             if IsBlank (self.cmd_info.path_archive_file) then
                self.common_options.all_installed_pkgs := True;
+            else
+               if self.common_options.shell_glob or else
+                 self.common_options.regex or else
+                 self.common_options.case_insensitive or else
+                 self.common_options.case_insensitive
+               then
+                  set_error (self, "-Cgix switch settings are invalid with pkg-file");
+               end if;
             end if;
          end if;
       end if;
