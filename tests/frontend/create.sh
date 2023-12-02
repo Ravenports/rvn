@@ -36,13 +36,12 @@ genmanifest() {
 namebase: test
 subpackage: single
 variant: standard
-version: 1
+version: "1"
 maintainer: test
 categories: [test]
 comment: a test
 www: http://test
 prefix: /
-abi = "*";
 desc: <<EOD
 Yet another test
 EOD
@@ -54,13 +53,12 @@ genprefixmanifest() {
 namebase: test
 subpackage: single
 variant: standard
-version: 1
+version: "1"
 maintainer: test
 categories: [test]
 comment: a test
 www: http://test
 prefix: /prefix
-abi = "*";
 desc: <<EOD
 Yet another test
 EOD
