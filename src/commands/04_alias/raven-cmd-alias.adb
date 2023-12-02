@@ -63,10 +63,15 @@ package body Raven.Cmd.Alias is
       begin
          for word in 1 .. words loop
             declare
-               alias_name : constant String := specific_field (setting, word, delim2);
                found : Boolean := False;
+               alias_name : constant String := specific_field (setting, word, delim2);
+               val : constant String := RCU.config_setting_map_value (CFG.alias, alias_name, found);
             begin
-               TIO.Put_Line (RCU.config_setting_map_value (CFG.alias, alias_name, found));
+               if found then
+                  TIO.Put_Line (val);
+               else
+                  Raven.Event.emit_error (val);
+               end if;
                all_found := all_found and found;
             end;
          end loop;
