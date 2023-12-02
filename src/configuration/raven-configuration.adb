@@ -415,8 +415,31 @@ package body Raven.Configuration is
                                 "via the environment, variable unset");
                ENV.Clear (name);
             when ThickUCL.data_object =>
-               EV.emit_debug (high_level, "object option " & name & " can not be set " &
-                                "via the environment, variable unset");
+               --  comma delimited
+               --  if no equal sign exists, use string as key with empty payload
+               session_configuration.start_object (name);
+               declare
+                  num_fields : constant Natural := count_char (val, LAT.Comma) + 1;
+               begin
+                  for opt in 1 .. num_fields loop
+                     declare
+                        opt_string : constant String := trim (specific_field (val, opt, ","));
+                     begin
+                        if not IsBlank (opt_string) then
+                           if contains (opt_string, "=") then
+                              session_configuration.insert
+                                (part_1 (opt_string, "="),
+                                 part_2 (opt_string, "="));
+                           else
+                              --  It is a user error to pass a nvpair without an equals sign,
+                              --  but try to handle it as if it's trailing with "="
+                              session_configuration.insert (opt_string, "");
+                           end if;
+                        end if;
+                     end;
+                  end loop;
+               end;
+               session_configuration.close_object;
                ENV.Clear (name);
             when ThickUCL.data_time | ThickUCL.data_float =>
                EV.emit_debug (high_level, "Impossible env var " & name & " returns the " &
