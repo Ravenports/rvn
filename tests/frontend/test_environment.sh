@@ -7,9 +7,9 @@ export RESOURCEDIR="${TESTSDIR}/frontend"
 export OS="${THIS_OS}"
 export PATH="${OUTPUTDIR}:${PATH}"
 export INSTALL_AS_USER=yes
-export RAVENSW_DBDIR=.
+export RVN_DBDIR=.
 export NO_TICK=yes
-export PROGNAME="ravensw"
+export PROGNAME="rvn"
 
 tests_init()
 {

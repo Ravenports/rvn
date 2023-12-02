@@ -37,7 +37,7 @@ OUTPUT="showaliases          'alias -q'
 list                 'info -q'
 "
 	atf_check \
-		-o inline:"ALIAS                ARGUMENTS\n${OUTPUT}" \
+		-o inline:"ALIAS                     ARGUMENTS\n${OUTPUT}" \
 		-e empty \
 		-s exit:0 \
 		rvn -C "" alias
@@ -76,7 +76,7 @@ OUTPUT="showaliases          'alias -q'
 list                 'info -q'
 "
 	atf_check \
-		-o inline:"ALIAS                ARGUMENTS\n${OUTPUT}" \
+		-o inline:"ALIAS                     ARGUMENTS\n${OUTPUT}" \
 		-e empty \
 		-s exit:0 \
 		rvn -C config alias
