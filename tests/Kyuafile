@@ -1,0 +1,5 @@
+syntax(2)
+
+test_suite("rvn")
+
+include('frontend/Kyuafile')
