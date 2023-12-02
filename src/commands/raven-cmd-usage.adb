@@ -231,8 +231,8 @@ package body Raven.Cmd.Usage is
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
-         msg3 : constant String := "info [-ABbMDdefIlpqRrsNSV] [-Cgix] <pkg-name>";
-         msg4 : constant String := "info [-ABbMDdfIlpqRrsNSV] -F <pkg-file>";
+         msg3 : constant String := "info [-ABbMDdefIlpqrsNSV] [-Cgix] <pkg-name>";
+         msg4 : constant String := "info [-ABbMDdfIlpqRsNSV] -F <pkg-file>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -252,12 +252,24 @@ package body Raven.Cmd.Usage is
             then
                return alert ("<pkg-name> not used with -a or -F switch");
             end if;
+            if comline.cmd_info.raw_manifest then
+               return alert ("--raw manifest only available from pkg-file (-F)");
+            end if;
          end if;
 
          if not comline.common_options.all_installed_pkgs and then
            IsBlank (comline.common_options.name_pattern)
          then
             return alert ("Missing <pkg-name>");
+         end if;
+         
+         if not IsBlank (comline.cmd_info.path_archive_file) then
+            if comline.cmd_info.installed then
+               return alert ("--exists switch invalid when used with pkg-file (-F)");
+            end if;
+            if comline.cmd_info.rev_deps then
+               return alert ("--required-by switch invalid when used with pkg-file (-F)");
+            end if;
          end if;
 
          return True;

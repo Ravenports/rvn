@@ -37,7 +37,9 @@ begin
          end if;
    end case;
    if Raven.Cmd.Bahnhof.execute_command (comline_inputs) then
-      CLI.Set_Exit_Status (Code => CLI.Success);
+      if not Raven.Cmd.Unset.exit_status_already_set then
+         CLI.Set_Exit_Status (Code => CLI.Success);
+      end if;
    else
       CLI.Set_Exit_Status (Code => CLI.Failure);
    end if;

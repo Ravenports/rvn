@@ -249,6 +249,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.shlibs_used := True;
                   elsif datum = "-b" or else datum = "--provided-shlibs" then
                      data.cmd_info.shlibs_provided := True;
+                  elsif datum = "-j" or else datum = "--adjacent-shlibs" then
+                     data.cmd_info.shlibs_adjacent := True;
                   elsif datum = "-M" or else datum = "--pkg-message" then
                      data.cmd_info.install_message := True;
                   elsif datum = "-D" or else datum = "--description" then
@@ -569,8 +571,13 @@ package body Raven.Cmd.Line is
       --  These command imply -a
       --  rvn info
       --  any rvn info missing the pkg-name / pattern argument
+      --  -a with pkg-name is an error
       if self.command = cv_info then
-         if not self.common_options.all_installed_pkgs then
+         if self.common_options.all_installed_pkgs then
+            if not IsBlank (self.cmd_info.path_archive_file) then
+               set_error (self, "--all is mutually exclusive with pkg-name");
+            end if;
+         else
             if IsBlank (self.cmd_info.path_archive_file) then
                self.common_options.all_installed_pkgs := True;
             end if;

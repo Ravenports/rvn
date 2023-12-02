@@ -162,7 +162,6 @@ package body Raven.Cmd.Create is
    is
       fname     : constant String := tail (filename, "/");
       out_level : constant String := Archive.Unix.real_path (creation_dir);
-      extension : constant String := ".rvn";
    begin
       if fname'Length > extension'Length and then
         lowercase (fname (fname'Last - extension'Length + 1 .. fname'Last)) = extension

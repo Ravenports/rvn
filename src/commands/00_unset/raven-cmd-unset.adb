@@ -458,4 +458,21 @@ package body Raven.Cmd.Unset is
    end config_setting_map_value;
    
    
+   -------------------------------
+   --  exit_status_already_set  --
+   -------------------------------
+   function exit_status_already_set return Boolean is
+   begin
+      return sys_exit_overridden;
+   end exit_status_already_set;
+   
+   
+   ----------------------------
+   --  override_exit_status  --
+   ----------------------------
+   procedure override_exit_status is
+   begin
+      sys_exit_overridden := True;
+   end override_exit_status;
+   
 end Raven.Cmd.Unset;

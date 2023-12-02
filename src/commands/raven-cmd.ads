@@ -100,6 +100,7 @@ private
          annotations        : Boolean := False;  --  -A, --annotations
          shlibs_provided    : Boolean := False;  --  -B, --required-shlibs
          shlibs_used        : Boolean := False;  --  -b, --provided-shlibs
+         shlibs_adjacent    : Boolean := False;  --  -j, --adjacent-shlibs
          install_message    : Boolean := False;  --  -M, --message
          description        : Boolean := False;  --  -D, --description
          dependencies       : Boolean := False;  --  -d, --dependencies (package depends on them)

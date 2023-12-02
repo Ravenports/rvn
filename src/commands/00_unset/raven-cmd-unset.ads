@@ -39,9 +39,16 @@ package Raven.Cmd.Unset is
      (setting : CFG.Configuration_Item;
       map_key : String) return String;
 
+   --  Tells the exit routine not to set the exit status again.
+   function exit_status_already_set return Boolean;
+
+   --  This indicates that the command set the exit code already
+   procedure override_exit_status;
+
 private
 
    program_configuration : ThickUCL.UclTree;
+   sys_exit_overridden   : Boolean := False;
 
    --  rvn -v
    function basic_version_info return Boolean;
