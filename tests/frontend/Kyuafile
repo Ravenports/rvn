@@ -7,6 +7,7 @@ test_suite('prop: test-suite = frontend')
 --
 
 atf_test_program{name='alias.sh'}
+atf_test_program{name='create.sh'}
 
 
 
@@ -21,7 +22,6 @@ atf_test_program{name='alias.sh'}
 --  atf_test_program{name='configmerge'}
 --  atf_test_program{name='conflicts'}
 --  atf_test_program{name='conflicts-multirepo'}
---  atf_test_program{name='create'}
 --  atf_test_program{name='delete'}
 --  atf_test_program{name='extract'}
 --  atf_test_program{name='fetch'}

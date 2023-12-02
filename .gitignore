@@ -10,3 +10,5 @@ obj/
 # clang-format ?
 .clang-format
 
+# don't commit tests before we are ready
+tests/frontend/*.notready
