@@ -33,8 +33,8 @@ alias_from_env_body() {
 	. $(atf_get_srcdir)/test_environment.sh
 	export ALIAS="showaliases=alias -q,list=info -q"
 
-OUTPUT="showaliases          'alias -q'
-list                 'info -q'
+OUTPUT="list                      info -q
+showaliases               alias -q
 "
 	atf_check \
 		-o inline:"ALIAS                     ARGUMENTS\n${OUTPUT}" \
@@ -72,8 +72,8 @@ ALIAS: {
 }
 EOF
 
-OUTPUT="showaliases          'alias -q'
-list                 'info -q'
+OUTPUT="list                      info -q
+showaliases               alias -q
 "
 	atf_check \
 		-o inline:"ALIAS                     ARGUMENTS\n${OUTPUT}" \
