@@ -35,18 +35,20 @@ package body Raven.Cmd.Alias is
             setting : constant String := RCU.config_setting_as_string (CFG.alias);
             lines   : Natural := count_char (setting, delim) + 1;
          begin
-            for field_number in 1 .. lines loop
-               declare
-                  line : constant String := specific_field (setting, field_number, delim2);
-               begin
-                  TIO.Put (pad_right (part_1 (line, ": "), 26));
-                  if comline.cmd_alias.without_args then
-                     TIO.Put_Line("");
-                  else
-                     TIO.Put_Line (part_2 (line, ": "));
-                  end if;
-               end;
-            end loop;
+            if not IsBlank (setting) then
+               for field_number in 1 .. lines loop
+                  declare
+                     line : constant String := specific_field (setting, field_number, delim2);
+                  begin
+                     TIO.Put (pad_right (part_1 (line, ": "), 26));
+                     if comline.cmd_alias.without_args then
+                        TIO.Put_Line("");
+                     else
+                        TIO.Put_Line (part_2 (line, ": "));
+                     end if;
+                  end;
+               end loop;
+            end if;
          end;
          return True;
       end if;
