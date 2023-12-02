@@ -15,7 +15,7 @@
 .Op Fl w Ar whitelist
 .Op Fl m Ar metadata
 .Op Fl t Ar timestamp
-.Ar pkg-name
+.Op Ar pkg-name
 .\" ---------------------------------------------------------------------------
 .Pp
 .Nm
@@ -27,7 +27,7 @@
 .Op Cm --whitelist Ar whitelist
 .Op Cm --metadata Ar metadata
 .Op Cm --timestamp Ar timestamp
-.Ar pkg-name
+.Op Ar pkg-name
 .\" ---------------------------------------------------------------------------
 .Sh DESCRIPTION
 .Nm
@@ -44,6 +44,14 @@ The package files are always created with the .rvn extension.
 If the
 .Ar pkg-name
 doesn't end with .rvn, the extension will automatically be added.
+.Pp
+If the
+.Ar pkg-name
+is not given at all, the name will be generated from the namebase,
+subpackage, and variant values provided in the metadata.  If any of those
+three are missing
+.Nm
+will emit an error.
 .\" ---------------------------------------------------------------------------
 .Sh OPTIONS
 The following options are supported by

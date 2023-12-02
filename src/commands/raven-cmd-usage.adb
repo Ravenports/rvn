@@ -184,11 +184,7 @@ package body Raven.Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       end if;
-      
-      if IsBlank (comline.common_options.name_pattern) then
-         return alert ("The pkg-name argument is required.");
-      end if;
-      
+
       if not IsBlank (comline.cmd_create.timestamp) then
          if not IsNumeric (USS (comline.cmd_create.timestamp)) then
             return alert ("The timestamp value is not numeric.");

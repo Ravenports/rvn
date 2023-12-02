@@ -60,6 +60,16 @@ package Raven.Metadata is
      (metatree  : ThickUCL.UclTree; 
       note_keys : in out ThickUCL.jar_string.Vector);
    
+   --  Returns true if key exists and contains string data
+   function string_data_exists 
+     (metatree  : ThickUCL.UclTree; 
+      field     : metadata_field) return Boolean;
+   
+   --  Returns String of metadata field (blank if the field isn't defined)
+   function get_string_data 
+     (metatree  : ThickUCL.UclTree; 
+      field     : metadata_field) return String; 
+   
 private
    
    --  convert message type to key string

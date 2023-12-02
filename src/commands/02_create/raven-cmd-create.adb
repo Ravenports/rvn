@@ -3,16 +3,19 @@
 
 with Raven.Cmd.Unset;
 with Raven.Event;
+with Raven.Metadata;
 with Raven.Strings; use Raven.Strings;
 with Ada.Directories;
 with Ada.Environment_Variables;
 with Archive.Pack;
 with Archive.Unix;
+with ThickUCL.Files;
 
 
 package body Raven.Cmd.Create is
 
    package RCU renames Raven.Cmd.Unset;
+   package MET renames Raven.Metadata;
    package DIR renames Ada.Directories;
    package ENV renames Ada.Environment_Variables;
    
@@ -24,19 +27,18 @@ package body Raven.Cmd.Create is
    is      
       function reveal_prefix return String;
       function final_rootdir return String;
-
+      function determine_basename return String;
       
       root_dir     : constant String := USS (comline.cmd_create.rootdir_dir);
       output_dir   : constant String := USS (comline.cmd_create.output_dir);
       metadata     : constant String := USS (comline.cmd_create.metadata_file);
       whitelist    : constant String := USS (comline.cmd_create.whitelist_file);
-      basename     : constant String := USS (comline.common_options.name_pattern);
-      rvn_filename : constant String := rvn_file (basename, creation_directory (output_dir));
       package_abi  : constant String := RCU.config_setting (RCU.CFG.abi);
       keywords_dir : constant String := RCU.config_setting (RCU.CFG.keywords_dir);
       verbosity    : constant Boolean := RCU.config_setting (RCU.CFG.create_verbose);
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
       level        : Archive.info_level := Archive.silent;
+      no_pkgname   : Boolean := False;
       
       --------------------
       -- reveal_prefix  --
@@ -62,6 +64,42 @@ package body Raven.Cmd.Create is
          return root_dir;
       end final_rootdir;
       
+      function determine_basename return String 
+      is
+         --  must be run after it's determined metadata file is valid (if provided)
+         metatree : ThickUCL.UclTree;
+      begin
+         if not IsBlank (comline.common_options.name_pattern) then
+            return USS (comline.common_options.name_pattern);
+         end if;
+         --  No pkg-name given, we need to assemble one
+         if IsBlank (metadata) then
+            no_pkgname := True;
+            Raven.Event.emit_error ("metadata is not optional if pkg-name is not provided.");
+            return "";
+         end if;
+         begin
+            ThickUCL.Files.parse_ucl_file (metatree, metadata, "");
+            if MET.string_data_exists (metatree, MET.namebase) and then
+              MET.string_data_exists (metatree, MET.subpackage) and then
+              MET.string_data_exists (metatree, MET.variant) and then
+              MET.string_data_exists (metatree, MET.version)
+            then
+               return MET.get_string_data (metatree, MET.namebase) & "-" &
+                 MET.get_string_data (metatree, MET.subpackage) & "-" &
+                 MET.get_string_data (metatree, MET.variant) & "-" &
+                 MET.get_string_data (metatree, MET.version);
+            else
+               Raven.Event.emit_error ("pkg-name was not provided, but metadata " & 
+                                         "is missing name components to determine it.");
+            end if;
+         exception
+            when ThickUCL.Files.ucl_file_unparseable =>
+               Raven.Event.emit_error ("pkg-name determination: metadata file failed to parse");
+         end;
+         no_pkgname := True;
+         return "";
+      end determine_basename;
    begin   
       if not valid_directory (root_dir, "root") then
          return False;
@@ -87,20 +125,29 @@ package body Raven.Cmd.Create is
          level := Archive.verbose;
       end if;
       
-      if not Archive.Pack.integrate (top_level_directory => final_rootdir,
-                                     metadata_file       => metadata,
-                                     manifest_file       => whitelist,
-                                     prefix              => reveal_prefix,
-                                     abi                 => package_abi,
-                                     keyword_dir         => keywords_dir,
-                                     fixed_timestamp     => timestamp,
-                                     output_file         => rvn_filename,
-                                     verbosity           => level)
-      then
-         return False;
-      end if;
+      declare
+         basename     : constant String := determine_basename;
+         rvn_filename : constant String := rvn_file (basename, creation_directory (output_dir));
+      begin
+         if no_pkgname then
+            return False;
+         end if;
+         
+         if not Archive.Pack.integrate (top_level_directory => final_rootdir,
+                                        metadata_file       => metadata,
+                                        manifest_file       => whitelist,
+                                        prefix              => reveal_prefix,
+                                        abi                 => package_abi,
+                                        keyword_dir         => keywords_dir,
+                                        fixed_timestamp     => timestamp,
+                                        output_file         => rvn_filename,
+                                        verbosity           => level)
+         then
+            return False;
+         end if;
+      end;
             
-      return True;         
+      return True;       
    end execute_create_command;
    
    

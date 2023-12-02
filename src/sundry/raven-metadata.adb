@@ -176,4 +176,38 @@ package body Raven.Metadata is
    end obtain_annotations_keys;
    
    
+   --------------------------
+   --  string_data_exists  --
+   --------------------------
+   function string_data_exists 
+     (metatree  : ThickUCL.UclTree; 
+      field : metadata_field) return Boolean
+   is
+      dtype : ThickUCL.Leaf_type;
+      key   : constant String := metadata_field_label (field);
+   begin
+      dtype := ThickUCL.get_data_type (metatree, key);
+      case dtype is
+         when ThickUCL.data_string => return True;
+         when others => return False;
+      end case;
+   end string_data_exists;
+   
+   
+   -----------------------
+   --  get_string_data  --
+   -----------------------
+   function get_string_data 
+     (metatree  : ThickUCL.UclTree; 
+      field     : metadata_field) return String
+   is
+      key : constant String := metadata_field_label (field);
+   begin
+      if string_data_exists (metatree, field) then
+         return metatree.get_base_value (key);
+      end if;
+      return "";
+   end get_string_data;
+   
+   
 end Raven.Metadata;
