@@ -58,16 +58,16 @@ package body Raven.Metadata is
       if size < 0 then
          return "----";
       elsif size < 5_121 then
-         return int2str (Integer (size)) & "B";
+         return int2str (Integer (size)) & " Bytes";
       elsif size < 5_242_881 then
          tmp_size := Float (size + half_KiB) / Float (half_KiB * 2);
-         return int2str (Integer (Float'Floor (tmp_size))) & "KiB";
+         return int2str (Integer (Float'Floor (tmp_size))) & " KiB";
       elsif size < 5_368_709_121 then
          tmp_size := Float (size + half_MiB) / Float (half_MiB * 2);
-         return int2str (Integer (Float'Floor (tmp_size))) & "MiB";
+         return int2str (Integer (Float'Floor (tmp_size))) & " MiB";
       else
          tmp_size := Float (size + half_GiB) / Float (half_GiB * 2);
-         return int2str (Integer (Float'Floor (tmp_size))) & "GiB";
+         return int2str (Integer (Float'Floor (tmp_size))) & " GiB";
       end if;
    end human_readable_size;
    

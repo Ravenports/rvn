@@ -330,7 +330,7 @@ package body Raven.Cmd.Info is
          return;
       end if;
       if not single then
-         TIO.Put (this_label & ":");
+         TIO.Put_Line (this_label & ":");
       end if;
       declare
          val : constant String := MET.get_message (metatree, MET.install);
@@ -370,7 +370,7 @@ package body Raven.Cmd.Info is
          return;
       end if;
       if not single then
-         TIO.Put (this_label & ":");
+         TIO.Put_Line (this_label & ":");
       end if;
       MET.obtain_dependencies_keys (metatree, dep_keys);
       dep_keys.Iterate (print'Access);
@@ -418,7 +418,7 @@ package body Raven.Cmd.Info is
          return;
       end if;
       if not single then
-         TIO.Put (this_label & ":");
+         TIO.Put_Line (this_label & ":");
       end if;
       dtype := metatree.get_data_type (key);
       case dtype is
@@ -446,7 +446,7 @@ package body Raven.Cmd.Info is
          return;
       end if;
       if not single then
-         TIO.Put (this_label & ":");
+         TIO.Put_Line (this_label & ":");
       end if;
       --  Perhaps we will want to update the Archive.Unpack class to configure a 4-character
       --  long indent for the files list.  Right now they aren't indented.
