@@ -357,7 +357,9 @@ package body Raven.Cmd.Line is
                --  Too small to be any kind of switch, just save it
                --  It also could be a hyphen to indicate stdin output
                save_as_is := True;
-            elsif datum (datum'First) = '-' then
+            elsif datum'Length > 0 and then
+              datum (datum'First) = '-'
+            then
                if datum (datum'First + 1) = '-' then
                   if datum'Length = 2 then
                      --  illegal "--" value, just save
