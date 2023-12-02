@@ -39,18 +39,48 @@ package body Raven.Cmd.Create is
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
       level        : Archive.info_level := Archive.silent;
       no_pkgname   : Boolean := False;
+      meta_parsed  : Boolean := False;
+      metatree     : ThickUCL.UclTree;
 
       --------------------
       -- reveal_prefix  --
       --------------------
       function reveal_prefix return String
       is
+         function cli_prefix return String;
+         --  A prefix defined in metadata has priority
          given : constant String := USS (comline.cmd_create.prefix);
+
+         function cli_prefix return String is
+         begin
+            if given = "" then
+               return "/";
+            end if;
+            return given;
+         end cli_prefix;
       begin
-         if given = "" then
-            return "/";
+         if IsBlank (metadata) then
+            return cli_prefix;
          end if;
-         return given;
+         if not meta_parsed then
+            begin
+              ThickUCL.Files.parse_ucl_file (metatree, metadata, "");
+               meta_parsed := True;
+            exception
+               when ThickUCL.Files.ucl_file_unparseable =>
+               Raven.Event.emit_error ("prefix determination: metadata file failed to parse");
+            end;
+         end if;
+         if meta_parsed then
+            if MET.string_data_exists (metatree, MET.prefix) then
+               if not isBlank (given) then
+                  Raven.Event.emit_notice
+                    ("Prefix found in metadata has priority; value of --prefix ignored.");
+               end if;
+               return MET.get_string_data (metatree, MET.prefix);
+            end if;
+         end if;
+         return cli_prefix;
       end reveal_prefix;
 
       ---------------------
@@ -70,7 +100,6 @@ package body Raven.Cmd.Create is
       function determine_basename return String
       is
          --  must be run after it's determined metadata file is valid (if provided)
-         metatree : ThickUCL.UclTree;
       begin
          if not IsBlank (comline.common_options.name_pattern) then
             return USS (comline.common_options.name_pattern);
@@ -81,8 +110,10 @@ package body Raven.Cmd.Create is
             Raven.Event.emit_error ("metadata is not optional if pkg-name is not provided.");
             return "";
          end if;
+         Raven.Event.emit_debug (moderate, "Need to assemble package name from metadata");
          begin
             ThickUCL.Files.parse_ucl_file (metatree, metadata, "");
+            meta_parsed := True;
             if MET.string_data_exists (metatree, MET.namebase) and then
               MET.string_data_exists (metatree, MET.subpackage) and then
               MET.string_data_exists (metatree, MET.variant) and then
@@ -94,7 +125,7 @@ package body Raven.Cmd.Create is
                  MET.get_string_data (metatree, MET.version);
             else
                Raven.Event.emit_error ("pkg-name was not provided, but metadata " &
-                                         "is missing name components to determine it.");
+                                         "is missing name string components to determine it.");
             end if;
          exception
             when ThickUCL.Files.ucl_file_unparseable =>
