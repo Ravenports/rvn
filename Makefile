@@ -16,9 +16,9 @@ manpage-footers:
 	@(cd ${.CURDIR}/manpages && perl fix-xrefs rvn*.[58]) && echo "done"
 
 kyua-test:
-	rm -rf ${.CURDIR}/test/html
-	(cd ${.CURDIR}/tests && /bin/sh ./exec_test.sh) ||:
-	(cd ${.CURDIR}/tests && kyua report-html)
+	@rm -rf ${.CURDIR}/tests/html
+	@(cd ${.CURDIR}/tests && /bin/sh ./exec_test.sh) ||:
+	@(cd ${.CURDIR}/tests && kyua report-html)
 
 # future installation perhaps
 # etc/bash_completion.d/_rvn.bash
