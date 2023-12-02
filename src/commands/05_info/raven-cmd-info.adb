@@ -95,13 +95,16 @@ package body Raven.Cmd.Info is
             return False;
          end if;
 
+         operation.open_rvn_archive (resolved_path, Archive.normal);
          begin
             ThickUCL.Files.parse_ucl_string (metatree, operation.extract_metadata, "");
          exception
             when ThickUCL.Files.ucl_file_unparseable =>
                Raven.Event.emit_error ("Fatal error: Failed to obtain packages metadata.");
+               operation.close_rvn_archive;
                return False;
          end;
+         operation.close_rvn_archive;
 
          if cmd.raw_manifest then
             TIO.Put_Line (ThickUCL.Emitter.emit_ucl (metatree));
