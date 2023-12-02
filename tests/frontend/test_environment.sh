@@ -1,11 +1,12 @@
 DPATH=$(dirname "$0")
 TESTSDIR=$(cd "${DPATH}/.." && pwd -P)
-OUTPUTDIR=$(cd "${DPATH}/../../build_objects" && pwd -P)
+RVNOUT=$(cd "${TESTSDIR}/../obj" && pwd -P)
+XRVNOUT=$(cd "${TESTSDIR}/../src/rvn-format/programs/obj" && pwd -P)
 THIS_OS=$(uname -s)
 
 export RESOURCEDIR="${TESTSDIR}/frontend"
 export OS="${THIS_OS}"
-export PATH="${OUTPUTDIR}:${PATH}"
+export PATH="${RVNOUT}:${XRVNOUT}:${PATH}"
 export INSTALL_AS_USER=yes
 export RVN_DBDIR=.
 export NO_TICK=yes

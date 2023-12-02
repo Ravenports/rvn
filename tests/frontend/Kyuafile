@@ -6,7 +6,7 @@ test_suite('prop: test-suite = frontend')
 --  Remove comments when tests are activated
 --
 
-atf_test_program{name='alias'}
+atf_test_program{name='alias.sh'}
 
 
 
