@@ -453,7 +453,7 @@ package body Raven.Cmd.Info is
       if not active then
          return;
       end if;
-      if quiet then
+      if single or else quiet then
          indent := 0;
       end if;
       if not single then
