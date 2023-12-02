@@ -281,12 +281,11 @@ package body Raven.Configuration is
    is
       --  if debug level is set by both -d command line option and the -o command line option,
       --  the -o value takes priority, although -d is in effect for the event emissions.
-       numfields : Natural;
+       numfields : Natural := 0;
    begin
-      if IsBlank (options) then
-         return;
+      if not IsBlank (options) then
+         numfields := count_char (options, LAT.Vertical_Line) + 1;
       end if;
-      numfields := count_char (options, LAT.Vertical_Line) + 1;
 
       for F in 1 .. numfields loop
          declare
