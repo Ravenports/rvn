@@ -113,7 +113,7 @@ package body Raven.Cmd.Info is
          end if;
 
          if cmd.full_information or else num_attr_selected = 0 then
-            display_full_information (metatree, resolved_path);
+            display_full_information (metatree, resolved_path, comline.common_options.quiet);
             return True;
          end if;
 
@@ -140,6 +140,7 @@ package body Raven.Cmd.Info is
       rvn_path  : String)
    is
       single : Boolean := num_attr = 1;
+      Q      : Boolean := comline.common_options.quiet;
    begin
       display_string (metatree, comline.cmd_info.namebase, single, MET.namebase);
       display_string (metatree, comline.cmd_info.subpackage, single, MET.subpackage);
@@ -148,13 +149,13 @@ package body Raven.Cmd.Info is
       display_string (metatree, comline.cmd_info.install_prefix, single, MET.prefix);
       display_string (metatree, comline.cmd_info.description, single, MET.description);
       display_size   (metatree, comline.cmd_info.total_size, single);
-      display_array  (metatree, comline.cmd_info.shlibs_used, single, MET.shlibs_required);
-      display_array  (metatree, comline.cmd_info.shlibs_provided, single, MET.shlibs_provided);
-      display_array  (metatree, comline.cmd_info.shlibs_adjacent, single, MET.shlibs_adjacent);
-      display_dependencies    (metatree, comline.cmd_info.dependencies, single);
-      display_annotations     (metatree, comline.cmd_info.annotations, single);
+      display_array  (metatree, comline.cmd_info.shlibs_used, single, Q, MET.shlibs_required);
+      display_array  (metatree, comline.cmd_info.shlibs_provided, single, Q, MET.shlibs_provided);
+      display_array  (metatree, comline.cmd_info.shlibs_adjacent, single, Q, MET.shlibs_adjacent);
+      display_dependencies    (metatree, comline.cmd_info.dependencies, single, Q);
+      display_annotations     (metatree, comline.cmd_info.annotations, single, Q);
       display_install_message (metatree, comline.cmd_info.install_message, single);
-      list_files              (rvn_path, comline.cmd_info.list_files, single);
+      list_files              (rvn_path, comline.cmd_info.list_files, single, Q);
    end display_individual_attributes;
 
 
@@ -214,6 +215,7 @@ package body Raven.Cmd.Info is
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
       single   : Boolean;
+      quiet    : Boolean;
       mfield   : MET.metadata_field)
    is
       dtype      : ThickUCL.Leaf_type;
@@ -239,7 +241,7 @@ package body Raven.Cmd.Info is
                      declare
                         val : constant String := metatree.get_array_element_value (vndx, index);
                      begin
-                        if single then
+                        if single or else quiet then
                            TIO.Put_Line (val);
                         else
                            TIO.Put_Line ("    " & val);
@@ -349,7 +351,8 @@ package body Raven.Cmd.Info is
    procedure display_dependencies
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean)
+      single   : Boolean;
+      quiet    : Boolean)
    is
       procedure print (Position : ThickUCL.jar_string.Cursor);
 
@@ -361,7 +364,7 @@ package body Raven.Cmd.Info is
       is
          dependency : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
       begin
-         if single then
+         if single or else quiet then
             TIO.Put_Line (dependency);
          end if;
          TIO.Put_Line ("    " & dependency);
@@ -384,7 +387,8 @@ package body Raven.Cmd.Info is
    procedure display_annotations
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean)
+      single   : Boolean;
+      quiet    : Boolean)
    is
       procedure print (Position : ThickUCL.jar_string.Cursor);
 
@@ -405,7 +409,7 @@ package body Raven.Cmd.Info is
                declare
                   note : constant String := metatree.get_object_value (vndx, note_id);
                begin
-                  if single then
+                  if single or else quiet then
                      TIO.Put_Line (note_id & " = " & note);
                   end if;
                   TIO.Put_Line ("    " & note_id & " = " & note);
@@ -439,13 +443,18 @@ package body Raven.Cmd.Info is
    procedure list_files
      (rvn_path  : String;
       active    : Boolean;
-      single    : Boolean)
+      single    : Boolean;
+      quiet     : Boolean)
    is
       this_label : constant attr_label := format_label ("files");
       operation  : Archive.Unpack.Darc;
+      indent     : Natural := 4;
    begin
       if not active then
          return;
+      end if;
+      if quiet then
+         indent := 0;
       end if;
       if not single then
          TIO.Put_Line (this_label & ":");
@@ -453,7 +462,7 @@ package body Raven.Cmd.Info is
       --  Perhaps we will want to update the Archive.Unpack class to configure a 4-character
       --  long indent for the files list.  Right now they aren't indented.
       operation.open_rvn_archive (rvn_path, Archive.normal);
-      operation.print_manifest (False, False);
+      operation.print_manifest (False, False, indent);
       operation.close_rvn_archive;
    end list_files;
 
@@ -462,7 +471,8 @@ package body Raven.Cmd.Info is
    --------------------------------
    procedure display_full_information
      (metatree : ThickUCL.UclTree;
-      pkg_path : String)
+      pkg_path : String;
+      quiet    : Boolean)
    is
       basename : constant String := head (tail (pkg_path, "/"), ".");
    begin
@@ -481,11 +491,11 @@ package body Raven.Cmd.Info is
       display_string (metatree, True, False, MET.maintainer);
       display_string (metatree, True, False, MET.prefix);
 
-      display_array (metatree, True, False, MET.shlibs_required);
-      display_array (metatree, True, False, MET.shlibs_provided);
-      display_array (metatree, True, False, MET.shlibs_adjacent);
+      display_array (metatree, True, False, quiet, MET.shlibs_required);
+      display_array (metatree, True, False, quiet, MET.shlibs_provided);
+      display_array (metatree, True, False, quiet, MET.shlibs_adjacent);
 
-      display_annotations (metatree, True, False);
+      display_annotations (metatree, True, False, quiet);
       display_size        (metatree, True, False);
       display_string      (metatree, True, False, MET.description);
    end display_full_information;

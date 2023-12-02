@@ -23,7 +23,8 @@ private
 
    procedure display_full_information
      (metatree : ThickUCL.UclTree;
-      pkg_path : String);
+      pkg_path : String;
+      quiet    : Boolean);
 
    procedure display_individual_attributes
      (metatree  : ThickUCL.UclTree;
@@ -51,6 +52,7 @@ private
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
       single   : Boolean;
+      quiet    : Boolean;
       mfield   : MET.metadata_field);
 
    procedure display_array_oneline
@@ -60,16 +62,19 @@ private
    procedure display_dependencies
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean);
+      single   : Boolean;
+      quiet    : Boolean);
 
    procedure display_annotations
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean);
+      single   : Boolean;
+      quiet    : Boolean);
 
    procedure list_files
      (rvn_path  : String;
       active    : Boolean;
-      single    : Boolean);
+      single    : Boolean;
+      quiet     : Boolean);
 
 end Raven.Cmd.Info;
