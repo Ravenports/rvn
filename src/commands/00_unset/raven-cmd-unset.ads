@@ -37,7 +37,8 @@ package Raven.Cmd.Unset is
    --  Return configuration object key value as a string (for example, an alias)
    function config_setting_map_value
      (setting : CFG.Configuration_Item;
-      map_key : String) return String;
+      map_key : String;
+      success : in out Boolean) return String;
 
    --  Tells the exit routine not to set the exit status again.
    function exit_status_already_set return Boolean;

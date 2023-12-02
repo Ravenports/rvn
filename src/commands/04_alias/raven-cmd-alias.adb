@@ -59,16 +59,19 @@ package body Raven.Cmd.Alias is
          delim2  : constant String (1 .. 1) := (others => delim);
          setting : constant String := USS (comline.cmd_alias.alias);
          words   : Natural := count_char (setting, delim) + 1;
+         all_found : Boolean := True;
       begin
          for word in 1 .. words loop
             declare
                alias_name : constant String := specific_field (setting, word, delim2);
+               found : Boolean := False;
             begin
-               TIO.Put_Line (RCU.config_setting_map_value (CFG.alias, alias_name));
+               TIO.Put_Line (RCU.config_setting_map_value (CFG.alias, alias_name, found));
+               all_found := all_found and found;
             end;
          end loop;
+         return all_found;
       end;
-      return True;
    end execute_alias_command;
 
 end Raven.Cmd.Alias;

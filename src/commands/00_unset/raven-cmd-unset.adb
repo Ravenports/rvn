@@ -408,11 +408,13 @@ package body Raven.Cmd.Unset is
    --------------------------------
    function config_setting_map_value
      (setting : CFG.Configuration_Item;
-      map_key : String) return String
+      map_key : String;
+      success : in out Boolean) return String
    is
       key   : constant String := CFG.get_ci_key (setting);
       dtype : ThickUCL.Leaf_type;
    begin
+      success := False;
       dtype := program_configuration.get_data_type (key);
       case dtype is
          when ThickUCL.data_object =>
@@ -427,8 +429,10 @@ package body Raven.Cmd.Unset is
                   when ThickUCL.data_not_present =>
                      return progname & ": No such alias: '" & map_key & "'";
                   when ThickUCL.data_string =>
+                     success := True;
                      return map_key & ": " & program_configuration.get_object_value (vndx, map_key);
                   when ThickUCL.data_boolean =>
+                     success := True;
                      declare
                         val : Boolean;
                      begin
@@ -436,6 +440,7 @@ package body Raven.Cmd.Unset is
                         return map_key & ": " & val'Img;
                      end;
                   when ThickUCL.data_integer =>
+                     success := True;
                      declare
                         val : Ucl.ucl_integer;
                      begin
