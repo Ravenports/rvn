@@ -321,6 +321,12 @@ package body Raven.Cmd.Line is
       second_expansion (expanded_args, USS (data.next_argument));
       expanded_args.Iterate (translate_switch'Access);
 
+      case last_cmd is
+         when nothing_pending => null;
+         when others =>
+            set_error (data, "The last switch requires an argument");
+      end case;
+
       --  TODO: when annotated implemented:
       --  check_annotate_stdin;
 

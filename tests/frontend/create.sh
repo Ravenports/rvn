@@ -3,7 +3,7 @@
 . $(atf_get_srcdir)/test_environment.sh
 
 # The tests with "_from_plist" are misnomers
-# PLIST are not supported.  All tests are generated with a UCL metadata file 
+# PLIST are not supported.  All tests are generated with a UCL metadata file
 # and possible a whitelist.  The names are kept to allow comparision with FreeBSD's pkg
 
 tests_init \
@@ -11,20 +11,20 @@ tests_init \
 
 
 #soon	create_from_plist_set_owner \
-	create_from_plist_set_group_space \
-	create_from_plist_gather_mode \
-	create_from_plist_set_mode \
-	create_from_plist_mini \
-	create_from_plist_with_keyword_arguments \
-	create_from_plist_missing_file \
-	create_from_manifest_and_plist \
-	create_from_manifest \
-	create_from_manifest_dir \
-	create_from_plist_pkg_descr \
-	create_from_plist_with_keyword_and_message \
-	create_with_hardlink \
-	time \
-	create_from_plist_keyword_deprecated
+#	create_from_plist_set_group_space \
+#	create_from_plist_gather_mode \
+#	create_from_plist_set_mode \
+#	create_from_plist_mini \
+#	create_from_plist_with_keyword_arguments \
+#	create_from_plist_missing_file \
+#	create_from_manifest_and_plist \
+#	create_from_manifest \
+#	create_from_manifest_dir \
+#	create_from_plist_pkg_descr \
+#	create_from_plist_with_keyword_and_message \
+#	create_with_hardlink \
+#	time \
+#	create_from_plist_keyword_deprecated
 
 # LUA	create_from_plist_keyword_validation
 # LUA	create_from_plist_keyword_real_args
@@ -106,7 +106,7 @@ create_from_plist_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -r . -w test.plist 
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 	basic_validation
 	atf_check \

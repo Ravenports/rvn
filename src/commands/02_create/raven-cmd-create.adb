@@ -18,17 +18,17 @@ package body Raven.Cmd.Create is
    package MET renames Raven.Metadata;
    package DIR renames Ada.Directories;
    package ENV renames Ada.Environment_Variables;
-   
-   
+
+
    ------------------------------
    --  execute_create_command  --
    ------------------------------
-   function execute_create_command (comline : Cldata) return Boolean 
-   is      
+   function execute_create_command (comline : Cldata) return Boolean
+   is
       function reveal_prefix return String;
       function final_rootdir return String;
       function determine_basename return String;
-      
+
       root_dir     : constant String := USS (comline.cmd_create.rootdir_dir);
       output_dir   : constant String := USS (comline.cmd_create.output_dir);
       metadata     : constant String := USS (comline.cmd_create.metadata_file);
@@ -39,11 +39,11 @@ package body Raven.Cmd.Create is
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
       level        : Archive.info_level := Archive.silent;
       no_pkgname   : Boolean := False;
-      
+
       --------------------
       -- reveal_prefix  --
       --------------------
-      function reveal_prefix return String 
+      function reveal_prefix return String
       is
          given : constant String := USS (comline.cmd_create.prefix);
       begin
@@ -52,7 +52,7 @@ package body Raven.Cmd.Create is
          end if;
          return given;
       end reveal_prefix;
-      
+
       ---------------------
       --  final_rootdir  --
       ---------------------
@@ -61,10 +61,13 @@ package body Raven.Cmd.Create is
          if isBlank (root_dir) then
             return "/";
          end if;
-         return root_dir;
+         return Archive.Unix.real_path (root_dir);
       end final_rootdir;
-      
-      function determine_basename return String 
+
+      ------------------------
+      -- determine_basename --
+      ------------------------
+      function determine_basename return String
       is
          --  must be run after it's determined metadata file is valid (if provided)
          metatree : ThickUCL.UclTree;
@@ -90,7 +93,7 @@ package body Raven.Cmd.Create is
                  MET.get_string_data (metatree, MET.variant) & "-" &
                  MET.get_string_data (metatree, MET.version);
             else
-               Raven.Event.emit_error ("pkg-name was not provided, but metadata " & 
+               Raven.Event.emit_error ("pkg-name was not provided, but metadata " &
                                          "is missing name components to determine it.");
             end if;
          exception
@@ -100,31 +103,35 @@ package body Raven.Cmd.Create is
          no_pkgname := True;
          return "";
       end determine_basename;
-   begin   
+   begin
       if not valid_directory (root_dir, "root") then
          return False;
       end if;
-      
+
       if not valid_directory (output_dir, "output") then
          return False;
       end if;
-      
+
       if not valid_directory (keywords_dir, "keywords") then
          return False;
       end if;
-      
+
       if not valid_file (whitelist, "whitelist") then
          return False;
       end if;
-      
+
       if not valid_file (metadata, "metadata") then
          return False;
       end if;
-      
+
       if comline.common_options.verbose or else verbosity then
          level := Archive.verbose;
       end if;
-      
+      case comline.pre_command.debug_setting is
+         when low_level => level := Archive.debug;
+         when others => null;
+      end case;
+
       declare
          basename     : constant String := determine_basename;
          rvn_filename : constant String := rvn_file (basename, creation_directory (output_dir));
@@ -132,7 +139,7 @@ package body Raven.Cmd.Create is
          if no_pkgname then
             return False;
          end if;
-         
+
          if not Archive.Pack.integrate (top_level_directory => final_rootdir,
                                         metadata_file       => metadata,
                                         manifest_file       => whitelist,
@@ -146,11 +153,11 @@ package body Raven.Cmd.Create is
             return False;
          end if;
       end;
-            
-      return True;       
+
+      return True;
    end execute_create_command;
-   
-   
+
+
    --------------------------
    --  creation_directory  --
    --------------------------
@@ -159,10 +166,10 @@ package body Raven.Cmd.Create is
       if IsBlank (outdir) then
          return ".";
       end if;
-      return outdir;         
+      return outdir;
    end creation_directory;
-   
-   
+
+
    -------------------------
    --  provide_timestamp  --
    -------------------------
@@ -200,8 +207,8 @@ package body Raven.Cmd.Create is
       end if;
       return result;
    end provide_timestamp;
-   
-   
+
+
    ----------------
    --  rvn_file  --
    ----------------
@@ -217,8 +224,8 @@ package body Raven.Cmd.Create is
       end if;
       return out_level & "/" & fname & extension;
    end rvn_file;
-   
-   
+
+
    ------------------------
    --  valid_directory  --
    -----------------------
@@ -229,24 +236,24 @@ package body Raven.Cmd.Create is
       if not opt_directory then
          return True;
       end if;
-      
+
       --  verify directory exists and is a directory.
       if DIR.Exists (checkdir) then
          case DIR.Kind (checkdir) is
             when DIR.Directory =>
                return True;
             when others =>
-               Raven.Event.emit_error ("create:" & description & " argument (" & checkdir 
+               Raven.Event.emit_error ("create:" & description & " argument (" & checkdir
                                        & ") is not a directory.");
                return False;
          end case;
       end if;
-      Raven.Event.emit_error ("create:"  & description & " directory (" & checkdir 
+      Raven.Event.emit_error ("create:"  & description & " directory (" & checkdir
                               & ") does not exist.");
       return False;
    end valid_directory;
-   
-   
+
+
    ------------------
    --  valid_file  --
    ------------------
@@ -266,15 +273,15 @@ package body Raven.Cmd.Create is
             when DIR.Ordinary_File =>
                return True;
             when others =>
-               Raven.Event.emit_error ("create:" & description & " argument (" & checkfile 
+               Raven.Event.emit_error ("create:" & description & " argument (" & checkfile
                                        & ") is not a file.");
                return False;
          end case;
       end if;
 
-      Raven.Event.emit_error ("create:" & description & " file (" & checkfile & 
+      Raven.Event.emit_error ("create:" & description & " file (" & checkfile &
                                 ") does not exist.");
       return False;
    end valid_file;
-   
+
 end Raven.Cmd.Create;
