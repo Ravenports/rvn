@@ -107,6 +107,7 @@ private
          installed          : Boolean := False;  --  -e, --exists
          full_information   : Boolean := False;  --  -f, --full
          comment            : Boolean := False;  --  -I, --comment
+         list_digests       : Boolean := False;  --  -L, --list-digests
          list_files         : Boolean := False;  --  -l, --list-files
          install_prefix     : Boolean := False;  --  -p, --prefix
          raw_manifest       : Boolean := False;  --  -R, --raw

@@ -75,6 +75,7 @@ private
      (rvn_path  : String;
       active    : Boolean;
       single    : Boolean;
-      quiet     : Boolean);
+      quiet     : Boolean;
+      digest    : Boolean);
 
 end Raven.Cmd.Info;

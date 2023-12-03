@@ -263,6 +263,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.full_information := True;
                   elsif datum = "-I" or else datum = "--comment" then
                      data.cmd_info.comment := True;
+                  elsif datum = "-L" or else datum = "--list-digests" then
+                     data.cmd_info.list_digests := True;
                   elsif datum = "-l" or else datum = "--list-files" then
                      data.cmd_info.list_files := True;
                   elsif datum = "-p" or else datum = "--prefix" then

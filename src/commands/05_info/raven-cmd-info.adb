@@ -64,6 +64,7 @@ package body Raven.Cmd.Info is
       increment (cmd.install_message);
       increment (cmd.install_prefix);
       increment (cmd.list_files);
+      increment (cmd.list_digests);
       increment (cmd.namebase);
       increment (cmd.rev_deps);
       increment (cmd.shlibs_adjacent);
@@ -155,7 +156,8 @@ package body Raven.Cmd.Info is
       display_dependencies    (metatree, comline.cmd_info.dependencies, single, Q);
       display_annotations     (metatree, comline.cmd_info.annotations, single, Q);
       display_install_message (metatree, comline.cmd_info.install_message, single);
-      list_files              (rvn_path, comline.cmd_info.list_files, single, Q);
+      list_files              (rvn_path, comline.cmd_info.list_files, single, Q, False);
+      list_files              (rvn_path, comline.cmd_info.list_digests, single, Q, True);
    end display_individual_attributes;
 
 
@@ -444,7 +446,8 @@ package body Raven.Cmd.Info is
      (rvn_path  : String;
       active    : Boolean;
       single    : Boolean;
-      quiet     : Boolean)
+      quiet     : Boolean;
+      digest    : Boolean)
    is
       this_label : constant attr_label := format_label ("files");
       operation  : Archive.Unpack.Darc;
@@ -462,9 +465,10 @@ package body Raven.Cmd.Info is
       --  Perhaps we will want to update the Archive.Unpack class to configure a 4-character
       --  long indent for the files list.  Right now they aren't indented.
       operation.open_rvn_archive (rvn_path, Archive.normal);
-      operation.print_manifest (False, False, indent);
+      operation.print_manifest (digest, False, indent);
       operation.close_rvn_archive;
    end list_files;
+
 
    --------------------------------
    --  display_full_information  --

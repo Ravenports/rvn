@@ -8,7 +8,7 @@ package body Raven.Cmd.Usage is
    -----------------------------
    --  precheck_command_line  --
    -----------------------------
-   function precheck_command_line (comline : Cldata) return precheck_result 
+   function precheck_command_line (comline : Cldata) return precheck_result
    is
       procedure alert (error_msg : String)
       is
@@ -27,28 +27,28 @@ package body Raven.Cmd.Usage is
          alert (USS (comline.error_message));
          return error_found;
       end if;
-      
+
       if comline.pending_argument then
          alert ("The last switch requires an argument");
          return error_found;
       end if;
-      
+
       if comline.pre_command.status_check or else
         comline.pre_command.list_commands or else
         comline.pre_command.version_setting /= not_shown
       then
          return action_needed;
-      end if;       
-      
+      end if;
+
       if IsBlank (comline.next_argument) then
          alert ("No commands specified");
          return nothing_to_do;
       end if;
       return command_pending;
-      
+
    end precheck_command_line;
-   
-   
+
+
    --------------------------
    --  command_line_valid  --
    --------------------------
@@ -63,8 +63,8 @@ package body Raven.Cmd.Usage is
          when cv_info   => return verb_info (comline);
       end case;
    end command_line_valid;
-   
-   
+
+
    ---------------------
    --  display_error  --
    ---------------------
@@ -74,8 +74,8 @@ package body Raven.Cmd.Usage is
          TIO.Put_Line (TIO.Standard_Error, progname & ": " & error_msg);
       end if;
    end display_error;
-   
-   
+
+
    ---------------------
    --  display_usage  --
    ---------------------
@@ -88,8 +88,8 @@ package body Raven.Cmd.Usage is
       end if;
       TIO.Put_Line (TIO.Standard_Error, tray & usage_msg);
    end display_usage;
-   
-   
+
+
    -------------------------------
    --  display_help_suggestion  --
    -------------------------------
@@ -108,8 +108,8 @@ package body Raven.Cmd.Usage is
                  SQ (progname & " help " & convert_command_enum_to_label (command)) & ".");
       end case;
    end display_help_suggestion;
-   
-   
+
+
    ------------------------------
    --  insert_carriage_return  --
    ------------------------------
@@ -117,8 +117,8 @@ package body Raven.Cmd.Usage is
    begin
       TIO.Put_Line (TIO.Standard_Error, "");
    end insert_carriage_return;
-   
-   
+
+
    -------------------
    --  verb_config  --
    -------------------
@@ -139,8 +139,8 @@ package body Raven.Cmd.Usage is
       end if;
       return True;
    end verb_config;
-   
-      
+
+
    -------------------
    --  verb_alias  --
    -------------------
@@ -161,7 +161,7 @@ package body Raven.Cmd.Usage is
       end if;
       return True;
    end verb_alias;
-   
+
 
    -------------------
    --  verb_create  --
@@ -189,12 +189,12 @@ package body Raven.Cmd.Usage is
          if not IsNumeric (USS (comline.cmd_create.timestamp)) then
             return alert ("The timestamp value is not numeric.");
          end if;
-      end if;   
-      
-      return True;   
+      end if;
+
+      return True;
    end verb_create;
-   
-   
+
+
    -----------------
    --  verb_help  --
    -----------------
@@ -215,8 +215,8 @@ package body Raven.Cmd.Usage is
       end if;
       return True;
    end verb_help;
-   
-   
+
+
    -----------------
    --  verb_info  --
    -----------------
@@ -227,8 +227,8 @@ package body Raven.Cmd.Usage is
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
-         msg3 : constant String := "info [-ABbMDdefIlpqrsNSV] [-Cgix] <pkg-name>";
-         msg4 : constant String := "info [-ABbMDdfIlpqRsNSV] -F <pkg-file>";
+         msg3 : constant String := "info [-ABbMDdefIpqrsNSV] [-L|-l] [-Cgix] <pkg-name>";
+         msg4 : constant String := "info [-ABbMDdfIpqRsNSV] [-L|-l] -F <pkg-file>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -243,8 +243,8 @@ package body Raven.Cmd.Usage is
          return alert (USS (comline.error_message));
       else
          if not IsBlank (comline.common_options.name_pattern) then
-            if comline.common_options.all_installed_pkgs or else 
-              not IsBlank (comline.cmd_info.path_archive_file) 
+            if comline.common_options.all_installed_pkgs or else
+              not IsBlank (comline.cmd_info.path_archive_file)
             then
                return alert ("<pkg-name> not used with -a or -F switch");
             end if;
@@ -268,11 +268,15 @@ package body Raven.Cmd.Usage is
             end if;
          end if;
 
+         if comline.cmd_info.list_files and then comline.cmd_info.list_digests then
+            return alert ("--list-files and --list-digests are mutually exclusive");
+         end if;
+
          return True;
       end if;
    end verb_info;
-   
-   
+
+
    ----------------------------------
    --  alert_command_unrecognized  --
    ----------------------------------
@@ -282,5 +286,5 @@ package body Raven.Cmd.Usage is
    begin
       display_error (msg);
    end alert_command_unrecognized;
-   
+
 end Raven.Cmd.Usage;
