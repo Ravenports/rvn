@@ -1,6 +1,12 @@
 #!/bin/sh
 
 SYSTEM=$(uname -s)
+USER=$(id -un)
+
+if [ "$USER" != "root" ]; then
+   echo "This testsuite must be run by the 'root' user, not '${USER}'"
+   exit 1
+fi
 
 case "${SYSTEM}" in
 	Linux)
@@ -14,4 +20,4 @@ case "${SYSTEM}" in
 esac
 
 kyua test
-
+kyua report-html

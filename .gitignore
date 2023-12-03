@@ -12,3 +12,6 @@ obj/
 
 # don't commit tests before we are ready
 tests/frontend/*.notready
+
+# don't comment kyua test results
+tests/html

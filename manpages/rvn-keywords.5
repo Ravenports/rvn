@@ -1,4 +1,4 @@
-.Dd November 30, 2023
+.Dd December 3, 2023
 .Dt RVN-KEYWORDS 5
 .Os
 .Sh NAME
@@ -19,6 +19,11 @@ and specific phases of package management.
 All arguments of the keyword are tokenized and referenced by \%%0 (entire
 argument string) or \%%<number> for the tokens created by a space delimiter.
 These variables are expanded by shell and lua scripts.
+.Pp
+Every action must have an argument, and the position of the arguments
+match the order the of the actions.
+The first argument goes with the first action, the second argument with
+the second action, and so forth.
 .Pp
 The format is the following:
 .Bl -tag -width Ds
@@ -104,13 +109,20 @@ If not set, the message will always be printed
 If
 .Ar line
 contains any of the following sequences, they will be expanded inline.
+This expansions are based on the previous line.
+If the previous line starts with "@" then it will be based on the first
+argument of the keyword.
 For the following examples, assume that the
 .Cm prefix
 is set to
 .Pa /raven
-and the last extracted file was
+and the previous line was equal to
 .Pa bin/emacs .
 .Bl -tag -width indent -compact
+.It Cm "\&%F"
+Expands to the last filename extracted (as specified), in the example case
+it will get expanded to
+.Pa bin/emacs .
 .It Cm "\&%D"
 Expand to the top-level prefix of the package.
 In the example case it will get expanded to

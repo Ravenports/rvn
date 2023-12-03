@@ -108,7 +108,7 @@ package body Raven.Cmd.Info is
          operation.close_rvn_archive;
 
          if cmd.raw_manifest then
-            TIO.Put_Line (ThickUCL.Emitter.emit_ucl (metatree));
+            TIO.Put (ThickUCL.Emitter.emit_ucl (metatree));
             return True;
          end if;
 

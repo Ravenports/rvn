@@ -8,14 +8,15 @@
 
 tests_init \
 	create_from_plist \
+	create_from_plist_set_owner \
+	create_from_plist_set_group_space \
+	create_from_plist_gather_mode \
+	create_from_plist_set_mode \
+	create_from_plist_mini \
+	create_from_plist_with_keyword_arguments \
 
 
-#soon	create_from_plist_set_owner \
-#	create_from_plist_set_group_space \
-#	create_from_plist_gather_mode \
-#	create_from_plist_set_mode \
-#	create_from_plist_mini \
-#	create_from_plist_with_keyword_arguments \
+
 #	create_from_plist_missing_file \
 #	create_from_manifest_and_plist \
 #	create_from_manifest \
@@ -42,6 +43,7 @@ categories: [test]
 comment: a test
 www: http://test
 prefix: /
+abi: "*:*:0"
 desc: <<EOD
 Yet another test
 EOD
@@ -59,6 +61,7 @@ categories: [test]
 comment: a test
 www: http://test
 prefix: /prefix
+abi: "*:*:0"
 desc: <<EOD
 Yet another test
 EOD
@@ -79,7 +82,7 @@ preparetestcredentials() {
 }
 
 basic_validation() {
-	test -f test-1.rvn || atf_fail "Package not created"
+	test -f test-single-standard-1.rvn || atf_fail "Package not created"
 }
 
 create_with_hardlink_body() {
@@ -108,10 +111,10 @@ create_from_plist_body() {
 
 	basic_validation
 	atf_check \
-		-o match:"-rw-r--r-- .*root[ /]+wheel.* /file1$" \
+		-o match:"-rw-r--r-- .*root[ ]+wheel.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_missing_file_body() {
@@ -134,14 +137,14 @@ create_from_plist_set_owner_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 	basic_validation
 	atf_check \
-		-o match:"-rw-r--r-- .*plop[ /]+wheel.* /file1$" \
+		-o match:"-rw-r--r-- .*plop[ ]+wheel.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		bsdtar tvf test-1.rvn
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_set_group_body() {
@@ -171,14 +174,14 @@ create_from_plist_set_group_space_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 	basic_validation
 	atf_check \
-		-o match:"-rw-r--r-- .*root[ /]+bla.* /file1$" \
+		-o match:"-rw-r--r-- .*root[ ]+bla.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		bsdtar tvf test-1.rvn
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_gather_mode_body() {
@@ -191,14 +194,14 @@ create_from_plist_gather_mode_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 	basic_validation
 	atf_check \
-		-o match:"-rwxrwxrwx .*plop[ /]+bla.* /file1$" \
+		-o match:"-rwxrwxrwx .*plop[ ]+bla.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		bsdtar tvf test-1.rvn
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_set_mode_body() {
@@ -209,14 +212,14 @@ create_from_plist_set_mode_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 	basic_validation
 	atf_check \
-		-o match:"-rwxr-sr-x .*root[ /]+wheel.* /file1$" \
+		-o match:"-rwxr-sr-x .*root[ ]+wheel.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		bsdtar tvf test-1.rvn
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_mini_body() {
@@ -224,17 +227,11 @@ create_from_plist_mini_body() {
 	preparetestcredentials "(plop,)"
 
 	atf_check \
-		-o empty \
+		-o match:"Manifest entity [[][@][(]plop,[)] file1[]] keyword line failed to parse" \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -v -o ${TMPDIR} -r . -m METADATA -w test.plist
 
-	basic_validation
-	atf_check \
-		-o match:"-rw-r--r-- .*plop[ /]+wheel.* /file1$" \
-		-e ignore \
-		-s exit:0 \
-		bsdtar tvf test-1.rvn
 }
 
 create_from_plist_keyword_real_args_body() {
@@ -258,7 +255,7 @@ EOF
 mkdir target
 
 	atf_check \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 	atf_check \
 		-o inline:"yes\nfile1\nyes\nA\nB\nC\nD\n" \
@@ -279,7 +276,7 @@ EOF
 		-o empty \
 		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 cat << EOF > test.ucl
 actions: []
@@ -293,7 +290,7 @@ EOF
 		-o inline:"file1\n" \
 		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 cat << EOF > test.ucl
 actions: []
@@ -307,7 +304,7 @@ EOF
 		-o inline:"0\n" \
 		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 cat << EOF > test.ucl
 actions: []
@@ -322,7 +319,7 @@ EOF
 		-o inline:"1\n" \
 		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 	genplist "@test A B"
 	genplist "@test A A"
@@ -354,7 +351,7 @@ ${PROGNAME}: Fail to apply keyword 'test'
 	atf_check \
 		-e inline:"${output}" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 }
 
 create_from_plist_with_keyword_arguments_body() {
@@ -362,9 +359,9 @@ create_from_plist_with_keyword_arguments_body() {
 
 	atf_check \
 		-o empty \
-		-e inline:"${PROGNAME}: cannot load keyword from ./testkeyword.ucl: No such file or directory\n${PROGNAME}: unknown keyword testkeyword: @testkeyword\n" \
+		-e match:"testkeyword[.]ucl: UCL keyword not found, fatal[.]$" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF >> testkeyword.ucl
 actions: []
@@ -375,9 +372,9 @@ EOF
 
 	atf_check \
 		-o empty \
-		-e inline:"${PROGNAME}: Requesting argument %2 while only 1 arguments are available\n${PROGNAME}: Fail to apply keyword 'testkeyword'\n" \
+		-e inline:"Requesting argument %2 while only 1 arguments are available\nFailed to apply keyword 'testkeyword'\n" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF > testkeyword.ucl
 actions: [file(%1)]
@@ -390,16 +387,23 @@ EOF
 
 	atf_check \
 		-o empty \
-		-e inline:"${PROGNAME}: Invalid argument: expecting a number got (%1)\n${PROGNAME}: Fail to apply keyword 'testkeyword'\n" \
+		-e inline:"testkeyword.ucl: action 'file(%1)' not recognized\n" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF > testkeyword.ucl
-actions: [file(1), dir(2)]
+actions: [file, dir]
 arguments: true
 post-install:
 	echo %1 %2
 EOF
+
+	atf_check \
+		-o match:"Manifest file [[]A[]] does not exist, ignoring$" \
+		-e empty \
+		-s exit:1 \
+		rvn -o KEYWORDS_DIR=. create -v -o ${TMPDIR} -r . -m METADATA -w test.plist
+
 	touch A
 	mkdir B
 
@@ -407,45 +411,44 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
-
-	atf_check \
-		-o empty \
-		-e empty \
-		-s exit:0 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF >> output.ucl
-name = "test";
-origin = "test";
-version = "1";
-comment = "a test";
-maintainer = "test";
-www = "http://test";
-abi = "*";
-arch = "*";
-prefix = "/";
-flatsize = 0;
-desc = "Yet another test";
-categories [
-    "test",
+abi: '*:*:0'
+categories: [
+  'test'
 ]
-files {
-    /A = "1\$e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+comment: 'a test'
+desc: 'Yet another test'
+directories: [
+  {
+    group: false
+    owner: false
+    path: 'B'
+    perms: false
+  }
+]
+flatsize: 0
+maintainer: 'test'
+namebase: 'test'
+prefix: '/'
+scripts: {
+  post-install: [
+    'echo A B'
+  ]
 }
-directories {
-    /B = "y";
-}
-scripts {
-    post-install = "# args: A B\necho A B";
-}
+subpackage: 'single'
+variant: 'standard'
+version: '1'
+www: 'http://test'
+
 EOF
 
 	atf_check \
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info -R --raw-format=ucl -F test-1.rvn
+		rvn info -R -F ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_manifest_and_plist_body() {
@@ -608,7 +611,7 @@ On install:
 on install
 
 '
-	atf_check rvn -o PLIST_KEYWORDS_DIR=. create -m . -r ${TMPDIR} -p test.plist
+	atf_check rvn -o KEYWORDS_DIR=. create -m . -r ${TMPDIR} -p test.plist
 	atf_check -o inline:"${OUTPUT}" rvn info -D -F ./test-1.rvn
 
 }
@@ -682,12 +685,12 @@ ${PROGNAME}: Fail to apply keyword 'test'
 	atf_check \
 		-e inline:"${output}" \
 		-s exit:1 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 touch A B
 	atf_check \
 		-s exit:0 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 	atf_check \
 		-o match:"-rw-r--r-- .*plop[ /]+wheel.* /A$" \
 		bsdtar tvf test-1.rvn
@@ -706,7 +709,7 @@ EOF
 	atf_check \
 		-e inline:"${PROGNAME}: Use of '@test' is deprecated\n" \
 		-s exit:0 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 cat << EOF > test.ucl
 arguments: true
@@ -719,6 +722,6 @@ EOF
 	atf_check \
 		-e inline:"${PROGNAME}: Use of '@test' is deprecated: we don't like it anymore\n" \
 		-s exit:0 \
-		rvn -o PLIST_KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
 
 }
