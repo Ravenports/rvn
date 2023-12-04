@@ -1,6 +1,5 @@
 new_pkg() {
 	cat << EOF > $1.ucl
-name: $2
 namebase: $2
 subpackage: $3
 variant: "$4"

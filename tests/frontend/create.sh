@@ -19,13 +19,10 @@ tests_init \
 	create_from_manifest \
 	create_from_manifest_dir \
 	create_from_plist_pkg_descr \
+	create_from_plist_with_keyword_and_message \
+	create_from_plist_keyword_deprecated \
+	create_with_hardlink \
 
-
-
-#	create_from_plist_with_keyword_and_message \
-#	create_with_hardlink \
-#	time \
-#	create_from_plist_keyword_deprecated
 
 # LUA	create_from_plist_keyword_validation
 # LUA	create_from_plist_keyword_real_args
@@ -86,16 +83,29 @@ basic_validation() {
 }
 
 create_with_hardlink_body() {
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "1.0"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg \
+	METADATA "test" "single" "standard" "1" "/" 
 	echo "blah" >> foo
 	ln foo bar
-	echo "@(root,wheel,0555,) /foo" >> test.plist
-	echo "@config(root,wheel,0644,) /bar" >> test.plist
+	echo "@(root,wheel,0555) /foo" >> test.plist
+	echo "@(root,wheel,0644) /bar" >> test.plist
+
+cat << EOF >> output.listing
+-rw-r--r--     root    wheel        5 1970-01-03 00:00 bar
+hr-xr-xr-x     root    wheel        0 1970-01-03 00:00 foo
+EOF
 
 	atf_check \
 		-o ignore \
 		-e ignore \
-		rvn create -M test.ucl -p test.plist -r .
+		env SOURCE_DATE_EPOCH=172800 rvn create -o ${TMPDIR} -r . -m METADATA.ucl -w test.plist
+
+	atf_check \
+		-o file:output.listing \
+		-e empty \
+		-s exit:0 \
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+
 }
 
 create_from_plist_body() {
@@ -399,8 +409,8 @@ post-install:
 EOF
 
 	atf_check \
-		-o match:"Manifest file [[]A[]] does not exist, ignoring$" \
-		-e empty \
+		-o empty \
+		-e match:"Manifest file [[]A[]] does not exist, ignoring$" \
 		-s exit:1 \
 		rvn -o KEYWORDS_DIR=. create -v -o ${TMPDIR} -r . -m METADATA -w test.plist
 
@@ -430,6 +440,8 @@ directories: [
 ]
 flatsize: 0
 maintainer: 'test'
+messages: {
+}
 namebase: 'test'
 prefix: '/'
 scripts: {
@@ -472,6 +484,8 @@ directories: [
 ]
 flatsize: 0
 maintainer: 'test'
+messages: {
+}
 namebase: 'test'
 prefix: '/'
 scripts: {
@@ -544,6 +558,8 @@ directories: [
 ]
 flatsize: 0
 maintainer: 'test'
+messages: {
+}
 namebase: 'test'
 prefix: '/'
 scripts: {
@@ -577,6 +593,7 @@ create_from_plist_pkg_descr_body() {
 
 cat << EOF >> METADATA
 messages: {
+  always: "This message always displayed."
   install: "This is install message."
   upgrade: "This is upgrade message."
 }
@@ -584,7 +601,7 @@ EOF
 
 	atf_check rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 	atf_check \
-		-o match:"^This is install message.$" \
+		-o match:"^This message always displayed[.]$" \
 		-e empty \
 		-s exit:0 \
 		rvn info --pkg-message -F ${TMPDIR}/test-single-standard-1.rvn
@@ -593,6 +610,7 @@ EOF
 create_from_plist_with_keyword_and_message_body() {
 	genmanifest
 	genplist "@showmsg plop"
+
 cat << EOF > showmsg.ucl
 actions: []
 messages: [
@@ -601,63 +619,47 @@ messages: [
 	{ message: "on install"; type = "install" },
 ]
 EOF
-cat << EOF > +DISPLAY
-old message
+
+cat << EOF >> output.ucl
+abi: '*:*:0'
+categories: [
+  'test'
+]
+comment: 'a test'
+desc: 'Yet another test'
+directories: [
+]
+flatsize: 0
+maintainer: 'test'
+messages: {
+  always: [
+    'always'
+  ]
+  install: [
+    'on install'
+  ]
+  upgrade: [
+    'on upgrade'
+  ]
+}
+namebase: 'test'
+prefix: '/'
+scripts: {
+}
+subpackage: 'single'
+variant: 'standard'
+version: '1'
+www: 'http://test'
+
 EOF
 
-OUTPUT='test-1:
-Always:
-old message
-
-Always:
-always
-
-On upgrade:
-on upgrade
-
-On install:
-on install
-
-'
-	atf_check rvn -o KEYWORDS_DIR=. create -m . -r ${TMPDIR} -p test.plist
-	atf_check -o inline:"${OUTPUT}" rvn info -D -F ./test-1.rvn
-
-}
-
-time_body() {
-	atf_check sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "1"
-	cat << EOF >> test.ucl
-files: {
-	"${TMPDIR}/a" = "";
-}
-EOF
-	touch a
-	pattern=$(ls -l ${TMPDIR}/a | awk '{print $6" +"$7" +"$8".*/a"}')
-	atf_check rvn create -M test.ucl
-	atf_check env SOURCE_DATE_EPOCH=86400 rvn create -M test.ucl
+	atf_check rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 	atf_check \
-		-o match:"0 Jan +2 +1970.*/a" \
-		bsdtar tvf test-1.rvn
-	atf_check -e match:"Invalid" -s exit:1 rvn create -t meh -M test.ucl
-	atf_check rvn create -t 172800 -M test.ucl
-	atf_check \
-		-o match:"0 Jan +3 +1970.*/a" \
-		bsdtar tvf test-1.rvn
-	atf_check env SOURCE_DATE_EPOCH=86400 rvn create -t 172800 -M test.ucl
-	atf_check \
-		-o match:"0 Jan +3 +1970.*/a" \
-		bsdtar tvf test-1.rvn
-	atf_check rvn create -M test.ucl
-	atf_check \
-		-o match:"${pattern}" \
-		bsdtar tvf test-1.rvn
+		-o file:output.ucl \
+		-e empty \
+		-s exit:0 \
+		rvn info --raw -F ${TMPDIR}/test-single-standard-1.rvn
 
-	mkdir target
-	atf_check -o empty \
-		rvn -o REPOS_DIR=/dev/null -r ${TMPDIR}/target install -qfy ${TMPDIR}/test-1.rvn
-	atf_check \
-		-o match:"${pattern}" \
-		ls -l ${TMPDIR}/target/${TMPDIR}/a
 }
 
 
@@ -715,9 +717,9 @@ deprecated: true
 EOF
 
 	atf_check \
-		-e inline:"${PROGNAME}: Use of '@test' is deprecated\n" \
+		-e inline:"The use of '@test' is deprecated\n" \
 		-s exit:0 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF > test.ucl
 arguments: true
@@ -728,8 +730,8 @@ EOM
 EOF
 
 	atf_check \
-		-e inline:"${PROGNAME}: Use of '@test' is deprecated: we don't like it anymore\n" \
+		-e inline:"The use of '@test' is deprecated: we don't like it anymore\n" \
 		-s exit:0 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 }
