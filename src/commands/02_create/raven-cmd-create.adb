@@ -37,7 +37,7 @@ package body Raven.Cmd.Create is
       keywords_dir : constant String := RCU.config_setting (RCU.CFG.keywords_dir);
       verbosity    : constant Boolean := RCU.config_setting (RCU.CFG.create_verbose);
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
-      level        : Archive.info_level := Archive.silent;
+      level        : Archive.info_level := Archive.normal;
       no_pkgname   : Boolean := False;
       meta_parsed  : Boolean := False;
       metatree     : ThickUCL.UclTree;
@@ -157,6 +157,8 @@ package body Raven.Cmd.Create is
 
       if comline.common_options.verbose or else verbosity then
          level := Archive.verbose;
+      elsif comline.common_options.quiet then
+         level := Archive.silent;
       end if;
       case comline.pre_command.debug_setting is
          when low_level => level := Archive.debug;
