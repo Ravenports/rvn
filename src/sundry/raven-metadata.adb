@@ -9,7 +9,7 @@ package body Raven.Metadata is
    ----------------------------
    --  metadata_field_label  --
    ----------------------------
-   function metadata_field_label (field : metadata_field) return String 
+   function metadata_field_label (field : metadata_field) return String
    is
    begin
       case field is
@@ -26,7 +26,7 @@ package body Raven.Metadata is
          when abi             => return "abi";
          when dependencies    => return "deps";
          when options         => return "options";
-         when categories      => return "categories"; 
+         when categories      => return "categories";
          when license_logic   => return "licenselogic";
          when licenses        => return "licenses";
          when annotations     => return "annotations";
@@ -44,7 +44,7 @@ package body Raven.Metadata is
    ---------------------------
    --  human_readable_size  --
    ---------------------------
-   function human_readable_size (size : int64) return String 
+   function human_readable_size (size : int64) return String
    is
       --  0             -         5,120 : xB
       --  5,121         -     5,242,880 : 5KiB - 5120KiB
@@ -70,12 +70,12 @@ package body Raven.Metadata is
          return int2str (Integer (Float'Floor (tmp_size))) & " GiB";
       end if;
    end human_readable_size;
-   
-   
+
+
    --------------------
    --  get_flatsize  --
    --------------------
-   function get_flatsize (metatree : ThickUCL.UclTree) return Int64 
+   function get_flatsize (metatree : ThickUCL.UclTree) return Int64
    is
       dtype      : ThickUCL.Leaf_type;
       key        : constant String := metadata_field_label (flatsize);
@@ -89,8 +89,8 @@ package body Raven.Metadata is
          when others => return 0;
       end case;
    end get_flatsize;
-   
-   
+
+
    -------------------
    --  get_message  --
    -------------------
@@ -117,27 +117,28 @@ package body Raven.Metadata is
             return "Package construction error - message not stored in object";
       end case;
    end get_message;
-   
-   
+
+
    -------------------
    --  message_key  --
    -------------------
    function message_key (mtype : message_type) return String is
    begin
       case mtype is
+         when always    => return "always";
          when install   => return "install";
          when deinstall => return "deinstall";
          when upgrade   => return "upgrade";
       end case;
    end message_key;
-   
-   
+
+
    --------------------------------
    --  obtain_dependencies_keys  --
    --------------------------------
-   procedure obtain_dependencies_keys 
-     (metatree : ThickUCL.UclTree; 
-      dep_keys : in out ThickUCL.jar_string.Vector) 
+   procedure obtain_dependencies_keys
+     (metatree : ThickUCL.UclTree;
+      dep_keys : in out ThickUCL.jar_string.Vector)
    is
       key   : constant String := metadata_field_label (dependencies);
       dtype : ThickUCL.Leaf_type;
@@ -148,17 +149,17 @@ package body Raven.Metadata is
          when ThickUCL.data_object =>
             vndx := metatree.get_index_of_base_ucl_object (key);
             metatree.get_object_object_keys (vndx, dep_keys);
-         when others => 
+         when others =>
             null;
       end case;
    end obtain_dependencies_keys;
-   
-   
+
+
    -------------------------------
    --  obtain_annotations_keys  --
    -------------------------------
    procedure obtain_annotations_keys
-     (metatree  : ThickUCL.UclTree; 
+     (metatree  : ThickUCL.UclTree;
       note_keys : in out ThickUCL.jar_string.Vector)
    is
       key   : constant String := metadata_field_label (annotations);
@@ -170,17 +171,17 @@ package body Raven.Metadata is
          when ThickUCL.data_object =>
             vndx := metatree.get_index_of_base_ucl_object (key);
             metatree.get_object_object_keys (vndx, note_keys);
-         when others => 
+         when others =>
             null;
       end case;
    end obtain_annotations_keys;
-   
-   
+
+
    --------------------------
    --  string_data_exists  --
    --------------------------
-   function string_data_exists 
-     (metatree  : ThickUCL.UclTree; 
+   function string_data_exists
+     (metatree  : ThickUCL.UclTree;
       field : metadata_field) return Boolean
    is
       dtype : ThickUCL.Leaf_type;
@@ -192,13 +193,13 @@ package body Raven.Metadata is
          when others => return False;
       end case;
    end string_data_exists;
-   
-   
+
+
    -----------------------
    --  get_string_data  --
    -----------------------
-   function get_string_data 
-     (metatree  : ThickUCL.UclTree; 
+   function get_string_data
+     (metatree  : ThickUCL.UclTree;
       field     : metadata_field) return String
    is
       key : constant String := metadata_field_label (field);
@@ -208,6 +209,6 @@ package body Raven.Metadata is
       end if;
       return "";
    end get_string_data;
-   
-   
+
+
 end Raven.Metadata;

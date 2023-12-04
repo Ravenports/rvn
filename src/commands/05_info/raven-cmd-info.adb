@@ -340,7 +340,7 @@ package body Raven.Cmd.Info is
          TIO.Put_Line (this_label & ":");
       end if;
       declare
-         val : constant String := MET.get_message (metatree, MET.install);
+         val : constant String := MET.get_message (metatree, MET.always);
       begin
          if not IsBlank (val) then
             TIO.Put_Line (val);
