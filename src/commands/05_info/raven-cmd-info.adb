@@ -65,6 +65,7 @@ package body Raven.Cmd.Info is
       increment (cmd.install_prefix);
       increment (cmd.list_files);
       increment (cmd.list_digests);
+      increment (cmd.list_attributes);
       increment (cmd.namebase);
       increment (cmd.rev_deps);
       increment (cmd.shlibs_adjacent);
