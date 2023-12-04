@@ -223,12 +223,15 @@ package body Raven.Cmd.Usage is
    function verb_info (comline : Cldata) return Boolean
    is
       function alert (error_msg : String) return Boolean;
+
+      list_opts : Natural := 0;
+
       function alert (error_msg : String) return Boolean
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
          msg3 : constant String := "info [-ABbMDdefIpqrsNSV] [-L|-l] [-Cgix] <pkg-name>";
-         msg4 : constant String := "info [-ABbMDdfIpqRsNSV] [-L|-l] -F <pkg-file>";
+         msg4 : constant String := "info [-ABbMDdfIpqRsNSV] [-L|-l|-X] -F <pkg-file>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -268,8 +271,18 @@ package body Raven.Cmd.Usage is
             end if;
          end if;
 
-         if comline.cmd_info.list_files and then comline.cmd_info.list_digests then
-            return alert ("--list-files and --list-digests are mutually exclusive");
+         if comline.cmd_info.list_files then
+            list_opts := list_opts + 1;
+         end if;
+         if comline.cmd_info.list_digests then
+            list_opts := list_opts + 1;
+         end if;
+         if comline.cmd_info.list_attributes then
+            list_opts := list_opts + 1;
+         end if;
+         if list_opts > 1 then
+            return alert
+              ("--list-files, --list-digests, and --list-extended are mutually exclusive");
          end if;
 
          return True;

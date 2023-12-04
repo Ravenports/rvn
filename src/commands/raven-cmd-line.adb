@@ -267,6 +267,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.list_digests := True;
                   elsif datum = "-l" or else datum = "--list-files" then
                      data.cmd_info.list_files := True;
+                  elsif datum = "-X" or else datum = "--list-extended" then
+                     data.cmd_info.list_attributes := True;
                   elsif datum = "-p" or else datum = "--prefix" then
                      data.cmd_info.install_prefix := True;
                   elsif datum = "-R" or else datum = "--raw" then
@@ -589,7 +591,12 @@ package body Raven.Cmd.Line is
             end if;
          else
             if IsBlank (self.cmd_info.path_archive_file) then
-               self.common_options.all_installed_pkgs := True;
+               if isBlank (self.common_options.name_pattern) then
+                  self.common_options.all_installed_pkgs := True;
+               end if;
+               if self.cmd_info.list_attributes then
+                  set_error (self, "--list-extended is not available for installed packages");
+               end if;
             else
                if self.common_options.shell_glob or else
                  self.common_options.regex or else

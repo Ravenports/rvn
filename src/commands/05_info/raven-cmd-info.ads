@@ -76,6 +76,7 @@ private
       active    : Boolean;
       single    : Boolean;
       quiet     : Boolean;
-      digest    : Boolean);
+      digest    : Boolean;
+      extended  : Boolean);
 
 end Raven.Cmd.Info;
