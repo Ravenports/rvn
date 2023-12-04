@@ -14,14 +14,14 @@ tests_init \
 	create_from_plist_set_mode \
 	create_from_plist_mini \
 	create_from_plist_with_keyword_arguments \
+	create_from_plist_missing_file \
+	create_from_manifest_and_plist \
+	create_from_manifest \
+	create_from_manifest_dir \
+	create_from_plist_pkg_descr \
 
 
 
-#	create_from_plist_missing_file \
-#	create_from_manifest_and_plist \
-#	create_from_manifest \
-#	create_from_manifest_dir \
-#	create_from_plist_pkg_descr \
 #	create_from_plist_with_keyword_and_message \
 #	create_with_hardlink \
 #	time \
@@ -124,9 +124,9 @@ create_from_plist_missing_file_body() {
 
 	atf_check \
 		-o empty \
-		-e match:"Unable to access file .*file1:" \
+		-e match:"Manifest entity [[]file1[]] does not exist"\
 		-s exit:1 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 }
 
 create_from_plist_set_owner_body() {
@@ -227,10 +227,10 @@ create_from_plist_mini_body() {
 	preparetestcredentials "(plop,)"
 
 	atf_check \
-		-o match:"Manifest entity [[][@][(]plop,[)] file1[]] keyword line failed to parse" \
-		-e empty \
+		-o empty \
+		-e match:"Manifest entity [[][@][(]plop,[)] file1[]] keyword line failed to parse" \
 		-s exit:0 \
-		rvn create -v -o ${TMPDIR} -r . -m METADATA -w test.plist
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 }
 
@@ -459,127 +459,135 @@ create_from_manifest_and_plist_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -M ./+MANIFEST -p test.plist -r ${TMPDIR}
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
-	cat << EOF > output.ucl
-name = "test";
-origin = "test";
-version = "1";
-comment = "a test";
-maintainer = "test";
-www = "http://test";
-abi = "*";
-arch = "*";
-prefix = "/";
-flatsize = 0;
-desc = "Yet another test";
-categories [
-    "test",
+cat << EOF >> output.ucl
+abi: '*:*:0'
+categories: [
+  'test'
 ]
-files {
-    /testfile = "1\$e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+comment: 'a test'
+desc: 'Yet another test'
+directories: [
+]
+flatsize: 0
+maintainer: 'test'
+namebase: 'test'
+prefix: '/'
+scripts: {
 }
+subpackage: 'single'
+variant: 'standard'
+version: '1'
+www: 'http://test'
+
 EOF
 
 	atf_check \
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info -R --raw-format=ucl -F test-1.rvn
+		rvn info -R -F ${TMPDIR}/test-single-standard-1.rvn
+
+	atf_check \
+		-o match:"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 testfile$" \
+		-e empty \
+		-s exit:0 \
+		rvn info --list-digests -F ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_manifest_body() {
 	genmanifest
-	cat <<EOF >> +MANIFEST
-files: {
-     /testfile: {perm: 0644}
-}
-EOF
+	genplist "@(,,0644) testfile"
+
 	touch testfile
 	atf_check \
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -M ./+MANIFEST -r ${TMPDIR}
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist --timestamp 100020008
 
-	cat << EOF > output.ucl
-name = "test";
-origin = "test";
-version = "1";
-comment = "a test";
-maintainer = "test";
-www = "http://test";
-abi = "*";
-arch = "*";
-prefix = "/";
-flatsize = 0;
-desc = "Yet another test";
-categories [
-    "test",
-]
-files {
-    /testfile = "1\$e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+	atf_check \
+		-o match:"-rw-r--r--     root    wheel        0 1973-03-03 15:20 testfile$" \
+		-e empty \
+		-s exit:0 \
+		rvn info --list-extended -F ${TMPDIR}/test-single-standard-1.rvn
 }
+
+create_from_manifest_dir_body() {
+	genmanifest
+	genplist "@(,,0644) testfile"
+	genplist "@dir(,,0644) testdir"
+
+	touch testfile
+	mkdir testdir
+	atf_check \
+		-o empty \
+		-e empty \
+		-s exit:0 \
+		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist --timestamp 100020008
+
+cat << EOF >> output.ucl
+abi: '*:*:0'
+categories: [
+  'test'
+]
+comment: 'a test'
+desc: 'Yet another test'
+directories: [
+  {
+    group: false
+    owner: false
+    path: 'testdir'
+    perms: 420
+  }
+]
+flatsize: 0
+maintainer: 'test'
+namebase: 'test'
+prefix: '/'
+scripts: {
+}
+subpackage: 'single'
+variant: 'standard'
+version: '1'
+www: 'http://test'
+
 EOF
 
 	atf_check \
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info -R --raw-format=ucl -F test-1.rvn
-}
-
-create_from_manifest_dir_body() {
-	genmanifest
-	cat <<EOF >> +MANIFEST
-files: {
-     /testfile: {perm: 0644}
-     /testdir: {perm: 0644}
-}
-EOF
-	touch testfile
-	mkdir testdir
-	atf_check \
-		-o empty \
-		-e not-empty \
-		-s not-exit:0 \
-		rvn create -M ./+MANIFEST -r ${TMPDIR}
-
+		rvn info -R -F ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_pkg_descr_body() {
 	genmanifest
-cat << EOF > ./+DISPLAY
-Message
+	touch testfile
+	genplist "testfile"
+
+	atf_check rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
+	atf_check \
+		-o match:"^Yet another test$" \
+		-e empty \
+		-s exit:0 \
+		rvn info -D -F ${TMPDIR}/test-single-standard-1.rvn
+
+
+cat << EOF >> METADATA
+messages: {
+  install: "This is install message."
+  upgrade: "This is upgrade message."
+}
 EOF
 
-OUTPUT="test-1:
-Always:
-Message
-
-"
-	atf_check rvn create -m . -r ${TMPDIR}
-	atf_check -o inline:"${OUTPUT}" rvn info -D -F ./test-1.rvn
-
-cat << EOF > ./+DISPLAY
-[
-	{ message: "message" },
-	{ message: "message upgrade", type = "upgrade" },
-]
-EOF
-
-OUTPUT='test-1:
-Always:
-message
-
-On upgrade:
-message upgrade
-
-'
-
-	atf_check rvn create -m . -r ${TMPDIR}
-	atf_check -o inline:"${OUTPUT}" rvn info -D -F ./test-1.rvn
-
+	atf_check rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
+	atf_check \
+		-o match:"^This is install message.$" \
+		-e empty \
+		-s exit:0 \
+		rvn info --pkg-message -F ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_with_keyword_and_message_body() {

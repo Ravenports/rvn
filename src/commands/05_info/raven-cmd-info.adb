@@ -330,7 +330,7 @@ package body Raven.Cmd.Info is
       active   : Boolean;
       single   : Boolean)
    is
-      key        : constant String := MET.metadata_field_label (MET.flatsize);
+      key        : constant String := MET.metadata_field_label (MET.messages);
       this_label : constant attr_label := format_label (key);
    begin
       if not active then
