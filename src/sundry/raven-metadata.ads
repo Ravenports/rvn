@@ -70,6 +70,18 @@ package Raven.Metadata is
      (metatree  : ThickUCL.UclTree;
       field     : metadata_field) return String;
 
+   --  Returns String of metadata field (default if the field isn't defined)
+   function get_string_data
+     (metatree  : ThickUCL.UclTree;
+      field     : metadata_field;
+      default   : String) return String;
+
+   function reveal_namebase   (metatree : ThickUCL.UclTree) return String;
+   function reveal_subpackage (metatree : ThickUCL.UclTree) return String;
+   function reveal_variant    (metatree : ThickUCL.UclTree) return String;
+   function reveal_version    (metatree : ThickUCL.UclTree) return String;
+   function reveal_prefix     (metatree : ThickUCL.UclTree) return String;
+
 private
 
    --  convert message type to key string

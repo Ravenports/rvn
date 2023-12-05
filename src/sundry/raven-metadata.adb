@@ -195,9 +195,9 @@ package body Raven.Metadata is
    end string_data_exists;
 
 
-   -----------------------
-   --  get_string_data  --
-   -----------------------
+   ---------------------------
+   --  get_string_data # 1  --
+   ---------------------------
    function get_string_data
      (metatree  : ThickUCL.UclTree;
       field     : metadata_field) return String
@@ -209,6 +209,64 @@ package body Raven.Metadata is
       end if;
       return "";
    end get_string_data;
+
+
+   ---------------------------
+   --  get_string_data # 2  --
+   ---------------------------
+   function get_string_data
+     (metatree  : ThickUCL.UclTree;
+      field     : metadata_field;
+      default   : String) return String
+   is
+      key : constant String := metadata_field_label (field);
+   begin
+      if string_data_exists (metatree, field) then
+         return metatree.get_base_value (key);
+      end if;
+      return default;
+   end get_string_data;
+
+
+   -----------------------
+   --  reveal_namebase  --
+   -----------------------
+   function reveal_namebase (metatree : ThickUCL.UclTree) return String is
+   begin
+      return get_string_data (metatree, namebase, "namebase_not_found");
+   end reveal_namebase;
+
+   -------------------------
+   --  reveal_subpackage  --
+   -------------------------
+   function reveal_subpackage (metatree : ThickUCL.UclTree) return String is
+   begin
+      return get_string_data (metatree, subpackage, "subpackage_not_found");
+   end reveal_subpackage;
+
+   ---------------------
+   --  reveal_variant --
+   ---------------------
+   function reveal_variant (metatree : ThickUCL.UclTree) return String is
+   begin
+      return get_string_data (metatree, variant, "variant_not_found");
+   end reveal_variant;
+
+   ----------------------
+   --  reveal_version  --
+   ----------------------
+   function reveal_version (metatree : ThickUCL.UclTree) return String is
+   begin
+      return get_string_data (metatree, version, "version_not_found");
+   end reveal_version;
+
+   ---------------------
+   --  reveal_prefix  --
+   ---------------------
+   function reveal_prefix (metatree : ThickUCL.UclTree) return String is
+   begin
+      return get_string_data (metatree, prefix, "prefix_not_found");
+   end reveal_prefix;
 
 
 end Raven.Metadata;

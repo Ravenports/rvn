@@ -100,6 +100,7 @@ package body Raven.Cmd.Create is
       function determine_basename return String
       is
          --  must be run after it's determined metadata file is valid (if provided)
+         hyphen : constant Character := '-';
       begin
          if not IsBlank (comline.common_options.name_pattern) then
             return USS (comline.common_options.name_pattern);
@@ -119,10 +120,11 @@ package body Raven.Cmd.Create is
               MET.string_data_exists (metatree, MET.variant) and then
               MET.string_data_exists (metatree, MET.version)
             then
-               return MET.get_string_data (metatree, MET.namebase) & "-" &
-                 MET.get_string_data (metatree, MET.subpackage) & "-" &
-                 MET.get_string_data (metatree, MET.variant) & "-" &
-                 MET.get_string_data (metatree, MET.version);
+               return
+                 MET.reveal_namebase (metatree) & hyphen &
+                 MET.reveal_subpackage (metatree) & hyphen &
+                 MET.reveal_variant (metatree) & hyphen &
+                 MET.reveal_version (metatree);
             else
                Raven.Event.emit_error ("pkg-name was not provided, but metadata " &
                                          "is missing name string components to determine it.");
