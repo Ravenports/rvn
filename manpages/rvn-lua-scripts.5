@@ -1,0 +1,137 @@
+.Dd December 6, 2023
+.Dt RVN-LUA-SCRIPT 5
+.Os
+.Sh NAME
+.Nm "lua scripts"
+.Nd lua scripts that are run by
+.Xr rvn 8
+.Sh DESCRIPTION
+.Xr rvn 8
+runs scripts at distinct phases of package maintenance:
+.Bl -tag -width Ds
+.It Cm pre-install :
+run before installing files on the system.
+.It Cm post-install :
+run after installing files on the system.
+.It Cm pre-deinstall :
+run before removing files on the system.
+.It Cm post-deinstall :
+run after removing files on the system.
+.El
+.Pp
+A package may contain multiple scripts per phase and each will be run
+sequentally inside its own Lua VM.
+.Pp
+In the case of a package upgrade, the scripts are run in this order:
+.Bl -enum -compact
+.It
+new pre-install
+.It
+old pre-deinstall
+.It
+replace binaries
+.It
+new post-install
+.El
+.Pp
+Lua scripts are always run after Bourne shell scripts of the same phase.
+.Sh API
+The complete Lua API is available with the exception of the following changes:
+.Bl -tag -width Ds
+.It Fn io.open
+has been modified to only open files relatively to the rootdir if specified by
+the
+.Ar -r
+argument passed to
+.Xr rvn 8 .
+.It Fn os.remove
+has been modified to only remove files relatively to the rootdir if specified by
+the
+.Ar -r
+argument passed to
+.Xr rvn 8 .
+.It Fn os.rename
+has been modified to only rename files relatively to the rootdir if specified by
+the
+.Ar -r
+argument passed to
+.Xr rvn 8 .
+.El
+.Pp
+The following variables are predefined for the scripts:
+.Bl -tag -width Ds
+.It Va pkg_namebase
+namebase of the package.
+.It Va pkg_subpackage
+subpackage of the package.
+.It Va pkg_variant
+variant of the package.
+.It Va pkg_prefix
+.Va PREFIX
+defined within the package at build time.
+.It Va pkg_rootdir
+represents the root directory where the package will be installed as specified
+by the
+.Fl r
+arguments passed to
+.Xr rvn 8 .
+.It Va pkg_upgrade
+Boolean to inform the script that it is running in the context of an upgrade
+.El
+.Pp
+The following functions have been added:
+.Bl -tag -width Ds
+.It Ft out Fn pkg.prefixed_path "in"
+prepend
+.Va pkg_prefix
+to
+.Ar in
+if needed and returns it as
+.Ft out .
+.It Fn pkg.print_msg "msg"
+send messages to the user that will be shown at the end of the
+.Xr rvn 8
+process.
+.It Fn pkg.filecmp "file1" "file2"
+Compare 2 files, return
+.Va 0
+if the files are identical,
+.Va 1
+if the files are different and
+.Va >1
+if an error occurs.
+.It Fn pkg.copy "source" "destination"
+Copy a file preserving its attributes. return
+.Va -1
+if an error occured
+.It Ft st Fn pkg.stat "file"
+return an object table
+.Ft st
+with the following fields:
+.Va type ,
+.Va size ,
+.Va uid ,
+.Va gid
+.It Fn pkg.symlink "source" "destination"
+Create a symbolic link
+.Va destination
+pointing at
+.Va source
+.It Ft res Fn pkg.readdir path
+Will return an
+.Va ipair
+with the list of elements contained in the directory
+with the special directories
+.Va .
+and
+.Va ..
+filtered out.
+.El
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8
