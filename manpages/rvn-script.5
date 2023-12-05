@@ -1,4 +1,4 @@
-.Dd November 30, 2023
+.Dd December 4, 2023
 .Dt RVN-SCRIPT 5
 .Os
 .Sh NAME
@@ -19,7 +19,7 @@ runs script before removing files on the system.
 runs script after removing files on the system.
 .El
 .Pp
-In the case of a package upgrade, the scripts are run in the following order:
+In the case of a package upgrade, the scripts are run in this order:
 .Bl -enum -compact
 .It
 new pre-install
@@ -48,9 +48,9 @@ by the
 .Fl r
 arguments passed to
 .Xr rvn 8 .
-.It Ev PKG_MSGFD
-Number of a file descriptor to be used to be able to send messages to the user
-that will be shown at the end of the
+.It Ev PKG_OUTFILE
+path to a temporary file to to be used to be able to send messages via >>
+to the user that will be shown at the end of the
 .Xr rvn 8
 process.
 .It Ev PKG_UPGRADE
