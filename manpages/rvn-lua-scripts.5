@@ -39,23 +39,27 @@ Lua scripts are always run after Bourne shell scripts of the same phase.
 The complete Lua API is available with the exception of the following changes:
 .Bl -tag -width Ds
 .It Fn io.open
-has been modified to only open files relatively to the rootdir if specified by
-the
+has been modified to limit opening files inside the rootdir
+specified by the
 .Ar -r
 argument passed to
 .Xr rvn 8 .
 .It Fn os.remove
-has been modified to only remove files relatively to the rootdir if specified by
-the
+has been modified to limit deleting files inside the rootdir
+specified by the
 .Ar -r
 argument passed to
 .Xr rvn 8 .
 .It Fn os.rename
-has been modified to only rename files relatively to the rootdir if specified by
-the
+has been modified to limit renaming files inside the rootdir
+specified by the
 .Ar -r
 argument passed to
 .Xr rvn 8 .
+.It Fn os.execute
+has been disabled.
+.It Fn os.exit
+has been disabled.
 .El
 .Pp
 The following variables are predefined for the scripts:
@@ -98,12 +102,20 @@ Compare 2 files, return
 if the files are identical,
 .Va 1
 if the files are different and
-.Va >1
-if an error occurs.
+.Va 2
+if at least of the files does not exist.
 .It Fn pkg.copy "source" "destination"
-Copy a file preserving its attributes. return
-.Va -1
-if an error occured
+Copy a regular file or a hard link preserving its attributes. return
+.Va 0
+upon success,
+.Va 1
+if an error occurred during copy,
+.Va 2
+if the source file does not exist,
+.Va 3
+if the source file is not an accepted type and
+.Va 4
+if the parent directory of the destination file does not exist.
 .It Ft st Fn pkg.stat "file"
 return an object table
 .Ft st
@@ -117,6 +129,14 @@ Create a symbolic link
 .Va destination
 pointing at
 .Va source
+.It Fn pkg.exec arguments
+Will execute the command
+.Ar arguments
+expected in the following form:
+.So
+.Bro command, arg1, arg2, arg3, ...
+.Brc
+.Sc
 .It Ft res Fn pkg.readdir path
 Will return an
 .Va ipair
