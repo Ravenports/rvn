@@ -4,6 +4,7 @@
 with Raven.Cmd.Unset;
 with Raven.Event;
 with Raven.Metadata;
+with Raven.Context;
 with Raven.Strings; use Raven.Strings;
 with Ada.Directories;
 with Ada.Environment_Variables;
@@ -38,6 +39,7 @@ package body Raven.Cmd.Create is
       verbosity    : constant Boolean := RCU.config_setting (RCU.CFG.create_verbose);
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
       level        : Archive.info_level := Archive.normal;
+      remote_FD    : Archive.Unix.File_Descriptor;
       no_pkgname   : Boolean := False;
       meta_parsed  : Boolean := False;
       metatree     : ThickUCL.UclTree;
@@ -157,6 +159,7 @@ package body Raven.Cmd.Create is
          when low_level => level := Archive.debug;
          when others => null;
       end case;
+      remote_FD := Archive.Unix.File_Descriptor (Context.reveal_event_pipe);
 
       declare
          basename     : constant String := determine_basename;
@@ -174,7 +177,8 @@ package body Raven.Cmd.Create is
                                         keyword_dir         => keywords_dir,
                                         fixed_timestamp     => timestamp,
                                         output_file         => rvn_filename,
-                                        verbosity           => level)
+                                        verbosity           => level,
+                                        optional_pipe       => remote_FD)
          then
             return False;
          end if;
