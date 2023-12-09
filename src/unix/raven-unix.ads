@@ -85,7 +85,7 @@ private
       cloexec   : IC.int;
       creat     : IC.int;
       trunc     : IC.int) return IC.int;
-   pragma Import (C, C_Open, "try_open");
+   pragma Import (C, C_Open, "rvn_try_open");
 
    function C_dprint (fd : IC.int; msg : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_dprint, "dprint");

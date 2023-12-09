@@ -6,7 +6,7 @@
 #if defined _WIN32
 
 int
-try_open
+rvn_try_open
   (const char *path,
    int flag_rdonly,
    int flag_wronly,
@@ -17,7 +17,7 @@ try_open
    int flag_trunc) { return 1; }
 
 int
-try_openat
+rvn_try_openat
   (int dirfd,
    const char *path,
    int flag_rdonly,
