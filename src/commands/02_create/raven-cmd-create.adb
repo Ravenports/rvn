@@ -47,24 +47,15 @@ package body Raven.Cmd.Create is
       --------------------
       function reveal_prefix return String
       is
-         function cli_prefix return String;
          --  A prefix defined in metadata has priority
-         given : constant String := USS (comline.cmd_create.prefix);
-
-         function cli_prefix return String is
-         begin
-            if given = "" then
-               return "/";
-            end if;
-            return given;
-         end cli_prefix;
+         cmd_prefix : constant String := USS (comline.cmd_create.prefix);
       begin
          if IsBlank (metadata) then
-            return cli_prefix;
+            return cmd_prefix;
          end if;
          if not meta_parsed then
             begin
-              ThickUCL.Files.parse_ucl_file (metatree, metadata, "");
+               ThickUCL.Files.parse_ucl_file (metatree, metadata, "");
                meta_parsed := True;
             exception
                when ThickUCL.Files.ucl_file_unparseable =>
@@ -73,14 +64,14 @@ package body Raven.Cmd.Create is
          end if;
          if meta_parsed then
             if MET.string_data_exists (metatree, MET.prefix) then
-               if not isBlank (given) then
+               if not isBlank (cmd_prefix) then
                   Raven.Event.emit_notice
                     ("Prefix found in metadata has priority; value of --prefix ignored.");
                end if;
                return MET.get_string_data (metatree, MET.prefix);
             end if;
          end if;
-         return cli_prefix;
+         return cmd_prefix;
       end reveal_prefix;
 
       ---------------------

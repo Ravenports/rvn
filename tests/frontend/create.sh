@@ -22,11 +22,11 @@ tests_init \
 	create_from_plist_with_keyword_and_message \
 	create_from_plist_keyword_deprecated \
 	create_with_hardlink \
+	create_from_plist_keyword_validation \
+	create_from_plist_keyword_lua_actions \
 
 
-# LUA	create_from_plist_keyword_validation
 # LUA	create_from_plist_keyword_real_args
-# LUA	create_from_plist_keyword_lua_actions
 
 
 genmanifest() {
@@ -84,7 +84,7 @@ basic_validation() {
 
 create_with_hardlink_body() {
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg \
-	METADATA "test" "single" "standard" "1" "/" 
+	METADATA "test" "single" "standard" "1" "/"
 	echo "blah" >> foo
 	ln foo bar
 	echo "@(root,wheel,0555) /foo" >> test.plist
@@ -165,14 +165,14 @@ create_from_plist_set_group_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 	basic_validation
 	atf_check \
-		-o match:"-rw-r--r-- .*root[ /]+bla.* /file1$" \
+		-o match:"-rw-r--r-- .*root[ ]+bla.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		bsdtar tvf test-1.rvn
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 
@@ -265,7 +265,7 @@ EOF
 mkdir target
 
 	atf_check \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 	atf_check \
 		-o inline:"yes\nfile1\nyes\nA\nB\nC\nD\n" \
@@ -284,9 +284,9 @@ EOS
 EOF
 	atf_check \
 		-o empty \
-		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
+		-e inline:"meh\nFail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 cat << EOF > test.ucl
 actions: []
@@ -298,9 +298,9 @@ EOS
 EOF
 	atf_check \
 		-o inline:"file1\n" \
-		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
+		-e inline:"meh\nFail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 cat << EOF > test.ucl
 actions: []
@@ -310,11 +310,12 @@ io.stderr:write("meh\n")
 return 1
 EOS
 EOF
+	# arguments: has no effect.  they are always one.
 	atf_check \
-		-o inline:"0\n" \
-		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
+		-o inline:"1\n" \
+		-e inline:"meh\nFail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 cat << EOF > test.ucl
 actions: []
@@ -327,9 +328,9 @@ EOS
 EOF
 	atf_check \
 		-o inline:"1\n" \
-		-e inline:"meh\n${PROGNAME}: Fail to apply keyword 'test'\n" \
+		-e inline:"meh\nFail to apply keyword 'test'\n" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 	genplist "@test A B"
 	genplist "@test A A"
@@ -339,7 +340,7 @@ actions: []
 arguments: true
 prepackaging: <<EOS
 if #arg == 1 then
-  return 0
+  return
 end
 if #arg == 2 then
   if arg[1] == arg[2] then
@@ -352,16 +353,16 @@ io.stderr:write("Invalid number of arguments '".. #arg .. "' expecting 1 or 2\n"
 return 1
 EOS
 EOF
-output="${PROGNAME}: Fail to apply keyword 'test'
+output="Fail to apply keyword 'test'
 The first and the second argument are identical
-${PROGNAME}: Fail to apply keyword 'test'
+Fail to apply keyword 'test'
 Invalid number of arguments '3' expecting 1 or 2
-${PROGNAME}: Fail to apply keyword 'test'
+Fail to apply keyword 'test'
 "
 	atf_check \
 		-e inline:"${output}" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 }
 
 create_from_plist_with_keyword_arguments_body() {
@@ -412,7 +413,7 @@ EOF
 		-o empty \
 		-e match:"Manifest file [[]A[]] does not exist, ignoring$" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -v -o ${TMPDIR} -r . -m METADATA -w test.plist
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 	touch A
 	mkdir B
@@ -666,14 +667,16 @@ EOF
 create_from_plist_keyword_lua_actions_body()
 {
 	genmanifest
-	genplist "@test(plop,,) A B C D"
+	genplist "@test A B C D"
 
 cat << EOF > test.ucl
-arguments: true
+actions: [file]
+attributes: {owner: plop}
 prepackaging: <<EOS
 ok = true
 for i = 1, #arg do
-	if not pkg.file(arg[i]) then
+	if not pkg.stat(arg[i]) then
+		io.stderr:write("Unable to access file " .. arg[i] .. ":No such file or directory\n")
 		ok = false
 	end
 end
@@ -681,29 +684,30 @@ if not ok then
 	return 1
 end
 EOS
-arguments: true
 EOF
 
 touch C
 touch D
 
-output="${PROGNAME}: Unable to access file ./A:No such file or directory
-${PROGNAME}: Unable to access file ./B:No such file or directory
-${PROGNAME}: Fail to apply keyword 'test'
+output="Unable to access file A:No such file or directory
+Unable to access file B:No such file or directory
+Fail to apply keyword 'test'
 "
 
 	atf_check \
 		-e inline:"${output}" \
 		-s exit:1 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 
 touch A B
 	atf_check \
 		-s exit:0 \
-		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m . -p test.plist -r .
+		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -m METADATA -w test.plist -r .
 	atf_check \
-		-o match:"-rw-r--r-- .*plop[ /]+wheel.* /A$" \
-		bsdtar tvf test-1.rvn
+		-o match:"-rw-r--r-- .*plop[ ]+wheel.*[ ]A$" \
+		-e empty \
+		-s exit:0 \
+		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_keyword_deprecated_body()

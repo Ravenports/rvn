@@ -3,32 +3,7 @@
  * Reference: ../../License.txt
  */
 
-#if defined _WIN32
-
-int
-rvn_try_open
-  (const char *path,
-   int flag_rdonly,
-   int flag_wronly,
-   int flag_nonblock,
-   int flag_directory,
-   int flag_cloexec,
-   int flag_creat,
-   int flag_trunc) { return 1; }
-
-int
-rvn_try_openat
-  (int dirfd,
-   const char *path,
-   int flag_rdonly,
-   int flag_wronly,
-   int flag_nonblock,
-   int flag_directory,
-   int flag_cloexec,
-   int flag_creat,
-   int flag_trunc) { return 1; }
-
-#else  /* defined _WIN32 */
+#if !defined _WIN32
 
 #include <fcntl.h>
 
@@ -46,7 +21,7 @@ rvn_try_openat
 
 
 int
-try_open
+rvn_try_open
   (const char *path,
    int flag_rdonly,
    int flag_wronly,
@@ -89,7 +64,7 @@ try_open
 }
 
 int
-try_openat
+rvn_try_openat
   (int dirfd,
    const char *path,
    int flag_rdonly,
@@ -132,4 +107,4 @@ try_openat
     return (openat (dirfd, path, flags));
 }
 
-#endif /* defined _WIN32 */
+#endif /* !defined _WIN32 */
