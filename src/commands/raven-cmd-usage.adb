@@ -293,7 +293,7 @@ package body Raven.Cmd.Usage is
       function alert (error_msg : String) return Boolean
       is
          msg1 : constant String := "install [-AfIMnFqRUy] [-r reponame] [-Cgix] <pkg-name-pattern>";
-         msg2 : constant String := "install --[[no|only]-registration| [--file] <pkg-file-pattern>";
+         msg2 : constant String := "install --[[no|only]-registration| [--file] <path-rvn-archive>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -320,9 +320,23 @@ package body Raven.Cmd.Usage is
          if not IsBlank (comline.common_options.repo_name) then
             return alert ("--repository" & not_with_file);
          end if;
+         if comline.common_options.case_insensitive or else
+           comline.common_options.case_sensitive or else
+           comline.common_options.regex or else
+           comline.common_options.shell_glob
+         then
+            return alert ("-Cgix" & not_with_file);
+         end if;
+         if comline.common_options.multiple_patterns.Is_Empty then
+            return alert ("Missing path to rvn archive");
+         end if;
+         if comline.cmd_install.recursive then
+            return alert ("--recursive" & not_with_file);
+         end if;
       end if;
-      if IsBlank (comline.common_options.name_pattern) then
-         return alert ("Missing package file/name pattern");
+
+      if comline.common_options.multiple_patterns.Is_Empty then
+         return alert ("Missing package name pattern");
       end if;
 
       return True;

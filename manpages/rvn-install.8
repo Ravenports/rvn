@@ -182,8 +182,9 @@ This command installs packages directly (bypassing a repository) from a local di
 If the package to be installed has unmet dependencies,
 .Nm
 will search the directory containing pkg-name for suitable rvn archive files to fulfill
-those dependencies on a best-effort basis while emitting errors on any missing
-dependencies.
+those dependencies.  The
+.Fl M
+switch can be used to force an installation if one or more dependencies is absent.
 .El
 .Sh ENVIRONMENT
 The following environment variables affect the execution of

@@ -74,6 +74,7 @@ private
          no_repo_update     : Boolean := False;  --  -U, --no-repo-update
          name_pattern       : Text;
          repo_name          : Text;
+         multiple_patterns  : string_crate.Vector;
       end record;
 
    type switches_config_alias is

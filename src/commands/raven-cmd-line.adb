@@ -324,7 +324,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_repo or else datum = swl_repo then
                      last_cmd := generic_repo_name;
                   else
-                     handle_trailing_pkgname (data, datum, datumtxt);
+                     handle_pkg_patterns (data, datum, datumtxt);
                   end if;
             end case;
          else
@@ -542,11 +542,9 @@ package body Raven.Cmd.Line is
    -------------------------------
    --  handle_trailing_pkgname  --
    -------------------------------
-   procedure handle_trailing_pkgname (self : in out Cldata; datum : String; datumtxt : Text)
-   is
-      hyphen : constant Character := '-';
+   procedure handle_trailing_pkgname (self : in out Cldata; datum : String; datumtxt : Text) is
    begin
-      if datum (datum'First) = hyphen then
+      if datum (datum'First) = LAT.Hyphen then
          set_error (self, "Unexpected switch: " & datum);
       else
          if self.common_options.all_installed_pkgs then
@@ -559,6 +557,19 @@ package body Raven.Cmd.Line is
          end if;
       end if;
    end handle_trailing_pkgname;
+
+
+   ---------------------------
+   --  handle_pkg_patterns  --
+   ---------------------------
+   procedure handle_pkg_patterns (self : in out Cldata; datum : String; datumtxt : Text) is
+   begin
+      if datum (datum'First) = LAT.Hyphen then
+         set_error (self, "Unexpected switch: " & datum);
+         return;
+      end if;
+      self.common_options.multiple_patterns.Append (datumtxt);
+   end handle_pkg_patterns;
 
 
    -------------
