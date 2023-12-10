@@ -10,11 +10,11 @@ with ThickUCL.Emitter;
 with Ucl;
 
 package body Raven.Cmd.Unset is
-   
+
    package ENV renames Ada.Environment_Variables;
    package EV  renames Raven.Event;
-   
-   
+
+
    --------------------------
    --  execute_no_command  --
    --------------------------
@@ -23,7 +23,7 @@ package body Raven.Cmd.Unset is
       case comline.pre_command.version_setting is
          when not_shown =>
             --  switch --list
-            if comline.pre_command.list_commands then   
+            if comline.pre_command.list_commands then
                return list_available_commands;
             end if;
             if comline.pre_command.status_check then
@@ -33,14 +33,14 @@ package body Raven.Cmd.Unset is
             return False;
          when just_version =>
             --  switch -v
-            return basic_version_info;          
+            return basic_version_info;
          when dump_configuration =>
             --  switch -vv
             initialize_program (comline);
             return extended_version_info;
       end case;
    end execute_no_command;
-   
+
 
    --------------------------
    --  basic_version_info  --
@@ -50,8 +50,8 @@ package body Raven.Cmd.Unset is
       TIO.Put_Line (progversion);
       return True;
    end basic_version_info;
-   
-   
+
+
    -----------------------
    --  do_status_check  --
    -----------------------
@@ -60,8 +60,8 @@ package body Raven.Cmd.Unset is
       TIO.Put_Line ("status-check not yet implemented");
       return False;
    end do_status_check;
-   
-   
+
+
    ------------------------------
    --  list_available_comands  --
    ------------------------------
@@ -98,7 +98,7 @@ package body Raven.Cmd.Unset is
             end case;
          end loop;
       end;
-      
+
       for y in rows loop
          for x in cols loop
             declare
@@ -111,24 +111,24 @@ package body Raven.Cmd.Unset is
       end loop;
       return True;
    end list_available_commands;
-   
-   
+
+
    --------------------------
    --  initialize_program  --
    --------------------------
-   procedure initialize_program (comline : Cldata) 
+   procedure initialize_program (comline : Cldata)
    is
       function config_file_path return String;
-      
+
       --  establish configuration
-      --  set environment 
+      --  set environment
       --  set context
       --  special debug handling (if specified in command line:
       --          * set context early
       --          * passes to establish_configuration
       --          * reset context
-      
-      function config_file_path return String 
+
+      function config_file_path return String
       is
          default_location : constant String := install_loc & "/etc/" & progname & ".conf";
       begin
@@ -139,25 +139,25 @@ package body Raven.Cmd.Unset is
       end config_file_path;
    begin
       Context.register_debug_level (comline.pre_command.debug_setting);
-      CFG.establish_configuration 
-        (configuration_file    => config_file_path, 
-         command_line_options  => USS (comline.pre_command.option_nvpairs), 
-         debug_level_cli       => comline.pre_command.debug_setting, 
+      CFG.establish_configuration
+        (configuration_file    => config_file_path,
+         command_line_options  => USS (comline.pre_command.option_nvpairs),
+         debug_level_cli       => comline.pre_command.debug_setting,
          session_configuration => program_configuration);
-      
+
       declare
          key1 : constant String := CFG.get_ci_key (CFG.debug_level);
          key2 : constant String := CFG.get_ci_key (CFG.dbdir);
          key3 : constant String := CFG.get_ci_key (CFG.cachedir);
          key4 : constant String := CFG.get_ci_key (CFG.event_pipe);
          key5 : constant String := CFG.get_ci_key (CFG.dev_mode);
-         
+
          conf_debug : constant Ucl.ucl_integer := program_configuration.get_base_value (key1);
-         db_dir     : constant String := program_configuration.get_base_value (key2); 
+         db_dir     : constant String := program_configuration.get_base_value (key2);
          cache_dir  : constant String := program_configuration.get_base_value (key3);
          event_pipe : constant String := program_configuration.get_base_value (key4);
-         dev_mode   : constant Boolean := program_configuration.get_base_value (key5);   
-         
+         dev_mode   : constant Boolean := program_configuration.get_base_value (key5);
+
          mechanism  : Unix.Unix_Pipe;
       begin
          case conf_debug is
@@ -182,7 +182,7 @@ package body Raven.Cmd.Unset is
                when Unix.unix_socket =>
                   case Context.register_event_pipe_via_socket (event_pipe) is
                      when Unix.connected =>
-                        EV.emit_debug 
+                        EV.emit_debug
                           (moderate, "Event pipe " & SQ (event_pipe) & " socket opened.");
                      when Unix.failed_creation
                         | Unix.failed_connection =>
@@ -195,15 +195,15 @@ package body Raven.Cmd.Unset is
             end case;
          end if;
       end;
-      
+
       declare
          procedure upsert (Position : ThickUCL.jar_string.Cursor);
-         
+
          nkey : constant String := CFG.get_ci_key (CFG.environ);
          keys : ThickUCL.jar_string.Vector;
          vndx : ThickUCL.object_index := program_configuration.get_index_of_base_ucl_object (nkey);
-         
-         procedure upsert (Position : ThickUCL.jar_string.Cursor) 
+
+         procedure upsert (Position : ThickUCL.jar_string.Cursor)
          is
             name : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
             val  : constant String := program_configuration.get_object_value (vndx, name);
@@ -211,12 +211,12 @@ package body Raven.Cmd.Unset is
             ENV.Set (name, val);
          end upsert;
       begin
-         program_configuration.get_object_object_keys (vndx, keys); 
+         program_configuration.get_object_object_keys (vndx, keys);
          keys.Iterate (upsert'Access);
       end;
    end initialize_program;
-   
-   
+
+
    -----------------------------
    --  extended_version_info  --
    -----------------------------
@@ -228,8 +228,8 @@ package body Raven.Cmd.Unset is
 
       return True;
    end extended_version_info;
-   
-   
+
+
    ----------------------------
    --  show_repository_info  --
    ----------------------------
@@ -238,12 +238,12 @@ package body Raven.Cmd.Unset is
       --  TODO: Re-implement
       null;
    end show_repository_info;
-   
-   
+
+
    ------------------------
    --  alias_definition  --
    ------------------------
-   function alias_definition (alias : String) return String 
+   function alias_definition (alias : String) return String
    is
       key : constant String := CFG.get_ci_key (CFG.alias);
       vndx : ThickUCL.object_index;
@@ -261,12 +261,12 @@ package body Raven.Cmd.Unset is
       end if;
       return "";
    end alias_definition;
-   
-   
+
+
    -------------------------
    --  config_setting #1  --
    -------------------------
-   function config_setting (setting : CFG.Configuration_Item) return String 
+   function config_setting (setting : CFG.Configuration_Item) return String
    is
       key   : constant String := CFG.get_ci_key (setting);
       dtype : ThickUCL.Leaf_type;
@@ -276,11 +276,11 @@ package body Raven.Cmd.Unset is
          when ThickUCL.data_string =>
             return program_configuration.get_base_value (key);
          when others =>
-            raise ThickUCL.ucl_type_mismatch with key & " is not of type string";  
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type string";
       end case;
    end config_setting;
-   
-   
+
+
    -------------------------
    --  config_setting #2  --
    -------------------------
@@ -294,15 +294,15 @@ package body Raven.Cmd.Unset is
          when ThickUCL.data_boolean =>
             return program_configuration.get_base_value (key);
          when others =>
-            raise ThickUCL.ucl_type_mismatch with key & " is not of type boolean";  
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type boolean";
       end case;
    end config_setting;
-   
-   
+
+
    -------------------------
    --  config_setting #3  --
    -------------------------
-   function config_setting (setting : CFG.Configuration_Item) return int64 
+   function config_setting (setting : CFG.Configuration_Item) return int64
    is
       key   : constant String := CFG.get_ci_key (setting);
       dtype : ThickUCL.Leaf_type;
@@ -314,21 +314,22 @@ package body Raven.Cmd.Unset is
             value := program_configuration.get_base_value (key);
             return int64 (value);
          when others =>
-            raise ThickUCL.ucl_type_mismatch with key & " is not of type int64";  
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type int64";
       end case;
    end config_setting;
-   
+
+
    --------------------------------
    --  config_setting_as_string  --
    --------------------------------
-   function config_setting_as_string (setting : CFG.Configuration_Item) return String 
+   function config_setting_as_string (setting : CFG.Configuration_Item) return String
    is
       key   : constant String := CFG.get_ci_key (setting);
       dtype : ThickUCL.Leaf_type;
    begin
       dtype := program_configuration.get_data_type (key);
       case dtype is
-         when ThickUCL.data_string => 
+         when ThickUCL.data_string =>
             return config_setting (setting);
          when ThickUCL.data_boolean =>
             declare
@@ -375,15 +376,15 @@ package body Raven.Cmd.Unset is
             end;
          when ThickUCL.data_object =>
             declare
-               procedure scan (Position : ThickUCL.jar_string.Cursor); 
-                 
+               procedure scan (Position : ThickUCL.jar_string.Cursor);
+
                key    : constant String := CFG.get_ci_key (setting);
                vndx   : ThickUCL.object_index;
                delim  : Character := Character'Val (0);
                okeys  : ThickUCL.jar_string.Vector;
                restxt : Text;
-               
-               procedure scan (Position : ThickUCL.jar_string.Cursor) 
+
+               procedure scan (Position : ThickUCL.jar_string.Cursor)
                is
                   dkey : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
                   val  : constant String := program_configuration.get_object_value (vndx, dkey);
@@ -402,7 +403,8 @@ package body Raven.Cmd.Unset is
             end;
       end case;
    end config_setting_as_string;
-   
+
+
    --------------------------------
    --  config_setting_map_value  --
    --------------------------------
@@ -458,11 +460,11 @@ package body Raven.Cmd.Unset is
                end case;
             end;
          when others =>
-            raise ThickUCL.ucl_type_mismatch with key & " is not of type object";  
+            raise ThickUCL.ucl_type_mismatch with key & " is not of type object";
       end case;
    end config_setting_map_value;
-   
-   
+
+
    -------------------------------
    --  exit_status_already_set  --
    -------------------------------
@@ -470,8 +472,8 @@ package body Raven.Cmd.Unset is
    begin
       return sys_exit_overridden;
    end exit_status_already_set;
-   
-   
+
+
    ----------------------------
    --  override_exit_status  --
    ----------------------------
@@ -479,5 +481,5 @@ package body Raven.Cmd.Unset is
    begin
       sys_exit_overridden := True;
    end override_exit_status;
-   
+
 end Raven.Cmd.Unset;

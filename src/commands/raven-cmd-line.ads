@@ -41,8 +41,7 @@ private
 
    type Clswitch is
         (nothing_pending,
-         --  generic_repo_name,
-         --  generic_raw_format,
+         generic_repo_name,
          --  annotate_tag,
          create_metadata,
          create_whitelist,

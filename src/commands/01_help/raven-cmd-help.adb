@@ -87,6 +87,7 @@ package body Raven.Cmd.Help is
                when cv_create  => PL (C, "Creates software packages for distribution");
                when cv_help    => PL (C, "Displays help information");
                when cv_info    => PL (C, "Displays information about installed packages");
+               when cv_install => PL (C, "Installs packages from remote and local repositories");
                --  when cv_clean   => PL (C, "Cleans old packages from the cache");
                --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
                --  when cv_fetch   => PL (C, "Fetches packages from a remote repository");
@@ -105,10 +106,6 @@ package body Raven.Cmd.Help is
                --     PL (C, "Removes orphan packages");
                --  when cv_shlib =>
                --     PL (C, "Displays which packages link against a specific shared library");
-               --  when cv_set =>
-               --     PL (C, "Modifies information about packages in the local database");
-               --  when cv_install =>
-               --     PL (C, "Installs packages from remote package repositories and local archives");
                --  when cv_check =>
                --     PL (C, "Checks for missing dependencies and database consistency");
                --  when cv_annotate =>

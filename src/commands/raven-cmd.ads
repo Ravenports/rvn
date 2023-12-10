@@ -26,7 +26,8 @@ private
       cv_config,
       cv_create,
       cv_help,
-      cv_info
+      cv_info,
+      cv_install
      );
 
      --   cv_annotate,
@@ -34,7 +35,6 @@ private
      --   cv_check,
      --   cv_clean,
      --   cv_fetch,
-     --   cv_install,
      --   cv_query,
      --   cv_remove,
      --   cv_repo,
@@ -71,7 +71,9 @@ private
          dry_run            : Boolean := False;  --  -n, --dry-run
          assume_yes         : Boolean := False;  --  -y, --yes
          all_installed_pkgs : Boolean := False;  --  -a, --all
+         no_repo_update     : Boolean := False;  --  -U, --no-repo-update
          name_pattern       : Text;
+         repo_name          : Text;
       end record;
 
    type switches_config_alias is
@@ -120,6 +122,19 @@ private
          path_archive_file  : Text;
       end record;
 
+   type switches_install_cmd is
+      record
+         automatic          : Boolean := False;  --  -A, --automatic
+         fetch_only         : Boolean := False;  --  -F, --fetch-only
+         force_install      : Boolean := False;  --  -f, --force
+         inhibit_scripts    : Boolean := False;  --  -I, --no-scripts
+         ignore_missing     : Boolean := False;  --  -M, --ignore-missing
+         recursive          : Boolean := False;  --  -R, --recursive
+         local_file         : Boolean := False;  --      --file
+         no_register        : Boolean := False;          --no-register
+         only_register      : Boolean := False;          --only-register
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -150,6 +165,7 @@ private
          cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
          cmd_info               : switches_info_cmd;
+         cmd_install            : switches_install_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

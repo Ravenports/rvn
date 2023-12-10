@@ -55,12 +55,13 @@ package body Raven.Cmd.Usage is
    function command_line_valid (comline : Cldata) return Boolean is
    begin
       case comline.command is
-         when cv_unset  => return True;  -- already verified
-         when cv_alias  => return verb_alias (comline);
-         when cv_config => return verb_config (comline);
-         when cv_create => return verb_create (comline);
-         when cv_help   => return verb_help (comline);
-         when cv_info   => return verb_info (comline);
+         when cv_unset   => return True;  -- already verified
+         when cv_alias   => return verb_alias (comline);
+         when cv_config  => return verb_config (comline);
+         when cv_create  => return verb_create (comline);
+         when cv_help    => return verb_help (comline);
+         when cv_info    => return verb_info (comline);
+         when cv_install => return verb_install (comline);
       end case;
    end command_line_valid;
 
@@ -124,7 +125,6 @@ package body Raven.Cmd.Usage is
    -------------------
    function verb_config (comline : Cldata) return Boolean
    is
-      function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
          msg : constant String := "config <name>";
@@ -146,7 +146,6 @@ package body Raven.Cmd.Usage is
    -------------------
    function verb_alias (comline : Cldata) return Boolean
    is
-      function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
          msg : constant String := "alias [-ql] [alias]";
@@ -168,7 +167,6 @@ package body Raven.Cmd.Usage is
    -------------------
    function verb_create (comline : Cldata) return Boolean
    is
-      function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
          m1 : constant String := "create [-qv] [-o outdir] [-r rootdir] [-p prefix] ";
@@ -200,7 +198,6 @@ package body Raven.Cmd.Usage is
    -----------------
    function verb_help (comline : Cldata) return Boolean
    is
-      function alert (error_msg : String) return Boolean;
       function alert (error_msg : String) return Boolean
       is
          msg : constant String := "help <command>";
@@ -222,8 +219,6 @@ package body Raven.Cmd.Usage is
    -----------------
    function verb_info (comline : Cldata) return Boolean
    is
-      function alert (error_msg : String) return Boolean;
-
       list_opts : Natural := 0;
 
       function alert (error_msg : String) return Boolean
@@ -288,6 +283,50 @@ package body Raven.Cmd.Usage is
          return True;
       end if;
    end verb_info;
+
+
+   --------------------
+   --  verb_install  --
+   --------------------
+   function verb_install (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "install [-AfIMnFqRUy] [-r reponame] [-Cgix] <pkg-name-pattern>";
+         msg2 : constant String := "install --[[no|only]-registration| [--file] <pkg-file-pattern>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_help_suggestion (cv_install);
+         return False;
+      end alert;
+
+      not_with_file : constant String := " switch is incompatible with --file switch";
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+      if comline.cmd_install.no_register and then comline.cmd_install.only_register then
+         return alert ("--no-registration and --only-registration are mutually exclusive.");
+      end if;
+      if comline.cmd_install.local_file then
+         if comline.cmd_install.fetch_only then
+            return alert ("--fetch-only" & not_with_file);
+         end if;
+         if comline.common_options.no_repo_update then
+            return alert ("--no-repo-update" & not_with_file);
+         end if;
+         if not IsBlank (comline.common_options.repo_name) then
+            return alert ("--repository" & not_with_file);
+         end if;
+      end if;
+      if IsBlank (comline.common_options.name_pattern) then
+         return alert ("Missing package file/name pattern");
+      end if;
+
+      return True;
+   end verb_install;
 
 
    ----------------------------------

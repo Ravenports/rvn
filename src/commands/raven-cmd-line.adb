@@ -292,6 +292,40 @@ package body Raven.Cmd.Line is
                      end if;
                   end if;
 
+               when cv_install =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                  elsif datum = sws_dryrun or else datum = swl_dryrun then
+                     data.common_options.dry_run := True;
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                  elsif aCgix (data, datum, False) then
+                     null;
+                  elsif datum = "-A" or else datum = "--automatic" then
+                     data.cmd_install.automatic := True;
+                  elsif datum = "-F" or else datum = "--fetch-only" then
+                     data.cmd_install.fetch_only := True;
+                  elsif datum = "-f" or else datum = "--force" then
+                     data.cmd_install.force_install := True;
+                  elsif datum = "-I" or else datum = "--no-scripts" then
+                     data.cmd_install.inhibit_scripts := True;
+                  elsif datum = "-M" or else datum = "--ignore-missing" then
+                     data.cmd_install.ignore_missing := True;
+                  elsif datum = "-R" or else datum = "--recursive" then
+                     data.cmd_install.recursive := True;
+                  elsif datum = "--file" then
+                     data.cmd_install.local_file := True;
+                  elsif datum = "--no-registration" then
+                     data.cmd_install.no_register := True;
+                  elsif datum = "--only-registration" then
+                     data.cmd_install.only_register := True;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -304,6 +338,7 @@ package body Raven.Cmd.Line is
                when create_timestamp   => data.cmd_create.timestamp       := datumtxt;
                when create_prefix      => data.cmd_create.prefix          := datumtxt;
                when info_archive_file  => data.cmd_info.path_archive_file := datumtxt;
+               when generic_repo_name  => data.common_options.repo_name   := datumtxt;
                when help =>
                   data.help_command := get_command (datum);
                   if data.help_command = cv_unset then
@@ -426,7 +461,9 @@ package body Raven.Cmd.Line is
          ("config    ", cv_config),
          ("create    ", cv_create),
          ("help      ", cv_help),
-         ("info      ", cv_info)
+         ("info      ", cv_info),
+         ("install   ", cv_install)
+
          --  ("add       ", cv_add),
          --  ("alias     ", cv_alias),
          --  ("annotate  ", cv_annotate),
