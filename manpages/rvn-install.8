@@ -1,0 +1,215 @@
+.Dd December 9, 2023
+.Dt RVN-INSTALL 8
+.Os
+.Sh NAME
+.Nm "rvn install"
+.Nd install packages from package repositories, local or remote
+.Sh SYNOPSIS
+.Nm
+.Op Fl AfIMnFqRUy
+.Op Fl r Ar reponame
+.Op Fl Cgix
+.Ar <pkg-namebase|pkg-namebase-subpackage-variant> ...
+.Pp
+.Nm
+.Op Cm --{automatic,force,no-scripts,ignore-missing}
+.Op Cm --{dry-run,fetch-only,quiet,recursive,no-repo-update,yes}
+.Op Cm --repository Ar reponame
+.Op Cm --{case-sensitive,glob,case-insensitive,regex}
+.Ar <pkg-namebase|pkg-namebase-subpackage-variant> ...
+.Sh DESCRIPTION
+.Nm
+is used for installation of packages from package repositories or
+local archives.
+Multiple package names can be specified on the command line, either
+explicitly or by matching against package names (or origins) in the repository
+catalogues using shell globbing or regular expressions.
+.Pp
+.Nm
+first updates any out of date repository catalogues, unless
+.Cm REPO_AUTOUPDATE
+has been set to
+.Sy NO
+in
+.Pa rvn.conf .
+.Pp
+It then creates a work-list of all the package installations to do.
+Any already installed and up-to-date packages will be dropped from the
+list unless the
+.Fl f
+(force) option is supplied, in which case those packages will be
+reinstalled.
+.Pp
+The dependencies of packages in the list are examined and any missing
+packages are added to the list for installation.
+Such implicitly added packages are flagged as candidates for
+autoremoval.
+See
+.Xr rvn-autoremove 8
+for details.
+.Pp
+Autoremoval flags are sticky, and will persist over reinstallation or
+upgrade of the packages concerned, even if subsequently the packages
+are named explicitly on a command line.
+See
+.Xr rvn-query 8
+for finding the autoremoval status of a package.
+.Pp
+Any already installed but out of date packages, either named on the
+command line or from the sum of all their dependencies are added to
+the work list as upgrade jobs.
+The work list is sorted into dependency order and
+.Nm
+will present it to the user for approval before proceeding, unless
+overridden by the
+.Fl y
+option or the
+.Cm ASSUME_ALWAYS_YES
+setting in
+.Pa rvn.conf .
+.Pp
+Packages are fetched from the repositories into the local package
+cache if they are not already present, or if the checksum of the
+cached package file differs from the one in the repository.
+Packages may be downloaded from any of the repositories mentioned
+in
+.Xr rvn.conf 5
+or in the files in
+.Pa /usr/local/etc/rvn/repo .
+See
+.Xr rvn-repository 5
+for details.
+.Pp
+Package repository catalogues will be automatically updated whenever
+.Nm
+is run by a user ID with write access to the package database,
+unless disabled by the
+.Fl U
+flag or setting
+.Cm REPO_AUTOUPDATE
+to
+.Sy NO
+in
+.Xr rvn.conf 5 .
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width automatic
+.It Fl A , Cm --automatic
+Mark the installed packages as automatic.
+Will be automatically removed if no other packages depend on them.
+For more information please refer to
+.Xr rvn-autoremove 8 .
+.It Fl C , Cm --case-sensitive
+Make the standard or the regular expression
+.Fl ( x )
+matching against
+.Ar pkg-name
+case sensitive.
+.It Fl F , Cm --fetch-only
+Do not perform actual installation of packages, merely fetch packages
+that should be upgraded and detect possible conflicts.
+.It Fl f , Cm --force
+Force the reinstallation of the package if already installed.
+.It Fl g , Cm --glob
+Treat the package names as shell glob patterns.
+.It Fl I , Cm --no-scripts
+If any installation scripts (pre-install or post-install) exist for a given
+package, do not execute them.
+When a package is updated, deinstallation scripts (pre-deinstall or
+post-deinstall) are not run either.
+.It Fl i , Cm --case-insensitive
+Make the standard or the regular expression
+.Fl ( x )
+matching against
+.Ar pkg-name
+case insensitive.
+This is the default, unless modified by setting
+.Ev CASE_SENSITIVE_MATCH
+to true in
+.Pa rvn.conf .
+.It Fl M , Cm --ignore-missing
+Force the installation of the package with missing dependencies.
+.It Fl n , Cm --dry-run
+Dry-run mode.
+The list of changes to packages is always printed, but
+no changes are actually made.
+.It Fl q , Cm --quiet
+Force quiet output, except when
+.Fl n
+is used, where
+.Nm
+will always show packages to be installed, upgraded or deleted.
+.It Fl R , Cm --recursive
+When used with
+.Fl f ,
+reinstalls any packages that require the given package.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+Install packages from only the named repository,
+irrespective of the configured
+.Dq active
+status from
+.Pa repo.conf .
+.It Fl U , Cm --no-repo-update
+Suppress the automatic update of the local copy of the repository catalogue
+from remote.
+Automatic repository catalogue updates are only attempted when the
+effective UID of the process has write access to the package database.
+Otherwise they are silently ignored.
+.It Fl x , Cm --regex
+Treat the package names as regular expressions according to the
+"modern" or "extended" syntax of
+.Xr re_format 7 .
+.It Fl y , Cm --yes
+Assume yes when asked for confirmation before package installation.
+.El
+.Sh SPECIAL OPTIONS
+The following options are not intended for regular use and may be ignored.
+.Bl -tag -width automatic
+.It Cm --no-registration
+Disable package registration into the local database.
+The files are still installed and the scripts will be executed unless
+.Fl I
+or RUN_SCRIPTS disables that.
+.It Cm --only-registration
+The package manifest is registered into the local database without installing
+any files or running any scripts or performing analysis of the files being
+installed.
+The sole purpose of this option is to support regression testing by the
+Kyua testsuite.
+.It Cm --file
+This command installs packages directly (bypassing a repository) from a local directory.
+If the package to be installed has unmet dependencies,
+.Nm
+will search the directory containing pkg-name for suitable rvn archive files to fulfill
+those dependencies on a best-effort basis while emitting errors on any missing
+dependencies.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev ASSUME_ALWAYS_YES
+.It Ev CASE_SENSITIVE_MATCH
+.It Ev DEFAULT_ALWAYS_YES
+.It Ev HANDLE_RC_SCRIPTS
+.It Ev REPO_AUTOUPDATE
+.It Ev RUN_SCRIPTS
+.It Ev RVN_CACHEDIR
+.It Ev RVN_DBDIR
+.El
+.Sh FILES
+See
+.Xr rvn.conf 5 .
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8
