@@ -216,9 +216,7 @@ EOS
 }
 EOF
 
-ERR="Failed to execute lua script: [string \"os.execute(\"echo yeah\")\"]:1: os.execute not available
-pkg: lua script failed\n"
-
+ERR="Failed to execute Lua script:LUA_ERRRUN\n[string \"os.execute(\"echo yeah\")\"]:1: os.execute not available\npost-install-lua Lua script number 0 failed\n"
 
 	touch dummy.plist
 	atf_check \
@@ -502,7 +500,7 @@ EOF
 script_copy_symlink_body() {
 	echo "sample text" > a.sample
 	ln -s a.sample b
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	cat << EOF >> test.ucl
 scripts: {
   post-install-lua: [
@@ -557,7 +555,7 @@ scripts: {
        code: <<EOS
   sample_file = pkg.prefixed_path(arg[1])
   if arg[2] == nil then
-    target_file = string.gsub(sample_file,'%.sample$', "")
+    target_file = string.gsub(sample_file,'.sample', "")
   else
     target_file = pkg.prefixed_path(arg[2])
   end
@@ -605,7 +603,7 @@ scripts: {
        code: <<EOS
   sample_file = pkg.prefixed_path(arg[1])
   if arg[2] == nil then
-    target_file = string.gsub(sample_file,'%.sample$', "")
+    target_file = string.gsub(sample_file,'.sample', "")
   else
     target_file = pkg.prefixed_path(arg[2])
   end
