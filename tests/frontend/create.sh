@@ -24,9 +24,7 @@ tests_init \
 	create_with_hardlink \
 	create_from_plist_keyword_validation \
 	create_from_plist_keyword_lua_actions \
-
-
-# LUA	create_from_plist_keyword_real_args
+	create_from_plist_keyword_real_args
 
 
 genmanifest() {
@@ -269,7 +267,7 @@ mkdir target
 
 	atf_check \
 		-o inline:"yes\nfile1\nyes\nA\nB\nC\nD\n" \
-		rvn -o REPOS_DIR=/dev/null -r ${TMPDIR}/target install -qfy ${TMPDIR}/test-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_keyword_validation_body() {
@@ -340,7 +338,7 @@ actions: []
 arguments: true
 prepackaging: <<EOS
 if #arg == 1 then
-  return
+  return 0
 end
 if #arg == 2 then
   if arg[1] == arg[2] then
@@ -447,7 +445,10 @@ namebase: 'test'
 prefix: '/'
 scripts: {
   post-install: [
-    'echo A B'
+    {
+      args: ''
+      code: 'echo A B'
+    }
   ]
 }
 subpackage: 'single'
