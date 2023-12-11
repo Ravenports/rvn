@@ -93,6 +93,8 @@ package body Raven.Cmd.Install is
          return USS (comline.common_options.multiple_patterns.Element (0));
       end archive_path;
    begin
+      --  TODO: check if it's already installed
+
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
       if not operation.extract_manifest (file_list) then
          EV.emit_error ("Failed to extract manifest of packaged files.");
