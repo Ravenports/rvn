@@ -9,6 +9,7 @@ test_suite('prop: test-suite = frontend')
 atf_test_program{name='alias.sh'}
 atf_test_program{name='create.sh'}
 atf_test_program{name='lua.sh'}
+atf_test_program{name='shellscript.sh'}
 
 
 --  atf_test_program{name='abi'}
@@ -50,7 +51,6 @@ atf_test_program{name='lua.sh'}
 --  atf_test_program{name='rubypuppet'}
 --  atf_test_program{name='search'}
 --  atf_test_program{name='set'}
---  atf_test_program{name='shellscript'}
 --  atf_test_program{name='sqlite3'}
 --  atf_test_program{name='test_subr'}
 --  atf_test_program{name='triggers'}
