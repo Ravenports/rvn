@@ -330,6 +330,9 @@ package body Raven.Cmd.Usage is
          if comline.common_options.multiple_patterns.Is_Empty then
             return alert ("Missing path to rvn archive");
          end if;
+         if Natural (comline.common_options.multiple_patterns.Length) > 1 then
+            return alert ("Multiple file paths unsupported.  Limit to 1.");
+         end if;
          if comline.cmd_install.recursive then
             return alert ("--recursive" & not_with_file);
          end if;
@@ -337,6 +340,12 @@ package body Raven.Cmd.Usage is
 
       if comline.common_options.multiple_patterns.Is_Empty then
          return alert ("Missing package name pattern");
+      end if;
+
+      if comline.common_options.quiet and then
+        comline.common_options.dry_run
+      then
+         return alert ("--dry-run and --quiet are incompatible options.");
       end if;
 
       return True;

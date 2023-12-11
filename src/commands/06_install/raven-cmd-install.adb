@@ -1,10 +1,20 @@
 --  This file is covered by the Internet Software Consortium (ISC) License
 --  Reference: ../../../License.txt
 
-
 with Raven.Event;
+with Raven.Context;
+with Raven.Cmd.Unset;
+with Raven.Miscellaneous;
+with Raven.Strings; use Raven.Strings;
+with Archive.Unix;
+
 
 package body Raven.Cmd.Install is
+
+   package EV   renames Raven.Event;
+   package RCU  renames Raven.Cmd.Unset;
+   package MISC renames Raven.Miscellaneous;
+
 
    -------------------------------
    --  execute_install_command  --
@@ -31,12 +41,6 @@ package body Raven.Cmd.Install is
       if comline.common_options.assume_yes then
          return currently_unsupported ("--assume-yes");
       end if;
-      if comline.common_options.dry_run then
-         return currently_unsupported ("--dry-run");
-      end if;
-      if comline.common_options.quiet then
-         return currently_unsupported ("--quiet");
-      end if;
       if comline.cmd_install.recursive then
          return currently_unsupported ("--recursive");
       end if;
@@ -49,23 +53,17 @@ package body Raven.Cmd.Install is
       if comline.cmd_install.force_install then
          return currently_unsupported ("--force");
       end if;
-      if comline.cmd_install.inhibit_scripts then
-         return currently_unsupported ("--no-scripts");
-      end if;
       if comline.cmd_install.ignore_missing then
          return currently_unsupported ("--ignore-missing");
       end if;
-      if comline.cmd_install.no_register then
-         return currently_unsupported ("--no-registration");
-      end if;
-      if comline.cmd_install.only_register then
-         return currently_unsupported ("--only-registration");
-      end if;
+
       if comline.cmd_install.local_file then
-         return currently_unsupported ("--file");
+         return install_single_local_package (comline);
+      else
+         Raven.Event.emit_error ("Installation from repository not yet supported");
+         return False;
       end if;
 
-      return False;
    end execute_install_command;
 
 
@@ -74,8 +72,130 @@ package body Raven.Cmd.Install is
    -----------------------------
    function currently_unsupported (switch : String) return Boolean is
    begin
-      Raven.Event.emit_error ("switch " & switch & " is currently unsupported.");
+      EV.emit_error ("switch " & switch & " is currently unsupported.");
       return False;
    end currently_unsupported;
+
+
+   -----------------------------------
+   --  install_single_local_package  --
+   ------------------------------------
+   function install_single_local_package (comline : Cldata) return Boolean
+   is
+      file_list    : EXT.file_records.Vector;
+      metatree     : ThickUCL.UclTree;
+      operation    : Archive.Unpack.Darc;
+      result       : Boolean;
+      skip_scripts : Boolean;
+
+      function archive_path return String is
+      begin
+         return USS (comline.common_options.multiple_patterns.Element (0));
+      end archive_path;
+   begin
+      operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
+      if not operation.extract_manifest (file_list) then
+         EV.emit_error ("Failed to extract manifest of packaged files.");
+      end if;
+      operation.populate_metadata_tree (metatree);
+      operation.close_rvn_archive;
+
+      if comline.cmd_install.only_register then
+         return register_single_package (metatree, file_list, comline.cmd_install.automatic);
+      end if;
+
+      if comline.cmd_install.inhibit_scripts then
+         skip_scripts := True;
+      else
+         skip_scripts := not RCU.config_setting (RCU.CFG.run_scripts);
+      end if;
+
+      result := install_files_from_archive
+        (archive_path    => archive_path,
+         root_directory  => USS (comline.pre_command.install_rootdir),
+         inhibit_scripts => skip_scripts,
+         be_silent       => comline.common_options.quiet,
+         dry_run_only    => comline.common_options.dry_run,
+         upgrading       => False);
+
+
+      if result and then
+        not comline.cmd_install.no_register
+      then
+         return register_single_package (metatree, file_list, comline.cmd_install.automatic);
+      end if;
+      return result;
+   end install_single_local_package;
+
+
+   ----------------------------------
+   --  install_files_from_archive  --
+   ----------------------------------
+   function install_files_from_archive
+     (archive_path      : String;
+      root_directory    : String;
+      inhibit_scripts   : Boolean;
+      be_silent         : Boolean;
+      dry_run_only      : Boolean;
+      upgrading         : Boolean) return Boolean
+   is
+      operation : Archive.Unpack.Darc;
+      level     : Archive.info_level := Archive.normal;
+      basename  : constant String := MISC.archive_basename (archive_path);
+      rootuser  : constant Boolean := Archive.Unix.user_is_root;
+      pipe_fd   : constant Archive.Unix.File_Descriptor :=
+        Archive.Unix.File_Descriptor (Context.reveal_event_pipe);
+      good_extraction : Boolean;
+
+      function action return String is
+      begin
+         if upgrading then
+            return "upgrade";
+         end if;
+         return "install";
+      end action;
+   begin
+      --  Placeholder, needs to update graphically with indents and lines.
+      if dry_run_only then
+         EV.emit_message ("dry-run: " & action & " " & basename & " package");
+         return True;
+      else
+         if not be_silent then
+            EV.emit_notice (action & " " & basename & " package");
+         end if;
+      end if;
+
+      if be_silent then
+         level := Archive.silent;
+      end if;
+
+      operation.open_rvn_archive (archive_path, level, pipe_fd);
+      good_extraction := operation.extract_archive
+        (top_directory => root_directory,
+         set_owners    => rootuser,
+         set_perms     => rootuser,
+         set_modtime   => False,
+         skip_scripts  => inhibit_scripts,
+         upgrading     => upgrading,
+         interpreter   => MISC.get_interpreter);
+      operation.close_rvn_archive;
+
+      return good_extraction;
+   end install_files_from_archive;
+
+
+   -------------------------------
+   --  register_single_package  --
+   -------------------------------
+   function register_single_package
+     (metatree       : ThickUCL.UclTree;
+      file_list      : EXT.file_records.Vector;
+      mark_automatic : Boolean) return Boolean
+   is
+      pragma Unreferenced (metatree, file_list, mark_automatic);
+   begin
+      EV.emit_error ("register_single_package has not been implemented yet");
+      return False;
+   end register_single_package;
 
 end Raven.Cmd.Install;
