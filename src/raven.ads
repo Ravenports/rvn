@@ -16,7 +16,7 @@ package Raven is
                              solaris,
                              omnios);
    
-   progversion    : constant String := "0.0.3";
+   progversion    : constant String := "0.0.4";
    progname       : constant String := "rvn";
    extension      : constant String := ".rvn";
    platform       : constant Operating_System := Operating_System'First;
