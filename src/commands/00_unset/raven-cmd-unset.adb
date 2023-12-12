@@ -217,6 +217,18 @@ package body Raven.Cmd.Unset is
    end initialize_program;
 
 
+   ------------------------
+   --  finalize_program  --
+   ------------------------
+   procedure finalize_program is
+   begin
+      Context.close_root_directory_fd;
+      Context.close_db_directory_fd;
+      Context.close_cache_directory_fd;
+      Context.close_event_pipe;
+   end finalize_program;
+
+
    -----------------------------
    --  extended_version_info  --
    -----------------------------

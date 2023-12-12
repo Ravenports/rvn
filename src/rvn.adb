@@ -28,11 +28,13 @@ begin
          if not Raven.Cmd.Line.pending_command_recognized (comline_inputs) then
             RCU.alert_command_unrecognized (comline_inputs);
             CLI.Set_Exit_Status (Code => CLI.Failure);
+            Raven.Cmd.Unset.finalize_program;
             return;
          end if;
          Raven.Cmd.Line.parse_secondary_command(comline_inputs);
          if not Raven.Cmd.Usage.command_line_valid (comline_inputs) then
             CLI.Set_Exit_Status (Code => CLI.Failure);
+            Raven.Cmd.Unset.finalize_program;
             return;
          end if;
    end case;
@@ -43,4 +45,5 @@ begin
    else
       CLI.Set_Exit_Status (Code => CLI.Failure);
    end if;
+   Raven.Cmd.Unset.finalize_program;
 end Rvn;

@@ -17,6 +17,9 @@ package Raven.Cmd.Unset is
    --  The event pipe opening is best effort.  It's failure is not fatal.
    procedure initialize_program (comline : Cldata);
 
+   --  Close any open file descriptors
+   procedure finalize_program;
+
    --  Returns empty string if alias is not defined, otherwise it
    --  returns the definition of the alias
    function alias_definition (alias : String) return String;
