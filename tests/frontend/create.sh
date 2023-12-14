@@ -381,7 +381,7 @@ EOF
 
 	atf_check \
 		-o empty \
-		-e inline:"Requesting argument %2 while only 1 arguments are available\nFailed to apply keyword 'testkeyword'\n" \
+		-e inline:"Requesting argument \$2 while only 1 arguments are available\nFailed to apply keyword 'testkeyword'\n" \
 		-s exit:1 \
 		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
@@ -446,8 +446,8 @@ prefix: '/'
 scripts: {
   post-install: [
     {
-      args: ''
-      code: 'echo A B'
+      args: 'A B'
+      code: 'echo \$1 \$2'
     }
   ]
 }
