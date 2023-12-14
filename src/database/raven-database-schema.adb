@@ -50,7 +50,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_dependencies");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, dependency_id, "dependencies", dependency_id);
+      restrict (def, dependency_id, "dependencies", dependency_id);
       multi_primekey2 (def, package_id, dependency_id);
       return close_table (def);
    end table_pkg_dependencies;
@@ -64,7 +64,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_options");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, option_id, "options", option_id);
+      restrict (def, option_id, "options", option_id);
       col_text (def, "option_setting");
       multi_primekey2 (def, package_id, option_id);
       return close_table (def);
@@ -79,7 +79,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_libs_adjacent");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, library_id, "libraries", library_id);
+      restrict (def, library_id, "libraries", library_id);
       multi_primekey2 (def, package_id, library_id);
       return close_table (def);
    end table_pkg_libs_adjacent;
@@ -93,7 +93,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_libs_required");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, library_id, "libraries", library_id);
+      restrict (def, library_id, "libraries", library_id);
       multi_primekey2 (def, package_id, library_id);
       return close_table (def);
    end table_pkg_libs_required;
@@ -107,7 +107,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_libs_provided");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, library_id, "libraries", library_id);
+      restrict (def, library_id, "libraries", library_id);
       multi_primekey2 (def, package_id, library_id);
       return close_table (def);
    end table_pkg_libs_provided;
@@ -121,7 +121,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_annotations");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, annotation_id, "annotations", annotation_id);
+      restrict (def, annotation_id, "annotations", annotation_id);
       multi_primekey2 (def, package_id, annotation_id);
       return close_table (def);
    end table_pkg_annotations;
@@ -135,7 +135,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_directories");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, directory_id, "directories", directory_id);
+      restrict (def, directory_id, "directories", directory_id);
       multi_primekey2 (def, package_id, directory_id);
       return close_table (def);
    end table_pkg_directories;
@@ -149,7 +149,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_licenses");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, license_id, "licenses", license_id);
+      restrict (def, license_id, "licenses", license_id);
       multi_primekey2 (def, package_id, license_id);
       return close_table (def);
    end table_pkg_licenses;
@@ -163,7 +163,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_groups");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, group_id, "groups", group_id);
+      restrict (def, group_id, "groups", group_id);
       multi_primekey2 (def, package_id, group_id);
       return close_table (def);
    end table_pkg_groups;
@@ -177,7 +177,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_users");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, user_id, "users", user_id);
+      restrict (def, user_id, "users", user_id);
       multi_primekey2 (def, package_id, user_id);
       return close_table (def);
    end table_pkg_users;
@@ -191,7 +191,7 @@ package body Raven.Database.Schema is
       def : Text := start_table ("pkg_categories");
    begin
       cascade  (def, package_id, "packages", "id");
-      cascade  (def, category_id, "categories", category_id);
+      restrict (def, category_id, "categories", category_id);
       multi_primekey2 (def, package_id, category_id);
       return close_table (def);
    end table_pkg_categories;
@@ -266,7 +266,7 @@ package body Raven.Database.Schema is
       cascade  (def, package_id, "packages", "id");
       col_int  (def, script_type);
       col_int  (def, type_index);
-      cascade  (def, script_id, "scripts", script_id);
+      restrict (def, script_id, "scripts", script_id);
       col_text (def, "arguments");
       multi_primekey3 (def, package_id, script_type, type_index);
       return close_table (def);
@@ -449,7 +449,7 @@ package body Raven.Database.Schema is
    -------------------
    function start_table (table_name : String) return Text is
    begin
-      return SUS ("CREATE TABLE " & table_name & "(");
+      return SUS ("CREATE TABLE " & table_name & " (");
    end start_table;
 
 
@@ -531,6 +531,20 @@ package body Raven.Database.Schema is
       SU.Append (def, name & " INTEGER REFERENCES " & ref_table & "(" & ref_column
                  & ") ON DELETE CASCADE ON UPDATE CASCADE, ");
    end cascade;
+
+
+   ---------------
+   --  restrict  --
+   ---------------
+   procedure restrict
+     (def       : in out Text;
+      name      : String;
+      ref_table : String;
+      ref_column : String) is
+   begin
+      SU.Append (def, name & " INTEGER REFERENCES " & ref_table & "(" & ref_column
+                 & ") ON DELETE RESTRICT ON UPDATE RESTRICT, ");
+   end restrict;
 
 
    -----------------------

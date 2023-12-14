@@ -84,4 +84,11 @@ private
       ref_table : String;
       ref_column : String);
 
+   --  <name> INTEGER REFERENCES <ref_table>(<ref_column>) ON DELETE RESTRICT ON UPDATE RESTRICT,
+   procedure restrict
+     (def       : in out Text;
+      name      : String;
+      ref_table : String;
+      ref_column : String);
+
 end Raven.Database.Schema;
