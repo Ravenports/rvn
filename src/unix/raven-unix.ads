@@ -21,6 +21,10 @@ package Raven.Unix is
    stdout_file_fd : constant File_Descriptor := 1;
    stderr_file_fd : constant File_Descriptor := 2;
 
+   type struct_stat is limited private;
+   type struct_stat_Access is access all struct_stat;
+   pragma Convention (C, struct_stat_Access);
+
       --  Set both RDONLY and WRONLY to get RDRW flags
    type T_Open_Flags is
       record
@@ -63,9 +67,66 @@ package Raven.Unix is
    --  strerror from libc
    function strerror (errno : Integer) return String;
 
+   function C_Openat_Stock
+     (dirfd     : IC.int;
+      path      : IC.Strings.chars_ptr;
+      flags     : IC.int;
+      mode      : IC.int) return IC.int;
+   pragma Import (C, C_Openat_Stock, "openat");
+
+   function C_faccessat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      mode : IC.int;
+      flag : IC.int) return IC.int;
+   pragma Import (C, C_faccessat, "faccessat");
+
+   function C_unlinkat
+     (dfd  : File_Descriptor;
+      path : IC.Strings.chars_ptr;
+      remove_dir : IC.int) return IC.int;
+   pragma Import (C, C_unlinkat, "unlinkat");
+
+   function C_mkdirat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      mode : IC.int) return IC.int;
+   pragma Import (C, C_mkdirat, "mkdirat");
+
+   function C_fstatat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      sb   : struct_stat_Access;
+      flag : IC.int) return IC.int;
+   pragma Import (C, C_fstatat, "fstatat");
+
+   function C_lstatat
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr;
+      sb   : struct_stat_Access) return IC.int;
+   pragma Import (C, C_lstatat, "port_lstatat");
+
+   function lstatat
+     (dfd  : File_Descriptor;
+      path : String;
+      sb   : struct_stat_Access) return Boolean;
+
 private
 
    last_errno : Integer;
+
+   type stat_block is array (1 .. 256) of IC.unsigned_char;
+   type struct_stat is limited
+      record
+         --  sizeof(struct stat) is 128 on DragonFly
+         --  sizeof(struct stat) is 224 on FreeBSD
+         --  sizeof(struct stat) is 144 on Linux
+         --  Right now 256 seems to be enough to cover them all.
+         block : stat_block;
+      end record;
+
+   function success (rc : IC.int) return Boolean;
+   function failure (rc : IC.int) return Boolean;
 
    function C_Close (fd : IC.int) return IC.int;
    pragma Import (C, C_Close, "close");

@@ -179,4 +179,46 @@ package body Raven.Unix is
       end if;
    end strerror;
 
+
+   ---------------
+   --  lstatat  --
+   ---------------
+   function lstatat
+     (dfd  : File_Descriptor;
+      path : String;
+      sb   : struct_stat_Access) return Boolean
+   is
+      c_path : IC.Strings.chars_ptr;
+      result : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      result := C_lstatat (dfd  => IC.int (dfd),
+                           path => c_path,
+                           sb   => sb);
+      IC.Strings.Free (c_path);
+      return success (result);
+   end lstatat;
+
+
+   ---------------
+   --  success  --
+   ---------------
+   function success (rc : IC.int) return Boolean
+   is
+      use type IC.int;
+   begin
+      return (rc = IC.int (0));
+   end success;
+
+
+   ---------------
+   --  failure  --
+   ---------------
+   function failure (rc : IC.int) return Boolean
+   is
+      use type IC.int;
+   begin
+      return (rc = IC.int (1));
+   end failure;
+
 end Raven.Unix;
