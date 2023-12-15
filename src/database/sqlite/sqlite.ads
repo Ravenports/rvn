@@ -2,7 +2,7 @@
 --  Reference: ../../License.txt
 
 with sqlite_h;
---  with regex_h;
+with regex_h;
 
 
 private with Ada.Containers.Vectors;
@@ -15,6 +15,8 @@ package SQLite is
    subtype db3_error   is sqlite_h.enum_error_types;
    subtype db3_context is sqlite_h.sqlite3_context_Access;
    subtype db3_trace   is sqlite_h.cb_trace;
+
+   subtype reg_expression is regex_h.regex_t_Access;
 
    type sql_int64 is range -(2**63) .. +(2**63 - 1);
    type Step_Result is (row_present, no_more_data, something_else);
@@ -84,19 +86,19 @@ package SQLite is
    --  Shutdown sqlite3
    procedure shutdown_sqlite;
 
-   --  function sqlite3_get_auxdata_as_regex
-   --    (context : db3_context;
-   --     N       : Integer) return regex_h.regex_t_Access;
-   --
-   --  type cb_regex is access procedure
-   --    (regex_ptr :  not null regex_h.regex_t_Access);
-   --  pragma Convention (C, cb_regex);
-   --
-   --  procedure sqlite3_set_auxdata_as_regex
-   --    (context  : db3_context;
-   --     N        : Integer;
-   --     data     : regex_h.regex_t_Access;
-   --     callback : cb_regex);
+   function sqlite3_get_auxdata_as_regex
+     (context : db3_context;
+      N       : Integer) return reg_expression;
+
+   type cb_regex is access procedure
+     (regex_ptr :  not null reg_expression);
+   pragma Convention (C, cb_regex);
+
+   procedure sqlite3_set_auxdata_as_regex
+     (context  : db3_context;
+      N        : Integer;
+      data     : reg_expression;
+      callback : cb_regex);
 
    function db_connected
      (db : db3) return Boolean;

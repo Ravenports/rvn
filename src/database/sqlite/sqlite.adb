@@ -317,42 +317,42 @@ package body SQLite is
    --------------------------------------------------------------------
    --  sqlite3_get_auxdata_as_regex
    --------------------------------------------------------------------
-   --  function sqlite3_get_auxdata_as_regex
-   --    (context : db3_context;
-   --     N       : Integer) return regex_h.regex_t_Access
-   --  is
-   --     function convert is new Ada.Unchecked_Conversion (Source => sqlite_h.Void_Ptr,
-   --                                                       Target => regex_h.regex_t_Access);
-   --  begin
-   --     return convert (sqlite_h.sqlite3_get_auxdata (context, IC.int (N)));
-   --  end sqlite3_get_auxdata_as_regex;
+   function sqlite3_get_auxdata_as_regex
+     (context : db3_context;
+      N       : Integer) return reg_expression
+   is
+      function convert is new Ada.Unchecked_Conversion (Source => sqlite_h.Void_Ptr,
+                                                        Target => reg_expression);
+   begin
+      return convert (sqlite_h.sqlite3_get_auxdata (context, IC.int (N)));
+   end sqlite3_get_auxdata_as_regex;
 
 
    --------------------------------------------------------------------
    --  sqlite3_set_auxdata_as_regex
    --------------------------------------------------------------------
-   --  procedure sqlite3_set_auxdata_as_regex
-   --    (context  : db3_context;
-   --     N        : Integer;
-   --     data     : regex_h.regex_t_Access;
-   --     callback : cb_regex)
-   --  is
-   --     function convert2void is new Ada.Unchecked_Conversion (Source => regex_h.regex_t_Access,
-   --                                                            Target => sqlite_h.Void_Ptr);
-   --     function convert2callback is new Ada.Unchecked_Conversion (Source => cb_regex,
-   --                                                                Target => sqlite_h.cb_auxdata);
-   --
-   --     data_ptr : sqlite_h.Void_Ptr;
-   --     gen_cb   : sqlite_h.cb_auxdata;
-   --  begin
-   --     data_ptr := convert2void (data);
-   --     gen_cb   := convert2callback (callback);
-   --
-   --     sqlite_h.sqlite3_set_auxdata (context  => context,
-   --                                   N        => IC.int (N),
-   --                                   data     => data_ptr,
-   --                                   callback => gen_cb);
-   --  end sqlite3_set_auxdata_as_regex;
+   procedure sqlite3_set_auxdata_as_regex
+     (context  : db3_context;
+      N        : Integer;
+      data     : reg_expression;
+      callback : cb_regex)
+   is
+      function convert2void is new Ada.Unchecked_Conversion (Source => reg_expression,
+                                                             Target => sqlite_h.Void_Ptr);
+      function convert2callback is new Ada.Unchecked_Conversion (Source => cb_regex,
+                                                                 Target => sqlite_h.cb_auxdata);
+
+      data_ptr : sqlite_h.Void_Ptr;
+      gen_cb   : sqlite_h.cb_auxdata;
+   begin
+      data_ptr := convert2void (data);
+      gen_cb   := convert2callback (callback);
+
+      sqlite_h.sqlite3_set_auxdata (context  => context,
+                                    N        => IC.int (N),
+                                    data     => data_ptr,
+                                    callback => gen_cb);
+   end sqlite3_set_auxdata_as_regex;
 
 
    --------------------------------------------------------------------
