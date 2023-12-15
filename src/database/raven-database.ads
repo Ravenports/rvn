@@ -3,6 +3,7 @@
 
 package Raven.Database is
 
-   type dummy is (one, two, three);
+   --  TODO: this needs to be set during initialization
+   rdb_case_sensitive : Boolean := False;
 
 end Raven.Database;
