@@ -588,6 +588,10 @@ package body Raven.Cmd.Line is
       sws_regex  : constant String := "-x";
       swl_regex  : constant String := "--regex";
    begin
+      --  -C/-i are mutually exclusive (both affect same setting)
+      --  Actually all switches are mutually exclusive to the others
+      --  -C > -i > -g > -r
+
       if use_all and then (datum = sws_all or else datum = swl_all) then
          self.common_options.all_installed_pkgs := True;
       elsif datum = sws_case or else datum = swl_case then

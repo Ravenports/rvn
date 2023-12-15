@@ -63,7 +63,7 @@ private
       record
          verbose            : Boolean := False;
          quiet              : Boolean := False;  --  -q, --quiet
-         case_sensitive     : Boolean := False;  --  -C, --case-sensitive
+         case_sensitive     : Boolean := False;  --  -C, --case-sensitive  (priority over -i)
          case_insensitive   : Boolean := False;  --  -i, --case-insensitive (default)
          shell_glob         : Boolean := False;  --  -g, --glob
          regex              : Boolean := False;  --  -x, --regex
