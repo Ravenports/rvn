@@ -1,6 +1,6 @@
 /*
- * This file is covered by the Internet Software Consortium (ISC) License
- * Reference: ../../License.txt
+ *  SPDX-License-Identifier: ISC
+ *  Reference: /License.txt
  */
 
 #if defined _WIN32

@@ -1,6 +1,5 @@
---  This file is covered by the Internet Software Consortium (ISC) License
---  Reference: ../../../License.txt
-
+--  SPDX-License-Identifier: ISC
+--  Reference: /License.txt
 
 with Raven.Context;
 with Raven.Strings; use Raven.Strings;
