@@ -10,13 +10,24 @@ private with Interfaces.C.Strings;
 
 package SQLite is
 
-   subtype db3         is sqlite_h.sqlite3_Access;
-   subtype db3_stmt    is sqlite_h.sqlite3_stmt_Access;
-   subtype db3_error   is sqlite_h.enum_error_types;
-   subtype db3_context is sqlite_h.sqlite3_context_Access;
-   subtype db3_trace   is sqlite_h.cb_trace;
+   subtype db3          is sqlite_h.sqlite3_Access;
+   subtype db3_stmt     is sqlite_h.sqlite3_stmt_Access;
+   subtype db3_error    is sqlite_h.enum_error_types;
+   subtype db3_context  is sqlite_h.sqlite3_context_Access;
+   subtype db3_trace    is sqlite_h.cb_trace;
+   subtype db3_value    is sqlite_h.sqlite3_value_Access;
+   subtype db3_routine  is sqlite_h.sqlite3_api_routines_Access;
+   subtype db3_callback is sqlite_h.cb_xFuncStep;
 
    subtype reg_expression is regex_h.regex_t_Access;
+   subtype regex_storage  is regex_h.regex_t;
+
+   SQL_OK   : constant Natural := sqlite_h.SQLITE_OK;
+   SQL_ROW  : constant Natural := sqlite_h.SQLITE_ROW;
+   SQL_DONE : constant Natural := sqlite_h.SQLITE_DONE;
+
+   REX_CASE   : constant Natural := Natural (regex_h.REG_EXTENDED) + Natural (regex_h.REG_NOSUB);
+   REX_NOCASE : constant Natural := REX_CASE + Natural (regex_h.REG_ICASE);
 
    type sql_int64 is range -(2**63) .. +(2**63 - 1);
    type Step_Result is (row_present, no_more_data, something_else);
@@ -164,6 +175,46 @@ package SQLite is
 
    function database_corrupt
      (db : not null db3) return Boolean;
+
+   procedure set_sqlite_error
+     (context : db3_context;
+      message : String;
+      errnum  : Integer);
+
+   procedure create_function
+     (db    : not null db3;
+      name  : String;
+      nargs : Natural;
+      cb    : db3_callback);
+
+   function get_value (value : db3_value) return String;
+
+   procedure set_integer_result
+     (context  : db3_context;
+      result   : Integer);
+
+   procedure set_integer64_result
+     (context  : db3_context;
+      result   : sql_int64);
+
+   procedure set_text_result_without_destructor
+     (context : db3_context;
+      result  : String;
+      termpos : integer := -1);
+
+   function get_db_handle
+     (context : db3_context) return db3;
+
+   function regex_compile
+     (preg    : reg_expression;
+      pattern : string;
+      flags   : Natural) return Boolean;
+
+   function regex_match_found
+     (preg      : reg_expression;
+      candidate : String) return Boolean;
+
+   procedure free_expression (preg : reg_expression);
 
 private
 

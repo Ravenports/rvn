@@ -620,4 +620,161 @@ package body SQLite is
       end if;
    end translate_char_pointer;
 
+
+   --------------------------------------------------------------------
+   --  set_sqlite_error
+   --------------------------------------------------------------------
+   procedure set_sqlite_error
+     (context : db3_context;
+      message : String;
+      errnum  : Integer)
+   is
+      errmsg : ICS.chars_ptr;
+   begin
+      errmsg := ICS.New_String (message);
+      sqlite_h.sqlite3_result_error (context, errmsg, IC.int (errnum));
+      ICS.Free (errmsg);
+   end set_sqlite_error;
+
+
+   --------------------------------------------------------------------
+   --  create_function
+   --------------------------------------------------------------------
+   procedure create_function
+     (db    : not null db3;
+      name  : String;
+      nargs : Natural;
+      cb    : db3_callback)
+   is
+      use type IC.int;
+      flags : constant IC.int := sqlite_h.SQLITE_ANY + sqlite_h.SQLITE_DETERMINISTIC;
+      result : IC.int;
+   begin
+      result := sqlite_h.sqlite3_create_function
+        (db            => db,
+         zFunctionName => ICS.New_String (name),
+         nArg          => IC.int (nargs),
+         eTextRep      => flags,
+         pApp          => System.Null_Address,
+         xFunc         => cb,
+         xStep         => null,
+         xFinal        => null);
+   end create_function;
+
+
+   -----------------
+   --  get_value  --
+   -----------------
+   function get_value (value : db3_value) return String
+   is
+      value_ptr : ICS.chars_ptr;
+   begin
+      value_ptr := sqlite_h.sqlite3_value_text (value);
+      return (ICS.Value (value_ptr));
+   end get_value;
+
+
+   --------------------------
+   --  set_integer_result  --
+   --------------------------
+   procedure set_integer_result
+     (context  : db3_context;
+      result   : Integer) is
+   begin
+      sqlite_h.sqlite3_result_int (context, IC.int (result));
+   end set_integer_result;
+
+
+   ----------------------------
+   --  set_integer64_result  --
+   ----------------------------
+   procedure set_integer64_result
+     (context  : db3_context;
+      result   : sql_int64)
+   is
+   begin
+      sqlite_h.sqlite3_result_int64 (context, sqlite_h.sql64 (result));
+   end set_integer64_result;
+
+
+   ------------------------------------------
+   --  set_text_result_without_destructor  --
+   ------------------------------------------
+   procedure set_text_result_without_destructor
+     (context : db3_context;
+      result  : String;
+      termpos : integer := -1)
+   is
+      c_res : ICS.chars_ptr;
+   begin
+      c_res := ICS.New_String (result);
+      sqlite_h.sqlite3_result_text (context    => context,
+                                    result     => c_res,
+                                    termpos    => IC.Int (termpos),
+                                    destructor => null);
+      ICS.Free (c_res);
+   end set_text_result_without_destructor;
+
+
+   ---------------------
+   --  get_db_handle  --
+   ---------------------
+   function get_db_handle (context : db3_context) return db3 is
+   begin
+      return sqlite_h.sqlite3_context_db_handle (context);
+   end get_db_handle;
+
+
+   ---------------------
+   --  regex_compile  --
+   ---------------------
+   function regex_compile
+     (preg    : reg_expression;
+      pattern : string;
+      flags   : Natural) return Boolean
+   is
+      cflags : IC.int := IC.int (flags);
+      res    : IC.int;
+      regex  : ICS.chars_ptr;
+   begin
+      regex := ICS.New_String (pattern);
+      res := regex_h.regcomp (preg, regex, cflags);
+      ICS.Free (regex);
+      case res is
+         when 0      => return True;
+         when others => return False;
+      end case;
+   end regex_compile;
+
+
+   function regex_match_found
+     (preg      : reg_expression;
+      candidate : String) return Boolean
+   is
+      ret : IC.int;
+      regex : ICS.chars_ptr;
+   begin
+      regex := ICS.New_String (candidate);
+      ret := regex_h.regexec (preg   => preg,
+                              regex  => regex,
+                              nmatch => 0,
+                              pmatch => null,
+                              eflags => 0);
+      ICS.Free (regex);
+      case ret is
+         when 0 => return True;
+         when others => return False;
+      end case;
+   end regex_match_found;
+
+
+   -----------------------
+   --  free_expression  --
+   -----------------------
+   procedure free_expression (preg : reg_expression) is
+   begin
+      regex_h.regfree (preg);
+   end free_expression;
+
+
 end SQLite;
