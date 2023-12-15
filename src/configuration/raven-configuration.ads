@@ -5,6 +5,7 @@ with ThickUCL;
 private with Ada.Containers.Vectors;
 private with Ada.Containers.Hashed_Maps;
 private with Raven.Strings;
+private with Raven.Miscellaneous;
 
 package Raven.Configuration is
 
@@ -97,13 +98,10 @@ private
       Index_Type   => Natural,
       "="          => SU."=");
    
-   --  Used for mapped containers
-   function map_hash (key : Text) return Ada.Containers.Hash_Type;
-   
    package object_crate is new Ada.Containers.Hashed_Maps
      (Key_Type        => Text,
       Element_Type    => Text,
-      Hash            => map_hash,
+      Hash            => Raven.Miscellaneous.map_hash,
       Equivalent_Keys => Raven.Strings.equivalent,
       "="             => SU."=");
   

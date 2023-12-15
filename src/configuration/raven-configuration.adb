@@ -3,7 +3,6 @@
 
 with Raven.Strings; use Raven.Strings;
 with Raven.Event;
-with Ada.Strings.Hash;
 with Ada.Characters.Latin_1;
 with Ada.Environment_Variables;
 with Archive.Unix;
@@ -245,15 +244,6 @@ package body Raven.Configuration is
             raise config_type_mismatch with ci'Img & " is not of type UCL object";
       end case;
    end get_default_value;
-
-
-   ----------------
-   --  map_hash  --
-   ----------------
-   function map_hash (key : Text) return Ada.Containers.Hash_Type is
-   begin
-      return Ada.Strings.Hash (USS (key));
-   end map_hash;
 
 
    ------------------------------

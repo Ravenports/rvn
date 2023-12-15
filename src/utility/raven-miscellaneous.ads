@@ -1,6 +1,8 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Containers;
+
 package Raven.Miscellaneous is
 
    --  Returns temporary filename confirmed to not already being used.
@@ -12,6 +14,9 @@ package Raven.Miscellaneous is
 
    --  This is operating-system specific (normally /bin/sh though)
    function get_interpreter return String;
+
+   --  Used for mapped containers
+   function map_hash (key : Text) return Ada.Containers.Hash_Type;
 
 private
 

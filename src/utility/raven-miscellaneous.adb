@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ada.Real_Time;
+with Ada.Strings.Hash;
 with Archive.Unix;
 with Raven.Strings; use Raven.Strings;
 
@@ -97,5 +98,15 @@ package body Raven.Miscellaneous is
               solaris      => return "/usr/xpg4/bin/sh";
       end case;
    end get_interpreter;
+
+
+   ----------------
+   --  map_hash  --
+   ----------------
+   function map_hash (key : Text) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (USS (key));
+   end map_hash;
+
 
 end Raven.Miscellaneous;
