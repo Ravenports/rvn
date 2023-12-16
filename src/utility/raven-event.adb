@@ -9,7 +9,7 @@ with Raven.Strings; use Raven.Strings;
 package body Raven.Event is
 
    package TIO renames Ada.Text_IO;
-   
+
    ------------------
    --  pipe_event  --
    ------------------
@@ -19,8 +19,8 @@ package body Raven.Event is
          Unix.push_to_event_pipe (Context.reveal_event_pipe, json_message);
       end if;
    end pipe_event;
-   
-   
+
+
    ----------------------
    --  check_progress  --
    ----------------------
@@ -29,8 +29,8 @@ package body Raven.Event is
       --  Placeholder in the event progressbar is brought back
       null;
    end check_progress;
-   
-   
+
+
    -------------
    --  warnx  --
    -------------
@@ -38,8 +38,8 @@ package body Raven.Event is
    begin
       TIO.Put_Line (TIO.Standard_Error, verbatim_message);
    end warnx;
-   
-   
+
+
    -------------------
    --  emit_notice  --
    -------------------
@@ -54,8 +54,8 @@ package body Raven.Event is
       pipe_event (jmsg);
       TIO.Put_Line (message);
    end emit_notice;
-   
-   
+
+
    ------------------
    --  emit_error  --
    ------------------
@@ -70,8 +70,8 @@ package body Raven.Event is
       pipe_event (jmsg);
       warnx (message);
    end emit_error;
-   
-      
+
+
    --------------------
    --  emit_message  --
    --------------------
@@ -82,8 +82,8 @@ package body Raven.Event is
       check_progress;
       TIO.Put_Line (message);
    end emit_message;
-   
-   
+
+
    ------------------
    --  emit_debug  --
    ------------------
@@ -124,7 +124,7 @@ package body Raven.Event is
       end if;
    end emit_debug;
 
-   
+
    ------------------
    --  emit_errno  --
    ------------------
@@ -145,5 +145,21 @@ package body Raven.Event is
       pipe_event (jmsg);
       warnx (info);
    end emit_errno;
+
+
+   ------------------------
+   --  emit_no_local_db  --
+   ------------------------
+   procedure emit_no_local_db
+   is
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "ERROR_NOLOCALDB"),
+            json_objectpair ("data", "")));
+   begin
+      check_progress;
+      pipe_event (jmsg);
+      warnx ("Local package database nonexistent!");
+   end emit_no_local_db;
 
 end Raven.Event;
