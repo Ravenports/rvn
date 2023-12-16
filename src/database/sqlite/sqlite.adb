@@ -777,4 +777,21 @@ package body SQLite is
    end free_expression;
 
 
+   ------------------------
+   --  set_busy_timeout  --
+   ------------------------
+   function set_busy_timeout
+     (db        : db3;
+      millisecs : Natural) return Boolean
+   is
+      res : IC.int;
+   begin
+      res := sqlite_h.sqlite3_busy_timeout (db, IC.int (millisecs));
+      case res is
+         when 0      => return True;
+         when others => return False;
+      end case;
+   end set_busy_timeout;
+
+
 end SQLite;

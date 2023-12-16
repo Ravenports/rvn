@@ -216,6 +216,10 @@ package SQLite is
 
    procedure free_expression (preg : reg_expression);
 
+   function set_busy_timeout
+     (db        : db3;
+      millisecs : Natural) return Boolean;
+
 private
 
    last_errmsg : Interfaces.C.Strings.chars_ptr;
