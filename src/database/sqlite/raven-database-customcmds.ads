@@ -44,21 +44,6 @@ private
       argsval : not null access SQLite.db3_value);
    pragma Convention (C, rdb_now);
 
-   --  select myarch();
-   --  returns "DragonFly:5.8:x86_64"
-   --  select myarch(null);
-   --  returns "DragonFly:5.8:x86_64"
-   --  select myarch("OpenBSD:6.4:amd64");
-   --  returns "OpenBSD:6.4:amd64";
-   --
-   --  arg1 optional.  Will override ABI if present
-   --  Function returns configured ABI unless overridden in arguments (then it returns that)
-   procedure rdb_myarch
-     (context : not null SQLite.db3_context;
-      numargs : IC.int;
-      argsval : not null access SQLite.db3_value);
-   pragma Convention (C, rdb_myarch);
-
    --  sqlite> select regexp ("[0-9]e", "abc3ef");
    --  returns 1
    --  sqlite> select regexp ("[0-9]f", "abc3ef");
@@ -74,20 +59,6 @@ private
       argsval : not null access SQLite.db3_value);
    pragma Convention (C, rdb_regex);
 
-   --  select split_version ("nsv", "joe-single-standard-1.0");
-   --  returns "joe-single-standard"
-   --  select split_version ("version", "joe-single-standard-1.0_1,2");
-   --  returns "1.0_1,2"
-   --
-   --  arg1 = "nsv" or "version"
-   --  arg2 = package name
-   --  function returns name part or version part of package name
-   procedure rdb_split_version
-     (context : not null SQLite.db3_context;
-      numargs : IC.int;
-      argsval : not null access SQLite.db3_value);
-   pragma Convention (C, rdb_split_version);
-
    --  select vercmp("<=", "joe-1.0", "joe-1.1");
    --  returns 1.
    --
@@ -100,15 +71,6 @@ private
       numargs : IC.int;
       argsval : not null access SQLite.db3_value);
    pragma Convention (C, rdb_vercmp);
-
-   --  Where split routine does the actual work (allows custom split words, delimiter, etc)
-   procedure rdb_split_common
-     (context : not null SQLite.db3_context;
-      numargs : IC.int;
-      argsval : not null access SQLite.db3_value;
-      delim   : Character;
-      first   : String;
-      second  : String);
 
    --  callback for pkgdb_regex
    procedure rdb_regex_delete (regex_ptr : not null SQLite.reg_expression);

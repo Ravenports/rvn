@@ -135,56 +135,6 @@ package body Raven.Database.CustomCmds is
 
 
    --------------------------------------------------------------------
-   --  rdb_myarch
-   --------------------------------------------------------------------
-   procedure rdb_myarch
-     (context : not null SQLite.db3_context;
-      numargs : IC.int;
-      argsval : not null access SQLite.db3_value) is
-   begin
-      if Natural (numargs) > 1 then
-         SQLite.set_sqlite_error (context, "Invalid usage of myarch(): needs 0 or 1 arguments", -1);
-         return;
-      end if;
-
-      if Natural (numargs) = 1 then
-         declare
-            first : constant String := SQLite.get_value (argsval.all);
-         begin
-            if first /= "" then
-               SQLite.set_text_result_without_destructor (context, first);
-            end if;
-         end;
-      end if;
-
-      declare
-         abi : constant String := RCU.config_setting (RCU.CFG.abi);
-      begin
-         SQLite.set_text_result_without_destructor (context, abi);
-      end;
-      return;
-
-   end rdb_myarch;
-
-
-   --------------------------------------------------------------------
-   --  rdb_split_version
-   --------------------------------------------------------------------
-   procedure rdb_split_version
-     (context : not null SQLite.db3_context;
-      numargs : IC.int;
-      argsval : not null access SQLite.db3_value) is
-   begin
-      rdb_split_common (context => context,
-                          numargs => numargs,
-                          argsval => argsval,
-                          delim   => '-',
-                          first   => "nsv",
-                          second  => "version");
-   end rdb_split_version;
-
-
-   --------------------------------------------------------------------
    --  rdb_now
    --------------------------------------------------------------------
    procedure rdb_now
@@ -202,63 +152,6 @@ package body Raven.Database.CustomCmds is
 
       SQLite.set_integer64_result (context, SQLite.sql_int64 (epoch));
    end rdb_now;
-
-
-   --------------------------------------------------------------------
-   --  rdb_split_common
-   --------------------------------------------------------------------
-   procedure rdb_split_common
-     (context : not null SQLite.db3_context;
-      numargs : IC.int;
-      argsval : not null access SQLite.db3_value;
-      delim   : Character;
-      first   : String;
-      second  : String)
-   is
-      argv   : array (1 .. 2) of SQLite.db3_value;
-
-      for argv'Address use argsval.all'Address;
-      pragma Import (Ada, argv);
-   begin
-      if Natural (numargs) /= 2 then
-         SQLite.set_sqlite_error
-           (context, "Invalid usage of split_version(): needs 2 arguments", -1);
-         return;
-      end if;
-
-      declare
-         whatstr  : constant String := SQLite.get_value (argv (1));
-         datastr  : constant String := SQLite.get_value (argv (2));
-         delimstr : constant String (1 .. 1) := (1 => delim);
-      begin
-         if whatstr = "" or else
-           datastr = ""
-         then
-            SQLite.set_sqlite_error
-              (context, "Invalid usage of split_version(): blank arguments", -1);
-            return;
-         end if;
-
-         if whatstr = first then  -- first is "nsv"
-            if contains (datastr, delimstr) then
-               SQLite.set_text_result_without_destructor (context, head (datastr, delimstr));
-            else
-               --  shouldn't happen
-               SQLite.set_text_result_without_destructor (context, datastr);
-            end if;
-         elsif whatstr = second then  -- second is "version"
-            if contains (datastr, delimstr) then
-               SQLite.set_text_result_without_destructor (context, tail (datastr, delimstr));
-            else
-               --  shouldn't happen
-               SQLite.set_text_result_without_destructor (context, datastr);
-            end if;
-         else
-            SQLite.set_sqlite_error
-              (context, "SQL function split_version() called with invalid arguments", -1);
-         end if;
-      end;
-   end rdb_split_common;
 
 
    --------------------------------------------------------------------
@@ -321,11 +214,8 @@ package body Raven.Database.CustomCmds is
       pThunk   : SQLite.db3_routine) return IC.int is
    begin
       SQLite.create_function (db, "now",    0, rdb_now'Access);
-      SQLite.create_function (db, "myarch", 0, rdb_myarch'Access);
-      SQLite.create_function (db, "myarch", 1, rdb_myarch'Access);
       SQLite.create_function (db, "regexp", 2, rdb_regex'Access);
       SQLite.create_function (db, "vercmp", 3, rdb_vercmp'Access);
-      SQLite.create_function (db, "split_version", 2, rdb_split_version'Access);
       return IC.int (SQLite.SQL_OK);
    end sqlcmd_init;
 
