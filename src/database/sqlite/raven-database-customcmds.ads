@@ -26,7 +26,7 @@ package Raven.Database.CustomCmds is
    procedure define_file_exists (db : not null SQLite.db3);
 
    --  wrapper around sqlcmd_init()
-   procedure define_six_functions (db : not null SQLite.db3);
+   procedure define_three_functions (db : not null SQLite.db3);
 
 private
 

@@ -230,9 +230,9 @@ package body Raven.Database.CustomCmds is
 
 
    --------------------------------------------------------------------
-   --  define_six_functions
+   --  define_three_functions
    --------------------------------------------------------------------
-   procedure define_six_functions (db : not null SQLite.db3)
+   procedure define_three_functions (db : not null SQLite.db3)
    is
       unused_result : IC.int;
       pragma Unreferenced (unused_result);
