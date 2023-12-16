@@ -1,0 +1,6 @@
+This directory contains folder of source code for:
+1) sqlite3  (3.44.2)
+2) future...?
+
+The user is expected to extract sqlite3 distribution
+files into the sqlite3 subdirectory (which they create)

@@ -15,3 +15,6 @@ tests/frontend/*.notready
 
 # don't comment kyua test results
 tests/html
+
+# extracted vendor sources
+vendor/sqlite3
