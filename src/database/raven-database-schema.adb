@@ -410,7 +410,7 @@ package body Raven.Database.Schema is
    begin
       prime_key (def, "id");
       col_text (def, "namebase");
-      col_text (def, "subpackages");
+      col_text (def, "subpackage");
       col_text (def, "variant");
       col_text (def, "version");
       col_text (def, "comment");
@@ -572,5 +572,58 @@ package body Raven.Database.Schema is
    begin
       return "CREATE INDEX " & index_name & " ON " & table_name & "(" & table_column & ");";
    end generic_index;
+
+
+   -------------------------
+   --  prstat_definition  --
+   -------------------------
+   function prstat_definition (component : prepared_statement) return String
+   is
+      IOII : constant String := "INSERT OR IGNORE INTO ";
+      IORB : constant String := "INSERT OR ROLLBACK INTO ";
+   begin
+      case component is
+         when user        => return IOII & "users(name) VALUES(?1)";  --  T
+         when group       => return IOII & "groups(name) VALUES(?1)";  --  T
+         when script      => return IOII & "scripts(code) VALUES(?1)";  -- T
+         when license     => return IOII & "licenses(name) VALUES(?1)";  --  T
+         when library     => return IOII & "libraries(name) VALUES(?1)";  --  T
+         when category    => return IOII & "categories(name) VALUES(?1)";  --  T
+         when directory   => return IOII & "directories(path) VALUES(?1)";  --  T
+         when note        => return IOII & "annotations(annotation) VALUES(?1)";  --  T
+         when option      => return IOII & "options(option_name,option_desc) VALUES(?1,?2)";  --  TT
+         when dependency  => return IOII & "dependencies(namebase,subpackage,variant,version) " &
+                                    "VALUES(?1,?2,?3,?4)";  -- TTTT
+         when pkg_user    => return IORB & "pkg_users(package_id, user_id) VALUES" &
+                                    "(?1, (SELECT user_id FROM users WHERE name = ?2))";  -- IT
+         when pkg_group   => return IORB & "pkg_groups(package_id, group_id) VALUES" &
+                                    "(?1, (SELECT group_id FROM groups WHERE name = ?2))";  -- IT
+         when pkg_script  => return IORB & "pkg_scripts(package_id,script_type,type_index," &
+                                    "arguments,script_id) VALUES(?1,?2,?3,?4," &
+                                     "(SELECT script_id FROM scripts WHERE code = ?5))"; --  IIITT
+         when pkg_license => return IORB & "pkg_licenses(package_id, license_id) " &
+              "VALUES (?1, (SELECT license_id FROM licenses WHERE name = ?2))";  -- IT
+         when pkg_provided_lib => return IORB & "pkg_libs_provided(package_id,library_id) " &
+              "VALUES(?1, (SELECT library_id FROM libraries WHERE name = ?2))";  -- IT
+         when pkg_required_lib => return IORB & "pkg_libs_required(package_id,library_id) " &
+              "VALUES(?1, (SELECT library_id FROM libraries WHERE name = ?2))";  -- IT
+         when pkg_adjacent_lib => return IORB & "pkg_libs_adjacent(package_id,library_id) " &
+              "VALUES(?1, (SELECT library_id FROM libraries WHERE name = ?2))";  -- IT
+         when pkg_category     => return IORB & "pkg_categories(package_id,category_id) " &
+              "VALUES(?1, (SELECT category_id FROM categories WHERE name = ?2))";  -- IT
+         when pkg_directory    => return IORB & "pkg_directories(package_id,directory_id) " &
+              "VALUES(?1, (SELECT directory_id FROM directories WHERE path = ?2))";  -- IT
+         when pkg_note         => return IORB & "pkg_annotations(package_id,annotation_id) " &
+              "VALUES(?1, (SELECT annotation_id FROM annotations WHERE annotation = ?2))";  --IT
+         when pkg_option       => return IORB & "pkg_options(package_id,option_setting,option_id) "
+              & "VALUES(?1,?2,(SELECT option_id FROM options WHERE option_name = ?3))";  --IIT
+         when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) " &
+              "VALUES(?1, (SELECT dependency_id FROM dependencies WHERE " &
+              "namebase = ?2 AND subpackage = ?3 AND variant = ?4))";  -- ITTT
+         when main_pkg => return "INSERT OR REPLACE INTO packages(namebase,subpackage,variant," &
+              "version,comment,desc,www,maintainer,prefix,abi,flatsize,licenselogic,automatic) " &
+              "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)";  --TTTT TTTT TTII I
+      end case;
+   end prstat_definition;
 
 end Raven.Database.Schema;
