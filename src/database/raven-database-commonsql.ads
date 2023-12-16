@@ -33,6 +33,14 @@ package Raven.Database.CommonSQL is
      (db        : not null SQLite.db3;
       sql       : String) return Action_Result;
 
+   function get_int64
+     (db        : not null SQLite.db3;
+      srcfile   : String;
+      func      : String;
+      sql       : String;
+      res       : out int64;
+      silence   : Boolean) return Boolean;
+
 private
 
    function run_transaction

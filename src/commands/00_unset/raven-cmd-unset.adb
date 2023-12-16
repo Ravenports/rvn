@@ -151,13 +151,14 @@ package body Raven.Cmd.Unset is
          key3 : constant String := CFG.get_ci_key (CFG.cachedir);
          key4 : constant String := CFG.get_ci_key (CFG.event_pipe);
          key5 : constant String := CFG.get_ci_key (CFG.dev_mode);
+         key6 : constant String := CFG.get_ci_key (CFG.case_match);
 
          conf_debug : constant Ucl.ucl_integer := program_configuration.get_base_value (key1);
          db_dir     : constant String := program_configuration.get_base_value (key2);
          cache_dir  : constant String := program_configuration.get_base_value (key3);
          event_pipe : constant String := program_configuration.get_base_value (key4);
          dev_mode   : constant Boolean := program_configuration.get_base_value (key5);
-
+         sensitive  : constant Boolean := program_configuration.get_base_value (key6);
          mechanism  : Unix.Unix_Pipe;
       begin
          case conf_debug is
@@ -170,6 +171,7 @@ package body Raven.Cmd.Unset is
          Context.register_db_directory (db_dir);
          Context.register_cache_directory (cache_dir);
          Context.register_dev_mode (dev_mode);
+         Context.register_case_sensitivity (sensitive);  --  (command -C/-i will override)
          if not isBlank (event_pipe) then
             mechanism := Unix.IPC_mechanism (event_pipe);
             case mechanism is

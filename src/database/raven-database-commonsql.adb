@@ -126,4 +126,41 @@ package body Raven.Database.CommonSQL is
    end run_transaction;
 
 
+   -----------------
+   --  get_int64  --
+   -----------------
+   function get_int64
+     (db        : not null Sqlite.db3;
+      srcfile   : String;
+      func      : String;
+      sql       : String;
+      res       : out int64;
+      silence   : Boolean) return Boolean
+   is
+      stmt : SQLite.thick_stmt;
+      nres : SQLite.sql_int64;
+   begin
+      Event.emit_debug (high_level, "Single int64 query " & DQ (sql));
+      if not SQLite.prepare_sql (db, sql, stmt) then
+         if not silence then
+            ERROR_SQLITE (db, srcfile, func, sql);
+         end if;
+         res := 0;
+         return False;
+      end if;
+
+      if not SQLite.step_to_another_row (stmt => stmt, num_retries => 6) then
+         SQLite.finalize_statement (stmt);
+         Event.emit_error ("failed to step through get_int64()");
+         res := 0;
+         return False;
+      end if;
+
+      nres := SQLite.retrieve_integer (stmt, 0);
+      SQLite.finalize_statement (stmt);
+
+      res := int64 (nres);
+      return True;
+   end get_int64;
+
 end Raven.Database.CommonSQL;

@@ -146,6 +146,15 @@ package body Raven.Context is
    end reveal_debug_level;
 
 
+   -----------------------------
+   --  reveal_case_sensitive  --
+   -----------------------------
+   function reveal_case_sensitive return Boolean is
+   begin
+      return Context.case_sensitive;
+   end reveal_case_sensitive;
+
+
    ----------------------------
    --  register_debug_level  --
    ----------------------------
@@ -180,6 +189,15 @@ package body Raven.Context is
    begin
       context.dbdir := SUS (dir);
    end register_db_directory;
+
+
+   ---------------------------------
+   --  register_case_sensitivity  --
+   ---------------------------------
+   procedure register_case_sensitivity (sensitive : Boolean) is
+   begin
+      context.case_sensitive := sensitive;
+   end register_case_sensitivity;
 
 
 end Raven.Context;

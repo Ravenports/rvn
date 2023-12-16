@@ -6,7 +6,7 @@ with Raven.Strings; use Raven.Strings;
 package Raven.Database.Schema is
 
    type schema_component is
-     (packages,
+     (version, packages,
       users, groups, scripts, options, licenses, categories,
       directories, annotations, dependencies, libraries,
       pkg_users, pkg_groups, pkg_scripts, pkg_options, pkg_licences, pkg_categories,
@@ -22,6 +22,7 @@ package Raven.Database.Schema is
 
    function component_definition (component : schema_component) return String;
    function prstat_definition (component : prepared_statement) return String;
+   function upgrade_definition (component : Local_Upgrade_Series) return String;
 
 private
 
@@ -50,6 +51,7 @@ private
    function table_libraries         return String;
 
    function table_pkg_files         return String;
+   function pragma_version          return String;
 
    function table_pkg_users         return String;
    function table_pkg_groups        return String;

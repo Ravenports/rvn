@@ -7,6 +7,7 @@ with Raven.Strings;
 with Raven.Version;
 with Raven.Cmd.Unset;
 with Raven.Depends;
+with Raven.Context;
 with Archive.Unix;
 with SQLite;
 with Blake_3;
@@ -111,7 +112,7 @@ package body Raven.Database.CustomCmds is
          re_Access := SQLite.sqlite3_get_auxdata_as_regex (context, 0);
 
          if re_Access = null then
-            if Database.rdb_case_sensitive then
+            if Raven.Context.reveal_case_sensitive then
                flags := SQLite.REX_CASE;
             end if;
             re_Access := re'Access;
@@ -238,7 +239,7 @@ package body Raven.Database.CustomCmds is
       pragma Unreferenced (unused_result);
    begin
       unused_result := sqlcmd_init (db, null, null);
-   end define_six_functions;
+   end define_three_functions;
 
 
 end Raven.Database.CustomCmds;

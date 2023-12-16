@@ -11,6 +11,7 @@ package Raven.Context is
    function reveal_event_pipe return Unix.File_Descriptor;
    function reveal_debug_level return A_Debug_Level;
    function reveal_developer_mode return Boolean;
+   function reveal_case_sensitive return Boolean;
 
    procedure close_event_pipe;
    procedure close_root_directory_fd;
@@ -21,6 +22,7 @@ package Raven.Context is
    procedure register_dev_mode (mode_on : Boolean);
    procedure register_cache_directory (dir : String);
    procedure register_db_directory (dir: String);
+   procedure register_case_sensitivity (sensitive : Boolean);
    function register_event_pipe_via_file (pipe_name : String) return Boolean;
    function register_event_pipe_via_socket (pipe_name : String) return Unix.Unix_Socket_Result;
 
@@ -31,6 +33,7 @@ private
          eventpipe      : Unix.File_Descriptor := Unix.not_connected;
          debug_level    : A_Debug_Level := A_Debug_Level'First;
          developer_mode : Boolean := False;
+         case_sensitive : Boolean := False;
          cachedir       : Text;
          dbdir          : Text;
          rootdir_fd     : Unix.File_Descriptor := Unix.not_connected;

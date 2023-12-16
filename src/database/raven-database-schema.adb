@@ -38,6 +38,7 @@ package body Raven.Database.Schema is
          when index_files        => return index_files;
          when index_pkg_namebase => return index_pkg_namebase;
          when index_pkg_nsv      => return index_pkg_nsv;
+         when version            => return pragma_version;
       end case;
    end component_definition;
 
@@ -444,6 +445,15 @@ package body Raven.Database.Schema is
    end index_pkg_nsv;
 
 
+   ---------------------=
+   --  pragma_version  --
+   ---------------------=
+   function pragma_version return String is
+   begin
+      return "PRAGMA user_version = 0;";
+   end pragma_version;
+
+
    -------------------
    --  start_table  --
    -------------------
@@ -625,5 +635,18 @@ package body Raven.Database.Schema is
               "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)";  --TTTT TTTT TTII I
       end case;
    end prstat_definition;
+
+
+   --------------------------
+   --  upgrade_definition  --
+   --------------------------
+   function upgrade_definition (component : Local_Upgrade_Series) return String is
+   begin
+      --  This is a placeholder.  When it's time to upgrade, replace 1 rather than
+      --  increment Local_Upgrade_Series (then delete this comment)
+      case component is
+         when 1 => return "PRAGMA user_version = 2000;";
+      end case;
+   end upgrade_definition;
 
 end Raven.Database.Schema;

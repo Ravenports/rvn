@@ -5,8 +5,8 @@ private with SQLite;
 
 package Raven.Database is
 
-   --  TODO: this needs to be set during initialization
-   rdb_case_sensitive : Boolean := False;
+   LOCAL_SCHEMA_VERSION : constant Natural := 1;
+   type Local_Upgrade_Series is range 1 .. LOCAL_SCHEMA_VERSION;
 
    type RDB_Connection is limited private;
    type RDB_Connection_Access is access all RDB_Connection;
