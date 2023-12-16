@@ -26,7 +26,8 @@ private
       cv_create,
       cv_help,
       cv_info,
-      cv_install
+      cv_install,
+      cv_shell
      );
 
      --   cv_annotate,
@@ -40,7 +41,6 @@ private
      --   cv_rquery,
      --   cv_search,
      --   cv_set,
-     --   cv_shell,
      --   cv_shlib,
      --   cv_ssh,
      --   cv_stats,
@@ -135,6 +135,11 @@ private
          only_register      : Boolean := False;          --only-register
       end record;
 
+   type switches_shell_cmd is
+      record
+         pass_arguments     : string_crate.Vector;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -166,6 +171,7 @@ private
          cmd_create             : switches_create_cmd;
          cmd_info               : switches_info_cmd;
          cmd_install            : switches_install_cmd;
+         cmd_shell              : switches_shell_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

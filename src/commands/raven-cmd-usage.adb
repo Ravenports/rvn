@@ -62,6 +62,7 @@ package body Raven.Cmd.Usage is
          when cv_help    => return verb_help (comline);
          when cv_info    => return verb_info (comline);
          when cv_install => return verb_install (comline);
+         when cv_shell   => return True;  -- never shows usage (all args passed though)
       end case;
    end command_line_valid;
 

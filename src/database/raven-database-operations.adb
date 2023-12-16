@@ -332,4 +332,28 @@ package body Raven.Database.Operations is
       return True;
    end upgrade_schema;
 
+
+   ----------------------
+   --  localdb_exists  --
+   ----------------------
+   function localdb_exists return Boolean
+   is
+      dirfd : Unix.File_Descriptor;
+   begin
+      dirfd := Context.reveal_db_directory_fd;
+      return Unix.relative_file_exists (dirfd, localhost_database);
+   end localdb_exists;
+
+
+   --------------------
+   --  localdb_path  --
+   --------------------
+   function localdb_path return String
+   is
+      dbdir : constant String := RCU.config_setting (RCU.CFG.dbdir);
+   begin
+      return dbdir & "/" & localhost_database;
+   end localdb_path;
+
+
 end Raven.Database.Operations;

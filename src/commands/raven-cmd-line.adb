@@ -326,6 +326,9 @@ package body Raven.Cmd.Line is
                   else
                      handle_pkg_patterns (data, datum, datumtxt);
                   end if;
+
+               when cv_shell =>
+                  data.cmd_shell.pass_arguments.Append (datumtxt);
             end case;
          else
             --  insert second part of last seen command
@@ -462,7 +465,8 @@ package body Raven.Cmd.Line is
          ("create    ", cv_create),
          ("help      ", cv_help),
          ("info      ", cv_info),
-         ("install   ", cv_install)
+         ("install   ", cv_install),
+         ("shell     ", cv_shell)
 
          --  ("add       ", cv_add),
          --  ("alias     ", cv_alias),

@@ -9,6 +9,9 @@ package Raven.Database.Operations is
    function rdb_open_localdb (db : in out RDB_Connection) return Action_Result;
    procedure rdb_close       (db : in out RDB_Connection);
 
+   function localdb_exists return Boolean;
+   function localdb_path   return String;
+
 private
 
    internal_srcfile : constant String := "raven-database-operations.adb";

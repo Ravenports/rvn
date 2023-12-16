@@ -8,6 +8,7 @@ with Raven.Cmd.Create;
 with Raven.Cmd.Help;
 with Raven.Cmd.Info;
 with Raven.Cmd.Install;
+with Raven.Cmd.Shell;
 
 package body Raven.Cmd.Bahnhof is
 
@@ -18,6 +19,7 @@ package body Raven.Cmd.Bahnhof is
    package C04 renames Raven.Cmd.Alias;
    package C05 renames Raven.Cmd.Info;
    package C06 renames Raven.Cmd.Install;
+   package C07 renames Raven.Cmd.Shell;
 
    --------------------------------------------------------------------
    --  execute_command
@@ -32,6 +34,7 @@ package body Raven.Cmd.Bahnhof is
          when cv_alias    => return (C04.execute_alias_command (comline));
          when cv_info     => return (C05.execute_info_command (comline));
          when cv_install  => return (C06.execute_install_command (comline));
+         when cv_shell    => return (C07.execute_shell_command (comline));
          when others =>
             TIO.Put_Line ("Command '" & convert_command_enum_to_label (comline.command) &
                             "' hasn't been implemented yet.  Sorry!");
