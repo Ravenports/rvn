@@ -67,6 +67,18 @@ package Raven.Unix is
    --  strerror from libc
    function strerror (errno : Integer) return String;
 
+   function relative_file_readable
+     (dfd  : File_Descriptor;
+      path : String) return Boolean;
+
+   function relative_file_writable
+     (dfd  : File_Descriptor;
+      path : String) return Boolean;
+
+   function relative_file_exists
+     (dfd  : File_Descriptor;
+      path : String) return Boolean;
+
    function C_Openat_Stock
      (dirfd     : IC.int;
       path      : IC.Strings.chars_ptr;
@@ -156,5 +168,20 @@ private
 
    function C_Strerror (Errnum : IC.int) return IC.Strings.chars_ptr;
    pragma Import (C, C_Strerror, "strerror");
+
+   function C_faccessat_readable
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_faccessat_readable, "faccessat_readable");
+
+   function C_faccessat_writable
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_faccessat_writable, "faccessat_writable");
+
+   function C_faccessat_file_exists
+     (dfd  : IC.int;
+      path : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_faccessat_file_exists, "faccessat_file_exists");
 
 end Raven.Unix;

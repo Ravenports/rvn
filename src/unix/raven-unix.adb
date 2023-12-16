@@ -220,4 +220,56 @@ package body Raven.Unix is
       return (rc = IC.int (1));
    end failure;
 
+
+   ------------------------------
+   --  relative_file_readable  --
+   ------------------------------
+   function relative_file_readable
+     (dfd  : File_Descriptor;
+      path : String) return Boolean
+   is
+      c_path : IC.Strings.chars_ptr;
+      result : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      result := C_faccessat_readable (IC.int (dfd), c_path);
+      IC.Strings.Free (c_path);
+      return success (result);
+   end relative_file_readable;
+
+
+   ------------------------------
+   --  relative_file_writable  --
+   ------------------------------
+   function relative_file_writable
+     (dfd  : File_Descriptor;
+      path : String) return Boolean
+   is
+      c_path : IC.Strings.chars_ptr;
+      result : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      result := C_faccessat_writable (IC.int (dfd), c_path);
+      IC.Strings.Free (c_path);
+      return success (result);
+   end relative_file_writable;
+
+
+   ----------------------------
+   --  relative_file_exists  --
+   ----------------------------
+   function relative_file_exists
+     (dfd  : File_Descriptor;
+      path : String) return Boolean
+   is
+      c_path : IC.Strings.chars_ptr;
+      result : IC.int;
+   begin
+      c_path := IC.Strings.New_String (path);
+      result := C_faccessat_file_exists (IC.int (dfd), c_path);
+      IC.Strings.Free (c_path);
+      return success (result);
+   end relative_file_exists;
+
+
 end Raven.Unix;
