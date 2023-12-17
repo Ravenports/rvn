@@ -208,9 +208,7 @@ package body Raven.Database.Schema is
        def : Text := start_table ("dependencies");
    begin
       prime_key (def, dependency_id);
-      col_text (def, "namebase");
-      col_text (def, "subpackage");
-      col_text (def, "variant");
+      col_text (def, "nsv");
       col_text (def, "version");
       return close_table (def);
    end table_dependencies;
@@ -603,8 +601,7 @@ package body Raven.Database.Schema is
          when directory   => return IOII & "directories(path) VALUES(?1)";  --  T
          when note        => return IOII & "annotations(note_key) VALUES(?1)";  --  T
          when option      => return IOII & "options(option_name) VALUES(?1)";  --  T
-         when dependency  => return IOII & "dependencies(namebase,subpackage,variant,version) " &
-                                    "VALUES(?1,?2,?3,?4)";  -- TTTT
+         when dependency  => return IOII & "dependencies(nsv,version) VALUES(?1,?2)";  -- TT
          when pkg_user    => return IORB & "pkg_users(package_id, user_id) VALUES" &
                                     "(?1, (SELECT user_id FROM users WHERE name = ?2))";  -- IT
          when pkg_group   => return IORB & "pkg_groups(package_id, group_id) VALUES" &
@@ -630,9 +627,8 @@ package body Raven.Database.Schema is
          when pkg_option       => return IORB &
               "pkg_options(package_id,option_id,option_setting) " &
               "VALUES(?1,(SELECT option_id FROM options WHERE option_name = ?2),?3)";  --IIT
-         when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) " &
-              "VALUES(?1, (SELECT dependency_id FROM dependencies WHERE " &
-              "namebase = ?2 AND subpackage = ?3 AND variant = ?4))";  -- ITTT
+         when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) VALUES"
+              & "(?1, (SELECT dependency_id FROM dependencies WHERE nsv = ?2 AND version = ?3))";
          when main_pkg => return "INSERT OR REPLACE INTO packages(namebase,subpackage,variant," &
               "version,comment,desc,www,maintainer,prefix,abi,flatsize,licenselogic,automatic) " &
               "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)";  --TTTT TTTT TTII I
