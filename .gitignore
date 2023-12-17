@@ -18,3 +18,9 @@ tests/html
 
 # extracted vendor sources
 vendor/sqlite3
+vendor/*.gz
+
+# sqlite workfiles
+sqlite/*.[ch]
+sqlite/*.pico
+sqlite/libcustom_sqlite_pic.a
