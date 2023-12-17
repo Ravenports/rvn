@@ -8,14 +8,15 @@ PREFIX?=	/raven
 SHOBJ_CFLAGS=	-fpic
 SHOBJ_LDFLAGS=	-shared
 LOCAL_CFLAGS=	-I$(PREFIX)/include \
-		-D_HAVE_SQLITE_CONFIG_H \
 		-DHAVE_LINENOISE \
 		-Wno-unused-variable \
 		-Wno-unused-function \
 		-Wno-strict-aliasing \
 		-Wno-unused-parameter \
+		-Wno-unused-value \
+		-Wno-empty-body \
+		-Wno-implicit-fallthrough \
 		-DSQLITE_OS_UNIX=1 \
-		-DDHAVE_MALLOC_USABLE_SIZE=0 \
 		-DSQLITE_OMIT_AUTOVACUUM \
 		-DSQLITE_OMIT_BLOB_LITERAL \
 		-DSQLITE_OMIT_DECLTYPE \
@@ -56,15 +57,14 @@ all: lib${LIB}_pic.a
 
 sqlite3.pico: sqlite3.c sqlite3.h
 
-sqlite3.c: ${.CURDIR}/../../vendor/sqlite3/sqlite3.c
+sqlite3.c: ${.CURDIR}/../vendor/sqlite3/sqlite3.c
 	cp ${.ALLSRC} ${.TARGET}
 
-sqlite3.h: ${.CURDIR}/../../vendor/sqlite3/sqlite3.h
+sqlite3.h: ${.CURDIR}/../vendor/sqlite3/sqlite3.h
 	cp ${.ALLSRC} ${.TARGET}
 
-shell.c: ${.CURDIR}/../../vendor/sqlite3/shell.c
-	sed -e 's|SQLITE_CDECL main|SQLITE_CDECL sqlite3_shell|'\
-		${.ALLSRC} > ${.TARGET}
+shell.c: ${.CURDIR}/../vendor/sqlite3/shell.c
+	cp ${.ALLSRC} ${.TARGET}
 
 lib${LIB}_pic.a: ${SHOBJS}
 	ar cr ${.TARGET} ${SHOBJS}

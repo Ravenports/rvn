@@ -32,6 +32,7 @@ package body Raven.Database.Schema is
          when pkg_libs_provided  => return table_pkg_libs_provided;
          when pkg_libs_required  => return table_pkg_libs_required;
          when pkg_libs_adacent   => return table_pkg_libs_adjacent;
+         when pkg_files          => return table_pkg_files;
          when index_dep1         => return index_dependencies_1;
          when index_dep2         => return index_dependencies_2;
          when index_dep3         => return index_dependencies_3;
@@ -219,7 +220,7 @@ package body Raven.Database.Schema is
    ----------------------------
    function index_dependencies_1 return String is
    begin
-      return generic_index ("dep_pkg_id", "dependencies", package_id);
+      return generic_index ("dep_pkg_id", "dependencies", dependency_id);
    end index_dependencies_1;
 
 
@@ -238,7 +239,7 @@ package body Raven.Database.Schema is
    function index_dependencies_3 return String is
    begin
       return "CREATE UNIQUE INDEX dep_unique ON " &
-        "dependencies(namebase, subpackage, variant, version, package_id);";
+        "dependencies(namebase, subpackage, variant, version, dependency_id);";
    end index_dependencies_3;
 
 
@@ -441,7 +442,7 @@ package body Raven.Database.Schema is
    ---------------------
    function index_pkg_nsv return String is
    begin
-      return "CREATE UNIQUE INDEX packages_nsv ON packages(name, subversion, variant);";
+      return "CREATE UNIQUE INDEX packages_nsv ON packages(namebase, subpackage, variant);";
    end index_pkg_nsv;
 
 

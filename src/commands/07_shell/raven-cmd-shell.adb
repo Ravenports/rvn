@@ -25,8 +25,7 @@ package body Raven.Cmd.Shell is
       rdb      : Database.RDB_Connection;
       num_args : Natural := Natural (comline.cmd_shell.pass_arguments.Length);
       result   : IC.int;
-
-      type argv_t is array (1 .. num_args) of aliased ICS.chars_ptr;
+      nada     : aliased ICS.chars_ptr := ICS.Null_Ptr;
    begin
       if not OPS.localdb_exists then
          case OPS.rdb_open_localdb (rdb) is
@@ -44,21 +43,25 @@ package body Raven.Cmd.Shell is
          end if;
       end;
 
-      declare
-         argv : argv_t;
-         argsval : access ICS.chars_ptr;
-      begin
-         for x in 1 .. num_args loop
-            argv (x) := ICS.New_String (USS (comline.cmd_shell.pass_arguments.Element (x - 1)));
-         end loop;
+      if num_args = 0 then
+         result := sqlite_h.sqlite3_shell (IC.int (num_args), nada'Access);
+      else
+         declare
+            argv : array (1 .. num_args) of aliased ICS.chars_ptr;
+            argsval : access ICS.chars_ptr;
+         begin
+            for x in 1 .. num_args loop
+               argv (x) := ICS.New_String (USS (comline.cmd_shell.pass_arguments.Element (x - 1)));
+            end loop;
 
-         argsval := argv (1)'Access;
-         result := sqlite_h.sqlite3_shell (IC.int (num_args), argsval);
+            argsval := argv (1)'Access;
+            result := sqlite_h.sqlite3_shell (IC.int (num_args), argsval);
 
-         for x in 1 .. num_args loop
-            ICS.Free (argv (x));
-         end loop;
-      end;
+            for x in 1 .. num_args loop
+               ICS.Free (argv (x));
+            end loop;
+         end;
+      end if;
 
       case result is
          when 0 => return True;

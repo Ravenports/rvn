@@ -8,6 +8,7 @@ with Raven.Version;
 with Raven.Cmd.Unset;
 with Raven.Depends;
 with Raven.Context;
+with Raven.VFS;
 with Archive.Unix;
 with SQLite;
 with Blake_3;

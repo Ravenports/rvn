@@ -11,7 +11,7 @@ package Raven.Database.Schema is
       directories, annotations, dependencies, libraries,
       pkg_users, pkg_groups, pkg_scripts, pkg_options, pkg_licences, pkg_categories,
       pkg_directories, pkg_annotations, pkg_dependencies, pkg_libs_provided,
-      pkg_libs_required, pkg_libs_adacent,
+      pkg_libs_required, pkg_libs_adacent, pkg_files,
       index_dep1, index_dep2, index_dep3, index_files, index_pkg_namebase, index_pkg_nsv
      );
 

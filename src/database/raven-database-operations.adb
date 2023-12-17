@@ -187,8 +187,9 @@ package body Raven.Database.Operations is
    function create_localhost_database (db : in out RDB_Connection) return Boolean
    is
       func : constant String := "create_localhost_database";
+      save : constant String := "GENESIS";
    begin
-      if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, "") then
+      if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, save) then
          Event.emit_error (func & ": Failed to start transaction");
          return False;
       end if;
@@ -198,14 +199,14 @@ package body Raven.Database.Operations is
             when RESULT_OK => null;
             when others =>
                Event.emit_error (func & ": failed component " & comp'Img);
-               if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, "") then
+               if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, save) then
                   return False;
                end if;
          end case;
       end loop;
       if not CommonSQL.transaction_commit (db.handle, internal_srcfile,func, "") then
          Event.emit_error (func & ": failed transaction commit");
-         if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, "") then
+         if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, save) then
             return False;
          end if;
       end if;
