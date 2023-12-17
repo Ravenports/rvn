@@ -139,6 +139,9 @@ package SQLite is
    function get_sql
      (pStmt : not null db3_stmt) return String;
 
+   function get_expanded_sql
+     (stmt : thick_stmt) return String;
+
    procedure set_sqlite_profile
      (db       : not null db3;
       callback : db3_trace);
@@ -219,6 +222,8 @@ package SQLite is
    function set_busy_timeout
      (db        : db3;
       millisecs : Natural) return Boolean;
+
+   function get_last_insert_rowid (db : db3) return sql_int64;
 
 private
 

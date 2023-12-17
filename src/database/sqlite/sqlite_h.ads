@@ -436,6 +436,9 @@ package sqlite_h is
    function sqlite3_clear_bindings (pStmt : sqlite3_stmt_Access) return IC.int;
    pragma Import (C, sqlite3_clear_bindings);
 
+   function sqlite3_expanded_sql (pStmt : sqlite3_stmt_Access) return ICS.chars_ptr;
+   pragma Import (C, sqlite3_expanded_sql);
+
 private
 
    type sqlite3              is limited null record;

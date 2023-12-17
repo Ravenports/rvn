@@ -466,6 +466,18 @@ package body SQLite is
    end get_sql;
 
 
+   ------------------------
+   --  get_expanded_sql  --
+   ------------------------
+   function get_expanded_sql (stmt : thick_stmt) return String
+   is
+      sql : ICS.chars_ptr;
+   begin
+      sql := sqlite_h.sqlite3_expanded_sql (stmt.pStmt);
+      return translate_char_pointer (sql);
+   end get_expanded_sql;
+
+
    --------------------------------------------------------------------
    --  set_sqlite_profile
    --------------------------------------------------------------------
@@ -793,5 +805,15 @@ package body SQLite is
       end case;
    end set_busy_timeout;
 
+   -----------------------------
+   --  get_last_insert_rowid  --
+   -----------------------------
+   function get_last_insert_rowid (db : db3) return sql_int64
+   is
+      res : sqlite_h.sql64;
+   begin
+      res := sqlite_h.sqlite3_last_insert_rowid (db);
+      return sql_int64 (res);
+   end get_last_insert_rowid;
 
 end SQLite;
