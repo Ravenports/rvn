@@ -23,8 +23,16 @@ private
    procedure debug_running_stmt (stmt : SQLite.thick_stmt);
 
    --  Inserts stump-level package data, returns True on success
-   function run_prstmt_main_pkg (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_category (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_license  (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_main_pkg  (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_category  (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_license   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_user      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_group     (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_directory (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_script    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_library   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_note      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_option    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_depend    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
 
 end Raven.Database.Pkgs;
