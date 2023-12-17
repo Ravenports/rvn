@@ -162,4 +162,51 @@ package body Raven.Event is
       warnx ("Local package database nonexistent!");
    end emit_no_local_db;
 
+
+   --------------------------
+   --  emit_install_begin  --
+   --------------------------
+   procedure emit_install_begin (namebase   : String;
+                                 subpackage : String;
+                                 variant    : String;
+                                 version    : String)
+   is
+      nsv : constant String := namebase & "-" & subpackage & "-" & variant;
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_INSTALL_BEGIN"),
+            json_objectpair ("data",
+              CC (json_pair ("pkgname", nsv),
+                  json_pair ("pkgversion", version)))));
+   begin
+      check_progress;
+      pipe_event (jmsg);
+      TIO.Put_Line ("Install package start: " & nsv & "-" & version);
+   end emit_install_begin;
+
+
+   --------------------------
+   --  emit_install_begin  --
+   --------------------------
+   procedure emit_install_end (namebase   : String;
+                               subpackage : String;
+                               variant    : String;
+                               version    : String;
+                               message    : String)
+   is
+      nsv : constant String := namebase & "-" & subpackage & "-" & variant;
+      jmsg : constant String := json_object
+        (CC
+           (json_pair ("type", "INFO_INSTALL_FINISHED"),
+            json_objectpair ("data",
+              CC (CC (
+                json_pair ("pkgname", nsv),
+                json_pair ("pkgversion", version)),
+                json_pair ("message", message)))));
+   begin
+      check_progress;
+      pipe_event (jmsg);
+      TIO.Put_Line ("Install package end  : " & nsv & "-" & version & "(" & message & ")");
+   end emit_install_end;
+
 end Raven.Event;

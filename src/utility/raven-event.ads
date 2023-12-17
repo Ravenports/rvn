@@ -17,6 +17,17 @@ package Raven.Event is
       err_argument : String;
       err_number   : Integer);
 
+   procedure emit_install_begin (namebase   : String;
+                                 subpackage : String;
+                                 variant    : String;
+                                 version    : String);
+
+   procedure emit_install_end (namebase   : String;
+                               subpackage : String;
+                               variant    : String;
+                               version    : String;
+                               message    : String);
+
 private
 
    --  warnx prints the message to stdout verbatim
