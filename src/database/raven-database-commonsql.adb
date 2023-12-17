@@ -23,6 +23,21 @@ package body Raven.Database.CommonSQL is
 
 
    -------------------------
+   --  ERROR_STMT_SQLITE  --
+   -------------------------
+   procedure ERROR_STMT_SQLITE (db      : not null SQLite.db3;
+                                srcfile : String;
+                                func    : String;
+                                sql     : String)
+   is
+      msg : String := "sqlite error while executing <" & sql & "> in file " & srcfile &
+        ", " & func & ": " & SQLite.get_last_error_message (db);
+   begin
+      Event.emit_error (msg);
+   end ERROR_STMT_SQLITE;
+
+
+   -------------------------
    --  transaction_begin  --
    -------------------------
    function transaction_begin

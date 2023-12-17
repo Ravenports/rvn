@@ -11,6 +11,12 @@ package Raven.Database.CommonSQL is
       func    : String;
       query   : String);
 
+   procedure ERROR_STMT_SQLITE
+     (db      : not null SQLite.db3;
+      srcfile : String;
+      func    : String;
+      sql     : String);
+
    function transaction_begin
      (db        : not null SQLite.db3;
       srcfile   : String;
