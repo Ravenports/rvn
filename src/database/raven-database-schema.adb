@@ -298,7 +298,6 @@ package body Raven.Database.Schema is
    begin
       prime_key (def, option_id);
       col_text (def, "option_name");
-      col_text (def, "option_desc");
       return close_table (def);
    end table_options;
 
@@ -603,7 +602,7 @@ package body Raven.Database.Schema is
          when category    => return IOII & "categories(name) VALUES(?1)";  --  T
          when directory   => return IOII & "directories(path) VALUES(?1)";  --  T
          when note        => return IOII & "annotations(note_key) VALUES(?1)";  --  T
-         when option      => return IOII & "options(option_name,option_desc) VALUES(?1,?2)";  --  TT
+         when option      => return IOII & "options(option_name) VALUES(?1)";  --  T
          when dependency  => return IOII & "dependencies(namebase,subpackage,variant,version) " &
                                     "VALUES(?1,?2,?3,?4)";  -- TTTT
          when pkg_user    => return IORB & "pkg_users(package_id, user_id) VALUES" &
@@ -628,8 +627,9 @@ package body Raven.Database.Schema is
          when pkg_note         => return IORB &
               "pkg_annotations(package_id,annotation_id,annotation) " &
               "VALUES(?1,(SELECT annotation_id FROM annotations WHERE note_key = ?2),?3)";  --ITT
-         when pkg_option       => return IORB & "pkg_options(package_id,option_setting,option_id) "
-              & "VALUES(?1,?2,(SELECT option_id FROM options WHERE option_name = ?3))";  --IIT
+         when pkg_option       => return IORB &
+              "pkg_options(package_id,option_id,option_setting) " &
+              "VALUES(?1,(SELECT option_id FROM options WHERE option_name = ?2),?3)";  --IIT
          when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) " &
               "VALUES(?1, (SELECT dependency_id FROM dependencies WHERE " &
               "namebase = ?2 AND subpackage = ?3 AND variant = ?4))";  -- ITTT
