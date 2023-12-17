@@ -165,16 +165,22 @@ package body Raven.Database.Pkgs is
       is
          category : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, category);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.category);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -182,7 +188,10 @@ package body Raven.Database.Pkgs is
       is
          category : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, category);
             debug_running_stmt (pack_stmt);
@@ -190,25 +199,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_category);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.category);
-         return False;
-      end if;
       pkg.categories.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_category);
-            return False;
-         end if;
-         pkg.categories.Iterate (insert_into_package'Access);
-      end if;
+      pkg.categories.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_category;
@@ -229,16 +230,22 @@ package body Raven.Database.Pkgs is
       is
          license : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, license);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.license);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -246,7 +253,10 @@ package body Raven.Database.Pkgs is
       is
          license : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, license);
             debug_running_stmt (pack_stmt);
@@ -254,25 +264,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_license);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.license);
-         return False;
-      end if;
       pkg.licenses.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_license);
-            return False;
-         end if;
-         pkg.licenses.Iterate (insert_into_package'Access);
-      end if;
+      pkg.licenses.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_license;
@@ -293,16 +295,22 @@ package body Raven.Database.Pkgs is
       is
          user : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, user);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.user);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -310,7 +318,10 @@ package body Raven.Database.Pkgs is
       is
          user : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, user);
             debug_running_stmt (pack_stmt);
@@ -318,25 +329,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_user);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.user);
-         return False;
-      end if;
       pkg.users.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_user);
-            return False;
-         end if;
-         pkg.users.Iterate (insert_into_package'Access);
-      end if;
+      pkg.users.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_user;
@@ -357,16 +360,22 @@ package body Raven.Database.Pkgs is
       is
          group : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, group);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.group);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -374,7 +383,10 @@ package body Raven.Database.Pkgs is
       is
          group : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, group);
             debug_running_stmt (pack_stmt);
@@ -382,25 +394,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_group);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.group);
-         return False;
-      end if;
       pkg.groups.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_group);
-            return False;
-         end if;
-         pkg.groups.Iterate (insert_into_package'Access);
-      end if;
+      pkg.groups.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_group;
@@ -421,16 +425,22 @@ package body Raven.Database.Pkgs is
       is
          directory : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, directory);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.directory);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -438,7 +448,10 @@ package body Raven.Database.Pkgs is
       is
          directory : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, directory);
             debug_running_stmt (pack_stmt);
@@ -446,25 +459,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_directory);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.directory);
-         return False;
-      end if;
       pkg.directories.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_directory);
-            return False;
-         end if;
-         pkg.directories.Iterate (insert_into_package'Access);
-      end if;
+      pkg.directories.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_directory;
@@ -487,16 +492,22 @@ package body Raven.Database.Pkgs is
       is
          code : constant String := USS (Pkgtypes.Script_List.Element (Position).code);
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, code);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.script);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -506,7 +517,10 @@ package body Raven.Database.Pkgs is
          code : constant String := USS (Pkgtypes.Script_List.Element (Position).code);
          args : constant String := USS (Pkgtypes.Script_List.Element (Position).args);
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_integer (pack_stmt, 2, SQLite.sql_int64 (phase_type));
             SQLite.bind_integer (pack_stmt, 3, SQLite.sql_int64 (phase_ndx));
@@ -517,33 +531,25 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
             phase_ndx := phase_ndx + 1;
+         else
+            squawk_reset_error (SCH.pkg_script);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.script);
-         return False;
-      end if;
       for phase in Archive.Whitelist.package_phase'Range loop
          pkg.scripts (phase).Iterate (insert_main'Access);
       end loop;
+      for phase in Archive.Whitelist.package_phase'Range loop
+         phase_type := phase_type + 1;  --  type index starts at 1
+         phase_ndx := 0;                --  script array starts at 0
 
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_script);
-            return False;
-         end if;
-         for phase in Archive.Whitelist.package_phase'Range loop
-            phase_type := phase_type + 1;  --  type index starts at 1
-            phase_ndx := 0;                --  script array starts at 0
-
-            pkg.scripts (phase).Iterate (insert_into_package'Access);
-         end loop;
-      end if;
+         pkg.scripts (phase).Iterate (insert_into_package'Access);
+      end loop;
 
       return keep_going;
    end run_prstmt_script;
@@ -566,16 +572,22 @@ package body Raven.Database.Pkgs is
       is
          library : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, library);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.library);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -583,7 +595,10 @@ package body Raven.Database.Pkgs is
       is
          license : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt1) then
             SQLite.bind_integer (pack_stmt1, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt1, 2, license);
             debug_running_stmt (pack_stmt1);
@@ -591,9 +606,12 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt1));
+                                               SQLite.get_expanded_sql (pack_stmt1));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_adjacent_lib);
+            keep_going := False;
          end if;
       end insert_into_package1;
 
@@ -601,7 +619,10 @@ package body Raven.Database.Pkgs is
       is
          license : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt2) then
             SQLite.bind_integer (pack_stmt2, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt2, 2, license);
             debug_running_stmt (pack_stmt2);
@@ -609,9 +630,12 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt2));
+                                               SQLite.get_expanded_sql (pack_stmt2));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_provided_lib);
+            keep_going := False;
          end if;
       end insert_into_package2;
 
@@ -619,7 +643,10 @@ package body Raven.Database.Pkgs is
       is
          license : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt3) then
             SQLite.bind_integer (pack_stmt3, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt3, 2, license);
             debug_running_stmt (pack_stmt3);
@@ -627,47 +654,22 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt3));
+                                               SQLite.get_expanded_sql (pack_stmt3));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_required_lib);
+            keep_going := False;
          end if;
       end insert_into_package3;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.library);
-         return False;
-      end if;
-
       pkg.libs_adjacent.Iterate (insert_main'Access);
-      if keep_going then
-         pkg.libs_provided.Iterate (insert_main'Access);
-      end if;
-      if keep_going then
-         pkg.libs_required.Iterate (insert_main'Access);
-      end if;
+      pkg.libs_provided.Iterate (insert_main'Access);
+      pkg.libs_required.Iterate (insert_main'Access);
 
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt1) then
-            squawk_reset_error (SCH.pkg_adjacent_lib);
-            return False;
-         end if;
-         if not SQLite.reset_statement (pack_stmt2) then
-            squawk_reset_error (SCH.pkg_provided_lib);
-            return False;
-         end if;
-         if not SQLite.reset_statement (pack_stmt2) then
-            squawk_reset_error (SCH.pkg_required_lib);
-            return False;
-         end if;
-         pkg.libs_adjacent.Iterate (insert_into_package1'Access);
-      end if;
-
-      if keep_going then
-         pkg.libs_provided.Iterate (insert_into_package2'Access);
-      end if;
-      if keep_going then
-         pkg.libs_required.Iterate (insert_into_package3'Access);
-      end if;
+      pkg.libs_adjacent.Iterate (insert_into_package1'Access);
+      pkg.libs_provided.Iterate (insert_into_package2'Access);
+      pkg.libs_required.Iterate (insert_into_package3'Access);
 
       return keep_going;
    end run_prstmt_library;
@@ -688,16 +690,22 @@ package body Raven.Database.Pkgs is
       is
          note_key : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, note_key);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.note);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -706,7 +714,10 @@ package body Raven.Database.Pkgs is
          note_key  : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
          note_text : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, note_key);
             SQLite.bind_string  (pack_stmt, 3, note_text);
@@ -715,25 +726,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_note);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.note);
-         return False;
-      end if;
       pkg.annotations.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_note);
-            return False;
-         end if;
-         pkg.annotations.Iterate (insert_into_package'Access);
-      end if;
+      pkg.annotations.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_note;
@@ -754,16 +757,22 @@ package body Raven.Database.Pkgs is
       is
          opt_name : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, opt_name);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (main_stmt));
+                                               SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.option);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -772,7 +781,10 @@ package body Raven.Database.Pkgs is
          opt_name  : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
          opt_value : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, opt_name);
             SQLite.bind_string  (pack_stmt, 3, opt_value);
@@ -781,25 +793,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_option);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.option);
-         return False;
-      end if;
       pkg.options.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_option);
-            return False;
-         end if;
-         pkg.options.Iterate (insert_into_package'Access);
-      end if;
+      pkg.options.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_option;
@@ -820,7 +824,10 @@ package body Raven.Database.Pkgs is
       is
          fulldep : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (main_stmt) then
             SQLite.bind_string (main_stmt, 1, head (fulldep, "-"));
             SQLite.bind_string (main_stmt, 2, tail (fulldep, "-"));
             debug_running_stmt (main_stmt);
@@ -831,6 +838,9 @@ package body Raven.Database.Pkgs is
                                          SQLite.get_expanded_sql (main_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.dependency);
+            keep_going := False;
          end if;
       end insert_main;
 
@@ -838,7 +848,10 @@ package body Raven.Database.Pkgs is
       is
          fulldep : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if keep_going then
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, head (fulldep, "-"));
             SQLite.bind_string  (pack_stmt, 3, tail (fulldep, "-"));
@@ -847,25 +860,17 @@ package body Raven.Database.Pkgs is
                when SQLite.no_more_data => null;
                when SQLite.row_present | SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                         SQLite.get_expanded_sql (pack_stmt));
+                                               SQLite.get_expanded_sql (pack_stmt));
                   keep_going := False;
             end case;
+         else
+            squawk_reset_error (SCH.pkg_dependency);
+            keep_going := False;
          end if;
       end insert_into_package;
    begin
-      if not SQLite.reset_statement (main_stmt) then
-         squawk_reset_error (SCH.dependency);
-         return False;
-      end if;
       pkg.dependencies.Iterate (insert_main'Access);
-
-      if keep_going then
-         if not SQLite.reset_statement (pack_stmt) then
-            squawk_reset_error (SCH.pkg_dependency);
-            return False;
-         end if;
-         pkg.dependencies.Iterate (insert_into_package'Access);
-      end if;
+      pkg.dependencies.Iterate (insert_into_package'Access);
 
       return keep_going;
    end run_prstmt_depend;

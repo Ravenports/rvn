@@ -589,7 +589,7 @@ package body Raven.Database.Schema is
    function prstat_definition (component : prepared_statement) return String
    is
       IOII : constant String := "INSERT OR IGNORE INTO ";
-      IORB : constant String := "INSERT OR ROLLBACK INTO ";
+      IORB : constant String := "INSERT INTO ";  --  was "INSERT OR ROLLBACK INTO"
    begin
       case component is
          when user        => return IOII & "users(name) VALUES(?1)";  --  T
