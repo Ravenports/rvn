@@ -15,11 +15,7 @@ package Raven.Pkgtypes is
    type Package_ID         is mod 2**64;
    type Package_Size       is mod 2**64;
 
-   type License_Logic is
-     (LICENSE_OR,      --  ASCII POS ('|')
-      LICENSE_AND,     --  ASCII POS ('&')
-      LICENSE_SINGLE   --  1
-     );
+   type License_Logic is (LICENSE_DUAL, LICENSE_MULTI, LICENSE_SINGLE, LICENSE_UNLISTED);
 
    package Text_List is new CON.Vectors
      (Element_Type => Text,

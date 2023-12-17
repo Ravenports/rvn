@@ -2,6 +2,10 @@
 --  Reference: /License.txt
 
 with ThickUCL;
+with Archive.Unpack;
+with Raven.Pkgtypes;
+
+private with archive.Whitelist;
 
 package Raven.Metadata is
 
@@ -81,9 +85,34 @@ package Raven.Metadata is
    function reveal_version    (metatree : ThickUCL.UclTree) return String;
    function reveal_prefix     (metatree : ThickUCL.UclTree) return String;
 
+   procedure convert_to_package
+     (metatree  : ThickUCL.UclTree;
+      files     : Archive.Unpack.file_records.Vector;
+      new_pkg   : in out Pkgtypes.A_Package;
+      automatic : Boolean);
+
 private
+
+   package WL renames Archive.Whitelist;
 
    --  convert message type to key string
    function message_key (mtype : message_type) return String;
+
+   --  extract lists out of metadata.
+   procedure set_list
+     (metatree : ThickUCL.UclTree;
+      field    : metadata_field;
+      new_list : in out Pkgtypes.Text_List.Vector);
+
+   Procedure set_nvpair
+     (metatree : ThickUCL.UclTree;
+      field    : metadata_field;
+      new_dict : in out Pkgtypes.NV_Pairs.Map);
+
+   procedure set_scripts
+     (metatree : ThickUCL.UclTree;
+      new_dict : in out Pkgtypes.Script_Set);
+
+   function convert_to_phase (S : String; phase : in out WL.package_phase) return Boolean;
 
 end Raven.Metadata;
