@@ -124,6 +124,7 @@ package body Raven.Database.Schema is
    begin
       cascade  (def, package_id, "packages", "id");
       restrict (def, annotation_id, "annotations", annotation_id);
+      col_text (def, "annotation");
       multi_primekey2 (def, package_id, annotation_id);
       return close_table (def);
    end table_pkg_annotations;
@@ -323,7 +324,7 @@ package body Raven.Database.Schema is
        def : Text := start_table ("annotations");
    begin
       prime_key (def, annotation_id);
-      col_text_unique (def, "annotation");
+      col_text_unique (def, "note_key");
       return close_table (def);
    end table_annotations;
 
@@ -601,7 +602,7 @@ package body Raven.Database.Schema is
          when library     => return IOII & "libraries(name) VALUES(?1)";  --  T
          when category    => return IOII & "categories(name) VALUES(?1)";  --  T
          when directory   => return IOII & "directories(path) VALUES(?1)";  --  T
-         when note        => return IOII & "annotations(annotation) VALUES(?1)";  --  T
+         when note        => return IOII & "annotations(note_key) VALUES(?1)";  --  T
          when option      => return IOII & "options(option_name,option_desc) VALUES(?1,?2)";  --  TT
          when dependency  => return IOII & "dependencies(namebase,subpackage,variant,version) " &
                                     "VALUES(?1,?2,?3,?4)";  -- TTTT
@@ -624,8 +625,9 @@ package body Raven.Database.Schema is
               "VALUES(?1, (SELECT category_id FROM categories WHERE name = ?2))";  -- IT
          when pkg_directory    => return IORB & "pkg_directories(package_id,directory_id) " &
               "VALUES(?1, (SELECT directory_id FROM directories WHERE path = ?2))";  -- IT
-         when pkg_note         => return IORB & "pkg_annotations(package_id,annotation_id) " &
-              "VALUES(?1, (SELECT annotation_id FROM annotations WHERE annotation = ?2))";  --IT
+         when pkg_note         => return IORB &
+              "pkg_annotations(package_id,annotation_id,annotation) " &
+              "VALUES(?1,(SELECT annotation_id FROM annotations WHERE note_key = ?2),?3)";  --ITT
          when pkg_option       => return IORB & "pkg_options(package_id,option_setting,option_id) "
               & "VALUES(?1,?2,(SELECT option_id FROM options WHERE option_name = ?3))";  --IIT
          when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) " &
