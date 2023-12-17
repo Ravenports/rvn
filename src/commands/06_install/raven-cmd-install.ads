@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 private with Raven.Metadata;
+private with Raven.Database;
 private with ThickUCL;
 private with Archive.Unpack;
 
@@ -15,6 +16,8 @@ private
    package MET renames Raven.Metadata;
    package EXT renames Archive.Unpack;
 
+   rdb : Database.RDB_Connection;
+
    --  temporary function; remove when no longer needed
    function currently_unsupported (switch : String) return Boolean;
 
@@ -26,7 +29,8 @@ private
    function register_single_package
      (metatree       : ThickUCL.UclTree;
       file_list      : EXT.file_records.Vector;
-      mark_automatic : Boolean) return Boolean;
+      mark_automatic : Boolean;
+      force_install  : Boolean) return Boolean;
 
 
    --  Prior to this routine many things need to have been done:

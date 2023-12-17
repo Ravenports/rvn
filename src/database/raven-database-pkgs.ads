@@ -7,7 +7,7 @@ private with SQLite;
 
 package Raven.Database.Pkgs is
 
-   --  conflict checks must occur before this unless "forced" is set
+   --  Upon file path conflict, this will rollback unless "forced" is set.
    function rdb_register_package
      (db  : in out RDB_Connection;
       pkg : in out Pkgtypes.A_Package;

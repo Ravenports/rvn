@@ -3,8 +3,11 @@
 
 with Raven.Event;
 with Raven.Context;
+with Raven.Pkgtypes;
 with Raven.Cmd.Unset;
 with Raven.Miscellaneous;
+with Raven.Database.Pkgs;
+with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
 with Archive.Unix;
 
@@ -14,7 +17,8 @@ package body Raven.Cmd.Install is
    package EV   renames Raven.Event;
    package RCU  renames Raven.Cmd.Unset;
    package MISC renames Raven.Miscellaneous;
-
+   package PKGS renames Raven.Database.Pkgs;
+   package OPS  renames Raven.Database.Operations;
 
    -------------------------------
    --  execute_install_command  --
@@ -103,7 +107,8 @@ package body Raven.Cmd.Install is
       operation.close_rvn_archive;
 
       if comline.cmd_install.only_register then
-         return register_single_package (metatree, file_list, comline.cmd_install.automatic);
+         return register_single_package (metatree, file_list, comline.cmd_install.automatic,
+                                         comline.cmd_install.force_install);
       end if;
 
       if comline.cmd_install.inhibit_scripts then
@@ -111,6 +116,11 @@ package body Raven.Cmd.Install is
       else
          skip_scripts := not RCU.config_setting (RCU.CFG.run_scripts);
       end if;
+
+      Event.emit_install_begin (MET.reveal_namebase (metatree),
+                                MET.reveal_subpackage (metatree),
+                                MET.reveal_variant (metatree),
+                                MET.reveal_version (metatree));
 
       result := install_files_from_archive
         (archive_path    => archive_path,
@@ -124,8 +134,26 @@ package body Raven.Cmd.Install is
       if result and then
         not comline.cmd_install.no_register
       then
-         return register_single_package (metatree, file_list, comline.cmd_install.automatic);
+         result := register_single_package (metatree, file_list, comline.cmd_install.automatic,
+                                            comline.cmd_install.force_install);
       end if;
+
+      declare
+         function end_message return String is
+         begin
+            if result then
+               return "successful";
+            end if;
+            return "installation failed";
+         end end_message;
+      begin
+         Event.emit_install_end (MET.reveal_namebase (metatree),
+                                 MET.reveal_subpackage (metatree),
+                                 MET.reveal_variant (metatree),
+                                 MET.reveal_version (metatree),
+                                 end_message);
+      end;
+
       return result;
    end install_single_local_package;
 
@@ -192,12 +220,18 @@ package body Raven.Cmd.Install is
    function register_single_package
      (metatree       : ThickUCL.UclTree;
       file_list      : EXT.file_records.Vector;
-      mark_automatic : Boolean) return Boolean
+      mark_automatic : Boolean;
+      force_install  : Boolean) return Boolean
    is
-      pragma Unreferenced (metatree, file_list, mark_automatic);
+      my_package : Pkgtypes.A_Package;
    begin
-      EV.emit_error ("register_single_package has not been implemented yet");
-      return False;
+      case OPS.rdb_open_localdb (rdb) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      Metadata.convert_to_package (metatree, file_list, my_package, mark_automatic);
+      return PKGS.rdb_register_package (rdb, my_package, force_install);
    end register_single_package;
 
 end Raven.Cmd.Install;

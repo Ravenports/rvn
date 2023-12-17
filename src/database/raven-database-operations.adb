@@ -31,12 +31,14 @@ package body Raven.Database.Operations is
    begin
       case establish_localhost_connection (db) is
          when RESULT_OK =>
-            if not initialize_prepared_statements (db) then
-               Event.emit_error (func & ": Failed to initialize prepared statements");
-               rdb_close (db);
-               return RESULT_FATAL;
+            if not db.prstmt_initialized then
+               if not initialize_prepared_statements (db) then
+                  Event.emit_error (func & ": Failed to initialize prepared statements");
+                  rdb_close (db);
+                  return RESULT_FATAL;
+               end if;
+               db.prstmt_initialized := True;
             end if;
-            db.prstmt_initialized := True;
             return RESULT_OK;
          when others =>
             return RESULT_FATAL;
