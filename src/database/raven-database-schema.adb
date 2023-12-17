@@ -228,7 +228,7 @@ package body Raven.Database.Schema is
    ----------------------------
    function index_dependencies_2 return String is
    begin
-      return generic_index ("dep_namebase", "dependencies", "namebase");
+      return generic_index ("dep_namebase", "dependencies", "nsv");
    end index_dependencies_2;
 
 
@@ -238,7 +238,7 @@ package body Raven.Database.Schema is
    function index_dependencies_3 return String is
    begin
       return "CREATE UNIQUE INDEX dep_unique ON " &
-        "dependencies(namebase, subpackage, variant, version, dependency_id);";
+        "dependencies(nsv, version, dependency_id);";
    end index_dependencies_3;
 
 
