@@ -17,6 +17,8 @@ package Raven.Pkgtypes is
 
    type License_Logic is (LICENSE_DUAL, LICENSE_MULTI, LICENSE_SINGLE, LICENSE_UNLISTED);
 
+   Package_Not_Installed : constant Package_ID := 0;
+
    package Text_List is new CON.Vectors
      (Element_Type => Text,
       Index_Type   => Natural,

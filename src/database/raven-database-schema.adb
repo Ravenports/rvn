@@ -542,9 +542,9 @@ package body Raven.Database.Schema is
    end cascade;
 
 
-   ---------------
+   ----------------
    --  restrict  --
-   ---------------
+   ----------------
    procedure restrict
      (def       : in out Text;
       name      : String;

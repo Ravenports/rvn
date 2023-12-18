@@ -20,7 +20,6 @@ private
    internal_srcfile : constant String := "raven-database-pkgs.adb";
 
    procedure squawk_reset_error (stmt_type : SCH.prepared_statement);
-   procedure debug_running_stmt (stmt : SQLite.thick_stmt);
 
    --  Inserts stump-level package data, returns True on success
    function run_prstmt_main_pkg  (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
@@ -34,5 +33,10 @@ private
    function run_prstmt_note      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
    function run_prstmt_option    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
    function run_prstmt_depend    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+
+   function delete_satellite
+     (db    : RDB_Connection;
+      pkgid : Pkgtypes.Package_ID;
+      table : String) return Boolean;
 
 end Raven.Database.Pkgs;

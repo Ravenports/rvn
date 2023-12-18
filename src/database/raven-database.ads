@@ -21,4 +21,6 @@ private
          prstmt_initialized : Boolean := False;
       end record;
 
+   procedure debug_running_stmt (stmt : SQLite.thick_stmt);
+
 end Raven.Database;

@@ -5,6 +5,7 @@ with Raven.Event;
 with Raven.Strings;
 with Raven.Database.CommonSQL;
 with Raven.Database.Operations;
+with Raven.Database.Query;
 with Archive.Whitelist;
 
 use Raven.Strings;
@@ -12,6 +13,7 @@ use Raven.Strings;
 package body Raven.Database.Pkgs is
 
    package OPS renames Raven.Database.Operations;
+   package QRY renames Raven.Database.Query;
 
    ----------------------------
    --  rdb_register_package  --
@@ -23,13 +25,62 @@ package body Raven.Database.Pkgs is
    is
       save : constant String := "REGPACK";
       func : constant String := "rdb_register_package";
-      onward : Boolean;
+      onward : Boolean := True;
+      pkgid  : Pkgtypes.Package_ID := Pkgtypes.Package_Not_Installed;
    begin
       if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, save) then
          Event.emit_error (func & ": Failed to start transaction");
          return False;
       end if;
-      onward := run_prstmt_main_pkg (db, pkg);
+
+      if forced then
+         pkgid := QRY.package_installed (db, USS (pkg.namebase), USS (pkg.subpackage),
+                                         USS (pkg.variant));
+         case pkgid is
+            when Pkgtypes.Package_Not_Installed => null;
+            when others =>
+               if onward then
+                  onward := delete_satellite (db, "pkg_users");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_groups");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_scripts");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_licenses");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_libs_provided");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_libs_required");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_libs_adjacent");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_categories");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_directories");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_annotations");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_options");
+               end if;
+               if onward then
+                  onward := delete_satellite (db, "pkg_dependencies");
+               end if;
+         end case;
+      end if;
+
+      if onward then
+         onward := run_prstmt_main_pkg (db, pkg);
+      end if;
       if onward then
          pkg.id := Pkgtypes.Package_ID (SQLite.get_last_insert_rowid (db.handle));
          -- TODO Update dep information on packages that depend on the inserted package
@@ -88,15 +139,6 @@ package body Raven.Database.Pkgs is
    begin
       Event.emit_error ("failed to reset " & stmt_type'Img & " prepared statement");
    end squawk_reset_error;
-
-
-   --------------------------
-   --  debug_running_stmt  --
-   --------------------------
-   procedure debug_running_stmt (stmt : SQLite.thick_stmt) is
-   begin
-      Event.emit_debug (high_level, "[rdb] running: " & SQLite.get_expanded_sql (stmt));
-   end debug_running_stmt;
 
 
    ---------------------------
@@ -874,6 +916,23 @@ package body Raven.Database.Pkgs is
 
       return keep_going;
    end run_prstmt_depend;
+
+
+   ------------------------
+   --  delete_satellite  --
+   ------------------------
+   function delete_satellite
+     (db    : RDB_Connection;
+      pkgid : Pkgtypes.Package_ID;
+      table : String) return Boolean
+   is
+      sql : constant String := "DELETE FROM " & table & " WHERE package_id =" & pkgid'Img & ";";
+   begin
+      case CommonSQL.exec (db.handle, sql) is
+         when RESULT_OK => return True;
+         when others => return False;
+      end case;
+   end delete_satellite;
 
 
 end Raven.Database.Pkgs;

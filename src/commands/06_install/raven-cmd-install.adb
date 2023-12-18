@@ -7,6 +7,7 @@ with Raven.Pkgtypes;
 with Raven.Cmd.Unset;
 with Raven.Miscellaneous;
 with Raven.Database.Pkgs;
+with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
 with Archive.Unix;
@@ -18,6 +19,7 @@ package body Raven.Cmd.Install is
    package RCU  renames Raven.Cmd.Unset;
    package MISC renames Raven.Miscellaneous;
    package PKGS renames Raven.Database.Pkgs;
+   package QRY  renames Raven.Database.Query;
    package OPS  renames Raven.Database.Operations;
 
    -------------------------------
@@ -89,7 +91,7 @@ package body Raven.Cmd.Install is
       file_list    : EXT.file_records.Vector;
       metatree     : ThickUCL.UclTree;
       operation    : Archive.Unpack.Darc;
-      result       : Boolean;
+      result       : Boolean := True;
       skip_scripts : Boolean;
 
       function archive_path return String is
@@ -97,7 +99,6 @@ package body Raven.Cmd.Install is
          return USS (comline.common_options.multiple_patterns.Element (0));
       end archive_path;
    begin
-      --  TODO: check if it's already installed
 
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
       if not operation.extract_manifest (file_list) then
@@ -106,52 +107,66 @@ package body Raven.Cmd.Install is
       operation.populate_metadata_tree (metatree);
       operation.close_rvn_archive;
 
-      if comline.cmd_install.only_register then
-         return register_single_package (metatree, file_list, comline.cmd_install.automatic,
-                                         comline.cmd_install.force_install);
-      end if;
-
-      if comline.cmd_install.inhibit_scripts then
-         skip_scripts := True;
-      else
-         skip_scripts := not RCU.config_setting (RCU.CFG.run_scripts);
-      end if;
-
-      Event.emit_install_begin (MET.reveal_namebase (metatree),
-                                MET.reveal_subpackage (metatree),
-                                MET.reveal_variant (metatree),
-                                MET.reveal_version (metatree));
-
-      result := install_files_from_archive
-        (archive_path    => archive_path,
-         root_directory  => USS (comline.pre_command.install_rootdir),
-         inhibit_scripts => skip_scripts,
-         be_silent       => comline.common_options.quiet,
-         dry_run_only    => comline.common_options.dry_run,
-         upgrading       => False);
-
-
-      if result and then
-        not comline.cmd_install.no_register
-      then
-         result := register_single_package (metatree, file_list, comline.cmd_install.automatic,
-                                            comline.cmd_install.force_install);
-      end if;
-
       declare
-         function end_message return String is
-         begin
-            if result then
-               return "successful";
-            end if;
-            return "installation failed";
-         end end_message;
+         N : constant String := MET.reveal_namebase (metatree);
+         S : constant String := MET.reveal_subpackage (metatree);
+         V : constant String := MET.reveal_variant (metatree);
+         P : constant String := N & "-" & S & "-" & V;
       begin
-         Event.emit_install_end (MET.reveal_namebase (metatree),
-                                 MET.reveal_subpackage (metatree),
-                                 MET.reveal_variant (metatree),
-                                 MET.reveal_version (metatree),
-                                 end_message);
+         if not comline.cmd_install.no_register then
+            case OPS.rdb_open_localdb (rdb) is
+               when RESULT_OK => null;
+               when others => return False;
+            end case;
+
+            if not comline.cmd_install.force_install then
+               case QRY.package_installed (rdb, N, S, V) is
+                  when Pkgtypes.Package_Not_Installed => null;
+                  when others => EV.emit_error ("The " & P & " package is already installed.");
+               end case;
+            end if;
+         end if;
+
+         if comline.cmd_install.only_register then
+            return register_single_package (metatree, file_list, comline.cmd_install.automatic,
+                                            comline.cmd_install.force_install);
+         end if;
+
+         if not comline.cmd_install.no_register then
+            result := register_single_package (metatree, file_list, comline.cmd_install.automatic,
+                                               comline.cmd_install.force_install);
+         end if;
+
+         if comline.cmd_install.inhibit_scripts then
+            skip_scripts := True;
+         else
+            skip_scripts := not RCU.config_setting (RCU.CFG.run_scripts);
+         end if;
+
+
+         if result then
+            Event.emit_install_begin (N, S, V, MET.reveal_version (metatree));
+
+            result := install_files_from_archive
+              (archive_path    => archive_path,
+               root_directory  => USS (comline.pre_command.install_rootdir),
+               inhibit_scripts => skip_scripts,
+               be_silent       => comline.common_options.quiet,
+               dry_run_only    => comline.common_options.dry_run,
+               upgrading       => False);
+
+            declare
+               function end_message return String is
+               begin
+                  if result then
+                     return "successful";
+                  end if;
+                  return "installation failed";
+               end end_message;
+            begin
+               Event.emit_install_end (N, S, V, MET.reveal_version (metatree), end_message);
+            end;
+         end if;
       end;
 
       return result;
@@ -225,11 +240,6 @@ package body Raven.Cmd.Install is
    is
       my_package : Pkgtypes.A_Package;
    begin
-      case OPS.rdb_open_localdb (rdb) is
-         when RESULT_OK => null;
-         when others => return False;
-      end case;
-
       Metadata.convert_to_package (metatree, file_list, my_package, mark_automatic);
       return PKGS.rdb_register_package (rdb, my_package, force_install);
    end register_single_package;
