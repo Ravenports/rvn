@@ -3,6 +3,7 @@
 
 with Raven.Pkgtypes;
 private with Raven.Database.Schema;
+private with Archive.Unpack;
 private with SQLite;
 
 package Raven.Database.Pkgs is
@@ -33,10 +34,27 @@ private
    function run_prstmt_note      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
    function run_prstmt_option    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
    function run_prstmt_depend    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_file      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+
+   function overwrite_main_pkg
+     (db    : RDB_Connection;
+      pkgid : Pkgtypes.Package_ID;
+      pkg   : Pkgtypes.A_Package) return Boolean;
 
    function delete_satellite
      (db    : RDB_Connection;
       pkgid : Pkgtypes.Package_ID;
       table : String) return Boolean;
+
+   --  iterate through old files.  Any file not present in pkg.files will be physically deleted.
+   procedure remove_orphaned_files
+     (pkg   : Pkgtypes.A_Package;
+      old   : Archive.Unpack.file_records.Vector);
+
+   function overwrite_file
+     (db    : RDB_Connection;
+      pkgid : Pkgtypes.Package_ID;
+      path  : String;
+      b3sum : String) return Boolean;
 
 end Raven.Database.Pkgs;

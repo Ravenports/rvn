@@ -98,7 +98,7 @@ package body Raven.Database.Query is
    --  rvn_which  --
    -----------------
    procedure rvn_which
-     (db         : in out RDB_Connection;
+     (db         : RDB_Connection;
       query_path : String;
       use_glob   : Boolean;
       packages   : in out Pkgtypes.Package_Set.Vector)

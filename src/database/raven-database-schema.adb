@@ -602,6 +602,7 @@ package body Raven.Database.Schema is
          when note        => return IOII & "annotations(note_key) VALUES(?1)";  --  T
          when option      => return IOII & "options(option_name) VALUES(?1)";  --  T
          when dependency  => return IOII & "dependencies(nsv,version) VALUES(?1,?2)";  -- TT
+         when pkg_file    => return IORB & "pkg_files(package_id,path,b3digest) VALUES(?1,?2,?3);";
          when pkg_user    => return IORB & "pkg_users(package_id, user_id) VALUES" &
                                     "(?1, (SELECT user_id FROM users WHERE name = ?2))";  -- IT
          when pkg_group   => return IORB & "pkg_groups(package_id, group_id) VALUES" &

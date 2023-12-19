@@ -22,7 +22,7 @@ package Raven.Database.Query is
 
    --  Populates a container of truncates packages (only data from main table, no joins)
    procedure rvn_which
-     (db         : in out RDB_Connection;
+     (db         : RDB_Connection;
       query_path : String;
       use_glob   : Boolean;
       packages   : in out Pkgtypes.Package_Set.Vector);

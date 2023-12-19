@@ -27,7 +27,7 @@ package body Raven.Cmd.Install is
    -------------------------------
    function execute_install_command (comline : Cldata) return Boolean
    is
-
+      install_success : Boolean;
    begin
       if comline.common_options.case_insensitive then
          return currently_unsupported ("--case-insensitive");
@@ -64,7 +64,9 @@ package body Raven.Cmd.Install is
       end if;
 
       if comline.cmd_install.local_file then
-         return install_single_local_package (comline);
+         install_success := install_single_local_package (comline);
+         OPS.rdb_close (rdb);
+         return install_success;
       else
          Raven.Event.emit_error ("Installation from repository not yet supported");
          return False;
