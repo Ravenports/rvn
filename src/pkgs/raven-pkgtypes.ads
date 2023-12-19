@@ -85,4 +85,12 @@ package Raven.Pkgtypes is
          files         : File_List.Vector;
       end record;
 
+   package Package_Set is new CON.Vectors
+     (Element_Type => A_Package,
+      Index_Type   => Natural);
+
+   package ID_Set is new CON.Vectors
+     (Element_Type => Package_ID,
+      Index_Type   => Natural);
+
 end Raven.Pkgtypes;
