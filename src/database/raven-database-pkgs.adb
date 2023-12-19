@@ -134,6 +134,9 @@ package body Raven.Database.Pkgs is
       if onward then
          onward := run_prstmt_depend (db, pkg);
       end if;
+      if onward then
+         onward := run_prstmt_file (db, pkg);
+      end if;
 
       if not new_package then
          remove_orphaned_files (pkg, old_files);
