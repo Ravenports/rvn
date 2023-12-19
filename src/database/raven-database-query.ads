@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Raven.Pkgtypes;
+with Archive.Unpack;
 
 package Raven.Database.Query is
 
@@ -12,6 +13,19 @@ package Raven.Database.Query is
       namebase   : String;
       subpackage : String;
       variant    : String) return Pkgtypes.Package_ID;
+
+   --  Populates a container of installed files given a package ID
+   procedure get_package_files
+     (db         : in out RDB_Connection;
+      pkg_id     : Pkgtypes.Package_ID;
+      files      : in out Archive.Unpack.file_records.Vector);
+
+   --  Populates a container of truncates packages (only data from main table, no joins)
+   procedure rvn_which
+     (db         : in out RDB_Connection;
+      query_path : String;
+      use_glob   : Boolean;
+      packages   : in out Pkgtypes.Package_Set.Vector);
 
 private
 

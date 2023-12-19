@@ -2,8 +2,12 @@
 --  Reference: /License.txt
 
 with SQLite;
+with Blake_3;
 with Raven.Event;
+with Raven.Strings;
 with Raven.Database.CommonSQL;
+
+use Raven.Strings;
 
 package body Raven.Database.Query is
 
@@ -42,6 +46,151 @@ package body Raven.Database.Query is
       SQLite.finalize_statement (new_stmt);
       return installed;
    end package_installed;
+
+
+   -------------------------
+   --  get_package_files  --
+   -------------------------
+   procedure get_package_files
+     (db         : in out RDB_Connection;
+      pkg_id     : Pkgtypes.Package_ID;
+      files      : in out Archive.Unpack.file_records.Vector)
+   is
+      func : constant String := "get_package_files";
+      sql  : constant String := "SELECT path, b3digest FROM pkg_files where package_id = ?1";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      files.Clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (pkg_id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  path  : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  b3sum : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  myrec : Archive.Unpack.file_record;
+               begin
+                  myrec.path   := SUS (path);
+                  myrec.digest := Blake_3.blake3_hash_hex (b3sum);
+                  files.Append (myrec);
+               exception
+                  when others =>
+                     myrec.digest := (others => '0');
+                     files.Append (myrec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end get_package_files;
+
+
+   -----------------
+   --  rvn_which  --
+   -----------------
+   procedure rvn_which
+     (db         : in out RDB_Connection;
+      query_path : String;
+      use_glob   : Boolean;
+      packages   : in out Pkgtypes.Package_Set.Vector)
+   is
+      function comparison return String is
+      begin
+         if use_glob then
+            return "GLOB ?1 ";
+         end if;
+         return "= ?1 ";
+      end comparison;
+
+      func : constant String := "rvn_which";
+      sql  : constant String :=
+        "SELECT p.id, p.namebase, p.subpackage, p.variant, p.version, f.path " &
+        "FROM packages as p " &
+        "LEFT JOIN pkg_files as f ON p.id = f.package_id " &
+        "WHERE f.path " & comparison &
+        "ORDER BY p.id, f.path;";
+
+      new_stmt : SQLite.thick_stmt;
+      temporary_packages : Pkgtypes.Package_Set.Vector;
+      temporary_ids      : Pkgtypes.ID_Set.Vector;
+
+      procedure assemble (Position : Pkgtypes.ID_Set.Cursor)
+      is
+         this_pkgid : Pkgtypes.Package_ID := Pkgtypes.ID_Set.Element (Position);
+         new_rec : Pkgtypes.A_Package;
+         file_tray : Pkgtypes.File_Item;
+
+         procedure scan (Position : Pkgtypes.Package_Set.Cursor)
+         is
+            use type Pkgtypes.Package_ID;
+            mypkg : Pkgtypes.A_Package renames Pkgtypes.Package_Set.Element (Position);
+         begin
+            if mypkg.id = this_pkgid then
+               file_tray.path := mypkg.comment;
+
+               new_rec.id := mypkg.id;
+               new_rec.namebase := mypkg.namebase;
+               new_rec.subpackage := mypkg.subpackage;
+               new_rec.variant := mypkg.variant;
+               new_rec.version := mypkg.version;
+               new_rec.files.Append (file_tray);
+            end if;
+         end scan;
+      begin
+         temporary_packages.Iterate (scan'Access);
+         packages.Append (new_rec);
+      end assemble;
+   begin
+      packages.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_string (new_stmt, 1, query_path);
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  pkgid : constant Pkgtypes.Package_ID :=
+                                   Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 0));
+                  namebase   : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  subpackage : constant String := SQLite.retrieve_string (new_stmt, 2);
+                  variant    : constant String := SQLite.retrieve_string (new_stmt, 3);
+                  version    : constant String := SQLite.retrieve_string (new_stmt, 4);
+                  file_path  : constant String := SQLite.retrieve_string (new_stmt, 5);
+                  myrec : Pkgtypes.A_Package;
+               begin
+                  myrec.id         := pkgid;
+                  myrec.namebase   := SUS (namebase);
+                  myrec.subpackage := SUS (subpackage);
+                  myrec.variant    := SUS (variant);
+                  myrec.version    := SUS (version);
+                  myrec.comment    := SUS (file_path);
+                  temporary_packages.Append (myrec);
+                  if not temporary_ids.Contains (pkgid) then
+                     temporary_ids.Append (pkgid);
+                  end if;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+      temporary_ids.Iterate (assemble'Access);
+   end rvn_which;
 
 
 end Raven.Database.Query;
