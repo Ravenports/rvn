@@ -12,9 +12,6 @@ package Raven.Miscellaneous is
    --  Given the pattern "<path/to/parent-dir>/<basename>.<extension>" return basename
    function archive_basename (path_to_archive : String) return String;
 
-   --  This is operating-system specific (normally /bin/sh though)
-   function get_interpreter return String;
-
    --  Used for mapped containers
    function map_hash (key : Text) return Ada.Containers.Hash_Type;
 

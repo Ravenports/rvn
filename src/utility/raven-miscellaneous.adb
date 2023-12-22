@@ -80,26 +80,6 @@ package body Raven.Miscellaneous is
    end tmp;
 
 
-   -----------------------
-   --  get_interpreter  --
-   -----------------------
-   function get_interpreter return String
-   is
-      standard_interpreter : constant String := "/bin/sh";
-   begin
-      case platform is
-         when generic_unix |
-              dragonfly    |
-              freebsd      |
-              openbsd      |
-              netbsd       => return standard_interpreter;
-         when linux        => return standard_interpreter;
-         when omnios       |
-              solaris      => return "/usr/xpg4/bin/sh";
-      end case;
-   end get_interpreter;
-
-
    ----------------
    --  map_hash  --
    ----------------

@@ -6,20 +6,10 @@ with Ada.Strings.Unbounded;
 package Raven is
 
    package SU renames Ada.Strings.Unbounded;
-
-   type Operating_System is (generic_unix,
-                             freebsd,
-                             dragonfly,
-                             netbsd,
-                             openbsd,
-                             linux,
-                             solaris,
-                             omnios);
    
-   progversion    : constant String := "0.0.5";
+   progversion    : constant String := "0.0.6";
    progname       : constant String := "rvn";
    extension      : constant String := ".rvn";
-   platform       : constant Operating_System := Operating_System'First;
    db_schema_ver  : constant Natural := 1;
    local_rvn_db   : constant String := "local.sqlite";
    install_loc    : constant String := "/raven";
