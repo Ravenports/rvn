@@ -223,8 +223,7 @@ package body Raven.Cmd.Install is
          set_perms     => rootuser,
          set_modtime   => False,
          skip_scripts  => inhibit_scripts,
-         upgrading     => upgrading,
-         interpreter   => MISC.get_interpreter);
+         upgrading     => upgrading);
       operation.close_rvn_archive;
 
       return good_extraction;
