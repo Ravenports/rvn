@@ -191,7 +191,7 @@ package body Raven.Configuration is
          when dbdir          => return "/var/db/" & progname;
          when cachedir       => return "/var/cache/" & progname;
          when keywords_dir   => return "/var/ravenports/conspiracy/Mk/Keywords";
-         when abi            => return "TODO - TBW";
+         when abi            => return "";
          when nameserver     => return "";
          when user_agent     => return progname & "/" & progversion;
          when event_pipe     => return "";

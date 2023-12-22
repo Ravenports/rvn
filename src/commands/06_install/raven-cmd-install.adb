@@ -103,7 +103,7 @@ package body Raven.Cmd.Install is
    begin
 
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
-      if not operation.extract_manifest (file_list) then
+      if not operation.extract_manifest (file_list, USS (comline.pre_command.install_rootdir)) then
          EV.emit_error ("Failed to extract manifest of packaged files.");
       end if;
       operation.populate_metadata_tree (metatree);
