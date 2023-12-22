@@ -486,7 +486,6 @@ package body Raven.Metadata is
       set_list (metatree, groups, new_pkg.groups);
       set_list (metatree, licenses, new_pkg.licenses);
       set_list (metatree, categories, new_pkg.categories);
-      set_list (metatree, dependencies, new_pkg.dependencies);
       set_list (metatree, directories, new_pkg.directories);
       set_list (metatree, shlibs_adjacent, new_pkg.libs_adjacent);
       set_list (metatree, shlibs_provided, new_pkg.libs_provided);
@@ -495,6 +494,7 @@ package body Raven.Metadata is
       new_pkg.files.Clear;
       files.Iterate (scan'Access);
 
+      set_nvpair (metatree, dependencies, new_pkg.dependencies);
       set_nvpair (metatree, annotations, new_pkg.annotations);
       set_nvpair (metatree, options, new_pkg.options);
       set_scripts (metatree, new_pkg.scripts);

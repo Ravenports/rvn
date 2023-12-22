@@ -77,8 +77,8 @@ package Raven.Pkgtypes is
          libs_provided : Text_List.Vector;
          libs_required : Text_List.Vector;
          libs_adjacent : Text_List.Vector;
-         dependencies  : Text_List.Vector;
          directories   : Text_List.Vector;
+         dependencies  : NV_Pairs.Map;
          annotations   : NV_Pairs.Map;
          options       : NV_Pairs.Map;
          scripts       : Script_Set;

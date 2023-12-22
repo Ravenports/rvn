@@ -945,16 +945,17 @@ package body Raven.Database.Pkgs is
       func       : constant String := "run_prstmt_depend";
       keep_going : Boolean := True;
 
-      procedure insert_main (Position : Pkgtypes.Text_List.Cursor)
+      procedure insert_main (Position : Pkgtypes.NV_Pairs.Cursor)
       is
-         fulldep : constant String := USS (Pkgtypes.Text_List.Element (Position));
+         nsv     : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
+         version : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
       begin
          if not keep_going then
             return;
          end if;
          if SQLite.reset_statement (main_stmt) then
-            SQLite.bind_string (main_stmt, 1, head (fulldep, "-"));
-            SQLite.bind_string (main_stmt, 2, tail (fulldep, "-"));
+            SQLite.bind_string (main_stmt, 1, nsv);
+            SQLite.bind_string (main_stmt, 2, version);
             debug_running_stmt (main_stmt);
             case SQLite.step (main_stmt) is
                when SQLite.no_more_data => null;
@@ -969,17 +970,18 @@ package body Raven.Database.Pkgs is
          end if;
       end insert_main;
 
-      procedure insert_into_package (Position : Pkgtypes.Text_List.Cursor)
+      procedure insert_into_package (Position : Pkgtypes.NV_Pairs.Cursor)
       is
-         fulldep : constant String := USS (Pkgtypes.Text_List.Element (Position));
+         nsv     : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
+         version : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
       begin
          if not keep_going then
             return;
          end if;
          if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
-            SQLite.bind_string  (pack_stmt, 2, head (fulldep, "-"));
-            SQLite.bind_string  (pack_stmt, 3, tail (fulldep, "-"));
+            SQLite.bind_string  (pack_stmt, 2, nsv);
+            SQLite.bind_string  (pack_stmt, 3, version);
             debug_running_stmt (pack_stmt);
             case SQLite.step (pack_stmt) is
                when SQLite.no_more_data => null;
