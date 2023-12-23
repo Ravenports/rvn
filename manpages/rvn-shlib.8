@@ -1,0 +1,58 @@
+.Dd December 23, 2023
+.Dt RVN-SHLIB 8
+.Os
+.Sh NAME
+.Nm "rvn shlib"
+.Nd display uses of a specific shared library
+.Sh SYNOPSIS
+.Nm
+.Op Fl q
+.Op Fl PR
+.Ar library
+.Pp
+.Nm
+.Op Cm --quiet
+.Op Cm --{provides,requires}
+.Ar library
+.Sh DESCRIPTION
+.Nm
+displays which installed package provides a specific shared library
+and which installed packages require that library
+.Pp
+.Ar library
+is the filename of the library without any leading path.
+It is equivalent to the DT_SONAME definition of the library.
+Only exact matches are handled.
+.Sh OPTIONS
+The following mutually exclusive options are supported by
+.Nm :
+.Bl -tag -width provides
+.It Fl P , Cm --provides
+Show only the installed packages which provide the named
+.Ar library .
+.It Fl R , Cm --requires
+Show only the installed packages which require
+.Ar library .
+.It Fl q , Cm --quiet
+Force quiet output.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It RVN_DBDIR
+.El
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8
