@@ -37,6 +37,7 @@ package body Raven.Cmd.Create is
       package_abi  : constant String := RCU.config_setting (RCU.CFG.abi);
       keywords_dir : constant String := RCU.config_setting (RCU.CFG.keywords_dir);
       verbosity    : constant Boolean := RCU.config_setting (RCU.CFG.create_verbose);
+      rec_baselib  : constant Boolean := RCU.config_setting (RCU.CFG.base_shlibs);
       timestamp    : constant Archive.filetime := provide_timestamp (comline.cmd_create.timestamp);
       level        : Archive.info_level := Archive.normal;
       remote_FD    : Archive.Unix.File_Descriptor;
@@ -178,6 +179,7 @@ package body Raven.Cmd.Create is
                                         fixed_timestamp     => timestamp,
                                         output_file         => rvn_filename,
                                         verbosity           => level,
+                                        record_base_libs    => rec_baselib,
                                         optional_pipe       => remote_FD)
          then
             return False;
