@@ -451,6 +451,12 @@ scripts: {
     }
   ]
 }
+shlibs_adjacent: [
+]
+shlibs_provided: [
+]
+shlibs_required: [
+]
 subpackage: 'single'
 variant: 'standard'
 version: '1'
@@ -492,6 +498,12 @@ namebase: 'test'
 prefix: '/'
 scripts: {
 }
+shlibs_adjacent: [
+]
+shlibs_provided: [
+]
+shlibs_required: [
+]
 subpackage: 'single'
 variant: 'standard'
 version: '1'
@@ -566,6 +578,12 @@ namebase: 'test'
 prefix: '/'
 scripts: {
 }
+shlibs_adjacent: [
+]
+shlibs_provided: [
+]
+shlibs_required: [
+]
 subpackage: 'single'
 variant: 'standard'
 version: '1'
@@ -648,6 +666,12 @@ namebase: 'test'
 prefix: '/'
 scripts: {
 }
+shlibs_adjacent: [
+]
+shlibs_provided: [
+]
+shlibs_required: [
+]
 subpackage: 'single'
 variant: 'standard'
 version: '1'

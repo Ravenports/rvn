@@ -181,7 +181,6 @@ package body Raven.Event is
    begin
       check_progress;
       pipe_event (jmsg);
-      TIO.Put_Line ("Install package start: " & nsv & "-" & version);
    end emit_install_begin;
 
 
@@ -206,7 +205,6 @@ package body Raven.Event is
    begin
       check_progress;
       pipe_event (jmsg);
-      TIO.Put_Line ("Install package end  : " & nsv & "-" & version & "(" & message & ")");
    end emit_install_end;
 
 end Raven.Event;

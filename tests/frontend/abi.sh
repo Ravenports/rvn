@@ -2,15 +2,19 @@
 
 . $(atf_get_srcdir)/test_environment.sh
 tests_init \
-	basic
+	basic_freebsd \
+	basic_dragonfly
 
-basic_body() {
-	_expected="FreeBSD:13:amd64\n"
+basic_freebsd_body() {
+	atf_only_on FreeBSD rvn abi interpretation is hardcoded
 	atf_check \
-		-o inline:"${_expected}" \
-		rvn -o ABI_FILE=$(atf_get_srcdir)/artifacts/fbsd.binin config abi
+		-o inline:"freebsd:x86_64:13\n" \
+		env ABI_FILE=$(atf_get_srcdir)/artifacts/fbsd.binin rvn config abi
+}
 
+basic_dragonfly_body() {
+	atf_only_on DragonFly rvn abi interpretation is hardcoded
 	atf_check \
-		-o inline:"dragonfly:5.10:x86:64\n" \
-		rvn -o ABI_FILE=$(atf_get_srcdir)/artifacts/dfly.binin config abi
+		-o inline:"dragonfly:x86_64:5.10\n" \
+		env ABI_FILE=$(atf_get_srcdir)/artifacts/dfly.binin rvn config abi
 }

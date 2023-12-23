@@ -37,6 +37,13 @@ atf_skip_on() {
 	fi
 }
 
+atf_only_on() {
+	if [ "${OS}" != "$1" ]; then
+		shift
+		atf_skip "$@"
+	fi
+}
+
 atf_require() {
 	if ! command -v "$1" 2>/dev/null >/dev/null; then
 		shift
