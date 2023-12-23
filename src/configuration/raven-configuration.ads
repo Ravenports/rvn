@@ -19,6 +19,7 @@ package Raven.Configuration is
      (configuration_file    : String;
       command_line_options  : String;
       debug_level_cli       : A_Debug_Level;
+      root_directory        : String;
       session_configuration : in out ThickUCL.UclTree);
 
 
@@ -116,7 +117,7 @@ private
    function get_default_value (ci : Configuration_Item) return Int64;
    
    --  Return string value for the given item.   config_type_mismatch exception possible.
-   function get_default_value (ci : Configuration_Item) return String;
+   function get_default_value (ci : Configuration_Item; root_directory : String) return String;
    
    --  Populates the given crate with a vector of strings for the given item.
    --  It represents an array of strings.  config_type_mismatch exception possible.
@@ -145,7 +146,8 @@ private
    
    --  Delegate the logic that sets the remaining configuration to the default values
    procedure set_defaults_on_remaining_settings 
-     (session_configuration : in out ThickUCL.UclTree);
+     (session_configuration : in out ThickUCL.UclTree;
+      root_directory        : String);
    
    --  Brute force search of the configuration item from the key
    function get_configuration_item (key : String) return Configuration_Item;

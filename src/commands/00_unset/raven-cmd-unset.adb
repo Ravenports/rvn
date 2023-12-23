@@ -143,6 +143,7 @@ package body Raven.Cmd.Unset is
         (configuration_file    => config_file_path,
          command_line_options  => USS (comline.pre_command.option_nvpairs),
          debug_level_cli       => comline.pre_command.debug_setting,
+         root_directory        => USS (comline.pre_command.install_rootdir),
          session_configuration => program_configuration);
 
       declare
