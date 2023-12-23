@@ -65,8 +65,7 @@ package Raven.Configuration is
       autoclean,      --  AUTOCLEAN (false)
       valid_scheme,   --  VALID_URL_SCHEME([ array of schemes ])
       base_shlibs,    --  ALLOW_BASE_SHLIBS (false)
-      size_limit,     --  WARN_SIZE_LIMIT (1048576)
-      metalog_file    --  METALOG ("")
+      size_limit      --  WARN_SIZE_LIMIT (1048576)
      );
       
    --  workers_count,  --  WORKERS_COUNT (0)

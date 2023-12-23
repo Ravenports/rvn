@@ -62,7 +62,6 @@ package body Raven.Configuration is
          when valid_scheme   => return "VALID_URL_SCHEME";
          when base_shlibs    => return "ALLOW_BASE_SHLIBS";
          when size_limit     => return "WARN_SIZE_LIMIT";
-         when metalog_file   => return "METALOG";
          when skip_dev       => return "SKIP_DEV_SUBPKG";
          when skip_nls       => return "SKIP_NLS_SUBPKG";
          when skip_man       => return "SKIP_MAN_SUBPKG";
@@ -117,8 +116,7 @@ package body Raven.Configuration is
               user_agent     |
               event_pipe     |
               restrict_dir   |
-              ssh_args       |
-              metalog_file   => return ThickUCL.data_string;
+              ssh_args       => return ThickUCL.data_string;
          when
               repos_dir      |
               valid_scheme   => return ThickUCL.data_array;
@@ -210,7 +208,6 @@ package body Raven.Configuration is
          when event_pipe     => return "";
          when restrict_dir   => return "";
          when ssh_args       => return "";
-         when metalog_file   => return "";
          when others =>
             raise config_type_mismatch with ci'Img & " is not of type string";
       end case;
