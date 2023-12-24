@@ -4,7 +4,7 @@ all: sqlite/libcustom_sqlite_pic.a
 	gprbuild -p -P src/rvn-format/programs/rvnprogs
 
 sqlite/libcustom_sqlite_pic.a:
-	${MAKE} -c sqlite
+	${MAKE} -C sqlite
 
 install:
 	${BSD_INSTALL_PROGRAM} ${WRKSRC}/obj/rvn ${DESTDIR}${PREFIX}/sbin/
