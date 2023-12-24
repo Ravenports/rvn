@@ -203,7 +203,7 @@ package body Raven.Database.Query is
    is
       func : constant String := "provides_library";
       sql  : constant String :=
-        "SELECT p.id, p.namebase, p.subpackage, p.variant, p.version" &
+        "SELECT p.id, p.namebase, p.subpackage, p.variant, p.version " &
         "FROM packages as p, pkg_libs_provided as prv, libraries as l " &
         "WHERE p.id = prv.package_id AND prv.library_id = l.library_id AND l.name = ?1";
       new_stmt : SQLite.thick_stmt;
@@ -238,11 +238,66 @@ package body Raven.Database.Query is
             when SQLite.something_else =>
                CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
                                             SQLite.get_expanded_sql (new_stmt));
-            when SQLite.no_more_data => exit;
+            when SQLite.no_more_data =>
+               exit;
          end case;
       end loop;
       SQLite.finalize_statement (new_stmt);
 
    end provides_library;
+
+
+   ------------------------
+   --  requires_library  --
+   ------------------------
+   procedure requires_library
+     (db         : RDB_Connection;
+      lib_soname : String;
+      packages   : in out Pkgtypes.Package_Set.Vector)
+   is
+      func : constant String := "requires_library";
+      sql  : constant String :=
+        "SELECT p.id, p.namebase, p.subpackage, p.variant, p.version " &
+        "FROM packages as p, pkg_libs_required as req, libraries as l " &
+        "WHERE p.id = req.package_id AND req.library_id = l.library_id AND l.name = ?1";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      packages.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_string (new_stmt, 1, lib_soname);
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  pkgid : constant Pkgtypes.Package_ID :=
+                                   Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 0));
+                  namebase   : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  subpackage : constant String := SQLite.retrieve_string (new_stmt, 2);
+                  variant    : constant String := SQLite.retrieve_string (new_stmt, 3);
+                  version    : constant String := SQLite.retrieve_string (new_stmt, 4);
+                  myrec : Pkgtypes.A_Package;
+               begin
+                  myrec.id         := pkgid;
+                  myrec.namebase   := SUS (namebase);
+                  myrec.subpackage := SUS (subpackage);
+                  myrec.variant    := SUS (variant);
+                  myrec.version    := SUS (version);
+                  packages.Append (myrec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data =>
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end requires_library;
+
 
 end Raven.Database.Query;

@@ -99,8 +99,8 @@ private
 
    type switches_shlib_cmd is
       record
-         provides : Boolean;
-         requires : Boolean;
+         provides : Boolean := False;
+         requires : Boolean := False;
       end record;
 
    type switches_info_cmd is

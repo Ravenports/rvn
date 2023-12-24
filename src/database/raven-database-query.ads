@@ -34,10 +34,10 @@ package Raven.Database.Query is
       packages   : in out Pkgtypes.Package_Set.Vector);
 
    --  Returns 0 or more packages that require the given library soname
-   --  procedure requires_library
-   --    (db         : RDB_Connection;
-   --     lib_soname : String;
-   --     packages   : in out Pkgtypes.Package_Set.Vector);
+   procedure requires_library
+     (db         : RDB_Connection;
+      lib_soname : String;
+      packages   : in out Pkgtypes.Package_Set.Vector);
 
 private
 

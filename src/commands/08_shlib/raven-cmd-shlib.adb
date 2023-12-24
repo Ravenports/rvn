@@ -53,7 +53,7 @@ package body Raven.Cmd.Shlib is
       QRY.provides_library (rdb, library_soname, packages);
       if packages.Is_Empty then
          if not quiet then
-            Event.emit_message ("No packages provide " & library_soname & ".");
+            Event.emit_message ("No packages provides " & library_soname & ".");
          end if;
          return False;
       end if;
@@ -69,9 +69,35 @@ package body Raven.Cmd.Shlib is
    -------------------------
    --  show_requirements  --
    -------------------------
-   function show_requirements (quiet : Boolean; library_soname : String) return Boolean is
+   function show_requirements (quiet : Boolean; library_soname : String) return Boolean
+   is
+      packages : Pkgtypes.Package_Set.Vector;
+
+      procedure print (Position : Pkgtypes.Package_Set.Cursor)
+      is
+         this_pkg : Pkgtypes.A_Package renames Pkgtypes.Package_Set.Element (Position);
+      begin
+         Event.emit_message (Pkgtypes.nsvv_identifier (this_pkg));
+      end print;
    begin
-      return False;
+      case OPS.rdb_open_localdb (rdb) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      QRY.requires_library (rdb, library_soname, packages);
+      if packages.Is_Empty then
+         if not quiet then
+            Event.emit_message ("No packages require " & library_soname & ".");
+         end if;
+         return False;
+      end if;
+
+      if not quiet then
+         Event.emit_message (library_soname & " is linked to the following packages:");
+      end if;
+      packages.Iterate (print'Access);
+      return True;
    end show_requirements;
 
 
