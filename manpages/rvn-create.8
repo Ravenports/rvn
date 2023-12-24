@@ -48,8 +48,8 @@ doesn't end with .rvn, the extension will automatically be added.
 If the
 .Ar pkg-name
 is not given at all, the name will be generated from the namebase,
-subpackage, and variant values provided in the metadata.  If any of those
-three are missing
+subpackage, and variant values provided in the metadata.
+If any of those three are missing
 .Nm
 will emit an error.
 .\" ---------------------------------------------------------------------------
@@ -363,10 +363,6 @@ specified in the environment variable (same as the
 switch).
 .El
 .\" ---------------------------------------------------------------------------
-.Sh FILES
-See
-.Xr rvn.conf 5 .
-.\" ---------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
@@ -377,4 +373,5 @@ See
 .Xr rvn-info 8 ,
 .Xr rvn-install 8 ,
 .Xr rvn-shell 8 ,
-.Xr rvn-shlib 8
+.Xr rvn-shlib 8 ,
+.Xr rvn-which 8

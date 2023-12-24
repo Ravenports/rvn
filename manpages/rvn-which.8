@@ -1,0 +1,57 @@
+.Dd December 24, 2023
+.Dt RVN-WHICH 8
+.Os
+.Sh NAME
+.Nm "rvn which"
+.Nd display which package installed a specific file
+.Sh SYNOPSIS
+.Nm
+.Op Fl gopqm
+.Ar file
+.Pp
+.Nm
+.Op Cm --{glob,origin,path-search,quiet,show-match}
+.Ar file
+.Sh DESCRIPTION
+.Nm
+is used for displaying the package that installed
+.Ar file .
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width origin
+.It Fl g , Cm --glob
+Treat
+.Ao file Ac
+as a glob pattern.
+.It Fl m , Cm --show-match
+Show files that matched the glob pattern (requires --glob).
+.It Fl o , Cm --origin
+Show the origin of the package instead of name-version.
+.It Fl p , Cm --path-search
+Search for the filename in PATH.
+.It Fl q , Cm --quiet
+Be quiet.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev PATH
+.El
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8
