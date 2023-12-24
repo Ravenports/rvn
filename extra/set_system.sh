@@ -4,6 +4,7 @@
 DPATH=$(dirname "$0")
 EXTRADIR=$(cd "${DPATH}" && pwd -P)
 ADS="${EXTRADIR}/../src/rvn-format/src/archive.ads"
+ARCGPR="${EXTRADIR}/../src/rvn-format/programs/rvnprogs.gpr"
 OSNAME=$(uname -s)
 
 case "${OSNAME}" in
@@ -25,3 +26,6 @@ case "${platform}" in
 		           -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
 esac
+
+# don't build all the archive programs, only xrvn
+sed -i.bak -e '/for Main use/ s|"packrvn.adb", "readelf.adb", ||' "${ARCGPR}"
