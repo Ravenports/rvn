@@ -93,4 +93,7 @@ package Raven.Pkgtypes is
      (Element_Type => Package_ID,
       Index_Type   => Natural);
 
+   --  returns name-subpackage-variant-version
+   function nsvv_identifier (pkg : A_Package) return String;
+
 end Raven.Pkgtypes;

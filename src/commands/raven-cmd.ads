@@ -27,7 +27,8 @@ private
       cv_help,
       cv_info,
       cv_install,
-      cv_shell
+      cv_shell,
+      cv_shlib
      );
 
      --   cv_annotate,
@@ -41,7 +42,6 @@ private
      --   cv_rquery,
      --   cv_search,
      --   cv_set,
-     --   cv_shlib,
      --   cv_ssh,
      --   cv_stats,
      --   cv_update,
@@ -95,6 +95,12 @@ private
          whitelist_file  : Text;
          timestamp       : Text;
          prefix          : Text;
+      end record;
+
+   type switches_shlib_cmd is
+      record
+         provides : Boolean;
+         requires : Boolean;
       end record;
 
    type switches_info_cmd is
@@ -172,6 +178,7 @@ private
          cmd_info               : switches_info_cmd;
          cmd_install            : switches_install_cmd;
          cmd_shell              : switches_shell_cmd;
+         cmd_shlib              : switches_shlib_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

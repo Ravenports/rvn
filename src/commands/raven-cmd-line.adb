@@ -329,6 +329,17 @@ package body Raven.Cmd.Line is
 
                when cv_shell =>
                   data.cmd_shell.pass_arguments.Append (datumtxt);
+
+               when cv_shlib =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = "-P" or else datum = "--provides" then
+                     data.cmd_shlib.provides := True;
+                  elsif datum = "-R" or else datum = "--requires" then
+                     data.cmd_shlib.requires := True;
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -466,7 +477,8 @@ package body Raven.Cmd.Line is
          ("help      ", cv_help),
          ("info      ", cv_info),
          ("install   ", cv_install),
-         ("shell     ", cv_shell)
+         ("shell     ", cv_shell),
+         ("shlib     ", cv_shlib)
 
          --  ("add       ", cv_add),
          --  ("alias     ", cv_alias),
