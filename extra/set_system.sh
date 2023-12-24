@@ -3,7 +3,7 @@
 
 DPATH=$(dirname "$0")
 EXTRADIR=$(cd "${DPATH}" && pwd -P)
-RAVEN_ADS="${EXTRADIR}/../src/raven.ads"
+ADS="${EXTRADIR}/../src/rvn-format/src/archive.ads"
 OSNAME=$(uname -s)
 
 case "${OSNAME}" in
@@ -18,10 +18,10 @@ esac
 
 case "${platform}" in
 	generic)
-		sed -i.bak -e "/install_loc/ s|/raven|${1}|" "${RAVEN_ADS}"
+		sed -i.bak -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
 	*)
 		sed -i.bak -e "s/Operating_System'First/${platform}/" \
-		           -e "/install_loc/ s|/raven|${1}|" "${RAVEN_ADS}"
+		           -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
 esac
