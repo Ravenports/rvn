@@ -25,6 +25,7 @@ package body Raven.Cmd.Which is
    is
       return_result  : Boolean := False;
       search_patterns : Pkgtypes.Text_List.Vector;
+      something_found : Boolean := False;
 
       procedure query (Position : Pkgtypes.Text_List.Cursor)
       is
@@ -43,15 +44,21 @@ package body Raven.Cmd.Which is
                Event.emit_message (USS (fitem.path));
             end print_file;
          begin
-            if comline.common_options.shell_glob then
-               Event.emit_message (query_path & " was glob searched and found in " & pkgname);
-            else
-               Event.emit_message (query_path & " was installed by " & pkgname);
-            end if;
             if comline.cmd_which.show_match then
                this_pkg.files.Iterate (print_file'Access);
+            else
+               if comline.common_options.quiet then
+                  Event.emit_message (pkgname);
+               else
+                  if comline.common_options.shell_glob then
+                     Event.emit_message (query_path & " was glob searched and found in " & pkgname);
+                  else
+                     Event.emit_message (query_path & " was installed by " & pkgname);
+                  end if;
+               end if;
             end if;
             return_result := True;
+            something_found := True;
          end print;
       begin
          QRY.rvn_which (rdb, query_path, comline.common_options.shell_glob, result_pkgs);
@@ -74,6 +81,11 @@ package body Raven.Cmd.Which is
       end if;
 
       search_patterns.iterate (query'Access);
+
+      if not something_found and then not comline.common_options.quiet then
+         Event.emit_message
+           (USS (comline.common_options.name_pattern) & " was not found in the database");
+      end if;
 
       if not LOK.release_lock (rdb, LOK.lock_readonly) then
          null;
