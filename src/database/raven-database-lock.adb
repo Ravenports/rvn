@@ -61,7 +61,7 @@ package body Raven.Database.Lock is
    function check_lock_pid (db : in out RDB_Connection) return lock_result
    is
       func     : constant String := "check_lock_pid";
-      sql      : constant String := "SELECT pid FROM pkg_lock_pid;";
+      sql      : constant String := "SELECT pid FROM lock_process;";
       new_stmt : SQLite.thick_stmt;
       pid      : Unix.Process_ID;
       lpid     : Unix.Process_ID;
@@ -120,7 +120,7 @@ package body Raven.Database.Lock is
    function write_lock_pid (db : in out RDB_Connection) return boolean
    is
       func     : constant String := "write_lock_pid";
-      sql      : constant String := "INSERT INTO pkg_lock_pid VALUES (?1);";
+      sql      : constant String := "INSERT INTO lock_process VALUES (?1);";
       new_stmt : SQLite.thick_stmt;
       done     : Boolean := False;
    begin
@@ -153,7 +153,7 @@ package body Raven.Database.Lock is
       set_read_sql : constant String := "UPDATE lock_state SET read=read+1 WHERE exclusive=0;";
       set_advi_sql : constant String := "UPDATE lock_state SET advisory=1 " &
                                         "WHERE exclusive=0 AND advisory=0;";
-      set_excl_sql : constant String := "UPDATE pkg_lock SET exclusive=1 " &
+      set_excl_sql : constant String := "UPDATE lock_state SET exclusive=1 " &
                                         "WHERE exclusive=0 AND advisory=0 AND read=0;";
       read_lock    : constant Boolean := RCU.config_setting (RCU.CFG.read_lock);
       locked       : Boolean;
