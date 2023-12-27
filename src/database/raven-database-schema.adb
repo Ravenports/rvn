@@ -40,6 +40,8 @@ package body Raven.Database.Schema is
          when index_pkg_namebase => return index_pkg_namebase;
          when index_pkg_nsv      => return index_pkg_nsv;
          when version            => return pragma_version;
+         when lock_state         => return table_lock_state;
+         when lock_process       => return table_lock_process;
       end case;
    end component_definition;
 
@@ -426,6 +428,32 @@ package body Raven.Database.Schema is
    end table_packages;
 
 
+   ------------------------
+   --  table_lock_state  --
+   ------------------------
+   function table_lock_state return String
+   is
+      def : Text := start_table ("lock_state");
+   begin
+      col_boolean (def, "exclusive");
+      col_boolean (def, "advisory");
+      col_int     (def, "read");
+      return close_table (def);
+   end table_lock_state;
+
+
+   --------------------------
+   --  table_lock_process  --
+   --------------------------
+   function table_lock_process return String
+   is
+      def : Text := start_table ("lock_process");
+   begin
+      prime_key (def, "pid");
+      return close_table (def);
+   end table_lock_process;
+
+
    --------------------------
    --  index_pkg_namebase  --
    --------------------------
@@ -513,6 +541,15 @@ package body Raven.Database.Schema is
          SU.Append (def, name & " INTEGER, ");
       end if;
    end col_int;
+
+
+   -------------------
+   --  col_boolean  --
+   -------------------
+   procedure col_boolean (def : in out Text; name : String) is
+   begin
+      SU.Append (def, name & " INTEGER(1), ");
+   end col_boolean;
 
 
    -------------------
@@ -642,10 +679,8 @@ package body Raven.Database.Schema is
    --------------------------
    function upgrade_definition (component : Local_Upgrade_Series) return String is
    begin
-      --  This is a placeholder.  When it's time to upgrade, replace 1 rather than
-      --  increment Local_Upgrade_Series (then delete this comment)
       case component is
-         when 1 => return "PRAGMA user_version = 2000;";
+         when 1 => return "INSERT INTO lock_state VALUES(0,0,0);";
       end case;
    end upgrade_definition;
 

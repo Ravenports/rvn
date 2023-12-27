@@ -11,7 +11,7 @@ package Raven.Database.Schema is
       directories, annotations, dependencies, libraries,
       pkg_users, pkg_groups, pkg_scripts, pkg_options, pkg_licences, pkg_categories,
       pkg_directories, pkg_annotations, pkg_dependencies, pkg_libs_provided,
-      pkg_libs_required, pkg_libs_adacent, pkg_files,
+      pkg_libs_required, pkg_libs_adacent, pkg_files, lock_state, lock_process,
       index_dep1, index_dep2, index_dep3, index_files, index_pkg_namebase, index_pkg_nsv
      );
 
@@ -66,6 +66,8 @@ private
    function table_pkg_libs_provided return String;
    function table_pkg_libs_required return String;
    function table_pkg_libs_adjacent return String;
+   function table_lock_state        return String;
+   function table_lock_process      return String;
 
    function index_dependencies_1    return String;
    function index_dependencies_2    return String;
@@ -81,6 +83,7 @@ private
    procedure col_text_unique (def : in out Text; name : String);
    procedure col_text        (def : in out Text; name : String; required : Boolean := True);
    procedure col_int         (def : in out Text; name : String; required : Boolean := True);
+   procedure col_boolean     (def : in out Text; name : String);
    procedure multi_primekey2 (def : in out Text; part1, part2 : String);
    procedure multi_primekey3 (def : in out Text; part1, part2, part3 : String);
 

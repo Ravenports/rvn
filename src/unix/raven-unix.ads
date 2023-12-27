@@ -123,6 +123,8 @@ package Raven.Unix is
       path : String;
       sb   : struct_stat_Access) return Boolean;
 
+   function running_process (pid : Process_ID) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -183,5 +185,8 @@ private
      (dfd  : IC.int;
       path : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_faccessat_file_exists, "faccessat_file_exists");
+
+   function C_Kill (pid : Process_ID; signal : IC.int) return IC.Int;
+   pragma Import (C, C_Kill, "kill");
 
 end Raven.Unix;

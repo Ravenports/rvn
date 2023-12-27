@@ -272,4 +272,18 @@ package body Raven.Unix is
    end relative_file_exists;
 
 
+   -----------------------
+   --  running_process  --
+   -----------------------
+   function running_process (pid : Process_ID) return Boolean is
+      res : IC.int;
+   begin
+      res := C_Kill (pid, 0);
+      case res is
+         when 0 => return True;
+         when others => return False;
+      end case;
+   end running_process;
+
+
 end Raven.Unix;
