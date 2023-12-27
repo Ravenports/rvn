@@ -40,5 +40,6 @@ private
    function verb_info    (comline : Cldata) return Boolean;
    function verb_install (comline : Cldata) return Boolean;
    function verb_shlib   (comline : Cldata) return Boolean;
+   function verb_which   (comline : Cldata) return Boolean;
 
 end Raven.Cmd.Usage;

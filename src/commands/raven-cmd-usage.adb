@@ -108,6 +108,7 @@ package body Raven.Cmd.Usage is
          when cv_install => return verb_install (comline);
          when cv_shell   => return True;  -- never shows usage (all args passed though)
          when cv_shlib   => return verb_shlib (comline);
+         when cv_which   => return verb_which (comline);
       end case;
    end command_line_valid;
 
@@ -439,5 +440,33 @@ package body Raven.Cmd.Usage is
 
       return True;
    end verb_shlib;
+
+
+   -------------------
+   --  verb_which  --
+   -------------------
+   function verb_which (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "which [-gmpq] <file|pattern>";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+      if comline.cmd_which.show_match and not comline.common_options.shell_glob then
+         return alert ("-m can only be used with -g");
+      end if;
+      if IsBlank (comline.common_options.name_pattern) then
+         return alert ("<file|pattern> is required.");
+      end if;
+      return True;
+   end verb_which;
+
 
 end Raven.Cmd.Usage;

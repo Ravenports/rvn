@@ -28,7 +28,8 @@ private
       cv_info,
       cv_install,
       cv_shell,
-      cv_shlib
+      cv_shlib,
+      cv_which
      );
 
      --   cv_annotate,
@@ -47,7 +48,6 @@ private
      --   cv_update,
      --   cv_upgrade,
      --   cv_version,
-     --   cv_which
 
    type Command2_verb is
      (cv2_unset,
@@ -101,6 +101,12 @@ private
       record
          provides : Boolean := False;
          requires : Boolean := False;
+      end record;
+
+   type switches_which_cmd is
+      record
+         show_match  : Boolean := False;
+         path_search : Boolean := False;
       end record;
 
    type switches_info_cmd is
@@ -179,6 +185,7 @@ private
          cmd_install            : switches_install_cmd;
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
+         cmd_which              : switches_which_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

@@ -340,6 +340,19 @@ package body Raven.Cmd.Line is
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
+
+               when cv_which =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = "-g" or else datum = "--glob" then
+                     data.common_options.shell_glob := True;
+                  elsif datum = "-m" or else datum = "--show-match" then
+                     data.cmd_which.show_match := True;
+                  elsif datum = "-p" or else datum = "--path-search" then
+                     data.cmd_which.path_search := True;
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -478,7 +491,8 @@ package body Raven.Cmd.Line is
          ("info      ", cv_info),
          ("install   ", cv_install),
          ("shell     ", cv_shell),
-         ("shlib     ", cv_shlib)
+         ("shlib     ", cv_shlib),
+         ("which     ", cv_which)
 
          --  ("add       ", cv_add),
          --  ("alias     ", cv_alias),
