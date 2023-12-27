@@ -227,7 +227,7 @@ package body Raven.Database.Operations is
             sql : constant String := SCH.prstat_definition (stmt);
             key : constant String :=  pad_right (stmt'Img, 12);
          begin
-            Event.emit_debug (high_level, "rdb: init " & key & " > " & SQ (sql));
+            Event.emit_debug (low_level, "rdb: init " & key & " > " & SQ (sql));
             if not SQLite.prepare_sql (db.handle, sql, prepared_statements (stmt)) then
                CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, "repo_prstmt_initialize",
                                        SCH.prstat_definition (stmt));
@@ -249,7 +249,7 @@ package body Raven.Database.Operations is
             declare
                key : constant String :=  pad_right (stmt'Img, 12);
             begin
-               Event.emit_debug (high_level, "rdb: close " & key & " statement");
+               Event.emit_debug (low_level, "rdb: close " & key & " statement");
                SQLite.finalize_statement (prepared_statements (stmt));
             end;
          end loop;
