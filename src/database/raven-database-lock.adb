@@ -84,7 +84,7 @@ package body Raven.Database.Lock is
                pid := Unix.Process_ID (SQLite.retrieve_integer (new_stmt, 1));
                if pid /= lpid then
                   if Unix.running_process (pid) then
-                     Event.emit_debug (high_level, "found stale pid" & pid'Img &
+                     Event.emit_debug (moderate, "found stale pid" & pid'Img &
                                          " in lock database, my pid is:" & lpid'Img);
                      case remove_lock_pid (db, pid) is
                         when lock_okay | lock_end => null;
@@ -163,18 +163,18 @@ package body Raven.Database.Lock is
             if not read_lock then
                return True;
             end if;
-            Event.emit_debug (high_level, "want to get a read only lock on a database");
+            Event.emit_debug (moderate, "want to get a read only lock on a database");
             locked := try_lock (db, set_read_sql, lock, False);
          when lock_advisory =>
-            Event.emit_debug (high_level, "want to get an advisory lock on a database");
+            Event.emit_debug (moderate, "want to get an advisory lock on a database");
             locked := try_lock (db, set_advi_sql, lock, False);
          when lock_exclusive =>
-            Event.emit_debug (high_level, "want to get an exclusive lock on a database");
+            Event.emit_debug (moderate, "want to get an exclusive lock on a database");
             locked := try_lock (db, set_excl_sql, lock, False);
       end case;
 
       if not locked then
-         Event.emit_debug (high_level, "failed to obtain the lock: " &
+         Event.emit_debug (moderate, "failed to obtain the lock: " &
                              SQLite.get_last_error_message (db.handle));
       end if;
 
@@ -209,11 +209,11 @@ package body Raven.Database.Lock is
             case check_lock_pid (db) is
                when lock_end =>
                   --  No live processes found, so we can safely reset lock
-                  Event.emit_debug (high_level, "no concurrent processes found, clean up the lock");
+                  Event.emit_debug (moderate, "no concurrent processes found, clean up the lock");
                   case reset_lock (db) is
                      when True => null;
                      when False =>
-                        Event.emit_debug (high_level, "unexpected failure of reset lock");
+                        Event.emit_debug (moderate, "unexpected failure of reset lock");
                         return False;
                   end case;
                   if upgrade then
@@ -223,7 +223,7 @@ package body Raven.Database.Lock is
                         when lock_okay =>
                            return obtain_lock (db, lock);
                         when lock_fatal | lock_end =>
-                           Event.emit_debug (high_level, "unexpected failure of remove lock pid");
+                           Event.emit_debug (moderate, "unexpected failure of remove lock pid");
                            return False;
                      end case;
                   else
@@ -239,16 +239,16 @@ package body Raven.Database.Lock is
                                  return False;
                            end case;
                         when lock_fatal | lock_end =>
-                           Event.emit_debug (high_level, "unexpected failure of remove lock pid");
+                           Event.emit_debug (moderate, "unexpected failure of remove lock pid");
                            return False;
                      end case;
                   end if;
                when lock_fatal =>
-                  Event.emit_debug (high_level, "unexpected failure of check pid, aborting.");
+                  Event.emit_debug (moderate, "unexpected failure of check pid, aborting.");
                   return False;
                when lock_okay =>
                   if timeout > 0 then
-                     Event.emit_debug (high_level, "waiting for database lock for" & tries'Img &
+                     Event.emit_debug (moderate, "waiting for database lock for" & tries'Img &
                                          " times, next try in " & timeout'Img & " seconds");
                      delay Duration (timeout);
                   else
@@ -283,7 +283,7 @@ package body Raven.Database.Lock is
       upgraded : Boolean := False;
    begin
       if old_type = lock_advisory and new_type = lock_exclusive then
-         Event.emit_debug(high_level, "want to upgrade advisory to exclusive lock");
+         Event.emit_debug(moderate, "want to upgrade advisory to exclusive lock");
          upgraded := try_lock (db, sql, new_type, true);
       end if;
       return upgraded;
@@ -303,7 +303,7 @@ package body Raven.Database.Lock is
       downgraded : Boolean := False;
    begin
       if old_type = lock_exclusive and new_type = lock_advisory then
-         Event.emit_debug(high_level, "want to downgrade exclusive to advisory lock");
+         Event.emit_debug(moderate, "want to downgrade exclusive to advisory lock");
          downgraded := try_lock (db, sql, new_type, true);
       end if;
       return downgraded;
@@ -330,19 +330,19 @@ package body Raven.Database.Lock is
             if not read_lock then
                return True;
             end if;
-            Event.emit_debug(high_level, "release a read only lock on a database");
+            Event.emit_debug(moderate, "release a read only lock on a database");
             case CommonSQL.exec (db.handle, sql_read) is
                when RESULT_OK => null;
                when others => return False;
             end case;
          when lock_advisory =>
-            Event.emit_debug(high_level, "release an advisory lock on a database");
+            Event.emit_debug(moderate, "release an advisory lock on a database");
             case CommonSQL.exec (db.handle, sql_advi) is
                when RESULT_OK => null;
                when others => return False;
             end case;
          when lock_exclusive =>
-            Event.emit_debug(high_level, "release an exclusive lock on a database");
+            Event.emit_debug(moderate, "release an exclusive lock on a database");
             case CommonSQL.exec (db.handle, sql_excl) is
                when RESULT_OK => null;
                when others => return False;
