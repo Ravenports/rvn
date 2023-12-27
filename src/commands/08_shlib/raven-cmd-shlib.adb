@@ -4,6 +4,7 @@
 with Raven.Event;
 with Raven.Strings;
 with Raven.Pkgtypes;
+with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Operations;
 
@@ -11,6 +12,7 @@ use Raven.Strings;
 
 package body Raven.Cmd.Shlib is
 
+   package LOK renames Raven.Database.Lock;
    package QRY renames Raven.Database.Query;
    package OPS renames Raven.Database.Operations;
 
@@ -22,12 +24,30 @@ package body Raven.Cmd.Shlib is
       --  guaranteed that --provides and --requires are not both set.
       --  This if --requires is not set, act as if --provides was (in case both are unset)
       library_soname : constant String := USS (comline.common_options.name_pattern);
+      return_result  : Boolean;
    begin
-      if comline.cmd_shlib.requires then
-         return show_requirements (comline.common_options.quiet, library_soname);
-      else
-         return show_provisions (comline.common_options.quiet, library_soname);
+      case OPS.rdb_open_localdb (rdb) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         OPS.rdb_close (rdb);
+         Event.emit_error ("Cannot get a read lock on a database, it is locked by another process");
+         return False;
       end if;
+
+      if comline.cmd_shlib.requires then
+         return_result := show_requirements (comline.common_options.quiet, library_soname);
+      else
+         return_result := show_provisions (comline.common_options.quiet, library_soname);
+      end if;
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         null;
+      end if;
+      OPS.rdb_close (rdb);
+
+      return return_result;
    end execute_shlib_command;
 
 
@@ -45,11 +65,6 @@ package body Raven.Cmd.Shlib is
          Event.emit_message (Pkgtypes.nsvv_identifier (this_pkg));
       end print;
    begin
-      case OPS.rdb_open_localdb (rdb) is
-         when RESULT_OK => null;
-         when others => return False;
-      end case;
-
       QRY.provides_library (rdb, library_soname, packages);
       if packages.Is_Empty then
          if not quiet then
@@ -80,11 +95,6 @@ package body Raven.Cmd.Shlib is
          Event.emit_message (Pkgtypes.nsvv_identifier (this_pkg));
       end print;
    begin
-      case OPS.rdb_open_localdb (rdb) is
-         when RESULT_OK => null;
-         when others => return False;
-      end case;
-
       QRY.requires_library (rdb, library_soname, packages);
       if packages.Is_Empty then
          if not quiet then
