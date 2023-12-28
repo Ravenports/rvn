@@ -155,8 +155,31 @@ package body Raven.Database.Lock is
                                         "WHERE exclusive=0 AND advisory=0;";
       set_excl_sql : constant String := "UPDATE lock_state SET exclusive=1 " &
                                         "WHERE exclusive=0 AND advisory=0 AND read=0;";
+      save         : constant String := "LOCKDB";
+      func         : constant String := "obtain_lock";
       read_lock    : constant Boolean := RCU.config_setting (RCU.CFG.read_lock);
       locked       : Boolean;
+
+      procedure start_trax is
+      begin
+         if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, save) then
+            Event.emit_error (func & ": Failed to start transaction");
+         end if;
+      end start_trax;
+
+      procedure abort_trax is
+      begin
+         if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, save) then
+            Event.emit_error (func & ": Failed to rollback transaction");
+         end if;
+      end abort_trax;
+
+      procedure complete_trax is
+      begin
+         if not CommonSQL.transaction_commit (db.handle, internal_srcfile, func, save) then
+            Event.emit_error (func & ": Failed to commit transaction");
+         end if;
+      end complete_trax;
    begin
       case lock is
          when lock_readonly =>
@@ -164,18 +187,24 @@ package body Raven.Database.Lock is
                return True;
             end if;
             Event.emit_debug (moderate, "want to get a read only lock on a database");
+            start_trax;
             locked := try_lock (db, set_read_sql, lock, False);
          when lock_advisory =>
             Event.emit_debug (moderate, "want to get an advisory lock on a database");
+            start_trax;
             locked := try_lock (db, set_advi_sql, lock, False);
          when lock_exclusive =>
             Event.emit_debug (moderate, "want to get an exclusive lock on a database");
+            start_trax;
             locked := try_lock (db, set_excl_sql, lock, False);
       end case;
 
-      if not locked then
+      if locked then
+         complete_trax;
+      else
          Event.emit_debug (moderate, "failed to obtain the lock: " &
                              SQLite.get_last_error_message (db.handle));
+         abort_trax;
       end if;
 
       return locked;
@@ -320,7 +349,30 @@ package body Raven.Database.Lock is
       sql_read  : constant String := "UPDATE lock_state SET read=read-1 WHERE read>0;";
       sql_advi  : constant String := "UPDATE lock_state SET advisory=0 WHERE advisory=1;";
       sql_excl  : constant String := "UPDATE lock_state SET exclusive=0 WHERE exclusive=1;";
+      func      : constant String := "release_lock";
+      save      : constant String := "UNLOCK";
       read_lock : constant Boolean := RCU.config_setting (RCU.CFG.read_lock);
+
+      procedure start_trax is
+      begin
+         if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, save) then
+            Event.emit_error (func & ": Failed to start transaction");
+         end if;
+      end start_trax;
+
+      procedure abort_trax is
+      begin
+         if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, save) then
+            Event.emit_error (func & ": Failed to rollback transaction");
+         end if;
+      end abort_trax;
+
+      procedure complete_trax is
+      begin
+         if not CommonSQL.transaction_commit (db.handle, internal_srcfile, func, save) then
+            Event.emit_error (func & ": Failed to commit transaction");
+         end if;
+      end complete_trax;
    begin
       if not SQLite.db_connected (db.handle) then
          return True;
@@ -331,30 +383,44 @@ package body Raven.Database.Lock is
                return True;
             end if;
             Event.emit_debug(moderate, "release a read only lock on a database");
+            start_trax;
             case CommonSQL.exec (db.handle, sql_read) is
                when RESULT_OK => null;
-               when others => return False;
+               when others =>
+                  abort_trax;
+                  return False;
             end case;
          when lock_advisory =>
             Event.emit_debug(moderate, "release an advisory lock on a database");
+            start_trax;
             case CommonSQL.exec (db.handle, sql_advi) is
                when RESULT_OK => null;
-               when others => return False;
+               when others =>
+                  abort_trax;
+                  return False;
             end case;
          when lock_exclusive =>
             Event.emit_debug(moderate, "release an exclusive lock on a database");
+            start_trax;
             case CommonSQL.exec (db.handle, sql_excl) is
                when RESULT_OK => null;
-               when others => return False;
+               when others =>
+                  abort_trax;
+                  return False;
             end case;
       end case;
       if SQLite.get_number_of_changes (db.handle) = 0 then
+         complete_trax;
          return True;
       end if;
 
       case remove_lock_pid (db, Unix.getpid) is
-         when lock_okay | lock_end => return True;
-         when lock_fatal => return False;
+         when lock_okay | lock_end =>
+            complete_trax;
+            return True;
+         when lock_fatal =>
+            abort_trax;
+            return False;
       end case;
    end release_lock;
 
