@@ -1,0 +1,238 @@
+.Dd December 27, 2023
+.Dt RVN-VERSION 8
+.Os
+.Sh NAME
+.Nm "rvn version"
+.Nd summarize installed versions of packages
+.Sh SYNOPSIS
+.Nm
+.Op Fl SIR
+.Op Fl hqvU
+.Op Fl l Ar limchar | Fl L Ar limchar
+.Op Fl Cegix Ar pattern
+.Op Fl r Ar reponame
+.Op Fl n Ar pkgname
+.Nm
+.Fl t Ar version1 Ar version2
+.Nm
+.Fl T Ar pkgname Ar pattern
+.Pp
+.Nm
+.Op Fl -{snapshot,index,remote}
+.Op Fl -{help,quiet,verbose,no-repo-update}
+.Op Fl -like Ar limchar | -not-like Ar limchar
+.Op Fl -{case-sensitive,exact,glob,case-insensitive,regex} Ar pattern
+.Op Fl -repository Ar reponame
+.Op Fl -match-name Ar pkgname
+.Nm
+.Fl -test-version Ar version1 Ar version2
+.Nm
+.Fl -test-pattern Ar pkgname Ar pattern
+.Sh DESCRIPTION
+.Nm
+is used for generating a report of packages installed by
+.Xr rvn 8 .
+.Pp
+The database of available packages and versions to compare against the
+installed packages may be chosen by specifying one of
+.Fl S ,
+.Fl I
+or
+.Fl R .
+If not specified then the repology.json file of the latest Ravenports release
+will be used
+.Fl ( I ) .
+The
+.Fl ( S )
+option specifies the use of the current repology.json file which is often
+newer than the latest release.
+There is risk in this specification as it represents a snapshot between
+build-tested releases.
+The
+.Fl ( R )
+option specifies that the repository catalog will be used as the
+version reference.
+.Pp
+When
+.Fl R
+is used,
+the package repository catalogs will be automatically updated whenever
+.Nm
+is run by a user ID with write access to the package database,
+unless disabled by the
+.Fl U
+flag or setting
+.Cm REPO_AUTOUPDATE
+to
+.Sy NO
+in
+.Xr rvn.conf 5 .
+.Pp
+When comparing package versions the package name and a comparison character
+are printed:
+.Bl -tag -width indent
+.It Li =
+The installed version of the package is current.
+.It Li \&<
+The installed version of the package is older than the current version.
+.It Li \&>
+The installed version of the package is newer than the current version.
+This situation can arise with an out of date index file, or when
+testing new ports.
+.It Li \&?
+The installed package does not appear in the index.
+The most likely cause of this scenario is that the port that generated the
+package was removed from Ravenports after installation.
+.It Li \&!
+The installed package exists in the index but for some reason,
+.Nm
+was unable to compare the version number of the installed package
+with the corresponding entry in the index.
+.El
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width repository
+.It Fl C , Fl -case-sensitive
+Make the standard or the regular expression
+.Fl ( x )
+matching against
+.Ar pkg-name
+case sensitive.
+.It Fl S , Fl -snapshot
+Use the most current
+.Pa repology.json
+file (which may be newer than the latest Ravenports release) for
+determining if a package is out of date.
+.It Fl I , Fl -index
+Use the
+.Pa repology.json
+file from the latest Ravenports release for determining if a package
+is out of date.
+This is the default when the reference is unspecified.
+.It Fl R , Fl -remote
+Use repository catalog as reference for determining if a package is out of date.
+.It Fl U , Fl -no-repo-update
+Suppress the automatic update of the local copy of the repository catalog
+from remote.
+This only has any effect in combination with the
+.Fl R
+option.
+Automatic repository catalog updates are only attempted when the
+effective UID of the process has write access to the package database.
+Otherwise they are silently ignored.
+.It Fl r Ar reponame , Fl -repository Ar reponame
+Compare installed package versions to packages available from the
+named repository only, irrespective of the configured
+.Dq active
+status from
+.Pa repo.conf .
+By default all repository catalogs marked
+.Dq active
+are used for version comparisons.
+Implies
+.Fl R .
+.It Fl q , Fl -quiet
+Be quiet.
+Less output will be produced.
+.It Fl v , Fl -verbose
+Be verbose.
+.It Fl l Ar limchar , Fl -like Ar limchar
+Display only the packages which status flag matches the one specified by
+.Ar limchar .
+.It Fl L Ar limchar , Fl -not-like Ar limchar
+Does the opposite of
+.Fl l
+flag.
+Displays the packages which status flag does not match the one
+specified by
+.Ar limchar
+.It Fl i , Fl -case-insensitive
+Make the exact
+.Fl ( e )
+or regular expression
+.Fl ( x )
+matching against
+.Ar pattern
+case insensitive.
+This is the default, unless modified by setting
+.Ev CASE_SENSITIVE_MATCH
+to true in
+.Pa rvn.conf .
+.It Fl x Ar pattern , Fl -regex Ar pattern
+Only display the packages that match the regular expression.
+Uses the "modern" or "extended" regex syntax.
+.It Fl g Ar pattern , Fl -glob Ar pattern
+Only display the packages that match the glob expression.
+.It Fl e Ar string , Fl -exact Ar string
+Only display the packages that exactly match the string.
+.It Fl n Ar pkgname , Fl -match-name Ar pkgname
+Display only the packages which name matches
+.Ar pkgname .
+.It Fl t Ar version1 Ar version2 , Fl -test-version Ar version1 Ar version2
+Test a pair of version number strings and exit.
+The output consists of one of the single characters
+.Li =
+(equal),
+.Li \&<
+(right-hand number greater), or
+.Li \&>
+(left-hand number greater) on standard output.
+This flag is mostly useful for scripts or for testing.
+.It Fl T Ar pkgname Ar pattern , Fl -test-pattern Ar pkgname Ar pattern
+Compare
+.Ar pkgname
+against shell glob
+.Ar pattern
+and set exit code accordingly.
+.Fl T
+can also be used in `filter mode':
+When one of the arguments is `-', standard input is used, and lines
+with matching package names/patterns are echoed to standard output.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev CASE_SENSITIVE_MATCH
+.It Ev RVN_DBDIR
+.El
+.Sh EXAMPLES
+The following is a typical invocation of the
+.Nm
+command, which checks the installed packages against the latest
+Ravenports release:
+.Pp
+.Dl % rvn version -v
+.Pp
+The command below generates a report against the versions in the
+repository catalog:
+.Pp
+.Dl % rvn update
+.Dl % rvn version -vR
+.Pp
+The following lists packages needing upgrade, compared to the
+repository catalog:
+.Pp
+.Dl % rvn update
+.Dl % rvn version -vRL=
+.Pp
+The following command compares two package version strings:
+.Pp
+.Dl % rvn version -t 1.5 1.5.1
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-which 8
