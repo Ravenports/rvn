@@ -29,6 +29,7 @@ private
       cv_install,
       cv_shell,
       cv_shlib,
+      cv_version,
       cv_which
      );
 
@@ -47,13 +48,22 @@ private
      --   cv_stats,
      --   cv_update,
      --   cv_upgrade,
-     --   cv_version,
+
 
    type Command2_verb is
      (cv2_unset,
       cv2_main,
       cv2_repository,
       cv2_main_conf
+     );
+
+   type Versioning_Behavior is
+     (no_defined_behavior,
+      use_remote_catalog_state,
+      use_repology_snapshot,
+      use_repology_release,
+      test_versions,
+      compare_against_pattern
      );
 
    type version_depth is (not_shown, just_version, dump_configuration);
@@ -152,6 +162,19 @@ private
          pass_arguments     : string_crate.Vector;
       end record;
 
+   type switches_version_cmd is
+      record
+         behavior     : Versioning_Behavior := no_defined_behavior;
+         exact_match  : Boolean := False;
+         match_char   : Character := Character'First;
+         not_char     : Character := Character'First;
+         test1        : Text;
+         test2        : Text;
+         pkg_name     : Text;
+         hyphen1      : Boolean := False;
+         hyphen2      : Boolean := False;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -185,6 +208,7 @@ private
          cmd_install            : switches_install_cmd;
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
+         cmd_version            : switches_version_cmd;
          cmd_which              : switches_which_cmd;
       end record;
 

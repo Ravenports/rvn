@@ -50,9 +50,13 @@ private
          create_rootdir,
          create_timestamp,
          create_prefix,
-         --  fetch_destdir,
          help,
-         info_archive_file --,
+         info_archive_file,
+         version_match_char,
+         version_not_char,
+         version_pkgname --,
+
+         --  fetch_destdir,
          --  query_condition,
          --  query_filename,
          --  repo_meta_File,
@@ -65,10 +69,6 @@ private
          --  set_automatic,
          --  set_vital,
          --  set_change_name,
-         --  version_match_char,
-         --  version_not_char,
-         --  version_origin,
-         --  version_pkgname,
         );
 
 end Raven.Cmd.Line;

@@ -109,6 +109,7 @@ package body Raven.Cmd.Usage is
          when cv_shell   => return True;  -- never shows usage (all args passed though)
          when cv_shlib   => return verb_shlib (comline);
          when cv_which   => return verb_which (comline);
+         when cv_version => return verb_version (comline);
       end case;
    end command_line_valid;
 
@@ -136,6 +137,17 @@ package body Raven.Cmd.Usage is
       end if;
       TIO.Put_Line (TIO.Standard_Error, tray & usage_msg);
    end display_usage;
+
+
+   -------------------------------
+   --  display_usage_multiline  --
+   -------------------------------
+   procedure display_usage_multiline (usage_msg : String)
+   is
+      blanks : constant String (1 .. progname'Length) := (others => ' ');
+   begin
+      TIO.Put_Line (TIO.Standard_Error, "       " & blanks & " " & usage_msg);
+   end display_usage_multiline;
 
 
    -------------------------------
@@ -467,6 +479,70 @@ package body Raven.Cmd.Usage is
       end if;
       return True;
    end verb_which;
+
+
+   --------------------
+   --  verb_version  --
+   --------------------
+   function verb_version (comline : Cldata) return Boolean
+   is
+      procedure print_usage
+      is
+         cegx : constant String := "[-Cegix pattern]";
+         msg1 : constant String := "version [-SIR] [qvU] [-l limchar] [-L limchar] " & cegx;
+         msg2 : constant String := "        [-r reponame] [-n pkgname]";
+         msg3 : constant String := "version -t <version1> <version2>";
+         msg4 : constant String := "version -T <pkgname> <pattern>";
+      begin
+         display_usage (msg1, True);
+         display_usage_multiline (msg2);
+         display_usage (msg3, False);
+         display_usage (msg4, False);
+      end print_usage;
+
+      function alert (error_msg : String) return Boolean is
+      begin
+         display_error (error_msg);
+         print_usage;
+         display_help_suggestion (cv_version);
+         return False;
+      end alert;
+
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+
+      case comline.cmd_version.match_char is
+         when Character'First => null;
+         when '<' | '>' | '=' | '?' | '!' => null;
+         when others => return alert ("Illegal character for -l switch");
+      end case;
+
+      case comline.cmd_version.not_char is
+         when Character'First => null;
+         when '<' | '>' | '=' | '?' | '!' => null;
+         when others => return alert ("Illegal character for -L switch");
+      end case;
+
+      if comline.cmd_version.behavior = test_versions then
+         if IsBlank (comline.cmd_version.test1) or else
+           IsBlank (comline.cmd_version.test2)
+         then
+            return alert ("--test-version requires 2 arguments");
+         end if;
+      end if;
+
+      if comline.cmd_version.behavior = compare_against_pattern then
+         if IsBlank (comline.cmd_version.test1) or else
+           IsBlank (comline.cmd_version.test2)
+         then
+            return alert ("--test-pattern requires 2 arguments");
+         end if;
+      end if;
+
+      return True;
+   end verb_version;
 
 
 end Raven.Cmd.Usage;

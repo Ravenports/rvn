@@ -90,6 +90,7 @@ package body Raven.Cmd.Help is
                when cv_install => PL (C, "Installs packages from remote and local repositories");
                when cv_shell   => PL (C, "Opens a debug shell for SQLite");
                when cv_shlib   => PL (C, "Displays packages that link against a specific library");
+               when cv_version => PL (C, "Displays the currency of installed packages");
                when cv_which   => PL (C, "Displays which package installed a specific file");
                --  when cv_clean   => PL (C, "Cleans old packages from the cache");
                --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
@@ -102,7 +103,6 @@ package body Raven.Cmd.Help is
                --  when cv_stats   => PL (C, "Displays package database statistics");
                --  when cv_update  => PL (C, "Updates package repository catalogs");
                --  when cv_upgrade => PL (C, "Performs upgrades of packaged software distributions");
-               --  when cv_version => PL (C, "Displays the versions of installed packages");
                --  when cv_autoremove => PL (C, "Removes orphan packages");
                --  when cv_check =>
                --     PL (C, "Checks for missing dependencies and database consistency");

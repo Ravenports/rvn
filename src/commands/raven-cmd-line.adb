@@ -158,7 +158,6 @@ package body Raven.Cmd.Line is
          error_chk  : constant String := "Attempt to redefine check action: ";
          error_ann  : constant String := "Attempt to redefine annotation action: ";
          error_PR   : constant String := "The --provides and --requires" & AME;
-         error_MON  : constant String := "The --match-origin and --match-name" & AME;
          error_like : constant String := "The --like and --not-like" & AME;
          hyphen     : constant Character := '-';
 
@@ -353,6 +352,90 @@ package body Raven.Cmd.Line is
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
+
+               when cv_version =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_verb or else datum = swl_verb then
+                     data.common_options.verbose := True;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                     if data.cmd_version.behavior = no_defined_behavior or else
+                       data.cmd_version.behavior = use_remote_catalog_state
+                     then
+                        data.cmd_version.behavior := use_remote_catalog_state;
+                     else
+                        set_error (data, "The -r switch is not compatible with " &
+                                     "-S, -I, -t, or -T switches.");
+                     end if;
+                  elsif aCgix (data, datum) then
+                     null;
+                  elsif datum = "-e" or else datum = "--exact" then
+                     data.cmd_version.exact_match := True;
+                  elsif datum = "-l" or else datum = "--like" then
+                     if data.cmd_version.not_char /= Character'First then
+                        set_error (data, error_like);
+                     end if;
+                     last_cmd := version_match_char;
+                  elsif datum = "-L" or else datum = "--not-like" then
+                     if data.cmd_version.match_char /= Character'First then
+                        set_error (data, error_like);
+                     end if;
+                     last_cmd := version_not_char;
+                  elsif datum = "-n" or else datum = "--match-name" then
+                     last_cmd := version_pkgname;
+                  elsif datum = "-t" or else datum = "--test-version" then
+                     if data.cmd_version.behavior = no_defined_behavior then
+                        data.cmd_version.behavior := test_versions;
+                     else
+                        set_error (data, "The --test-version switch is not compatible with " &
+                                   "-S, -I, -R, -r, or -T switches.");
+                     end if;
+                  elsif datum = "-T" or else datum = "--test-pattern" then
+                     if data.cmd_version.behavior = no_defined_behavior then
+                        data.cmd_version.behavior := compare_against_pattern;
+                     else
+                        set_error (data, "The --test-pattern switch is not compatible with " &
+                                   "-S, -I, -R, -r, or -t switches.");
+                     end if;
+                  elsif datum = "-S" or else datum = "--snapshot" then
+                     if data.cmd_version.behavior = no_defined_behavior then
+                        data.cmd_version.behavior := use_repology_snapshot;
+                     else
+                        set_error (data, "The -I switch is not compatible with " &
+                                     "-I, -R, -r, -T, or -t switches.");
+                     end if;
+                  elsif datum = "-I" or else datum = "--index" then
+                     if data.cmd_version.behavior = no_defined_behavior then
+                        data.cmd_version.behavior := use_repology_release;
+                     else
+                        set_error (data, "The -I switch is not compatible with " &
+                                     "-S, -R, -r, -T, or -t switches.");
+                     end if;
+                  elsif datum = "-R" or else datum = "--remote" then
+                     if data.cmd_version.behavior = no_defined_behavior or else
+                       data.cmd_version.behavior = use_remote_catalog_state
+                     then
+                        data.cmd_version.behavior := use_remote_catalog_state;
+                     else
+                        set_error (data, "The -R switch is not compatible with " &
+                                     "-S, -I, -T, or -t switches.");
+                     end if;
+                  else
+                     if data.cmd_version.behavior = compare_against_pattern or else
+                       data.cmd_version.behavior = test_versions
+                     then
+                        if IsBlank (data.cmd_version.test1) then
+                           data.cmd_version.test1 := datumtxt;
+                        elsif IsBlank (data.cmd_version.test2) then
+                           data.cmd_version.test2 := datumtxt;
+                        else
+                           set_error (data, "Too many arguments.");
+                        end if;
+                     else
+                        handle_trailing_pkgname (data, datum, datumtxt);
+                     end if;
+               end if;
             end case;
          else
             --  insert second part of last seen command
@@ -366,6 +449,9 @@ package body Raven.Cmd.Line is
                when create_prefix      => data.cmd_create.prefix          := datumtxt;
                when info_archive_file  => data.cmd_info.path_archive_file := datumtxt;
                when generic_repo_name  => data.common_options.repo_name   := datumtxt;
+               when version_match_char => data.cmd_version.match_char     := datum (datum'First);
+               when version_not_char   => data.cmd_version.not_char       := datum (datum'First);
+               when version_pkgname    => data.cmd_version.pkg_name       := datumtxt;
                when help =>
                   data.help_command := get_command (datum);
                   if data.help_command = cv_unset then
@@ -492,6 +578,7 @@ package body Raven.Cmd.Line is
          ("install   ", cv_install),
          ("shell     ", cv_shell),
          ("shlib     ", cv_shlib),
+         ("version   ", cv_version),
          ("which     ", cv_which)
 
          --  ("add       ", cv_add),
