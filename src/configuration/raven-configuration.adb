@@ -67,6 +67,7 @@ package body Raven.Configuration is
          when skip_man       => return "SKIP_MAN_SUBPKG";
          when skip_doc       => return "SKIP_DOC_SUBPKG";
          when skip_examples  => return "SKIP_EXAM_SUBPKG";
+         when version_source => return "VERSION_SOURCE";
       end case;
    end get_ci_key;
 
@@ -116,6 +117,7 @@ package body Raven.Configuration is
               user_agent     |
               event_pipe     |
               restrict_dir   |
+              version_source |
               ssh_args       => return ThickUCL.data_string;
          when
               repos_dir      |
@@ -208,6 +210,7 @@ package body Raven.Configuration is
          when event_pipe     => return "";
          when restrict_dir   => return "";
          when ssh_args       => return "";
+         when version_source => return "";
          when others =>
             raise config_type_mismatch with ci'Img & " is not of type string";
       end case;

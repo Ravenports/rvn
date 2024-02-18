@@ -65,12 +65,12 @@ package Raven.Configuration is
       autoclean,      --  AUTOCLEAN (false)
       valid_scheme,   --  VALID_URL_SCHEME([ array of schemes ])
       base_shlibs,    --  ALLOW_BASE_SHLIBS (false)
+      version_source, --  VERSION_SOURCE("") ('S'|'I'|'R')
       size_limit      --  WARN_SIZE_LIMIT (1048576)
      );
       
    --  workers_count,  --  WORKERS_COUNT (0)
    --  ip_version,     --  IP_VERSION (0)  (IPv4, IPv6?)
-   --  version_source  --  VERSION_SOURCE("")
    --  conservative,   --  CONSERVATIVE_UPGRADE(true)
    --  dot_file,       --  DOT_FILE ("")
    --                      OSVERSION (1302001)

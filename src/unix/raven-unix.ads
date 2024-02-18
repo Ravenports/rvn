@@ -125,6 +125,9 @@ package Raven.Unix is
 
    function running_process (pid : Process_ID) return Boolean;
 
+   --  Return true if teststring matches the pattern according to the shell rules.
+   function filename_match (pattern, teststring : String) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -188,5 +191,11 @@ private
 
    function C_Kill (pid : Process_ID; signal : IC.int) return IC.Int;
    pragma Import (C, C_Kill, "kill");
+
+   function C_fnmatch
+     (pattern    : IC.Strings.chars_ptr;
+      teststring : IC.Strings.chars_ptr;
+      flags      : IC.int) return IC.int;
+   pragma Import (C, C_fnmatch, "fnmatch");
 
 end Raven.Unix;
