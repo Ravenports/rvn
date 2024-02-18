@@ -134,10 +134,10 @@ package body Raven.Version is
                   exit when v1_index > version1'Last and then v2_index > version2'Last;
 
                   declare
-                     block_v1 : Boolean;
-                     block_v2 : Boolean;
-                     vc1      : version_component;
-                     vc2      : version_component;
+                     block_v1 : Boolean := False;
+                     block_v2 : Boolean := False;
+                     vc1      : version_component := (0, 0, 0);
+                     vc2      : version_component := (0, 0, 0);
                   begin
                      if v1_index > version1'Last or else version1 (v1_index) = '+' then
                         block_v1 := True;
