@@ -12,6 +12,7 @@ atf_test_program{name='create.sh'}
 atf_test_program{name='lua.sh'}
 atf_test_program{name='rootdir.sh'}
 atf_test_program{name='shellscript.sh'}
+atf_test_program{name='version.sh'}
 
 
 --  atf_test_program{name='add'}  
@@ -57,6 +58,5 @@ atf_test_program{name='shellscript.sh'}
 --  atf_test_program{name='update'}
 --  atf_test_program{name='updating'}
 --  atf_test_program{name='upgrade'}
---  atf_test_program{name='version'}
 --  atf_test_program{name='vital'}
 
