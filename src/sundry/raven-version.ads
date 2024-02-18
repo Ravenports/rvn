@@ -121,8 +121,8 @@ private
    stage : constant array (1 .. 6) of Stage_Type :=
      (
       ("pl   ", 2, 0),
-      ("snap ", 6, 1),
-      ("alpha", 5, 2),
+      ("alpha", 5, 1),
+      ("snap ", 4, 2),
       ("beta ", 4, 3),
       ("pre  ", 3, Character'Pos ('p') - Character'Pos ('a') + 2),
       ("rc   ", 2, Character'Pos ('r') - Character'Pos ('a') + 2)
