@@ -137,6 +137,14 @@ package body Raven.Cmd.Line is
       is
          --  stdin can be used for either the pattern or the package name, but not both
          --  multiple inputs supported - they are delimited with character of value 0
+         procedure push (mychar : Character) is
+         begin
+            if data.cmd_version.hyphen1 then
+               SU.Append (data.cmd_version.test1, mychar);
+            else
+               SU.Append (data.cmd_version.test2, mychar);
+            end if;
+         end push;
       begin
          if data.cmd_version.behavior = compare_against_pattern then
             data.cmd_version.hyphen1 := equivalent (data.cmd_version.test1, "-");
@@ -159,10 +167,9 @@ package body Raven.Cmd.Line is
                      if c = ' ' then
                         c := Character'Val (0);
                      end if;
-                     if data.cmd_version.hyphen1 then
-                        SU.Append (data.cmd_version.test1, c);
-                     else
-                        SU.Append (data.cmd_version.test2, c);
+                     push (c);
+                     if TIO.End_Of_Line then
+                        push (Character'Val (0));
                      end if;
                   end loop;
                end;

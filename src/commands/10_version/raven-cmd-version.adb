@@ -51,10 +51,12 @@ package body Raven.Cmd.Version is
             declare
                name : constant String := specific_field (pkgname, x, zerostr);
             begin
-               tmpres := Unix.filename_match (pattern, name);
-               if tmpres then
-                  result := True;
-                  TIO.Put_Line (name);
+               if name'Length > 0 then
+                  tmpres := Unix.filename_match (pattern, name);
+                  if tmpres then
+                     result := True;
+                     TIO.Put_Line (name);
+                  end if;
                end if;
             end;
          end loop;
@@ -67,10 +69,12 @@ package body Raven.Cmd.Version is
             declare
                subpattern : constant String := specific_field (pattern, x, zerostr);
             begin
-               tmpres := Unix.filename_match (subpattern, pkgname);
-               if tmpres then
-                  result := True;
-                  TIO.Put_Line (subpattern);
+               if subpattern'Length > 0 then
+                  tmpres := Unix.filename_match (subpattern, pkgname);
+                  if tmpres then
+                     result := True;
+                     TIO.Put_Line (subpattern);
+                  end if;
                end if;
             end;
          end loop;
