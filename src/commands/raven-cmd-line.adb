@@ -125,9 +125,49 @@ package body Raven.Cmd.Line is
    procedure parse_secondary_command (data : in out Cldata)
    is
       procedure translate_switch (position : string_crate.Cursor);
+      procedure check_version_stdin;
 
       expanded_args : string_crate.Vector;
       last_cmd      : Clswitch := nothing_pending;
+
+      ---------------------------
+      --  check_version_stdin  --
+      ---------------------------
+      procedure check_version_stdin
+      is
+         --  stdin can be used for either the pattern or the package name, but not both
+      begin
+         if data.cmd_version.behavior = compare_against_pattern then
+            data.cmd_version.hyphen1 := equivalent (data.cmd_version.test1, "-");
+            data.cmd_version.hyphen2 := equivalent (data.cmd_version.test2, "-");
+            declare
+               c : Character;
+            begin
+               if data.cmd_version.hyphen1 and then data.cmd_version.hyphen2 then
+                  set_error (data, "Only one input can be set through standard-in stream");
+                  return;
+               end if;
+               if data.cmd_version.hyphen1 or else data.cmd_version.hyphen2 then
+                  if data.cmd_version.hyphen1 then
+                     data.cmd_version.test1 := blank;
+                  else
+                     data.cmd_version.test2 := blank;
+                  end if;
+                  while not TIO.End_Of_File loop
+                     TIO.Get (c);
+                     if c = ' ' then
+                        set_error (data, "Only one input expected through standard-in stream");
+                     end if;
+                     if data.cmd_version.hyphen1 then
+                        SU.Append (data.cmd_version.test1, c);
+                     else
+                        SU.Append (data.cmd_version.test2, c);
+                     end if;
+                  end loop;
+               end if;
+            end;
+         end if;
+      end check_version_stdin;
 
       ------------------------
       --  translate_switch  --
@@ -482,8 +522,7 @@ package body Raven.Cmd.Line is
       --  TODO: when annotated implemented:
       --  check_annotate_stdin;
 
-      --  TODO: when version re-implemented:
-      --  check_version_stdin;
+      check_version_stdin;
 
       --  TODO: when rquery implemented:
       --  check_implied_rquery_all;
