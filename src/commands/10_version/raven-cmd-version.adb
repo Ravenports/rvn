@@ -37,15 +37,48 @@ package body Raven.Cmd.Version is
       hyphen1 : Boolean;
       hyphen2 : Boolean) return Boolean
    is
-      result : Boolean;
+      result  : Boolean := False;
+      tmpres  : Boolean;
+      fields  : Natural;
+      zeroasc : constant Character := Character'Val (0);
+      zerostr : constant String (1 .. 1) := (1 => zeroasc);
    begin
-      result := Unix.filename_match (pattern, pkgname);
-      if result then
-         if hyphen1 then
-            TIO.Put_Line (pkgname);
-         elsif hyphen2 then
-            TIO.Put_Line (pattern);
-         end if;
+      if hyphen1 then
+
+         -- [FILTER MODE] many package names, one pattern
+         fields := count_char (pkgname, zeroasc) + 1;
+         for x in 1 .. fields loop
+            declare
+               name : constant String := specific_field (pkgname, x, zerostr);
+            begin
+               tmpres := Unix.filename_match (pattern, name);
+               if tmpres then
+                  result := True;
+                  TIO.Put_Line (name);
+               end if;
+            end;
+         end loop;
+
+      elsif hyphen2 then
+
+         -- [FILTER MODE] one package name, many patterns
+         fields := count_char (pattern, zeroasc) + 1;
+         for x in 1 .. fields loop
+            declare
+               subpattern : constant String := specific_field (pattern, x, zerostr);
+            begin
+               tmpres := Unix.filename_match (subpattern, pkgname);
+               if tmpres then
+                  result := True;
+                  TIO.Put_Line (subpattern);
+               end if;
+            end;
+         end loop;
+
+      else
+
+         result := Unix.filename_match (pattern, pkgname);
+
       end if;
       return result;
    end do_testpattern;
