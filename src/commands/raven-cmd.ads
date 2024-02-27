@@ -60,8 +60,8 @@ private
    type Versioning_Behavior is
      (no_defined_behavior,
       use_remote_catalog_state,
-      use_repology_snapshot,
-      use_repology_release,
+      use_rvnindex_snapshot,
+      use_rvnindex_release,
       test_versions,
       compare_against_pattern
      );

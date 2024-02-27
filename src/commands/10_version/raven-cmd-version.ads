@@ -13,6 +13,13 @@ private
 
    rdb : Database.RDB_Connection;
 
+   repology : constant String := "rvnindex";
+   snapshot : constant String := "snapshot";
+   --  repology_db   : constant String := "rvnindex.sqlite";
+   --  snapshot_db   : constant String := "snapshot.sqlite";
+   --  repology_json : constant String := "rvnindex.json";
+   --  snapshot_json : constant String := "snapshot.json";
+
    --  rvn version -t <pkg1> <pkg2>
    function do_testversion (pkgname1, pkgname2 : String) return Boolean;
 

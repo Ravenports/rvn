@@ -173,9 +173,9 @@ package body Raven.Cmd.Version is
                                    pattern => USS (comline.cmd_version.test2),
                                    hyphen1 => comline.cmd_version.hyphen1,
                                    hyphen2 => comline.cmd_version.hyphen2);
-         when use_repology_release =>
+         when use_rvnindex_release =>
             reference := release_index;
-         when use_repology_snapshot =>
+         when use_rvnindex_snapshot =>
             reference := snapshot_index;
          when use_remote_catalog_state =>
             reference := repo_catalog;

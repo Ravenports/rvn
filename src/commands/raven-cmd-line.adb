@@ -448,14 +448,14 @@ package body Raven.Cmd.Line is
                      end if;
                   elsif datum = "-S" or else datum = "--snapshot" then
                      if data.cmd_version.behavior = no_defined_behavior then
-                        data.cmd_version.behavior := use_repology_snapshot;
+                        data.cmd_version.behavior := use_rvnindex_snapshot;
                      else
                         set_error (data, "The -I switch is not compatible with " &
                                      "-I, -R, -r, -T, or -t switches.");
                      end if;
                   elsif datum = "-I" or else datum = "--index" then
                      if data.cmd_version.behavior = no_defined_behavior then
-                        data.cmd_version.behavior := use_repology_release;
+                        data.cmd_version.behavior := use_rvnindex_release;
                      else
                         set_error (data, "The -I switch is not compatible with " &
                                      "-S, -R, -r, -T, or -t switches.");
