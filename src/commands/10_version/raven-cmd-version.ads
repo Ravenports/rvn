@@ -13,8 +13,18 @@ private
 
    rdb : Database.RDB_Connection;
 
-   repology : constant String := "rvnindex";
-   snapshot : constant String := "snapshot";
+   DLOAD_FAILED : constant String := "__Download_Failed__";
+
+   type download_type is (release, snapshot, reldate);
+
+   function downloaded_etag_path (downfile : download_type) return String;
+   function download_file_path (downfile : download_type) return String;
+   function index_database_path (downfile : download_type) return String;
+   function index_url (downfile : download_type) return String;
+   function cache_directory return String;
+   function database_directory return String;
+   function latest_release_url return String;
+
    --  repology_db   : constant String := "rvnindex.sqlite";
    --  snapshot_db   : constant String := "snapshot.sqlite";
    --  repology_json : constant String := "rvnindex.json";

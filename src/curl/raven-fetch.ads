@@ -7,9 +7,9 @@ package Raven.Fetch is
 
 
    --  remote_file_url : e.g. https://raw.githubusercontent.com/Ravenports/Ravenports/ ..
-   --                                master/Mk/Misc/repology.json
-   --  etag_file       : e.g. /var/cache/rvn/version/repology.etag
-   --  downloaded_file : e.g. /var/cache/rvn/version/repology.json
+   --                                master/Mk/Misc/rvnindex.txt
+   --  etag_file       : e.g. /var/cache/rvn/version/rvnindex.etag
+   --  downloaded_file : e.g. /var/cache/rvn/version/rvnindex.txt
 
    function download_file
      (remote_file_url : String;

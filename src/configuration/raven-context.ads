@@ -12,6 +12,8 @@ package Raven.Context is
    function reveal_debug_level return A_Debug_Level;
    function reveal_developer_mode return Boolean;
    function reveal_case_sensitive return Boolean;
+   function reveal_cache_directory return String;
+   function reveal_db_directory return String;
 
    procedure close_event_pipe;
    procedure close_root_directory_fd;

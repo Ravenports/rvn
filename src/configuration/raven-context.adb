@@ -182,6 +182,24 @@ package body Raven.Context is
    end register_cache_directory;
 
 
+   ------------------------------
+   --  reveal_cache_directory  --
+   ------------------------------
+   function reveal_cache_directory return String is
+   begin
+      return USS (context.cachedir);
+   end reveal_cache_directory;
+
+
+   ---------------------------
+   --  reveal_db_directory  --
+   ---------------------------
+   function reveal_db_directory return String is
+   begin
+      return USS (context.dbdir);
+   end reveal_db_directory;
+
+
    -----------------------------
    --  register_db_directory  --
    -----------------------------

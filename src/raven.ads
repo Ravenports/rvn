@@ -11,7 +11,6 @@ package Raven is
    progname       : constant String := "rvn";
    extension      : constant String := ".rvn";
    db_schema_ver  : constant Natural := 1;
-   local_rvn_db   : constant String := "local.sqlite";
    install_loc    : constant String := "/raven";
 
    --------------------

@@ -6,6 +6,9 @@ with Raven.Unix;
 with Raven.Strings;
 with Raven.Cmd.Unset;
 with Raven.Event;
+with Raven.Context;
+with Raven.Fetch;
+with curl_callbacks;
 
 Use Raven.Strings;
 
@@ -13,6 +16,7 @@ package body Raven.Cmd.Version is
 
    package VER renames Raven.Version;
    package RCU renames Raven.Cmd.Unset;
+   package CAL renames curl_callbacks;
 
    ----------------------
    --  do_testversion  --
@@ -237,5 +241,113 @@ package body Raven.Cmd.Version is
       end;
 
    end execute_version_command;
+
+
+   -----------------------
+   --  cache_directory  --
+   -----------------------
+   function cache_directory return String is
+   begin
+      return Context.reveal_cache_directory & "/version";
+   end cache_directory;
+
+
+   --------------------------
+   --  database_directory  --
+   --------------------------
+   function database_directory return String is
+   begin
+      return Context.reveal_db_directory & "/version";
+   end database_directory;
+
+
+   -----------------
+   --  index_url  --
+   -----------------
+   function index_url (downfile : download_type) return String
+   is
+      baseurl : constant string := "https://raw.githubusercontent.com/Ravenports/Ravenports/";
+   begin
+      case downfile is
+         when release  =>
+            declare
+               url : constant String := latest_release_url;
+            begin
+               if url = DLOAD_FAILED then
+                  return DLOAD_FAILED;
+               end if;
+               return baseurl & url;
+            end;
+         when snapshot => return baseurl & "master/Mk/Misc/rvnindex.txt";
+         when reldate  => return baseurl & "master/Mk/Misc/latest_release.txt";
+      end case;
+   end index_url;
+
+
+   ---------------------------
+   --  downloaded_etag_path  --
+   ----------------------------
+   function downloaded_etag_path (downfile : download_type) return String is
+   begin
+      case downfile is
+         when release  => return cache_directory & "/rvnindex.etag";
+         when snapshot => return cache_directory & "/snapshot.etag";
+         when reldate  => return cache_directory & "/latest_release.etag";
+      end case;
+   end downloaded_etag_path;
+
+
+   -----------------------
+   --  download_file_path  --
+   -----------------------
+   function download_file_path (downfile : download_type) return String is
+   begin
+      case downfile is
+         when release  => return cache_directory & "/rvnindex.txt";
+         when snapshot => return cache_directory & "/snapshot.txt";
+         when reldate  => return cache_directory & "/latest_release.txt";
+      end case;
+   end download_file_path;
+
+
+   ---------------------------
+   --  index_database_path  --
+   ---------------------------
+   function index_database_path (downfile : download_type) return String
+   is
+      basedir : constant String := Context.reveal_db_directory & "/version";
+   begin
+      case downfile is
+         when release  => return database_directory & "/rvnindex.sqlite";
+         when snapshot => return database_directory & "/snapshot.sqlite";
+         when reldate  => return "/tmp/cannot_happen";
+      end case;
+   end index_database_path;
+
+
+   --------------------------
+   --  latest_release_url  --
+   --------------------------
+   function latest_release_url return String
+   is
+      downloaded_file : constant String := download_file_path (reldate);
+   begin
+      case Fetch.download_file
+        (remote_file_url => index_url (reldate),
+         etag_file       => downloaded_etag_path (reldate),
+         downloaded_file => downloaded_file)
+      is
+         when Fetch.cache_valid | Fetch.file_downloaded =>
+            declare
+               contents   : constant String := CAL.file_to_string (downloaded_file);
+               releasever : constant String := CAL.first_line (contents);
+            begin
+               return releasever & "/Mk/Misc/rvnindex.txt";
+            end;
+         when Fetch.retrieval_failed =>
+            return DLOAD_FAILED;
+      end case;
+   end latest_release_url;
+
 
 end Raven.Cmd.Version;
