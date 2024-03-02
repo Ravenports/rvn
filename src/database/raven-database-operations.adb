@@ -202,18 +202,170 @@ package body Raven.Database.Operations is
             when others =>
                Event.emit_error (func & ": failed component " & comp'Img);
                if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, save) then
-                  return False;
+                  null;
                end if;
+               return False;
          end case;
       end loop;
+
       if not CommonSQL.transaction_commit (db.handle, internal_srcfile,func, "") then
          Event.emit_error (func & ": failed transaction commit");
          if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, save) then
-            return False;
+            null;
          end if;
+         return False;
       end if;
       return True;
    end create_localhost_database;
+
+
+   --------------------------------
+   --  create_rvnindex_database  --
+   --------------------------------
+   function create_rvnindex_database (db : in out RDB_Connection) return Boolean
+   is
+      func : constant String := "create_rvnindex_database";
+      sqlt : constant String := "CREATE TABLE rvnindex (" &
+        "subpackage_id INTEGER PRIMARY KEY, " &
+        "subpackage_name TEXT NOT NULL, " &
+        "port_version TEXT NOT NULL)";
+      sqli : constant String := "CREATE UNIQUE INDEX nsvv ON rvnindex " &
+        "(subpackage_name, port_version)";
+   begin
+      case CommonSQL.exec (db.handle, sqlt) is
+            when RESULT_OK => null;
+            when others =>
+               Event.emit_error (func & ": failed to create rvnindex table");
+               return False;
+      end case;
+      case CommonSQL.exec (db.handle, sqli) is
+         when RESULT_OK => null;
+         when others =>
+            Event.emit_error (func & ": failed to create index");
+            return False;
+      end case;
+      return True;
+   end create_rvnindex_database;
+
+
+   --------------------------------
+   --  establish_rvn_connection  --
+   --------------------------------
+   function establish_rvn_connection
+     (db           : in out RDB_Connection;
+      truncate_db  : Boolean;
+      index_dbdir  : String;
+      index_dbname : String) return Action_Result
+   is
+      func  : constant String := "establish_rvn_connection()";
+      dirfd : Unix.File_Descriptor;
+      attrs : Archive.Unix.File_Characteristics;
+      okay  : Boolean;
+      create_local_db : Boolean := False;
+      dirflags : constant Unix.T_Open_Flags := (DIRECTORY => True,
+                                                CLOEXEC => True,
+                                                others => False);
+   begin
+      if SQLite.db_connected (db.handle) then
+         return RESULT_OK;
+      end if;
+
+      Event.emit_debug (moderate, internal_srcfile & ": " & func);
+
+      attrs := UNX.get_charactistics (index_dbdir);
+      case attrs.ftype is
+         when Archive.directory => null;
+         when Archive.unsupported =>
+            begin
+               DIR.Create_Path (index_dbdir);
+            exception
+               when others =>
+                  Event.emit_error (func & ": Failed to create rvnindex database directory");
+                  return RESULT_FATAL;
+            end;
+         when others =>
+            Event.emit_error (func & ": " & index_dbdir & " exists but is not a directory");
+            return RESULT_FATAL;
+      end case;
+
+      dirfd := Unix.open_file (index_dbdir, dirflags);
+      if not Unix.file_connected (dirfd) then
+         Event.emit_error (func & ": Failed to open database directory as a file descriptor");
+         return RESULT_FATAL;
+      end if;
+
+      if Unix.relative_file_readable (dirfd, index_dbname) then
+         if truncate_db then
+            begin
+               DIR.Delete_File (index_dbdir & "/" & index_dbname);
+               create_local_db := True;
+            exception
+               when others =>
+                  Unix.close_file_blind (dirfd);
+                  Event.emit_error ("Failed to delete existing database: " & index_dbname);
+                  return RESULT_ENODB;
+            end;
+         end if;
+      else
+         if Unix.relative_file_exists (dirfd, index_dbname) then
+            --  db file exists but we can't read it.
+            if truncate_db then
+               begin
+                  DIR.Delete_File (index_dbdir & "/" & index_dbname);
+                  create_local_db := True;
+               exception
+                  when others =>
+                     --  Could not delete database file, bail out
+                     Unix.close_file_blind (dirfd);
+                     Event.emit_no_local_db;
+                     return RESULT_ENODB;
+               end;
+            else
+               Unix.close_file_blind (dirfd);
+               Event.emit_no_local_db;
+               return RESULT_ENODB;
+            end if;
+         elsif not Unix.relative_file_writable (dirfd, ".") then
+            --  We need to create db file but we can't write to the containing
+            --  directory, so fail
+            Unix.close_file_blind (dirfd);
+            Event.emit_no_local_db;
+            return RESULT_ENODB;
+         else
+            create_local_db := True;
+         end if;
+      end if;
+      Unix.close_file_blind (dirfd);
+
+      okay := SQLite.initialize_sqlite;
+      SQLite.rdb_syscall_overload;
+
+      if not SQLite.open_sqlite_database_readwrite ("/" & index_dbname, db.handle'Access)
+      then
+         CommonSQL.ERROR_SQLITE (db      => db.handle,
+                                 srcfile => internal_srcfile,
+                                 func    => func,
+                                 query   => "sqlite open");
+         if SQLite.database_corrupt (db.handle) then
+            Event.emit_error
+              (func & ": Database corrupt.  Are you running on NFS?  " &
+                 "If so, ensure the locking mechanism is properly set up.");
+         end if;
+         return RESULT_FATAL;
+      end if;
+
+      --  The database file is blank when create is set, so we have to initialize it
+      if create_local_db then
+         Event.emit_debug (moderate, func & ": import initial schema to blank rvnindex db");
+         if not create_rvnindex_database (db) then
+            rdb_close (db);
+            return RESULT_FATAL;
+         end if;
+      end if;
+
+      return RESULT_OK;
+
+   end establish_rvn_connection;
 
 
    --------------------------------------
@@ -221,6 +373,7 @@ package body Raven.Database.Operations is
    --------------------------------------
    function initialize_prepared_statements (db : in out RDB_Connection) return Boolean
    is
+      func : constant String := "initialize_prepared_statements()";
    begin
       for stmt in SCH.prepared_statement loop
          declare
@@ -229,7 +382,7 @@ package body Raven.Database.Operations is
          begin
             Event.emit_debug (low_level, "rdb: init " & key & " > " & SQ (sql));
             if not SQLite.prepare_sql (db.handle, sql, prepared_statements (stmt)) then
-               CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, "repo_prstmt_initialize",
+               CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, func,
                                        SCH.prstat_definition (stmt));
                return False;
             end if;
@@ -254,6 +407,7 @@ package body Raven.Database.Operations is
             end;
          end loop;
       end if;
+      db.prstmt_initialized := False;
    end finalize_prepared_statements;
 
 
@@ -358,5 +512,78 @@ package body Raven.Database.Operations is
       return dbdir & "/" & localhost_database;
    end localdb_path;
 
+
+   --------------------------------------
+   --  initialize_rvnindex_statements  --
+   --------------------------------------
+   function initialize_rvnindex_statements (db : in out RDB_Connection) return Boolean
+   is
+      sql : constant String := "INSERT INTO rvnindex (subpackage_name, port_version) VALUES (?,?)";
+      func : constant String := "initialize_rvnindex_statements()";
+   begin
+      Event.emit_debug (low_level, "rvnindex db: init insertion prepared statement");
+      if not SQLite.prepare_sql (db.handle, sql, rvnindex_statement) then
+         CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, func, sql);
+         return False;
+      end if;
+      return True;
+   end initialize_rvnindex_statements;
+
+
+   ------------------------------------
+   --  finalize_rvnindex_statements  --
+   ------------------------------------
+   procedure finalize_rvnindex_statements (db : in out RDB_Connection) is
+   begin
+      if db.prstmt_initialized then
+         Event.emit_debug (low_level, "rvnindex db: close prepared statement");
+         SQLite.finalize_statement (rvnindex_statement);
+      end if;
+      db.prstmt_initialized := False;
+   end finalize_rvnindex_statements;
+
+
+   ----------------------
+   --  rindex_db_open  --
+   ----------------------
+   function rindex_db_open
+     (db           : in out RDB_Connection;
+      truncate_db  : Boolean;
+      index_dbdir  : String;
+      index_dbname : String)  return Action_Result
+   is
+      func : constant String := "rindex_db_open()";
+   begin
+      case establish_rvn_connection (db, truncate_db, index_dbdir, index_dbname) is
+         when RESULT_OK =>
+            if not db.prstmt_initialized then
+               if not initialize_rvnindex_statements (db) then
+                  Event.emit_error (func & ": Failed to initialize prepared statements");
+                  rindex_db_close (db);
+                  return RESULT_FATAL;
+               end if;
+               db.prstmt_initialized := True;
+            end if;
+            return RESULT_OK;
+         when others =>
+            return RESULT_FATAL;
+      end case;
+   end rindex_db_open;
+
+
+   -----------------------
+   --  rindex_db_close  --
+   -----------------------
+   procedure rindex_db_close (db : in out RDB_Connection)
+   is
+      use type SQLite.db3;
+   begin
+      finalize_rvnindex_statements (db);
+      if db.handle /= null then
+         SQLite.close_database (db.handle);
+         db.handle := null;
+      end if;
+      SQLite.shutdown_sqlite;
+   end rindex_db_close;
 
 end Raven.Database.Operations;

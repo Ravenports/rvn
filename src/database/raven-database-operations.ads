@@ -13,6 +13,15 @@ package Raven.Database.Operations is
    function localdb_path   return String;
 
    prepared_statements : array (Raven.Database.Schema.prepared_statement) of SQLite.thick_stmt;
+   rvnindex_statement  : SQLite.thick_stmt;
+
+   function rindex_db_open
+     (db           : in out RDB_Connection;
+      truncate_db  : Boolean;
+      index_dbdir  : String;
+      index_dbname : String) return Action_Result;
+
+   procedure rindex_db_close (db : in out RDB_Connection);
 
 private
 
@@ -31,5 +40,18 @@ private
 
    --  Apply schema updates since the base version (OK => True, FATAL => False)
    function upgrade_schema (db : in out RDB_Connection) return Boolean;
+
+   --  Returns true on success
+   function create_rvnindex_database (db : in out RDB_Connection) return Boolean;
+
+   function establish_rvn_connection
+     (db           : in out RDB_Connection;
+      truncate_db  : Boolean;
+      index_dbdir  : String;
+      index_dbname : String) return Action_Result;
+
+   function initialize_rvnindex_statements (db : in out RDB_Connection) return Boolean;
+
+   procedure finalize_rvnindex_statements (db : in out RDB_Connection);
 
 end Raven.Database.Operations;
