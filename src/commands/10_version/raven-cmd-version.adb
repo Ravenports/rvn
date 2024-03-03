@@ -233,11 +233,9 @@ package body Raven.Cmd.Version is
          case reference is
             when unset => return False;  --  Can't happen
             when release_index =>
-               --  TODO
-               return False;
+               return create_index_database (release);
             when snapshot_index =>
-               --  TODO
-               return False;
+               return create_index_database (snapshot);
             when repo_catalog =>
                --  TODO
                return False;
@@ -367,7 +365,7 @@ package body Raven.Cmd.Version is
 
       case index_type is
          when reldate =>
-            Event.emit_debug (high_level, "Invalid value for index type (reldate)");
+            Event.emit_debug (high_level, "Invalid value for create_index_database index_type");
             return False;
 
          when snapshot | release =>

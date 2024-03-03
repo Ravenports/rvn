@@ -28,11 +28,6 @@ private
    --  Also returns true if the SQLite db exists and the index cache is present and valid
    function create_index_database (index_type : download_type) return Boolean;
 
-   --  repology_db   : constant String := "rvnindex.sqlite";
-   --  snapshot_db   : constant String := "snapshot.sqlite";
-   --  repology_json : constant String := "rvnindex.json";
-   --  snapshot_json : constant String := "snapshot.json";
-
    --  rvn version -t <pkg1> <pkg2>
    function do_testversion (pkgname1, pkgname2 : String) return Boolean;
 
