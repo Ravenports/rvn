@@ -34,6 +34,7 @@ package body Raven.Database.Cmdversion is
       handle    : TIO.File_Type;
       revert    : Boolean := False;
    begin
+      Event.emit_debug (moderate, "Building fresh rvnindex database.");
       case Operations.rindex_db_open
         (db           => rvndb,
          truncate_db  => True,

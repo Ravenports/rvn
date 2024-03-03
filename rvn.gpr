@@ -7,7 +7,8 @@ project Rvn is
 
    package Linker is
       for Switches ("ada") use ("-lzstd_pic", "-lblake3_pic", "-lucl_pic", "-llua-5.4_pic", "-lm", 
-                                "-L../sqlite", "-lcustom_sqlite_pic", "-llinenoise_pic");
+                                "-L../sqlite", "-lcustom_sqlite_pic", "-llinenoise_pic",
+                                "-lcurl_pic", "-lssh2_pic", "-lmbedtls", "-lmbedx509", "-lmbedcrypto", "-lz_pic");
    end Linker;
 
    package Compiler is

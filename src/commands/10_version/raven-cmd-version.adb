@@ -259,7 +259,7 @@ package body Raven.Cmd.Version is
    --------------------------
    function database_directory return String is
    begin
-      return Context.reveal_db_directory & "/version";
+      return Context.reveal_db_directory;
    end database_directory;
 
 
@@ -316,13 +316,11 @@ package body Raven.Cmd.Version is
    ---------------------------
    --  index_database_path  --
    ---------------------------
-   function index_database_path (downfile : download_type) return String
-   is
-      basedir : constant String := Context.reveal_db_directory & "/version";
+   function index_database_path (downfile : download_type) return String is
    begin
       case downfile is
-         when release  => return database_directory & "/rvnindex.sqlite";
-         when snapshot => return database_directory & "/snapshot.sqlite";
+         when release  => return database_directory & "/rvnindex_release.sqlite";
+         when snapshot => return database_directory & "/rvnindex_snapshot.sqlite";
          when reldate  => return "/tmp/cannot_happen";
       end case;
    end index_database_path;
@@ -386,6 +384,7 @@ package body Raven.Cmd.Version is
                      return False;
                   when Fetch.cache_valid =>
                      if DIR.Exists (index_database_path (index_type)) then
+                        Event.emit_debug (moderate, "Cached rvnindex database still valid.");
                         return True;
                      end if;
                      return DBC.create_rvnindex (rvndb => rvndb,
@@ -393,6 +392,9 @@ package body Raven.Cmd.Version is
                                                  database_file_path => database_file_path,
                                                  rvnindex_file_path => rvnindex_file_path);
                   when Fetch.file_downloaded =>
+                     if DIR.Exists (index_database_path (index_type)) then
+                        Event.emit_debug (moderate, "Cached rvnindex database is obsolete.");
+                     end if;
                      return DBC.create_rvnindex (rvndb => rvndb,
                                                  database_directory => database_directory,
                                                  database_file_path => database_file_path,
