@@ -1,3 +1,6 @@
+--  SPDX-License-Identifier: ISC
+--  Reference: /License.txt
+
 with Raven.Event;
 
 package body curl_header is

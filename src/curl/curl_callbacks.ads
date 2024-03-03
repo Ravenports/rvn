@@ -1,3 +1,6 @@
+--  SPDX-License-Identifier: ISC
+--  Reference: /License.txt
+
 with System;
 with Interfaces.C.Strings;
 with Ada.Streams.Stream_IO;

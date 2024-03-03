@@ -1,3 +1,6 @@
+--  SPDX-License-Identifier: ISC
+--  Reference: /License.txt
+
 with Ada.Unchecked_Conversion;
 with Ada.Text_IO;
 with Ada.Strings.Fixed;
