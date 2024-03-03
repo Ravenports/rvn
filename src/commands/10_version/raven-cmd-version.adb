@@ -8,14 +8,18 @@ with Raven.Cmd.Unset;
 with Raven.Event;
 with Raven.Context;
 with Raven.Fetch;
+with Raven.Database.Cmdversion;
 with curl_callbacks;
+with Ada.Directories;
 
 Use Raven.Strings;
 
 package body Raven.Cmd.Version is
 
+   package DIR renames Ada.Directories;
    package VER renames Raven.Version;
    package RCU renames Raven.Cmd.Unset;
+   package DBC renames Raven.Database.Cmdversion;
    package CAL renames curl_callbacks;
 
    ----------------------
@@ -274,6 +278,7 @@ package body Raven.Cmd.Version is
                url : constant String := latest_release_url;
             begin
                if url = DLOAD_FAILED then
+                  Event.emit_message ("Failed to determine latest Ravenports release");
                   return DLOAD_FAILED;
                end if;
                return baseurl & url;
@@ -349,5 +354,54 @@ package body Raven.Cmd.Version is
       end case;
    end latest_release_url;
 
+
+   -----------------------------
+   --  create_index_database  --
+   -----------------------------
+   function create_index_database (index_type : download_type) return Boolean
+   is
+      rvnindex_file_path : constant String := download_file_path (index_type);
+      database_file_path : constant String := index_database_path (index_type);
+   begin
+      DIR.Create_Path (cache_directory);
+
+      case index_type is
+         when reldate =>
+            Event.emit_debug (high_level, "Invalid value for index type (reldate)");
+            return False;
+
+         when snapshot | release =>
+            declare
+               remote_file_url : constant String := index_url (index_type);
+            begin
+               if remote_file_url = DLOAD_FAILED then
+                  return False;
+               end if;
+               case Fetch.download_file
+                 (remote_file_url => remote_file_url,
+                  etag_file       => downloaded_etag_path (index_type),
+                  downloaded_file => rvnindex_file_path)
+               is
+                  when Fetch.retrieval_failed =>
+                     Event.emit_debug
+                       (high_level, "Failed to return " & index_type'Img & " rvnindex from github");
+                     return False;
+                  when Fetch.cache_valid =>
+                     if DIR.Exists (index_database_path (index_type)) then
+                        return True;
+                     end if;
+                     return DBC.create_rvnindex (rvndb => rvndb,
+                                                 database_directory => database_directory,
+                                                 database_file_path => database_file_path,
+                                                 rvnindex_file_path => rvnindex_file_path);
+                  when Fetch.file_downloaded =>
+                     return DBC.create_rvnindex (rvndb => rvndb,
+                                                 database_directory => database_directory,
+                                                 database_file_path => database_file_path,
+                                                 rvnindex_file_path => rvnindex_file_path);
+               end case;
+            end;
+      end case;
+   end create_index_database;
 
 end Raven.Cmd.Version;

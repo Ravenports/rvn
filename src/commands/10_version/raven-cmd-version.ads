@@ -2,7 +2,6 @@
 --  Reference: /License.txt
 
 private with Raven.Database;
-private with Raven.Pkgtypes;
 
 package Raven.Cmd.Version is
 
@@ -11,7 +10,7 @@ package Raven.Cmd.Version is
 
 private
 
-   rdb : Database.RDB_Connection;
+   rvndb : Database.RDB_Connection;
 
    DLOAD_FAILED : constant String := "__Download_Failed__";
 
@@ -24,6 +23,10 @@ private
    function cache_directory return String;
    function database_directory return String;
    function latest_release_url return String;
+
+   --  Returns true if the index was successfully downloaded, parsed, and an SQLite db created.
+   --  Also returns true if the SQLite db exists and the index cache is present and valid
+   function create_index_database (index_type : download_type) return Boolean;
 
    --  repology_db   : constant String := "rvnindex.sqlite";
    --  snapshot_db   : constant String := "snapshot.sqlite";
