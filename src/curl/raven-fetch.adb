@@ -73,7 +73,7 @@ package body Raven.Fetch is
             curl_header.set_curl_option (curlobj, curl_header.CURLOPT_USERAGENT, agent);
          end if;
          case Raven.Context.reveal_debug_level is
-            when silent => verbose := False;
+            when silent | high_level => verbose := False;
             when others => verbose := True;
          end case;
          curl_header.set_curl_option (curlobj, curl_header.CURLOPT_VERBOSE, verbose);
