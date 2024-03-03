@@ -100,7 +100,7 @@ package body Raven.Fetch is
          end if;
       end;
 
-      if CAL.found_etag_file (etag_file) then
+      if CAL.found_etag_file (etag_file) and Archive.Unix.file_exists (downloaded_file) then
          declare
             set_etag : constant String := "If-None-Match: " &
               LAT.Quotation & CAL.file_to_string (etag_file) & LAT.Quotation;
@@ -131,8 +131,8 @@ package body Raven.Fetch is
             Event.emit_debug (high_level, "Received file " & downloaded_file);
             return file_downloaded;
          end if;
-         if response_code = 340 then
-            Event.emit_debug (high_level, "Response 340 - cached file is still valid");
+         if response_code = 304 then
+            Event.emit_debug (high_level, "Response 304 - cached file is still valid");
             return cache_valid;
          end if;
       end if;
