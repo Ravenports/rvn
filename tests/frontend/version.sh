@@ -4,6 +4,9 @@
 
 tests_init \
 	version \
+    test_pattern \
+    test_pattern_names_stdin \
+    test_patterns_stdin \
 #	compare
 
 version_body() {
@@ -22,7 +25,40 @@ version_body() {
 	atf_check -o inline:">\n" -s exit:0 rvn version -t 1.snap1 1.alpha1
 }
 
+test_pattern_body() {
+    atf_check -o ignore           rvn version -T "joe" "j[airo]e"
+    atf_check -o ignore -s exit:1 rvn version -T "joe" "j?r"
+}
+
+test_pattern_names_stdin_body() {
+	cat << EOF >> PACKAGES
+getconf
+getent
+getopt
+gprof
+grep
+groups
+gunzip
+EOF
+    atf_check -o match:"getconf getopt" echo $(cat PACKAGES | rvn version -T - "get[co]*")
+}
+
+test_patterns_stdin_body() {
+    cat << EOF >> PATTERNS
+AdaSAT-dev-standard-[0-9][0-9].0.0
+AdaSAT-*-standard-24.0.0
+AdaSAT-*
+GeoIP-single-standard*
+adasat-dev-standard
+AdaSAT-dev-standard
+A?????-*
+EOF
+    atf_check -o inline:"AdaSAT-dev-standard-[0-9][0-9].0.0 AdaSAT-*-standard-24.0.0 AdaSAT-* A?????-*\n"\
+    echo $(cat PATTERNS | rvn version -T "AdaSAT-dev-standard-24.0.0" -)
+}
+
 compare_body() {
+    # rvn info doesn't do this and likely will not ever do this (undocumented in man page)
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg test test 5.20_3
 
 	atf_check \
