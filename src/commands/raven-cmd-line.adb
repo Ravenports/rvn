@@ -483,7 +483,19 @@ package body Raven.Cmd.Line is
                      else
                         handle_trailing_pkgname (data, datum, datumtxt);
                      end if;
-               end if;
+                  end if;
+               when cv_genrepo =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = "-k" or else datum = "--key" then
+                     last_cmd := genrepo_key;
+                  elsif datum = "-p" or else datum = "--pubkey" then
+                     last_cmd := genrepo_pubkey;
+                  elsif datum = "-x" or else datum = "--external" then
+                     last_cmd := genrepo_sign_cmd;
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -500,6 +512,9 @@ package body Raven.Cmd.Line is
                when version_match_char => data.cmd_version.match_char     := datum (datum'First);
                when version_not_char   => data.cmd_version.not_char       := datum (datum'First);
                when version_pkgname    => data.cmd_version.pkg_name       := datumtxt;
+               when genrepo_key        => data.cmd_genrepo.key_private    := datumtxt;
+               when genrepo_pubkey     => data.cmd_genrepo.key_public     := datumtxt;
+               when genrepo_sign_cmd   => data.cmd_genrepo.sign_command   := datumtxt;
                when help =>
                   data.help_command := get_command (datum);
                   if data.help_command = cv_unset then
@@ -620,6 +635,7 @@ package body Raven.Cmd.Line is
          ("alias     ", cv_alias),
          ("config    ", cv_config),
          ("create    ", cv_create),
+         ("genrepo   ", cv_genrepo),
          ("help      ", cv_help),
          ("info      ", cv_info),
          ("install   ", cv_install),
@@ -629,35 +645,24 @@ package body Raven.Cmd.Line is
          ("which     ", cv_which)
 
          --  ("add       ", cv_add),
-         --  ("alias     ", cv_alias),
          --  ("annotate  ", cv_annotate),
          --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
          --  ("clean     ", cv_clean),
-         --  ("config    ", cv_config),
-         --  ("create    ", cv_create),
          --  ("delete    ", cv_delete),
          --  ("fetch     ", cv_fetch),
-         --  ("help      ", cv_help),
-         --  ("info      ", cv_info),
-         --  ("install   ", cv_install),
          --  ("lock      ", cv_lock),
          --  ("query     ", cv_query),
          --  ("register  ", cv_register),
          --  ("remove    ", cv_remove),
-         --  ("repo      ", cv_repo),
          --  ("rquery    ", cv_rquery),
          --  ("search    ", cv_search),
          --  ("set       ", cv_set),
-         --  ("shell     ", cv_shell),
-         --  ("shlib     ", cv_shlib),
          --  ("ssh       ", cv_ssh),
          --  ("stats     ", cv_stats),
          --  ("unlock    ", cv_unlock),
          --  ("update    ", cv_update),
          --  ("upgrade   ", cv_upgrade),
-         --  ("version   ", cv_version),
-         --  ("which     ", cv_which)
         );
 
       bandolier : keyword_string := (others => ' ');

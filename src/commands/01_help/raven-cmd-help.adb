@@ -85,6 +85,7 @@ package body Raven.Cmd.Help is
                when cv_alias   => PL (C, "List the command line aliases");
                when cv_config  => PL (C, "Display the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
+               when cv_genrepo => PL (C, "Creates a package repository catalog");
                when cv_help    => PL (C, "Displays help information");
                when cv_info    => PL (C, "Displays information about installed packages");
                when cv_install => PL (C, "Installs packages from remote and local repositories");
@@ -96,7 +97,6 @@ package body Raven.Cmd.Help is
                --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
                --  when cv_fetch   => PL (C, "Fetches packages from a remote repository");
                --  when cv_query   => PL (C, "Queries information about installed packages");
-               --  when cv_repo    => PL (C, "Creates a package repository catalog");
                --  when cv_rquery  => PL (C, "Queries information in repository catalogs");
                --  when cv_search  => PL (C, "Performs a search of package repository catalogs");
                --  when cv_ssh     => PL (C, "Package server (to be used via ssh)");

@@ -24,6 +24,7 @@ private
       cv_alias,
       cv_config,
       cv_create,
+      cv_genrepo,
       cv_help,
       cv_info,
       cv_install,
@@ -40,7 +41,6 @@ private
      --   cv_fetch,
      --   cv_query,
      --   cv_remove,
-     --   cv_repo,
      --   cv_rquery,
      --   cv_search,
      --   cv_set,
@@ -175,6 +175,13 @@ private
          hyphen2      : Boolean := False;
       end record;
 
+   type switches_genrepo_cmd is
+      record
+         key_private  : Text;
+         key_public   : Text;
+         sign_command : Text;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -210,6 +217,7 @@ private
          cmd_shlib              : switches_shlib_cmd;
          cmd_version            : switches_version_cmd;
          cmd_which              : switches_which_cmd;
+         cmd_genrepo            : switches_genrepo_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

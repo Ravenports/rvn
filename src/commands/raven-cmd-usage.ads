@@ -45,5 +45,6 @@ private
    function verb_shlib   (comline : Cldata) return Boolean;
    function verb_which   (comline : Cldata) return Boolean;
    function verb_version (comline : Cldata) return Boolean;
+   function verb_genrepo (comline : Cldata) return Boolean;
 
 end Raven.Cmd.Usage;

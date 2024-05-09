@@ -23,6 +23,7 @@ package body Raven.Cmd is
          when cv_shlib      => return "shlib";
          when cv_version    => return "version";
          when cv_which      => return "which";
+         when cv_genrepo    => return "genrepo";
          --  when cv_annotate   => return "annotate";
          --  when cv_autoremove => return "autoremove";
          --  when cv_check      => return "check";

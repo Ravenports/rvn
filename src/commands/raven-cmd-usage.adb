@@ -110,6 +110,7 @@ package body Raven.Cmd.Usage is
          when cv_shlib   => return verb_shlib (comline);
          when cv_which   => return verb_which (comline);
          when cv_version => return verb_version (comline);
+         when cv_genrepo => return verb_genrepo (comline);
       end case;
    end command_line_valid;
 
@@ -543,6 +544,66 @@ package body Raven.Cmd.Usage is
 
       return True;
    end verb_version;
+
+
+   --------------------
+   --  verb_genrepo  --
+   --------------------
+   function verb_genrepo (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "genrepo [-q] [-k private-key] [-p public-key] [-x sign-cmd] " &
+                                   "<repo-path>";
+         msg2 : constant String := "genrepo [--quiet] [--key private-key] [--pubkey public-key]";
+         msg3 : constant String := "        [--external sign-cmd] <repo-path>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage_multiline (msg3);
+         display_help_suggestion (cv_genrepo);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+
+      if not IsBlank (comline.cmd_genrepo.sign_command) then
+         if not IsBlank (comline.cmd_genrepo.key_private) or else
+           not IsBlank (comline.cmd_genrepo.key_public)
+         then
+            return alert ("--external can not be used with --key or --pubkey");
+         end if;
+      end if;
+
+      if not IsBlank (comline.cmd_genrepo.key_public) and then
+        IsBlank (comline.cmd_genrepo.key_private)
+      then
+         return alert ("--pubkey can not be used without --key");
+      end if;
+
+       if IsBlank (comline.common_options.name_pattern) then
+         return alert ("<repo-path> is required.");
+      else
+         declare
+            features : UNX.File_Characteristics :=
+              UNX.get_charactistics (USS (comline.common_options.name_pattern));
+         begin
+            case features.ftype is
+               when Archive.directory => null;
+               when Archive.unsupported =>
+                  return alert ("<repo-path> does not exist");
+               when others =>
+                  return alert ("<repo-path> exists, but is not a directory");
+            end case;
+         end;
+      end if;
+
+      return True;
+
+   end verb_genrepo;
 
 
 end Raven.Cmd.Usage;

@@ -54,14 +54,14 @@ private
          info_archive_file,
          version_match_char,
          version_not_char,
-         version_pkgname --,
+         version_pkgname,
+         genrepo_key,
+         genrepo_pubkey,
+         genrepo_sign_cmd
 
          --  fetch_destdir,
          --  query_condition,
          --  query_filename,
-         --  repo_meta_File,
-         --  repo_outdir,
-         --  repo_signing_cmd,
          --  rquery_eval_cond,
          --  search_modifier,
          --  search_field,
