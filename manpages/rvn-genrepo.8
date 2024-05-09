@@ -1,0 +1,207 @@
+.Dd May 8, 2024
+.Dt RVN-GENREPO 8
+.Os
+.Sh NAME
+.Nm "rvn genrepo"
+.Nd create a package repository catalog
+.Sh SYNOPSIS
+.Nm
+.Op Fl k Ar private-key
+.Op Fl p Ar public-key
+.Op Fl x Ar sign-command
+.Ao Ar repo-path Ac
+.Pp
+.Nm
+.Op Cm --key Ar private-key
+.Op Cm --pubkey Ar public-key
+.Op Cm --external Ar sign-command
+.Ao Ar repo-path Ac
+.Sh DESCRIPTION
+.Nm
+is used to create a catalog of the packages available in a repository.
+Catalogs enable the publication of the package repository
+and are intrinsic to the operation of
+.Nm "rvn install"
+or
+.Nm "rvn upgrade" .
+.Pp
+The repository generation process creates two files named
+.Pa catalog.sum
+and
+.Pa catalog.rvn .
+The content of those files are based on the packages prepositioned
+in the
+.Pa files
+subdirectory .
+The complete repository consists of those two files and the subdirectory.
+.Pp
+The
+.Pa catalog.rvn
+archive contains at least one file, the
+.Pa metadata.ucl
+catalog, which contains the defining information for a package
+on a single line compatible with a UCL parser.
+There is one line per package stored in the repository.
+An additional field will contain the Blake3 sum of the package as well
+for integrity verification.
+All of the dependency information for each package is provided in this file.
+If the respository is signed, the catalog package will contain the
+signature of the Blake3 digest of the 
+.Pa metadata.ucl
+file.
+If the repository is signed externally to be verified via fingerprint,
+the catalog package will also contain the public key used to verify
+the digest.
+.Pp
+The
+.Pa catalog.sum
+file contains the Blake3 digest of the
+.Pa catalog.rvn
+file.
+This allows repository mirrors to be used for the catalog and the
+packages of the repository.
+.Pp
+Repository users download these files to their local machines, where
+they are processed into one sqlite database per repository to enable
+the fast lookup of available packages.
+.Pp
+To create a package repository catalog, specify the top-level
+directory beneath which all the packages are stored in the
+.Pa files
+subdirectory of the
+.Ar repo-path .
+The two generated files will be created in the top-level repository directory.
+.Pp
+Optionally the repository catalog may be cryptographically signed.
+There are three methods to accomplish this.
+A private RSA key can sign the Blake3 hash of catalog file, requiring the
+consumer to have a copy of the public key, the public key can be packaged
+with the metadata and the signature, requiring the consumer to know the
+fingerprint of the public key, or an external signing command can be used
+which also requires the client to provide the RSA fingerprint.
+.Pp
+The external command is useful to create a signing server to keep the
+private key separate from the repository.
+The external command is passed the Blake3 hash of the repository
+catalogue on its stdin.
+It should output the following format:
+.Bd -literal -offset indent
+SIGNATURE
+signature data here
+CERT
+public RSA key here
+END
+.Ed
+.Pp
+When using an external command, the client's
+.Pa rvn.conf
+must have
+.Sy SIGNATURE_TYPE
+set to
+.Dv FINGERPRINTS
+and
+.Sy FINGERPRINTS
+set to a directory having a
+.Pa trusted/myrepo
+containing a fingerprint style representation of the public key:
+.Bd -literal -offset indent
+function: blake3
+fingerprint: <blake3-hash-of-the-public-key>
+.Ed
+.Pp
+Signing the catalogue is strongly recommended.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width quiet
+.It Fl q , Cm --quiet
+Force quiet output.
+.It Fl k , Cm --key Ar private-key
+Path to RSA private key.
+When used alone, the client side should use SIGNATURE_TYPE set to PUBKEY
+and PUBKEY set to a local path of the RSA public key in its repository
+configuration file.
+.It Fl p , Cm --pubkey Ar public-key
+Path to RSA public key.
+Setting this requires
+.Cm --key
+to also be set, and forces the client to set the SIGNATURE_TYPE
+to FINGERPRINTS .
+.It Fl x , Cm --external Ar sign-command
+This switch must not be used with the
+.Cm --key
+or
+.Cm --pubkey
+switches.
+The
+.Ar sign-command
+output will allow
+.Nm
+to package the signature and the RSA public key with the catalog.
+This reuires the client to set the SIGNATURE_TYPE to FINGERPRINTS.
+.El
+.Sh EXAMPLES
+Create an RSA key pair:
+.Bd -literal -offset indent
+% openssl genrsa -out repo.key 2048
+% chmod 0400 repo.key
+% openssl rsa -in repo.key -out repo.pub -pubout
+.Ed
+.Pp
+Create a repository and sign it with a local RSA key.
+The public key would be shared on all client servers with
+.Sy SIGNATURE_TYPE
+set to
+.Dv PUBKEY
+and its path set via
+.Sy PUBKEY
+setting in the repository configuration file:
+.Pp
+.Dl rvn genrepo /usr/ports/packages repo.key
+.Pp
+Create a repository and sign it with an external command.
+The client should set, via the repository configuration file,
+.Sy SIGNATURE_TYPE
+to
+.Dv FINGERPRINTS
+and
+.Sy FINGERPRINTS
+to a path containing a file with the SHA256 of the public key:
+.Bd -literal -offset indent
+# On signing server:
+% cat > sign.sh << EOF
+#!/bin/sh
+read -t 2 sum
+[ -z "$sum" ] && exit 1
+echo SIGNATURE
+echo -n $sum | /usr/bin/openssl dgst -sign repo.key -binary | b3sum --no-names
+echo
+echo CERT
+cat repo.pub
+echo END
+EOF
+
+# On package server:
+% rvn genrepo /build/ravenports/primary/packages signing_command: ssh signing-server sign.sh
+# Generate fingerprint for sharing with clients
+% sh -c '( echo "function: blake3"; echo "fingerprint: \\"$(b3sum --no-names repo.pub)\\""; ) > fingerprint'
+# The 'fingerprint' file should be distributed to all clients.
+
+# On clients with FINGERPRINTS: /raven/etc/rvn/fingerprints/myrepo:
+$ mkdir -p /raven/etc/rvn/fingerprints/myrepo/trusted
+# Add 'fingerprint' into /raven/etc/rvn/fingerprints/myrepo/trusted
+
+.Ed
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
