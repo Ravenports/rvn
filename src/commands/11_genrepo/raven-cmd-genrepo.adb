@@ -176,13 +176,14 @@ package body Raven.Cmd.Genrepo is
 
             end scan_rvn_package;
          begin
-            Event.emit_debug (moderate, "Started scan task" & lot'Img);
+            Event.emit_debug (low_level, "Started scan task" & lot'Img);
             task_product (lot) := Strings.SUS (Miscellaneous.get_temporary_filename ("genrepo"));
             task_queue (lot).Iterate (scan_rvn_package'Access);
             if TIO.Is_Open (file_handle) then
                TIO.Close (file_handle);
             end if;
             finished_task (lot) := True;
+            Event.emit_debug (low_level, "Completed scan task" & lot'Img);
          end scan;
 
          scan_01 : scan (lot => 1);
@@ -202,7 +203,7 @@ package body Raven.Cmd.Genrepo is
          scan_15 : scan (lot => 15);
          scan_16 : scan (lot => 16);
       begin
-         Event.emit_debug (low_level, "All tasks spawned");
+         Event.emit_debug (moderate, "All tasks spawned");
          if not quiet then
             Event.emit_message ("Scanning packages for catalog generation...");
          end if;
