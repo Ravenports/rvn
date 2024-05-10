@@ -61,6 +61,8 @@ package body Raven.Cmd.Genrepo is
          return False;
       end if;
 
+      DIR.Delete_File (catalog);
+
       return True;
    end execute_genrepo_command;
 
@@ -346,13 +348,15 @@ package body Raven.Cmd.Genrepo is
             keyword_dir         => "/",
             output_file         => output_file,
             fixed_timestamp     => 0,
-            verbosity           => Archive.silent,
+            verbosity           => Archive.verbose,
             record_base_libs    => False)
       then
          Event.emit_error ("Failed to integrate catalog to RVN archive");
+         DIR.Delete_File (whitelist);
          return False;
       end if;
 
+      DIR.Delete_File (whitelist);
       return True;
 
    exception
@@ -361,6 +365,9 @@ package body Raven.Cmd.Genrepo is
             TIO.Close (file_handle);
          end if;
          Event.emit_error ("Failed to compress catalog");
+         if DIR.Exists (whitelist) then
+            DIR.Delete_File (whitelist);
+         end if;
          return False;
    end compress_catalog;
 
