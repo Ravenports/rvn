@@ -601,6 +601,36 @@ package body Raven.Cmd.Usage is
          end;
       end if;
 
+      if not IsBlank (comline.cmd_genrepo.key_public) then
+         declare
+            features : UNX.File_Characteristics :=
+              UNX.get_charactistics (USS (comline.cmd_genrepo.key_public));
+         begin
+            case features.ftype is
+               when Archive.regular => null;
+               when Archive.unsupported =>
+                  return alert ("<public-key> file does not exist");
+               when others =>
+                  return alert ("<public-key> exists but is not a regular file");
+            end case;
+         end;
+      end if;
+
+      if not IsBlank (comline.cmd_genrepo.key_private) then
+         declare
+            features : UNX.File_Characteristics :=
+              UNX.get_charactistics (USS (comline.cmd_genrepo.key_private));
+         begin
+            case features.ftype is
+               when Archive.regular => null;
+               when Archive.unsupported =>
+                  return alert ("<private-key> file does not exist");
+               when others =>
+                  return alert ("<private-key> exists but is not a regular file");
+            end case;
+         end;
+      end if;
+
       return True;
 
    end verb_genrepo;

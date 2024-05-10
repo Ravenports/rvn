@@ -5,6 +5,7 @@ with Ada.Text_IO;
 with Ada.Directories;
 with Archive.Dirent.Scan;
 with Archive.Unix;
+with Archive.Pack;
 with Archive.Unpack;
 with ThickUCL.Emitter;
 with Ucl;
@@ -29,12 +30,37 @@ package body Raven.Cmd.Genrepo is
       nocat     : constant String := "The catalog was not created.";
       repo_path : constant String := Strings.USS (comline.common_options.name_pattern);
       quiet     : constant Boolean := comline.common_options.quiet;
-      catalog   : constant String := repo_path & "/catalog.ucl";
+      pass_pkey : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.key_public);
+      pass_key  : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.key_private);
+      catalog   : constant String := repo_path & "/" & CAT_UCL;
+      repo_key  : constant String := repo_path & "/" & REPO_PUBKEY;
+      include_public_key : Boolean := False;
+      include_signature  : Boolean := False;
    begin
       if not analyze_package_files (repo_path, ncpu, quiet, catalog) then
          Event.emit_message (nocat);
          return False;
       end if;
+
+      --  TODO: handling external signing command
+
+      if pass_pkey then
+         DIR.Copy_File
+           (Source_Name => Strings.USS (comline.cmd_genrepo.key_public),
+            Target_Name => repo_key);
+         include_public_key := True;
+      end if;
+
+      if not compress_catalog (repo_path, include_public_key, include_signature) then
+         Event.emit_message (nocat);
+         return False;
+      end if;
+
+      if not create_catalog_digest_file (repo_path) then
+         Event.emit_message ("The catalog.sum digest file was not created.");
+         return False;
+      end if;
+
       return True;
    end execute_genrepo_command;
 
@@ -287,5 +313,81 @@ package body Raven.Cmd.Genrepo is
 
       return combined_well;
    end analyze_package_files;
+
+
+   ------------------------
+   --  compress_catalog  --
+   ------------------------
+   function compress_catalog
+     (repo_path          : String;
+      provided_pubkey    : Boolean;
+      provided_signature : Boolean) return Boolean
+   is
+      whitelist   : constant String := Miscellaneous.get_temporary_filename ("genrepo");
+      output_file : constant String := repo_path & "/" & CAT_RVN;
+      file_handle : TIO.File_Type;
+   begin
+      TIO.Create (file_handle, TIO.Out_File, whitelist);
+      TIO.Put_Line (file_handle, CAT_UCL);
+      if provided_signature then
+         TIO.Put_Line (file_handle, CAT_SIGNATURE);
+      end if;
+      if provided_pubkey then
+         TIO.Put_Line (file_handle, REPO_PUBKEY);
+      end if;
+      TIO.Close (file_handle);
+
+      if not Archive.Pack.integrate
+           (top_level_directory => repo_path,
+            metadata_file       => "",
+            manifest_file       => whitelist,
+            prefix              => install_loc,
+            abi                 => "catalog",
+            keyword_dir         => "/",
+            output_file         => output_file,
+            fixed_timestamp     => 0,
+            verbosity           => Archive.silent,
+            record_base_libs    => False)
+      then
+         Event.emit_error ("Failed to integrate catalog to RVN archive");
+         return False;
+      end if;
+
+      return True;
+
+   exception
+      when others =>
+         if TIO.Is_Open (file_handle) then
+            TIO.Close (file_handle);
+         end if;
+         Event.emit_error ("Failed to compress catalog");
+         return False;
+   end compress_catalog;
+
+
+   ----------------------------------
+   --  create_catalog_digest_file  --
+   ----------------------------------
+   function create_catalog_digest_file (repo_path : String) return Boolean
+   is
+      hash     : Blake_3.blake3_hash_hex;
+      rvn_file : constant String := repo_path & "/" & CAT_RVN;
+      sum_file : constant String := repo_path & "/" & CAT_SUM;
+      file_handle : TIO.File_Type;
+   begin
+      hash := Blake_3.hex (Blake_3.file_digest (rvn_file));
+
+      TIO.Create (file_handle, TIO.Out_File, sum_file);
+      TIO.Put_Line (file_handle, hash);
+      TIO.Close (file_handle);
+      return True;
+   exception
+      when others =>
+         if TIO.Is_Open (file_handle) then
+            TIO.Close (file_handle);
+         end if;
+         Event.emit_error ("Failed to create catalog digest");
+         return False;
+   end create_catalog_digest_file;
 
 end Raven.Cmd.Genrepo;
