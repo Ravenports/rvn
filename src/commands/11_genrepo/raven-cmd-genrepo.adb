@@ -116,7 +116,7 @@ package body Raven.Cmd.Genrepo is
             end if;
          end slice_rvn_files;
       begin
-         SCN.scan_directory (repo_path, all_files);
+         SCN.scan_directory (repo_path & "/files", all_files);
          all_files.Iterate (filter_rvn_files'Access);
          total_num := Natural (rvn_files.Length);
          if total_num < MIN_PACKAGE_COUNT then
@@ -144,14 +144,14 @@ package body Raven.Cmd.Genrepo is
                rvn_filename : constant String := Strings.USS (string_crate.Element (position));
                metatree     : ThickUCL.UclTree;
                operation    : Archive.Unpack.Darc;
-               archive_path : constant String := repo_path & "/" & rvn_filename;
+               archive_path : constant String := repo_path & "/files/" & rvn_filename;
             begin
                if just_stop then
                   --  Experienced a problem with file creation, let the loop run out
                   return;
                end if;
 
-               Event.emit_debug (low_level, "Scanning " & rvn_filename);
+               Event.emit_debug (high_level, "Scanning " & rvn_filename);
                if not created then
                   begin
                      TIO.Create (file_handle, TIO.Out_File, Strings.USS (task_product (lot)));
