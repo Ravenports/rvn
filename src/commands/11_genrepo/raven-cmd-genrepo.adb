@@ -7,6 +7,8 @@ with Archive.Dirent.Scan;
 with Archive.Unix;
 with Archive.Unpack;
 with ThickUCL.Emitter;
+with Ucl;
+with Blake_3;
 with Raven.Strings;
 with Raven.Event;
 with Raven.Miscellaneous;
@@ -138,6 +140,8 @@ package body Raven.Cmd.Genrepo is
             file_handle : TIO.File_Type;
             created     : Boolean := False;
             just_stop   : Boolean := False;
+            features    : UNX.File_Characteristics;
+            hash        : Blake_3.blake3_hash_hex;
 
             procedure scan_rvn_package (position : string_crate.Cursor)
             is
@@ -170,6 +174,14 @@ package body Raven.Cmd.Genrepo is
                   optional_pipe => Archive.Unix.not_connected);
                operation.populate_metadata_tree (metatree);
                operation.close_rvn_archive;
+
+               --  Insert size of the package file
+               features := UNX.get_charactistics (archive_path);  --  regular file verified
+               ThickUCL.insert (metatree, "filesize", Ucl.ucl_integer (features.size));
+
+               --  Insert Blake3 sum of the package
+               hash := Blake_3.hex (Blake_3.file_digest (archive_path));
+               ThickUCL.insert (metatree, "b3sum", hash);
 
                ThickUCL.drop_base_keypair (metatree, "directories");
                ThickUCL.drop_base_keypair (metatree, "scripts");
