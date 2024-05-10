@@ -5,6 +5,8 @@ with Ada.Text_IO;
 with Ada.Directories;
 with Archive.Dirent.Scan;
 with Archive.Unix;
+with Archive.Unpack;
+with ThickUCL.Emitter;
 with Raven.Strings;
 with Raven.Event;
 with Raven.Miscellaneous;
@@ -139,14 +141,17 @@ package body Raven.Cmd.Genrepo is
 
             procedure scan_rvn_package (position : string_crate.Cursor)
             is
-               rvn_filename : Text renames string_crate.Element (position);
+               rvn_filename : constant String := Strings.USS (string_crate.Element (position));
+               metatree     : ThickUCL.UclTree;
+               operation    : Archive.Unpack.Darc;
+               archive_path : constant String := repo_path & "/" & rvn_filename;
             begin
                if just_stop then
                   --  Experienced a problem with file creation, let the loop run out
                   return;
                end if;
 
-               Event.emit_debug (low_level, "Scanning " & Strings.USS (rvn_filename));
+               Event.emit_debug (low_level, "Scanning " & rvn_filename);
                if not created then
                   begin
                      TIO.Create (file_handle, TIO.Out_File, Strings.USS (task_product (lot)));
@@ -155,10 +160,20 @@ package body Raven.Cmd.Genrepo is
                      when others =>
                         just_stop := False;
                         Event.emit_error
-                          ("Failed to create temporary file " & Strings.USS (rvn_filename));
+                          ("Failed to create temporary file " & rvn_filename);
                   end;
                end if;
-               --  TODO: write compact manifest
+
+               operation.open_rvn_archive
+                 (rvn_archive   => archive_path,
+                  verbosity     => Archive.silent,
+                  optional_pipe => Archive.Unix.not_connected);
+               operation.populate_metadata_tree (metatree);
+               operation.close_rvn_archive;
+
+               --  TODO: filter out files/directories/scripts
+               TIO.Put_Line (file_handle, ThickUCL.Emitter.emit_compact_ucl (metatree));
+
             end scan_rvn_package;
          begin
             Event.emit_debug (moderate, "Started scan task" & lot'Img);
@@ -214,7 +229,6 @@ package body Raven.Cmd.Genrepo is
          end loop;
       end loop;
 
-      --  To do: combine the catalog fragments in order, then delete them
       begin
          TIO.Create (catalog_handle, TIO.Out_File, catalog);
       exception
