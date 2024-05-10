@@ -171,7 +171,8 @@ package body Raven.Cmd.Genrepo is
                operation.populate_metadata_tree (metatree);
                operation.close_rvn_archive;
 
-               --  TODO: filter out files/directories/scripts
+               ThickUCL.drop_base_keypair (metatree, "directories");
+               ThickUCL.drop_base_keypair (metatree, "scripts");
                TIO.Put_Line (file_handle, ThickUCL.Emitter.emit_compact_ucl (metatree));
 
             end scan_rvn_package;
