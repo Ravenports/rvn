@@ -54,6 +54,18 @@ package body Raven.Cmd.Genrepo is
          include_public_key := True;
       end if;
 
+      if pass_key then
+         --  sign the hash of the catalog.ucl file
+         if not create_signature_file
+           (repo_path => repo_path,
+            key_path  => Strings.USS (comline.cmd_genrepo.key_private),
+            catalog   => catalog)
+         then
+            return False;
+         end if;
+         include_signature := True;
+      end if;
+
       if not compress_catalog (repo_path, include_public_key, include_signature) then
          Event.emit_message (nocat);
          return False;

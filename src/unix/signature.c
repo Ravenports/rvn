@@ -3,6 +3,9 @@
  *  Reference: /License.txt
  */
 
+#ifndef _WIN32
+
+#include <string.h>
 #include <mbedtls/build_info.h>
 #include <mbedtls/platform.h>
 #include <mbedtls/error.h>
@@ -77,3 +80,5 @@ exit:
    mbedtls_entropy_free (&entropy);
    mbedtls_exit(exit_code);
 }
+
+#endif
