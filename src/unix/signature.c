@@ -98,6 +98,7 @@ exit:
  *    3 = failure - failed to verify signature against the given hash
  */
 
+int
 verify_digest (const unsigned char *hash, const size_t hash_len, const char *public_key_path,
                const char *signature_path)
 {
@@ -122,7 +123,7 @@ verify_digest (const unsigned char *hash, const size_t hash_len, const char *pub
    /* read signature file data */
    if ((f = fopen (signature_path, "rb")) == NULL)
     {
-      exit_code = 2
+      exit_code = 2;
       goto exit;
     }
     sig_len = fread(signature, 1, sizeof(signature), f);
