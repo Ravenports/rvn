@@ -430,7 +430,7 @@ package body Raven.Cmd.Genrepo is
       c_hash      : array (Blake_3.blake3_hash'Range) of aliased IC.unsigned_char;
       c_capacity  : IC.size_t := 1024;
       c_signature : array (1 .. c_capacity) of aliased IC.unsigned_char := (others => 0);
-      c_sig_len   : IC.size_t := 0;
+      c_sig_len   : aliased IC.size_t := 0;
       a_digest    : Blake_3.blake3_hash;
       result      : IC.int;
 
@@ -447,7 +447,7 @@ package body Raven.Cmd.Genrepo is
          key_path  => c_key_path,
          signature => c_signature (1)'Access,
          sig_cap   => c_capacity,
-         sig_len   => c_sig_len);
+         sig_len   => c_sig_len'Access);
 
       IC.Strings.Free (c_key_path);
       if result /= 0 then
@@ -466,7 +466,7 @@ package body Raven.Cmd.Genrepo is
 
          SIO.Create (File => ndx_handle,
                      Mode => SIO.Out_File,
-                     Name => repo_path & CAT_SIGNATURE);
+                     Name => repo_path & "/" & CAT_SIGNATURE);
          ndx_stmaxs := SIO.Stream (ndx_handle);
          A_Signature'Output (ndx_stmaxs, final_signature);
          SIO.Close (ndx_handle);

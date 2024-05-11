@@ -41,7 +41,7 @@ private
       key_path  : IC.Strings.chars_ptr;
       signature : access IC.unsigned_char;
       sig_cap   : IC.size_t;
-      sig_len   : in out IC.size_t) return IC.int;
+      sig_len   : access IC.size_t) return IC.int;
    pragma Import (C, C_Sign_Digest, "sign_digest");
 
    --  Signs the Blake3 checksum of the catalog

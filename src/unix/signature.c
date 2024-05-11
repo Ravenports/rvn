@@ -29,7 +29,7 @@
 
 int
 sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_path,
-             unsigned char *signature, const size_t sig_capacity, size_t sig_len)
+             unsigned char *signature, const size_t sig_capacity, size_t *sig_len)
 {
   int ret = 0;
   int exit_code = 0;
@@ -39,7 +39,6 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
   const char *pers = "mbedtls_pk_sign";
 
   /* initialize */
-  sig_len = 0;
   mbedtls_entropy_init (&entropy);
   mbedtls_ctr_drbg_init (&ctr_drbg);
   mbedtls_pk_init (&pk);
@@ -64,7 +63,7 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
 
   /* The passed hash will be Blake3 which is a 256-bit hash, so sha256 should cover that case */
   if ((ret = mbedtls_pk_sign (&pk, MBEDTLS_MD_SHA256, hash, hash_len, signature, sig_capacity,
-                              &sig_len, mbedtls_ctr_drbg_random, &ctr_drbg))
+                              sig_len, mbedtls_ctr_drbg_random, &ctr_drbg))
       != 0)
     {
       /* failed to generate the signature */
@@ -78,7 +77,7 @@ exit:
    mbedtls_pk_free(&pk);
    mbedtls_ctr_drbg_free (&ctr_drbg);
    mbedtls_entropy_free (&entropy);
-   mbedtls_exit(exit_code);
+   return exit_code;
 }
 
 #endif
