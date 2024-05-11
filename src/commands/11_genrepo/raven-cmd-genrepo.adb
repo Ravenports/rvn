@@ -73,6 +73,18 @@ package body Raven.Cmd.Genrepo is
             return False;
          end if;
          include_signature := True;
+
+         --  if pass_pkey then
+         --     if verify_signed_catalog
+         --       (repo_path => repo_path,
+         --        key_path => Strings.USS (comline.cmd_genrepo.key_public),
+         --        catalog => catalog)
+         --     then
+         --        Event.emit_notice ("Catalog signature verified!");
+         --     else
+         --        Event.emit_notice ("Catalog verification #####  FAILED  #####");
+         --     end if;
+         --  end if;
       end if;
 
       if not compress_catalog (repo_path, include_public_key, include_signature) then
@@ -88,6 +100,14 @@ package body Raven.Cmd.Genrepo is
       clean_up (repo_key);
       clean_up (catalog);
       clean_up (repo_path & "/" & CAT_SIGNATURE);
+
+      if not quiet then
+         if include_signature then
+            Event.emit_message ("Cryptographically signed repository created.");
+         else
+            Event.emit_message ("Repository created.");
+         end if;
+      end if;
 
       return True;
    end execute_genrepo_command;
