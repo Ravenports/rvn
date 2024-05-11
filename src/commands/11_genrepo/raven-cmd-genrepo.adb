@@ -2,7 +2,9 @@
 --  Reference: /License.txt
 
 with Ada.Text_IO;
+with Ada.Exceptions;
 with Ada.Directories;
+with Ada.Streams.Stream_IO;
 with Archive.Dirent.Scan;
 with Archive.Unix;
 with Archive.Pack;
@@ -18,6 +20,7 @@ package body Raven.Cmd.Genrepo is
 
    package TIO renames Ada.Text_IO;
    package DIR renames Ada.Directories;
+   package SIO renames Ada.Streams.Stream_IO;
    package SCN renames Archive.Dirent.Scan;
    package UNX renames Archive.Unix;
 
@@ -396,5 +399,69 @@ package body Raven.Cmd.Genrepo is
          Event.emit_error ("Failed to create catalog digest");
          return False;
    end create_catalog_digest_file;
+
+
+   -----------------------------
+   --  create_signature_file  --
+   -----------------------------
+   function create_signature_file
+     (repo_path : String;
+      key_path  : String;
+      catalog   : String) return Boolean
+   is
+      c_key_path  : IC.Strings.chars_ptr;
+      c_hash_len  : IC.size_t := IC.size_t (Blake_3.blake3_hash'Length);
+      c_hash      : array (Blake_3.blake3_hash'Range) of aliased IC.unsigned_char;
+      c_capacity  : IC.size_t := 1024;
+      c_signature : array (1 .. c_capacity) of aliased IC.unsigned_char := (others => 0);
+      c_sig_len   : IC.size_t := 0;
+      a_digest    : Blake_3.blake3_hash;
+      result      : IC.int;
+
+      use type IC.int;
+   begin
+      a_digest := Blake_3.file_digest (catalog);
+      c_key_path := IC.Strings.New_String (key_path);
+      for x in Blake_3.blake3_hash'Range loop
+         c_hash (x) := IC.unsigned_char (Character'Pos (a_digest (x)));
+      end loop;
+      result := C_Sign_Digest
+        (hash      => c_hash (Blake_3.blake3_hash'First)'Access,
+         hash_len  => c_hash_len,
+         key_path  => c_key_path,
+         signature => c_signature (1)'Access,
+         sig_cap   => c_capacity,
+         sig_len   => c_sig_len);
+
+      IC.Strings.Free (c_key_path);
+      if result /= 0 then
+         Event.emit_debug (high_level, "Digest failed, RC =" & result'Img);
+         Event.emit_error ("Failed to calculate signature.");
+         return False;
+      end if;
+
+      declare
+         type A_Signature is array (1 .. c_sig_len) of IC.unsigned_char;
+         final_signature : A_Signature;
+         ndx_handle : SIO.File_Type;
+         ndx_stmaxs : SIO.Stream_Access;
+      begin
+         final_signature := A_Signature (c_signature (1 .. c_sig_len));
+
+         SIO.Create (File => ndx_handle,
+                     Mode => SIO.Out_File,
+                     Name => repo_path & CAT_SIGNATURE);
+         ndx_stmaxs := SIO.Stream (ndx_handle);
+         A_Signature'Output (ndx_stmaxs, final_signature);
+         SIO.Close (ndx_handle);
+      exception
+         when problem : others =>
+            Event.emit_debug (high_level, Ada.Exceptions.Exception_Message (problem));
+            Event.emit_error ("Failed to write signature file.");
+            return False;
+      end;
+
+      return True;
+   end create_signature_file;
 
 end Raven.Cmd.Genrepo;
