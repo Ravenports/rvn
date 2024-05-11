@@ -340,15 +340,15 @@ package body Raven.Cmd.Genrepo is
       TIO.Close (file_handle);
 
       if not Archive.Pack.integrate
-           (top_level_directory => repo_path,
+           (top_level_directory => UNX.real_path (repo_path),
             metadata_file       => "",
             manifest_file       => whitelist,
-            prefix              => install_loc,
+            prefix              => "",
             abi                 => "catalog",
             keyword_dir         => "/",
             output_file         => output_file,
             fixed_timestamp     => 0,
-            verbosity           => Archive.verbose,
+            verbosity           => Archive.silent,
             record_base_libs    => False)
       then
          Event.emit_error ("Failed to integrate catalog to RVN archive");
