@@ -465,17 +465,22 @@ package body Raven.Cmd.Genrepo is
 
       declare
          type A_Signature is array (1 .. c_sig_len) of IC.unsigned_char;
-         final_signature : A_Signature;
+         type A_Block is
+            record
+               signature : A_Signature;
+            end record;
+         block : A_Block;
+         for block'alignment use 8;
          ndx_handle : SIO.File_Type;
          ndx_stmaxs : SIO.Stream_Access;
       begin
-         final_signature := A_Signature (c_signature (1 .. c_sig_len));
+         block.signature := A_Signature (c_signature (1 .. c_sig_len));
 
          SIO.Create (File => ndx_handle,
                      Mode => SIO.Out_File,
                      Name => repo_path & "/" & CAT_SIGNATURE);
          ndx_stmaxs := SIO.Stream (ndx_handle);
-         A_Signature'Output (ndx_stmaxs, final_signature);
+         A_Block'Output (ndx_stmaxs, block);
          SIO.Close (ndx_handle);
       exception
          when problem : others =>
