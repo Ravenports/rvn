@@ -5,6 +5,7 @@
 
 #ifndef _WIN32
 
+#include <stdio.h>
 #include <string.h>
 #include <mbedtls/build_info.h>
 #include <mbedtls/platform.h>
@@ -14,12 +15,14 @@
 #include <mbedtls/pk.h>
 
 /*
- * sign 256-bit hash
+ * sign hash
  * params:
- *    hash (unsigned char pointer to 32 byte buffer)
+ *    hash (unsigned char pointer to buffer)
+ *    hash_len (length of hash buffer)
  *    private key file path (unsigned char pointer)
- *    in/out pointer to 32-byte buffer
- *    in/out output length
+ *    signature (unsigned char pointer to buffer)
+ *    signature buffer size
+ *    final signature size pointer
  * return int:
  *    0 = success
  *    1 = failure - failed to seed random number generator
@@ -53,6 +56,7 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
       goto exit;
     }
 
+  /* Read private key for use */
   if ((ret = mbedtls_pk_parse_keyfile (&pk, key_path, NULL, mbedtls_ctr_drbg_random, &ctr_drbg))
       != 0)
     {
@@ -77,6 +81,63 @@ exit:
    mbedtls_pk_free(&pk);
    mbedtls_ctr_drbg_free (&ctr_drbg);
    mbedtls_entropy_free (&entropy);
+   return exit_code;
+}
+
+/*
+ * verify hash
+ * params:
+ *    hash (unsigned char pointer to buffer)
+ *    hash_len (length of hash buffer)
+ *    public key file path (unsigned char pointer)
+ *    signature file path (unsigned char pointer)
+ * return int:
+ *    0 = success
+ *    1 = failure - failed to parse the public key file
+ *    2 = failure - failed to read in signature file data
+ *    3 = failure - failed to verify signature against the given hash
+ */
+
+verify_digest (const unsigned char *hash, const size_t hash_len, const char *public_key_path,
+               const char *signature_path)
+{
+   FILE *f;
+   int ret = 0;
+   int exit_code = 0;
+   size_t sig_len;
+   unsigned char signature[1024]; /* limit used for digest */
+   mbedtls_pk_context pk;
+
+   /* initialize */
+   mbedtls_pk_init (&pk);
+
+   /* Read public key for use */
+   if ((ret = mbedtls_pk_parse_public_keyfile (&pk, public_key_path)) != 0)
+    {
+      /* failed to parse the public key file */
+      exit_code = 1;
+      goto exit;
+    }
+
+   /* read signature file data */
+   if ((f = fopen (signature_path, "rb")) == NULL)
+    {
+      exit_code = 2
+      goto exit;
+    }
+    sig_len = fread(signature, 1, sizeof(signature), f);
+    fclose(f);
+
+    /* verify signature against the given hash */
+    if ((ret = mbedtls_pk_verify(&pk, MBEDTLS_MD_SHA256, hash, hash_len,
+                                 signature, sig_len)) != 0)
+    {
+      exit_code = 3;
+      goto exit;
+    }
+
+exit:
+   mbedtls_pk_free (&pk);
    return exit_code;
 }
 

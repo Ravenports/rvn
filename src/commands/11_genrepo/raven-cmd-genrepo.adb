@@ -492,4 +492,47 @@ package body Raven.Cmd.Genrepo is
       return True;
    end create_signature_file;
 
+
+   -----------------------------
+   --  verify_signed_catalog  --
+   -----------------------------
+   function verify_signed_catalog
+     (repo_path : String;
+      key_path  : String;
+      catalog   : String) return Boolean
+   is
+      c_key_path  : IC.Strings.chars_ptr;
+      c_sig_path  : IC.Strings.chars_ptr;
+      c_hash_len  : IC.size_t := IC.size_t (Blake_3.blake3_hash'Length);
+      c_hash      : array (Blake_3.blake3_hash'Range) of aliased IC.unsigned_char;
+      a_digest    : Blake_3.blake3_hash;
+      result      : IC.int;
+
+      use type IC.int;
+   begin
+      a_digest := Blake_3.file_digest (catalog);
+      c_key_path := IC.Strings.New_String (key_path);
+      c_sig_path := IC.Strings.New_String (repo_path & "/" & CAT_SIGNATURE);
+      for x in Blake_3.blake3_hash'Range loop
+         c_hash (x) := IC.unsigned_char (Character'Pos (a_digest (x)));
+      end loop;
+
+      result := C_Verify_Digest
+        (hash     => c_hash (Blake_3.blake3_hash'First)'Access,
+         hash_len => c_hash_len,
+         key_path => c_key_path,
+         sig_path => c_sig_path);
+
+      IC.Strings.Free (c_key_path);
+      IC.Strings.Free (c_sig_path);
+
+      if result /= 0 then
+         Event.emit_debug (high_level, "Verification failed, RC =" & result'Img);
+         return False;
+      end if;
+
+      return True;
+
+   end verify_signed_catalog;
+
 end Raven.Cmd.Genrepo;

@@ -44,8 +44,21 @@ private
       sig_len   : access IC.size_t) return IC.int;
    pragma Import (C, C_Sign_Digest, "sign_digest");
 
+   function C_Verify_Digest
+     (hash      : access IC.unsigned_char;
+      hash_len  : IC.size_t;
+      key_path  : IC.Strings.chars_ptr;
+      sig_path  : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_Verify_Digest, "verify_digest");
+
    --  Signs the Blake3 checksum of the catalog
    function create_signature_file
+     (repo_path : String;
+      key_path  : String;
+      catalog   : String) return Boolean;
+
+   --  Verify the signature against the Blake3 checksum of the catalog
+   function verify_signed_catalog
      (repo_path : String;
       key_path  : String;
       catalog   : String) return Boolean;
