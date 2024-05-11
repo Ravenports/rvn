@@ -29,6 +29,8 @@ package body Raven.Cmd.Genrepo is
    -------------------------------
    function execute_genrepo_command (comline : Cldata) return Boolean
    is
+      procedure clean_up (filename : String);
+
       ncpu      : constant MX.CPU_Range := MX.Number_Of_CPUs;
       nocat     : constant String := "The catalog was not created.";
       repo_path : constant String := Strings.USS (comline.common_options.name_pattern);
@@ -39,6 +41,13 @@ package body Raven.Cmd.Genrepo is
       repo_key  : constant String := repo_path & "/" & REPO_PUBKEY;
       include_public_key : Boolean := False;
       include_signature  : Boolean := False;
+
+      procedure clean_up (filename : String) is
+      begin
+         if DIR.Exists (filename) then
+            DIR.Delete_File (filename);
+         end if;
+      end clean_up;
    begin
       if not analyze_package_files (repo_path, ncpu, quiet, catalog) then
          Event.emit_message (nocat);
@@ -76,11 +85,9 @@ package body Raven.Cmd.Genrepo is
          return False;
       end if;
 
-      if pass_pkey then
-         DIR.Delete_File (repo_key);
-      end if;
-
-      DIR.Delete_File (catalog);
+      clean_up (repo_key);
+      clean_up (catalog);
+      clean_up (repo_path & "/" & CAT_SIGNATURE);
 
       return True;
    end execute_genrepo_command;
