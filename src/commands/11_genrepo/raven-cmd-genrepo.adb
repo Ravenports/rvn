@@ -76,6 +76,10 @@ package body Raven.Cmd.Genrepo is
          return False;
       end if;
 
+      if pass_pkey then
+         DIR.Delete_File (repo_key);
+      end if;
+
       DIR.Delete_File (catalog);
 
       return True;
