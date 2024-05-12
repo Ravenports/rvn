@@ -2,9 +2,12 @@
 --  Reference: /License.txt
 
 with Ada.Text_IO;
+with Ada.Direct_IO;
 with Ada.Exceptions;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
+with GNAT.OS_Lib;
+
 with Archive.Dirent.Scan;
 with Archive.Unix;
 with Archive.Pack;
@@ -22,6 +25,7 @@ package body Raven.Cmd.Genrepo is
    package TIO renames Ada.Text_IO;
    package DIR renames Ada.Directories;
    package SIO renames Ada.Streams.Stream_IO;
+   package OSL renames GNAT.OS_Lib;
    package SCN renames Archive.Dirent.Scan;
    package UNX renames Archive.Unix;
 
@@ -38,6 +42,7 @@ package body Raven.Cmd.Genrepo is
       quiet     : constant Boolean := comline.common_options.quiet;
       pass_pkey : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.key_public);
       pass_key  : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.key_private);
+      pass_cmd  : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.sign_command);
       catalog   : constant String := repo_path & "/" & CAT_UCL;
       repo_key  : constant String := repo_path & "/" & REPO_PUBKEY;
       include_public_key : Boolean := False;
@@ -55,7 +60,17 @@ package body Raven.Cmd.Genrepo is
          return False;
       end if;
 
-      --  TODO: handling external signing command
+      if pass_cmd then
+         if remotely_sign_catalog
+           (repo_path, catalog, Strings.USS (comline.cmd_genrepo.sign_command))
+         then
+            include_public_key := True;
+            include_signature := True;
+         else
+            Event.emit_message ("Invalid response to signing command");
+            Event.emit_message ("The generated repository will not be signed.");
+         end if;
+      end if;
 
       if pass_pkey then
          DIR.Copy_File
@@ -372,7 +387,7 @@ package body Raven.Cmd.Genrepo is
       provided_pubkey    : Boolean;
       provided_signature : Boolean) return Boolean
    is
-      whitelist   : constant String := Miscellaneous.get_temporary_filename ("genrepo");
+      whitelist   : constant String := Miscellaneous.get_temporary_filename ("genrepo_compress");
       output_file : constant String := repo_path & "/" & CAT_RVN;
       file_handle : TIO.File_Type;
    begin
@@ -555,5 +570,116 @@ package body Raven.Cmd.Genrepo is
       return True;
 
    end verify_signed_catalog;
+
+
+   -------------------------
+   --  slurp_sign_output  --
+   -------------------------
+   function slurp_sign_output (path : String) return String
+   is
+      filesize : Natural := Natural (DIR.Size (path));
+   begin
+      if filesize < 4097 then
+         return "INVALID";
+      end if;
+
+      declare
+         subtype File_String    is String (1 .. filesize);
+         package File_String_IO is new Ada.Direct_IO (File_String);
+
+         handle   : File_String_IO.File_Type;
+         contents : File_String;
+      begin
+         File_String_IO.Open  (handle, File_String_IO.In_File, path);
+         File_String_IO.Read  (handle, contents);
+         File_String_IO.Close (handle);
+
+         return contents;
+      end;
+   end slurp_sign_output;
+
+
+   ---------------------
+   --  generate_file  --
+   ---------------------
+   procedure generate_file (path : String; contents  : String)
+   is
+      subtype file_contents is String (1 .. contents'Length);
+      package Blitz is new Ada.Direct_IO (file_contents);
+
+      out_handle : Blitz.File_Type;
+   begin
+      Blitz.Create (out_handle, Blitz.Out_File, path);
+      if contents'Length > 0 then
+         Blitz.Write (out_handle, file_contents (contents));
+      end if;
+      Blitz.Close (out_handle);
+   exception
+      when others =>
+         Event.emit_error ("Failed to create " & path);
+   end generate_file;
+
+
+   -----------------------------
+   --  remotely_sign_catalog  --
+   -----------------------------
+   function remotely_sign_catalog
+     (repo_path : String;
+      catalog   : String;
+      scommand  : String) return Boolean
+   is
+      Args    : OSL.Argument_List_Access;
+      digest  : Blake_3.blake3_hash;
+      result  : Boolean := False;
+      success : Boolean;
+      retcode : Integer;
+      signout : constant String := Miscellaneous.get_temporary_filename ("genrepo_sign");
+   begin
+      digest := Blake_3.file_digest (catalog);
+      Args := OSL.Argument_String_To_List (scommand & " " & digest);
+      OSL.Spawn
+        (Program_Name => Args (Args'First).all,
+         Args         => Args (Args'First + 1 .. Args'Last),
+         Output_File  => signout,
+         Success      => success,
+         Return_Code  => retcode,
+         Err_To_Out   => True);
+      OSL.Free (Args);
+
+      if success then
+         Event.emit_debug (high_level, "remote sign command spawn failed (file didn't close?)");
+         return False;
+      end if;
+
+      declare
+         index_signature : Natural;
+         index_cert      : Natural;
+         index_end       : Natural;
+         sign_output     : constant String := slurp_sign_output (signout);
+         LF              : constant Character := Character'Val (10);
+         file_pubkey     : constant String := repo_path & "/" & REPO_PUBKEY;
+         file_signature  : constant String := repo_path & "/" & CAT_SIGNATURE;
+      begin
+         index_signature := Strings.start_index (sign_output, "SIGNATURE" & LF);
+         index_cert      := Strings.start_index (sign_output, LF & "CERT" & LF);
+         index_end       := Strings.start_index (sign_output, LF & "END" & LF);
+
+         if index_signature > 0 and then
+           index_cert > 0 and then
+           index_end > 0
+         then
+            generate_file (file_signature, sign_output (index_signature + 10 .. index_cert - 1));
+            generate_file (file_signature, sign_output (index_cert + 6 .. index_end -1));
+            result := True;
+         end if;
+      end;
+
+      if DIR.Exists (signout) then
+         DIR.Delete_File (signout);
+      end if;
+
+      return result;
+
+   end remotely_sign_catalog;
 
 end Raven.Cmd.Genrepo;

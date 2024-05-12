@@ -47,4 +47,21 @@ private
       key_path  : String;
       catalog   : String) return Boolean;
 
+   --  Execute the given command.  Returns true when the response is valid, resulting in a
+   --  signature and a public key
+   function remotely_sign_catalog
+     (repo_path : String;
+      catalog   : String;
+      scommand  : String) return Boolean;
+
+   --  If file size < 4097 chars, read entire file at once.
+   --  Otherwise it's not valid anyway and return "INVALID"
+   function slurp_sign_output
+     (path      : String) return String;
+
+   --  Write directly (avoids unwanted carriage returns)
+   procedure generate_file
+     (path      : String;
+      contents  : String);
+
 end Raven.Cmd.Genrepo;
