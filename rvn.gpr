@@ -2,11 +2,11 @@ project Rvn is
 
    for Source_Dirs use ("src/**");
    for Object_Dir use "obj";
-   for Main use ("rvn.adb");
+   for Main use ("ravensign.adb", "rvn.adb");
    for Languages use ("Ada", "C");
 
    package Linker is
-      for Switches ("ada") use ("-lzstd_pic", "-lblake3_pic", "-lucl_pic", "-llua-5.4_pic", "-lm", 
+      for Switches ("ada") use ("-lzstd_pic", "-lblake3_pic", "-lucl_pic", "-llua-5.4_pic", "-lm",
                                 "-L../sqlite", "-lcustom_sqlite_pic", "-llinenoise_pic",
                                 "-lcurl_pic", "-lssh2_pic", "-lmbedtls", "-lmbedx509", "-lmbedcrypto", "-lz_pic");
    end Linker;

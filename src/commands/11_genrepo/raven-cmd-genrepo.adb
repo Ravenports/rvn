@@ -12,8 +12,9 @@ with Archive.Unpack;
 with ThickUCL.Emitter;
 with Ucl;
 with Blake_3;
-with Raven.Strings;
+with Raven.Unix;
 with Raven.Event;
+with Raven.Strings;
 with Raven.Miscellaneous;
 
 package body Raven.Cmd.Genrepo is
@@ -468,7 +469,7 @@ package body Raven.Cmd.Genrepo is
       for x in Blake_3.blake3_hash'Range loop
          c_hash (x) := IC.unsigned_char (Character'Pos (a_digest (x)));
       end loop;
-      result := C_Sign_Digest
+      result := Unix.C_Sign_Digest
         (hash      => c_hash (Blake_3.blake3_hash'First)'Access,
          hash_len  => c_hash_len,
          key_path  => c_key_path,
@@ -537,7 +538,7 @@ package body Raven.Cmd.Genrepo is
          c_hash (x) := IC.unsigned_char (Character'Pos (a_digest (x)));
       end loop;
 
-      result := C_Verify_Digest
+      result := Unix.C_Verify_Digest
         (hash     => c_hash (Blake_3.blake3_hash'First)'Access,
          hash_len => c_hash_len,
          key_path => c_key_path,

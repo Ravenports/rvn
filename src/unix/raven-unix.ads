@@ -128,6 +128,24 @@ package Raven.Unix is
    --  Return true if teststring matches the pattern according to the shell rules.
    function filename_match (pattern, teststring : String) return Boolean;
 
+   --  create signature of hash
+   function C_Sign_Digest
+     (hash      : access IC.unsigned_char;
+      hash_len  : IC.size_t;
+      key_path  : IC.Strings.chars_ptr;
+      signature : access IC.unsigned_char;
+      sig_cap   : IC.size_t;
+      sig_len   : access IC.size_t) return IC.int;
+   pragma Import (C, C_Sign_Digest, "sign_digest");
+
+   --  verify signature of digest
+   function C_Verify_Digest
+     (hash      : access IC.unsigned_char;
+      hash_len  : IC.size_t;
+      key_path  : IC.Strings.chars_ptr;
+      sig_path  : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_Verify_Digest, "verify_digest");
+
 private
 
    last_errno : Integer;
