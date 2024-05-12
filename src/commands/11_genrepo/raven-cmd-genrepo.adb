@@ -136,7 +136,7 @@ package body Raven.Cmd.Genrepo is
                   DQ : constant Character := '"';
                   location : constant String := Strings.USS (comline.cmd_genrepo.fprint_file);
                begin
-                  TIO.Create (handle, TIO.In_File, location);
+                  TIO.Create (handle, TIO.Out_File, location);
                   TIO.Put_Line (handle, "function: " & DQ & "blake3" & DQ);
                   TIO.Put_Line (handle, "fingerprint: " & DQ & hash & DQ);
                   TIO.Close (handle);
