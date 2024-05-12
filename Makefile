@@ -11,6 +11,7 @@ install:
 	${BSD_INSTALL_PROGRAM} ${WRKSRC}/obj/rvn ${DESTDIR}${PREFIX}/sbin/
 	${BSD_INSTALL_PROGRAM} ${WRKSRC}/src/rvn-format/programs/obj/xrvn \
 		${DESTDIR}${PREFIX}/bin/
+	${BSD_INSTALL_PROGRAM} ${WRKSRC}/obj-rs/ravensign ${DESTDIR}${PREFIX}/bin/
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.5 ${DESTDIR}${PREFIX}/share/man/man5/
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.8 ${DESTDIR}${PREFIX}/share/man/man8/
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
