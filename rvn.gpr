@@ -2,7 +2,7 @@ project Rvn is
 
    for Source_Dirs use ("src/**");
    for Object_Dir use "obj";
-   for Main use ("ravensign.adb", "rvn.adb");
+   for Main use ("rvn.adb");
    for Languages use ("Ada", "C");
 
    package Linker is

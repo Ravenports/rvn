@@ -6,6 +6,7 @@
 
 # object files
 obj/
+obj-rs/
 
 # clang-format ?
 .clang-format
@@ -24,3 +25,6 @@ vendor/*.gz
 sqlite/*.[ch]
 sqlite/*.pico
 sqlite/libcustom_sqlite_pic.a
+
+# build scripts
+buildme.sh
