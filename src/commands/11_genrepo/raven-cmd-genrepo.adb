@@ -114,10 +114,6 @@ package body Raven.Cmd.Genrepo is
          return False;
       end if;
 
-      clean_up (repo_key);
-      clean_up (catalog);
-      clean_up (repo_path & "/" & CAT_SIGNATURE);
-
       if not quiet then
          if include_signature then
             Event.emit_message ("Cryptographically signed repository created.");
@@ -159,6 +155,10 @@ package body Raven.Cmd.Genrepo is
             end if;
          end;
       end if;
+
+      clean_up (repo_key);
+      clean_up (catalog);
+      clean_up (repo_path & "/" & CAT_SIGNATURE);
 
       return True;
    end execute_genrepo_command;
