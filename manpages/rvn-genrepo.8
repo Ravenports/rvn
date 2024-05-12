@@ -159,7 +159,7 @@ and its path set via
 .Sy PUBKEY
 setting in the repository configuration file:
 .Pp
-.Dl rvn genrepo /usr/ports/packages repo.key
+.Dl rvn genrepo --key repo.key /var/ravenports/primary/packages
 .Pp
 Create a repository and sign it with an external command.
 The client should set, via the repository configuration file,
@@ -168,23 +168,22 @@ to
 .Dv FINGERPRINTS
 and
 .Sy FINGERPRINTS
-to a path containing a file with the SHA256 of the public key:
+to a path containing a file with the Blake3 of the public key.
 .Bd -literal -offset indent
-# On signing server:
-% cat > sign.sh << EOF
-#!/bin/sh
-read -t 2 sum
-[ -z "$sum" ] && exit 1
-echo SIGNATURE
-echo -n $sum | /usr/bin/openssl dgst -sign repo.key -binary | b3sum --no-names
-echo
-echo CERT
-cat repo.pub
-echo END
-EOF
+# On signing server pick a location, e.g. /usr/local
+# The keys are relatively located ../etc/ravensign from the tool
+#
+# install ravensign tool at /usr/local/bin/
+# install private key at /usr/local/etc/ravensign/rvnrepo.key
+# install public key  at /usr/local/etc/ravensign/rvnrepo.pub
 
 # On package server:
-% rvn genrepo /build/ravenports/primary/packages signing_command: ssh signing-server sign.sh
+% setenv CATSUM `b3sum --no-names /build/ravenports/primary/packages/catalog.ucl`
+% rvn genrepo --external "ssh <hosting-server> ravensign $CATSUM"
+# or if not on the standard search path, use full path, e.g.
+% rvn genrepo --external "ssh <hosting-server> /home/frank/bin/ravensign $CATSUM"
+# unsetenv CATSUM
+
 # Generate fingerprint for sharing with clients
 % sh -c '( echo "function: blake3"; echo "fingerprint: \\"$(b3sum --no-names repo.pub)\\""; ) > fingerprint'
 # The 'fingerprint' file should be distributed to all clients.
