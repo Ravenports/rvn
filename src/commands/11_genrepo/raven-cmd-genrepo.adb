@@ -579,7 +579,7 @@ package body Raven.Cmd.Genrepo is
    is
       filesize : Natural := Natural (DIR.Size (path));
    begin
-      if filesize < 4097 then
+      if filesize > 4096 then
          return "INVALID";
       end if;
 
@@ -629,13 +629,13 @@ package body Raven.Cmd.Genrepo is
       scommand  : String) return Boolean
    is
       Args    : OSL.Argument_List_Access;
-      digest  : Blake_3.blake3_hash;
+      digest  : Blake_3.blake3_hash_hex;
       result  : Boolean := False;
       success : Boolean;
       retcode : Integer;
       signout : constant String := Miscellaneous.get_temporary_filename ("genrepo_sign");
    begin
-      digest := Blake_3.file_digest (catalog);
+      digest := Blake_3.hex (Blake_3.file_digest (catalog));
       Args := OSL.Argument_String_To_List (scommand & " " & digest);
       OSL.Spawn
         (Program_Name => Args (Args'First).all,
@@ -646,8 +646,12 @@ package body Raven.Cmd.Genrepo is
          Err_To_Out   => True);
       OSL.Free (Args);
 
-      if success then
+      if retcode /= 0 then
+         --  Success was returning false even though it apparently succeeded
          Event.emit_debug (high_level, "remote sign command spawn failed (file didn't close?)");
+         if DIR.Exists (signout) then
+            DIR.Delete_File (signout);
+         end if;
          return False;
       end if;
 
@@ -669,7 +673,7 @@ package body Raven.Cmd.Genrepo is
            index_end > 0
          then
             generate_file (file_signature, sign_output (index_signature + 10 .. index_cert - 1));
-            generate_file (file_signature, sign_output (index_cert + 6 .. index_end -1));
+            generate_file (file_pubkey, sign_output (index_cert + 6 .. index_end));
             result := True;
          end if;
       end;

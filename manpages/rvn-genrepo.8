@@ -178,9 +178,9 @@ to a path containing a file with the Blake3 of the public key.
 # install public key  at /usr/local/etc/ravensign/rvnrepo.pub
 
 # On package server:
-% rvn genrepo --external "ssh <sign-server> ravensign"
+% rvn genrepo --external "/usr/bin/ssh <sign-server> ravensign"
 # or if not on the standard search path, use full path, e.g.
-% rvn genrepo --external "ssh <sign-server> /opt/bin/ravensign"
+% rvn genrepo --external "/usr/bin/ssh <sign-server> /opt/bin/ravensign"
 
 # Generate fingerprint for sharing with clients
 % sh -c '( echo "function: blake3"; echo "fingerprint: \\"$(b3sum --no-names repo.pub)\\""; ) > fingerprint'
