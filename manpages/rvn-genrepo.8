@@ -84,14 +84,18 @@ with the metadata and the signature, requiring the consumer to know the
 fingerprint of the public key, or an external signing command can be used
 which also requires the client to provide the RSA fingerprint.
 .Pp
-The external command is useful to create a signing server to keep the
+The external command allows the use of a signing server to keep the
 private key separate from the repository.
-The external command is passed the Blake3 hash of the repository
-catalogue on its stdin.
-It should output the following format:
+While the signing program may be created, this is not necessary as the
+.Nm ravensign
+program is distributed with
+.Nm rvn .
+The external command is appended with the hex-encoded Blake3 hash of the
+repository catalogue.
+The signing server should respond with text in the following format:
 .Bd -literal -offset indent
 SIGNATURE
-signature data here
+binary signature data here
 CERT
 public RSA key here
 END
