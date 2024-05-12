@@ -43,6 +43,7 @@ package body Raven.Cmd.Genrepo is
       pass_pkey : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.key_public);
       pass_key  : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.key_private);
       pass_cmd  : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.sign_command);
+      gen_print : constant Boolean := not Strings.IsBlank (comline.cmd_genrepo.fprint_file);
       catalog   : constant String := repo_path & "/" & CAT_UCL;
       repo_key  : constant String := repo_path & "/" & REPO_PUBKEY;
       include_public_key : Boolean := False;
@@ -123,6 +124,40 @@ package body Raven.Cmd.Genrepo is
          else
             Event.emit_message ("Repository created.");
          end if;
+      end if;
+
+      if include_public_key then
+         declare
+            hash : Blake_3.blake3_hash_hex;
+         begin
+            hash := Blake_3.hex (Blake_3.file_digest (repo_key));
+            if not quiet then
+               Event.emit_message ("Fingerprint: " & hash);
+            end if;
+            if gen_print then
+               declare
+                  handle : TIO.File_Type;
+                  DQ : constant Character := '"';
+                  location : constant String := Strings.USS (comline.cmd_genrepo.fprint_file);
+               begin
+                  TIO.Create (handle, TIO.In_File, location);
+                  TIO.Put_Line (handle, "function: " & DQ & "blake3" & DQ);
+                  TIO.Put_Line (handle, "fingerprint: " & DQ & hash & DQ);
+                  TIO.Close (handle);
+                  if not quiet then
+                     Event.emit_message ("Written to " & location);
+                  end if;
+               exception
+                  when problems : others =>
+                     if TIO.Is_Open (handle) then
+                        TIO.Close (handle);
+                     end if;
+                     Event.emit_debug (high_level, "Gen fingerprint file: " &
+                                         Ada.Exceptions.Exception_Message (problems));
+                     Event.emit_error ("Failed to generate fingerprint file");
+               end;
+            end if;
+         end;
       end if;
 
       return True;

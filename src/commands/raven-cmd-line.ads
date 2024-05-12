@@ -57,7 +57,8 @@ private
          version_pkgname,
          genrepo_key,
          genrepo_pubkey,
-         genrepo_sign_cmd
+         genrepo_sign_cmd,
+         genrepo_finger
 
          --  fetch_destdir,
          --  query_condition,

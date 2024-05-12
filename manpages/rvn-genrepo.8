@@ -10,6 +10,7 @@
 .Op Fl k Ar private-key
 .Op Fl p Ar public-key
 .Op Fl x Ar sign-command
+.Op Fl f Ar output-file
 .Ao Ar repo-path Ac
 .Pp
 .Nm
@@ -17,6 +18,7 @@
 .Op Cm --key Ar private-key
 .Op Cm --pubkey Ar public-key
 .Op Cm --external Ar sign-command
+.Op Cm --fingerprint Ar output-path
 .Ao Ar repo-path Ac
 .Sh DESCRIPTION
 .Nm
@@ -48,7 +50,7 @@ An additional field will contain the Blake3 sum of the package as well
 for integrity verification.
 All of the dependency information for each package is provided in this file.
 If the respository is signed, the catalog package will contain the
-signature of the Blake3 digest of the 
+signature of the Blake3 digest of the
 .Pa metadata.ucl
 file.
 If the repository is signed externally to be verified via fingerprint,
@@ -141,6 +143,13 @@ output will allow
 .Nm
 to package the signature and the RSA public key with the catalog.
 This requires the client to set the SIGNATURE_TYPE to FINGERPRINTS.
+.It Fl f , Cm --fingerprint Ar output-path
+This option will create a fingerprint configuration file with the path
+.Ar output-path
+but only in conjunction with the options
+.Cm --pubkey
+or
+.Cm --sign-command .
 .El
 .Sh EXAMPLES
 Create an RSA key pair:
@@ -168,7 +177,7 @@ to
 .Dv FINGERPRINTS
 and
 .Sy FINGERPRINTS
-to a path containing a file with the Blake3 of the public key.
+to a path containing the public key's fingerprint.
 .Bd -literal -offset indent
 # On signing server pick a location, e.g. /usr/local
 # The keys are relatively located ../etc/ravensign from the tool
@@ -178,18 +187,15 @@ to a path containing a file with the Blake3 of the public key.
 # install public key  at /usr/local/etc/ravensign/rvnrepo.pub
 
 # On package server:
-% rvn genrepo --external "/usr/bin/ssh <sign-server> ravensign"
+% rvn genrepo --external "/usr/bin/ssh <sign-server> ravensign" -f ~/primary.fingerprint /var/ravenports/primary/packages
 # or if not on the standard search path, use full path, e.g.
-% rvn genrepo --external "/usr/bin/ssh <sign-server> /opt/bin/ravensign"
+% rvn genrepo --external "/usr/bin/ssh <sign-server> /opt/bin/ravensign" -f ~/primary.fingerprint /var/ravenports/primary/packages
 
-# Generate fingerprint for sharing with clients
-% sh -c '( echo "function: blake3"; echo "fingerprint: \\"$(b3sum --no-names repo.pub)\\""; ) > fingerprint'
-# The 'fingerprint' file should be distributed to all clients.
-
-# On clients with FINGERPRINTS: /raven/etc/rvn/fingerprints/myrepo:
-$ mkdir -p /raven/etc/rvn/fingerprints/myrepo/trusted
-# Add 'fingerprint' into /raven/etc/rvn/fingerprints/myrepo/trusted
-
+# The command above generated a fingerprint file for the built directory
+# The file or its contents should be published on a trusted site so the clients
+# can install it to be included in the repository configuration, e.g.
+# client> mkdir -p /raven/etc/keys/rvn/trusted
+# client> cp primary.fingerprint /raven/etc/keys/rvn/trusted/
 .Ed
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,

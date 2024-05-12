@@ -493,6 +493,8 @@ package body Raven.Cmd.Line is
                      last_cmd := genrepo_pubkey;
                   elsif datum = "-x" or else datum = "--external" then
                      last_cmd := genrepo_sign_cmd;
+                  elsif datum = "-f" or else datum = "--fingerprint" then
+                     last_cmd := genrepo_finger;
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
@@ -515,6 +517,7 @@ package body Raven.Cmd.Line is
                when genrepo_key        => data.cmd_genrepo.key_private    := datumtxt;
                when genrepo_pubkey     => data.cmd_genrepo.key_public     := datumtxt;
                when genrepo_sign_cmd   => data.cmd_genrepo.sign_command   := datumtxt;
+               when genrepo_finger     => data.cmd_genrepo.fprint_file    := datumtxt;
                when help =>
                   data.help_command := get_command (datum);
                   if data.help_command = cv_unset then

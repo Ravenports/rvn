@@ -553,33 +553,32 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "genrepo [-q] [-k private-key] [-p public-key] [-x sign-cmd] " &
-                                   "<repo-path>";
-         msg2 : constant String := "genrepo [--quiet] [--key private-key] [--pubkey public-key]";
-         msg3 : constant String := "        [--external sign-cmd] <repo-path>";
+         msg1 : constant String := "genrepo [-q] [-k private-key] [-p public-key] [-x sign-cmd]";
+         msg2 : constant String := "        [-f output-path] <repo-path>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
-         display_usage (msg2, False);
-         display_usage_multiline (msg3);
+         display_usage_multiline (msg2);
          display_help_suggestion (cv_genrepo);
          return False;
       end alert;
+
+      passed_private_key : constant Boolean := not IsBlank (comline.cmd_genrepo.key_private);
+      passed_public_key  : constant Boolean := not IsBlank (comline.cmd_genrepo.key_public);
+      passed_fingerprint : constant Boolean := not IsBlank (comline.cmd_genrepo.fprint_file);
+      passed_ext_command : constant Boolean := not IsBlank (comline.cmd_genrepo.sign_command);
    begin
       if comline.parse_error then
          return alert (USS (comline.error_message));
       end if;
 
-      if not IsBlank (comline.cmd_genrepo.sign_command) then
-         if not IsBlank (comline.cmd_genrepo.key_private) or else
-           not IsBlank (comline.cmd_genrepo.key_public)
-         then
+      if passed_ext_command then
+         if passed_private_key or else passed_public_key then
             return alert ("--external can not be used with --key or --pubkey");
          end if;
       end if;
 
-      if not IsBlank (comline.cmd_genrepo.key_public) and then
-        IsBlank (comline.cmd_genrepo.key_private)
+      if passed_public_key and then not passed_private_key
       then
          return alert ("--pubkey can not be used without --key");
       end if;
@@ -601,7 +600,7 @@ package body Raven.Cmd.Usage is
          end;
       end if;
 
-      if not IsBlank (comline.cmd_genrepo.key_public) then
+      if passed_public_key then
          declare
             features : UNX.File_Characteristics :=
               UNX.get_charactistics (USS (comline.cmd_genrepo.key_public));
@@ -616,7 +615,7 @@ package body Raven.Cmd.Usage is
          end;
       end if;
 
-      if not IsBlank (comline.cmd_genrepo.key_private) then
+      if passed_private_key then
          declare
             features : UNX.File_Characteristics :=
               UNX.get_charactistics (USS (comline.cmd_genrepo.key_private));
@@ -629,6 +628,28 @@ package body Raven.Cmd.Usage is
                   return alert ("<private-key> exists but is not a regular file");
             end case;
          end;
+      end if;
+
+      if passed_fingerprint then
+         if not passed_ext_command and not passed_public_key then
+            return alert ("--fingerprint requires --external or --pubkey option to be set.");
+         end if;
+         --  verify parent directory exists
+         if contains (comline.cmd_genrepo.fprint_file, "/") then
+            declare
+               features   : UNX.File_Characteristics;
+               parent_dir : constant String := head (USS (comline.cmd_genrepo.fprint_file), "/");
+            begin
+               features := UNX.get_charactistics (parent_dir);
+               case features.ftype is
+                  when Archive.directory => null;
+                  when Archive.unsupported =>
+                     return alert ("<output-file> parent directory does not exist");
+                  when others =>
+                     return alert ("<output-file> parent exists but is not a directory");
+               end case;
+            end;
+         end if;
       end if;
 
       return True;

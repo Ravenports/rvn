@@ -180,6 +180,7 @@ private
          key_private  : Text;
          key_public   : Text;
          sign_command : Text;
+         fprint_file  : Text;
       end record;
 
    type pre_command_switches is
