@@ -178,11 +178,9 @@ to a path containing a file with the Blake3 of the public key.
 # install public key  at /usr/local/etc/ravensign/rvnrepo.pub
 
 # On package server:
-% setenv CATSUM `b3sum --no-names /build/ravenports/primary/packages/catalog.ucl`
-% rvn genrepo --external "ssh <hosting-server> ravensign $CATSUM"
+% rvn genrepo --external "ssh <sign-server> ravensign"
 # or if not on the standard search path, use full path, e.g.
-% rvn genrepo --external "ssh <hosting-server> /home/frank/bin/ravensign $CATSUM"
-# unsetenv CATSUM
+% rvn genrepo --external "ssh <sign-server> /opt/bin/ravensign"
 
 # Generate fingerprint for sharing with clients
 % sh -c '( echo "function: blake3"; echo "fingerprint: \\"$(b3sum --no-names repo.pub)\\""; ) > fingerprint'
