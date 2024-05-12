@@ -45,8 +45,9 @@ is
       TIO.Put_Line (message);
    end quit;
 
-   key_path    : constant String := DIR.Current_Directory & "/../etc/ravensign/rvnrepo.key";
-   pubkey_path : constant String := DIR.Current_Directory & "/../etc/ravensign/rvnrepo.pub";
+   parentdir   : constant String := DIR.Containing_Directory (CLI.Command_Name);
+   key_path    : constant String := parentdir & "/../etc/ravensign/rvnrepo.key";
+   pubkey_path : constant String := parentdir & "/../etc/ravensign/rvnrepo.pub";
 
    binary_hash : Blake_3.blake3_hash;
    c_key_path  : IC.Strings.chars_ptr;
