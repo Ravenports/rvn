@@ -17,7 +17,9 @@ case "${OSNAME}" in
 	*)         platform=generic ;;
 esac
 
-case "${platform}" in
+# only run this once
+if [ ! -f "${ADS}.bak" ]; then
+    case "${platform}" in
 	generic)
 		sed -i.bak -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
@@ -25,7 +27,8 @@ case "${platform}" in
 		sed -i.bak -e "s/Operating_System'First/${platform}/" \
 		           -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
-esac
+    esac
 
 # don't build all the archive programs, only xrvn
 sed -i.bak -e '/for Main use/ s|"packrvn.adb", "readelf.adb", ||' "${ARCGPR}"
+fi
