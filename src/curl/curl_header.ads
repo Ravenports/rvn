@@ -927,6 +927,11 @@ package curl_header is
      );
    pragma Convention (C, curl_info);
 
+   --  Values for CURLOPT_IPRESOLVE option
+   CURL_IPRESOLVE_WHATEVER : constant Long_Integer := 0;
+   CURL_IPRESOLVE_V4       : constant Long_Integer := 1;
+   CURL_IPRESOLVE_V6       : constant Long_Integer := 2;
+
    type write_callback is access function
      (ptr      : IC.Strings.chars_ptr;
       size     : IC.size_t;

@@ -64,6 +64,12 @@ package body Raven.Cmd.Line is
             elsif datum = "--status-check"
             then
                result.pre_command.status_check := True;
+            elsif datum = "-4"
+            then
+               result.pre_command.internet_protocol := IPv4_only;
+            elsif datum = "-6"
+            then
+               result.pre_command.internet_protocol := IPv6_only;
             elsif datum = "-c" or else datum = "--chroot"
             then
                last_cmd := global_chroot;

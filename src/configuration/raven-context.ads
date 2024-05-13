@@ -14,6 +14,7 @@ package Raven.Context is
    function reveal_case_sensitive return Boolean;
    function reveal_cache_directory return String;
    function reveal_db_directory return String;
+   function reveal_protocol_restriction return IP_support;
 
    procedure close_event_pipe;
    procedure close_root_directory_fd;
@@ -25,6 +26,7 @@ package Raven.Context is
    procedure register_cache_directory (dir : String);
    procedure register_db_directory (dir: String);
    procedure register_case_sensitivity (sensitive : Boolean);
+   procedure register_protocol_restriction (setting : IP_support);
    function register_event_pipe_via_file (pipe_name : String) return Boolean;
    function register_event_pipe_via_socket (pipe_name : String) return Unix.Unix_Socket_Result;
 
@@ -41,6 +43,7 @@ private
          rootdir_fd     : Unix.File_Descriptor := Unix.not_connected;
          cachedir_fd    : Unix.File_Descriptor := Unix.not_connected;
          dbdir_fd       : Unix.File_Descriptor := Unix.not_connected;
+         internet_proto : IP_support := no_restriction;
       end record;
 
    context : A_context;

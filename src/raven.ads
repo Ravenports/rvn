@@ -18,6 +18,7 @@ package Raven is
    --------------------
    subtype Text is SU.Unbounded_String;
    type A_Debug_Level is (silent, high_level, moderate, low_level);
+   type IP_support is (no_restriction, IPv4_only, IPv6_only);
    type int64 is range -(2**63) .. +(2**63 - 1);
 
     type Action_Result is

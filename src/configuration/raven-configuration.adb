@@ -68,6 +68,7 @@ package body Raven.Configuration is
          when skip_info      => return "SKIP_INFO_SUBPKG";
          when skip_examples  => return "SKIP_EXAM_SUBPKG";
          when version_source => return "VERSION_SOURCE";
+         when ip_version     => return "IP_VERSION";
       end case;
    end get_ci_key;
 
@@ -107,6 +108,7 @@ package body Raven.Configuration is
               debug_level    |
               lock_wait      |
               lock_retries   |
+              ip_version     |
               size_limit     => return ThickUCL.data_integer;
          when
               dbdir          |
@@ -177,6 +179,7 @@ package body Raven.Configuration is
          when lock_wait      => return 1;
          when lock_retries   => return 5;
          when size_limit     => return 1048576;
+         when ip_version     => return 0;
          when others =>
             raise config_type_mismatch with ci'Img & " is not of type integer";
       end case;
@@ -466,6 +469,7 @@ package body Raven.Configuration is
          end case;
       end loop;
    end set_environment_options;
+
 
    -----------------------------------
    --  set_configuration_from_file  --

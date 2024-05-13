@@ -155,6 +155,15 @@ package body Raven.Context is
    end reveal_case_sensitive;
 
 
+   -----------------------------------
+   --  reveal_protocol_restriction  --
+   -----------------------------------
+   function reveal_protocol_restriction return IP_support is
+   begin
+      return context.internet_proto;
+   end reveal_protocol_restriction;
+
+
    ----------------------------
    --  register_debug_level  --
    ----------------------------
@@ -216,6 +225,15 @@ package body Raven.Context is
    begin
       context.case_sensitive := sensitive;
    end register_case_sensitivity;
+
+
+   -------------------------------------
+   --  register_protocol_restriction  --
+   -------------------------------------
+   procedure register_protocol_restriction (setting : IP_support) is
+   begin
+      context.internet_proto := setting;
+   end register_protocol_restriction;
 
 
 end Raven.Context;

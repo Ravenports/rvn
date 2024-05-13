@@ -139,6 +139,7 @@ package body Raven.Cmd.Unset is
       end config_file_path;
    begin
       Context.register_debug_level (comline.pre_command.debug_setting);
+      Context.register_protocol_restriction (comline.pre_command.internet_protocol);
       CFG.establish_configuration
         (configuration_file    => config_file_path,
          command_line_options  => USS (comline.pre_command.option_nvpairs),
@@ -153,8 +154,10 @@ package body Raven.Cmd.Unset is
          key4 : constant String := CFG.get_ci_key (CFG.event_pipe);
          key5 : constant String := CFG.get_ci_key (CFG.dev_mode);
          key6 : constant String := CFG.get_ci_key (CFG.case_match);
+         key7 : constant String := CFG.get_ci_key (CFG.ip_version);
 
          conf_debug : constant Ucl.ucl_integer := program_configuration.get_base_value (key1);
+         conf_proto : constant Ucl.ucl_integer := program_configuration.get_base_value (key7);
          db_dir     : constant String := program_configuration.get_base_value (key2);
          cache_dir  : constant String := program_configuration.get_base_value (key3);
          event_pipe : constant String := program_configuration.get_base_value (key4);
@@ -167,6 +170,12 @@ package body Raven.Cmd.Unset is
             when 1 => Context.register_debug_level (high_level);
             when 2 => Context.register_debug_level (moderate);
             when 3 => Context.register_debug_level (low_level);
+            when others => null;
+         end case;
+         case conf_proto is
+            when 0 => Context.register_protocol_restriction (no_restriction);
+            when 4 => Context.register_protocol_restriction (IPv4_only);
+            when 6 => Context.register_protocol_restriction (IPv6_only);
             when others => null;
          end case;
          Context.register_db_directory (db_dir);

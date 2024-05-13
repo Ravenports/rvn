@@ -23,7 +23,9 @@ package body Raven.Fetch is
    function download_file
      (remote_file_url : String;
       etag_file       : String;
-      downloaded_file : String) return fetch_result
+      downloaded_file : String;
+      remote_repo     : Boolean := False;
+      remote_protocol : IP_support := no_restriction) return fetch_result
    is
       temporary_file  : constant String := CAL.randomized_download_target (downloaded_file);
 
@@ -68,6 +70,7 @@ package body Raven.Fetch is
          ssl_cert       : constant String := ENV.Value ("SSL_CLIENT_CERT_FILE", "");
          cert_file      : constant String := ENV.Value ("SSL_CA_CERT_FILE", "");
          netrc_file     : constant String := ENV.Value ("NETRC", "");
+         set_protocol   : IP_support;
       begin
          if agent /= "" then
             curl_header.set_curl_option (curlobj, curl_header.CURLOPT_USERAGENT, agent);
@@ -75,6 +78,20 @@ package body Raven.Fetch is
          case Raven.Context.reveal_debug_level is
             when silent | high_level => verbose := False;
             when others => verbose := True;
+         end case;
+         if remote_repo then
+            set_protocol := remote_protocol;
+         else
+            set_protocol := Raven.Context.reveal_protocol_restriction;
+         end if;
+         case set_protocol is
+            when no_restriction => null;
+            when IPv4_only => curl_header.set_curl_option (curlobj,
+                                                           curl_header.CURLOPT_IPRESOLVE,
+                                                           curl_header.CURL_IPRESOLVE_V4);
+            when IPv6_only => curl_header.set_curl_option (curlobj,
+                                                           curl_header.CURLOPT_IPRESOLVE,
+                                                           curl_header.CURL_IPRESOLVE_V6);
          end case;
          curl_header.set_curl_option (curlobj, curl_header.CURLOPT_VERBOSE, verbose);
          if no_verify_peer then

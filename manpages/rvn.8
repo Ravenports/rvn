@@ -1,4 +1,4 @@
-.Dd November 26, 2023
+.Dd May 12, 2024
 .Dt RVN 8
 .Os
 .\" ---------------------------------------------------------------------------
@@ -15,6 +15,7 @@
 .Op Fl C Ao configuration file Ac
 .Op Fl o Ao option=value Ac
 .Op Fl R Ao repository configuration directory Ac
+.Op Fl 4 | Fl 6
 .Ao command Ac Ao Ar command-arguments Ac
 .Pp
 .Nm
@@ -26,6 +27,7 @@
 .Op Cm --config Ao configuration file Ac
 .Op Cm --option Ao option=value Ac
 .Op Cm --repo-conf-dir Ao repository configuration directory Ac
+.Op Fl 4 | Fl 6
 .Ao command Ac Ao Ar command-arguments Ac
 .\" ---------------------------------------------------------------------------
 .Sh DESCRIPTION
@@ -104,6 +106,12 @@ will search the directory for per-repository configuration files.
 This overrides any value of
 .Ev REPOS_DIR
 specified in the main configuration file.
+.It Fl 4
+.Nm
+will be restricted to IPv4 for fetching repository and packages.
+.It Fl 6
+.Nm
+will be restricted to IPv6 for fetching repository and packages.
 .El
 .\" ---------------------------------------------------------------------------
 .Sh COMMANDS

@@ -10,10 +10,14 @@ package Raven.Fetch is
    --                                master/Mk/Misc/rvnindex.txt
    --  etag_file       : e.g. /var/cache/rvn/version/rvnindex.etag
    --  downloaded_file : e.g. /var/cache/rvn/version/rvnindex.txt
+   --  remote_repo     : e.g. False
+   --  remote_protocol : e.g. no_restrictions
 
    function download_file
      (remote_file_url : String;
       etag_file       : String;
-      downloaded_file : String) return fetch_result;
+      downloaded_file : String;
+      remote_repo     : Boolean := False;
+      remote_protocol : IP_support := no_restriction) return fetch_result;
 
 end Raven.Fetch;
