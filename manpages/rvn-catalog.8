@@ -1,0 +1,74 @@
+.Dd May 13, 2024
+.Dt RVN-CATALOG 8
+.Os
+.Sh NAME
+.Nm "rvn catalog"
+.Nd update the local catalog of the enabled package repositories
+.Sh SYNOPSIS
+.Nm
+.Op Fl fq
+.Pp
+.Nm
+.Op Cm --{force,quiet}
+.Sh DESCRIPTION
+.Nm
+is used for updating the local copy of the repository catalog
+from the remote package repositories.
+The master repository is the reference for the latest catalog.
+The client may define other non-master repositories to act as mirrors.
+The defined priority dictates the order the repositories are checked,
+but once a download catalog matches the master reference, the process
+is complete.
+.Pp
+The repositories are defined by the configuration files in located in the
+.Pa /raven/etc/rvn/repos
+directory.
+See
+.Xr rvn.conf 5
+for details.
+.Pp
+It is best practice to ensure the local package repository catalogs are
+up to date before doing any package installation (via
+.Xr rvn-install 8 )
+or upgrades (via
+.Xr rvn-upgrade 8 ) .
+However, explicitly running
+.Nm
+is not necessary.
+By default both of these commands start by updating the repository
+catalog unless inhibited by setting
+.Ev REPO_AUTOUPDATE
+to false in
+.Xr rvn.conf 5
+or setting the equivalent by the command line switches.
+.Ss Signed repositories
+If the repository catalog is signed, the signature will be verified
+after download.
+Any catalog that fails signature verification is discarded.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width quiet
+.It Fl q , Cm --quiet
+Force quiet output.
+.It Fl f , Cm --force
+Force a full download of the repository catalog without regard to the
+respective ages of the local and remote copies of the catalogue.
+.El
+.Sh FILES
+See
+.Xr rvn.conf 5 .
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
