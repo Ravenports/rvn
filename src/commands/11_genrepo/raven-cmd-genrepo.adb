@@ -614,7 +614,7 @@ package body Raven.Cmd.Genrepo is
    is
       filesize : Natural := Natural (DIR.Size (path));
    begin
-      if filesize > 4096 then
+      if filesize = 0 or else filesize > 4096 then
          return "INVALID";
       end if;
 
@@ -630,6 +630,14 @@ package body Raven.Cmd.Genrepo is
          File_String_IO.Close (handle);
 
          return contents;
+      exception
+         when problems : others =>
+            if File_String_IO.Is_Open (handle) then
+               File_String_IO.Close (handle);
+            end if;
+            Event.emit_debug (high_level, "slurp_sign_output: " &
+                                Ada.Exceptions.Exception_Message (problems));
+            return "";
       end;
    end slurp_sign_output;
 
@@ -666,7 +674,7 @@ package body Raven.Cmd.Genrepo is
       braces_found : Boolean := Strings.contains (template, braces);
       result : Text;
    begin
-      if braces_found then
+      if not braces_found then
          return template & " " & digest;
       end if;
       result := Strings.SUS (template);
@@ -705,9 +713,11 @@ package body Raven.Cmd.Genrepo is
          Err_To_Out   => True);
       OSL.Free (Args);
 
+      Event.emit_debug (moderate, "spawn retcode =" & retcode'Img);
+      Event.emit_debug (moderate, "spawn success =" & success'Img);
+      --  Don't check success, it doesn't mean what you'd think (returns 0 when command DNE)
       if retcode /= 0 then
-         --  Success was returning false even though it apparently succeeded
-         Event.emit_debug (high_level, "remote sign command spawn failed (file didn't close?)");
+         Event.emit_debug (high_level, "remote sign command spawn return code:" & retcode'Img);
          if DIR.Exists (signout) then
             DIR.Delete_File (signout);
          end if;
