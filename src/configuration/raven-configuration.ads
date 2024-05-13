@@ -37,6 +37,7 @@ package Raven.Configuration is
       skip_man,       --  SKIP_MAN_SUBPKG (false)
       skip_doc,       --  SKIP_DOC_SUBPKG (false)
       skip_examples,  --  SKIP_EXAM_SUBPKG (true)
+      skip_info,      --  SKIP_INFO_SUBPACKAGE (false)
       syslog,         --  SYSLOG (true)
       abi,            --  ABI (dynamic)
       dev_mode,       --  DEVELOPER_MODE (false)
@@ -48,7 +49,6 @@ package Raven.Configuration is
       nameserver,     --  NAMESERVER ("")
       user_agent,     --  HTTP_USER_AGENT (dynamic, e.g. rvn/1.0.0)
       event_pipe,     --  EVENT_PIPE ("")
-      no_timestamp,   --  UNSET_TIMESTAMP(false)
       restrict_dir,   --  SSH_RESTRICT_DIR ("")
       ssh_args,       --  SSH_ARGS ("")
       environ,        --  RVN_ENVIRON ({})
@@ -84,6 +84,7 @@ package Raven.Configuration is
    --                      ARCHIVE_SYMLINK (false)
    --                      FILES_IGNORE_GLOB ([])
    --                      FILES_IGNORE_REGEX ([])
+   --                      UNSET_TIMESTAMP(false)
    
    
    --  Retrieve configuration item key given enum

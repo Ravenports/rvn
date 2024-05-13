@@ -1,0 +1,442 @@
+.Dd May 12, 2024
+.Dt RVN.CONF 5
+.Os
+.Sh NAME
+.Nm "rvn.conf"
+.Nd system-wide configuration file for
+.Xr rvn 8
+.Sh DESCRIPTION
+.Nm
+is the system-wide configuration file used by the
+.Xr rvn 8
+tool.
+.Pp
+The default location of this file is
+.Pa /raven/etc/rvn.conf .
+.Pp
+Lines in the file beginning with a "#" are comments
+and are ignored.
+.Pp
+The file is in UCL format.
+For more information on the syntax of UCL,
+please visit the official UCL website - http://github.com/vstakhov/libucl.
+.Pp
+The following types of options are recognized -
+boolean, string and list options.
+.Pp
+A boolean option is marked as enabled if one of the following values is
+specified in the configuration file -
+.Dv YES, TRUE
+and
+.Dv ON .
+.Sh OPTIONS
+The following options can be defined in
+.Nm :
+.Bl -tag -width ".Cm ABI: string"
+.It Cm ABI: string
+The ABI of the package you want to install.
+A system specific default is determined, E.g.,
+.Ql 'dragonfly:x86_64:6.4 .
+.It Cm ALIAS: key/value list
+Define local aliases for various
+.Xr rvn 8
+standard command lines.
+Whenever the
+.Em key
+text occurs as a separate
+.Sq action
+word in a command line of the form
+.Nm rvn Em key ... ,
+substitute the
+.Em value
+text verbatim.
+The replacement can consist of any sequence of text, which should form
+a syntactically correct
+.Xr rvn 8
+command line when substituted in and followed by any remaining tokens from
+the original command line.
+Default: not set.
+.It Cm AUTOCLEAN: boolean
+Automatically cleanout the content of
+.Em RVN_CACHEDIR
+after each non dry-run call to
+.Xr rvn-install 8
+or
+.Xr rvn-upgrade 8 .
+.It Cm DEFAULT_ALWAYS_YES: boolean
+When this option is enabled
+.Xr rvn 8
+will default to "yes" for all questions
+which require user confirmation before doing anything.
+Default: NO.
+.It Cm ASSUME_ALWAYS_YES: boolean
+When this option is enabled
+.Xr rvn 8
+will automatically assume "yes" to all questions
+which require user confirmation before doing anything, as if it
+the
+.Fl y
+flag was specified.
+Default: NO.
+.It Cm CASE_SENSITIVE_MATCH: boolean
+Match package names or regular expressions given on the command line
+against values in the database in a case sensitive way.
+Default: NO.
+.It Cm DEBUG_LEVEL: integer
+Incremental values from 1 to 3 produce successively more verbose
+debugging output.
+A setting of 0 disables debugging output.
+Overridden by the
+.Fl d
+command line option.
+Default: 0.
+.It Cm DEBUG_SCRIPTS: boolean
+Activate debug mode for scripts (aka set -x)
+Default: NO.
+.It Cm DEVELOPER_MODE: boolean
+Makes certain errors immediately fatal.
+Adds various warnings and
+suggestions to the output of
+.Xr rvn 8
+as an aid to port maintainers, including indicating when the port
+might be marked as architecture independent.
+Default: NO.
+.It Cm EVENT_PIPE: string
+Send all event messages to the specified FIFO or Unix socket.
+Events messages should be formatted as JSON.
+Default: not set.
+.It Cm FETCH_RETRY: integer
+Number of times to retry a failed fetch of a file.
+Default: 3.
+.It Cm FETCH_TIMEOUT: integer
+Maximum number of seconds to wait for any one file to download from the
+network, either by SSH or any of the protocols supported by
+.Xr fetch 3
+functions.
+Default: 30.
+.It Cm HANDLE_RC_SCRIPTS: boolean
+When enabled, this option will automatically perform start/stop of
+services during package installation and deinstallation.
+Services are only started on installation if they are enabled in
+.Pa /etc/rc.conf .
+Default: NO.
+.It Cm HTTP_USER_AGENT: string
+Define User-agent to be sent to HTTP server when getting repository
+data.
+.It Cm IP_VERSION: integer
+Restrict network access to specified IP version.
+4 will only allow IPv4 and 6 will only allow IPv6.
+Any other value will use the system default.
+Repositories or command line options can override this setting.
+Default: 0.
+.It Cm LOCK_RETRIES: integer
+Number of attempts to obtain a lock before giving up and exiting.
+Default: 5.
+.It Cm LOCK_WAIT: integer
+Wait time in seconds to regain a lock if it is not available.
+Default: 1.
+.It Cm NAMESERVER: string
+Hostname or IPv4 or IPv6 address of name server to use for DNS
+resolution, overriding the system defaults in
+.Pa /etc/resolv.conf .
+When given as a hostname, will be converted to a list of IPv4 or IPv6
+addresses by the default mechanisms configured on the system.
+See
+.Xr getaddrinfo 3 .
+.It Cm PERMISSIVE: boolean
+Ignore conflicts while registering a package.
+Note that the conflicting files will not be recorded as owned by the new
+package.
+Default: NO.
+.It Cm RVN_CACHEDIR: string
+Specifies the cache directory for packages.
+Default:
+.Pa /var/cache/rvn .
+.It Cm CREATE_VERBOSE: boolean
+When set to a
+.Sy true
+value, make
+.Xr rvn-create 8
+use verbose mode as standard.
+Default:
+.Sy NO .
+.It Cm RVN_DBDIR: string
+Specifies the directory to use for storing the package
+database files.
+Default:
+.Pa /var/db/rvn .
+.It Cm RVN_ENVIRON: Key/Value list
+This tells
+.Xr rvn 8
+to set key/values to be passed in the environment.
+This allow setting variables to configure the http(s) fetcher.
+Which accepts environment variables compatible with
+.Xr fetch 3 ,
+e.g.,
+.Ev HTTP_PROXY .
+Default: not set.
+.It Cm SSH_ARGS: string
+Extra arguments to pass to
+.Xr ssh 1 .
+Default: not set.
+.It Cm PLIST_KEYWORDS_DIR: string
+Directory containing definitions of plist keywords.
+.It Cm READ_LOCK: boolean
+Use read locking for query database.
+Default: NO.
+.It Cm REPOS_DIR: array
+List of directories to search for repository configuration files.
+Default: ,
+.Pa /raven/etc/rvn/repos/ .
+.It Cm REPO_AUTOUPDATE: boolean
+When true, automatically check for and download updates to
+.Pa /var/db/rvn/remote.sqlite
+when running one of:
+.Nm rvn fetch ,
+.Nm rvn install ,
+.Nm rvn rquery ,
+.Nm rvn search ,
+.Nm rvn upgrade ,
+or
+.Nm rvn version -R .
+Default: YES.
+.It Cm RUN_SCRIPTS: boolean
+Run pre-/post-installation action scripts.
+Default: YES.
+.It Cm SQLITE_PROFILE: boolean
+Profile SQLite queries.
+Default: NO.
+.It Cm SSH_RESTRICT_DIR: string
+Directory which the ssh subsystem will be restricted to.
+Default: not set.
+.It Cm SYSLOG: boolean
+Log all of the installation/deinstallation/upgrade operations via
+.Xr syslog 3 .
+Default: YES.
+.It Cm VERSION_SOURCE: string
+Default database for comparing version numbers in
+.Xr rvn-version 8 .
+Valid values are
+.Sy S
+for snapshot index,
+.Sy I
+for release index,
+.Sy R
+for remote catalog.
+Default: release index
+.It Cm VALID_URL_SCHEME
+List of url scheme that rvn can accept while parsing the repository
+confguration file. .
+.It Cm WARN_SIZE_LIMIT: integer
+When download and total change is less than than this option, don't ask
+the user to confirm the desired action.
+Default:
+.Sy 1048576
+.Pq 1MB .
+.El
+.Sh REPOSITORY CONFIGURATION
+To use a repository you will need at least one repository
+configuration file.
+.Pp
+Repository configuration files are searched for in order of the
+directories listed in the
+.Cm REPOS_DIR
+array,
+which defaults to
+.Pa /raven/etc/rvn/repos/ .
+.Pp
+Filenames are arbitrary, but should end in
+.Sq .conf .
+For example
+.Pa /raven/etc/rvn/repos/myrepo.conf .
+.Pp
+A repository file is in UCL format and has the following form:
+.Bl -tag -width ".Cm myrepo:"
+.It Cm myrepo:
+.Bl -tag -width ".Cm MIRROR_TYPE: string"
+.It Cm ENV: object
+A list of key value entries that will be passed as environment variable
+for the bundled curl library per repository.
+.It Cm URL: string
+URL for this repository only.
+.It Cm ENABLED: boolean
+The repository will be used only if this option is enabled.
+Default: YES.
+.It Cm MIRROR_TYPE: string
+MIRROR_TYPE for this repository only.
+Default: NONE.
+Any of
+.Dv HTTP
+or
+.Dv SRV
+or
+.Dv NONE .
+.It Cm SIGNATURE_TYPE: string
+Specifies what type of signature this repository uses.
+Can be one of
+.Dv NONE ,
+.Dv PUBKEY or
+.Dv FINGERPRINTS .
+(default: NONE)
+.It Cm PUBKEY: string
+This should be set to a path containing public key for this repository
+only. (default: NONE)
+.It Cm FINGERPRINTS: string
+This should be set to a path containing known signatures for the repository.
+.It Cm IP_VERSION: integer
+Restrict network access to specified IP version.
+4 will only allow IPv4 and 6 will only allow IPv6.
+Any other value will use the system default.
+This option overrides the global setting with the same name and can be
+overwritten by a command line option.
+Default: 0.
+.It Cm PRIORITY: integer
+Set the priority of the repository.
+Higher values are preferred.
+Default: 0.
+.El
+.El
+.Pp
+For a
+.Cm MIRROR_TYPE
+of
+.Dv NONE ,
+any of the following URL schemes:
+.Dv http:// ,
+.Dv https:// ,
+.Dv file:// ,
+.Dv ssh:// ,
+.Dv tcp:// .
+Where
+.Sy MIRROR_TYPE
+is
+.Dv SRV ,
+you should use a
+.Dv rvn+http://
+or
+.Dv rvn+https://
+(etc.) URL scheme.
+Using an
+.Dv http://
+URL implies that the hostname part is a simple hostname according to
+RFC 2616, and is no longer accepted.
+TODO: CHECK CODE, THIS PROBABLY CHANGED
+.Pp
+When
+.Sy SIGNATURE_TYPE
+is
+.Dv NONE ,
+then no signature checking will be done on the repository.
+When
+.Sy SIGNATURE_TYPE
+is
+.Dv PUBKEY ,
+then the
+.Sy PUBKEY
+option will be used for signature verification.
+This option is for use with the built-in signing support.
+When
+.Sy SIGNATURE_TYPE
+is
+.Dv FINGERPRINTS ,
+then the
+.Sy FINGERPRINTS
+option will be used for signature verification.
+This option is for use with an external signing command.
+See
+.Xr rvn-genrepo 8
+for more discussion on signature types.
+.Pp
+If
+.Sy FINGERPRINTS
+is set to
+.Pa /raven/etc/rvn/fingerprints/myrepo ,
+then the directories
+.Pa /raven/etc/rvn/fingerprints/myrepo/trusted
+and
+.Pa /raven/etc/rvn/fingerprints/myrepo/revoked
+should exist with known good and bad fingerprints, respectively.
+Files in those directories should be in the format:
+.Bd -literal -offset indent
+function: "blake3"
+fingerprint: "<blake3-representation-of-public-key>"
+.Ed
+.Pp
+The repository tag
+.Fa myrepo
+is an arbitrary string.
+Reusing the repository tag will cause those items defined in
+configuration files later on the
+.Sy REPOS_DIR
+search path to overwrite the equivalent settings for the same tag
+earlier on the search path.
+.Pp
+Repositories are processed in the order they are found on the
+.Sy REPOS_DIR
+search path, with individual repository configuration files in the
+same directory processed in alphabetical order.
+The mirror repositories will only be used if the catalog checksum matches
+the master repository's reported checksum.
+.Pp
+It is possible to specify more than one repository per file.
+.Sh VARIABLES
+The following variables will be expanded during the parsing of
+.Nm
+(Not yet implemented)
+.Bl -tag -width Ds
+.It Va ABI
+.It Va OSNAME
+Expands to the full version of the name of the operating system.
+.It Va RELEASE
+Expands to the full version of the operating system.
+.It Va ARCH
+Expands the architecture of the system.
+.El
+.Sh ENVIRONMENT
+An environment variable with the same name as the option in the
+configuration file always overrides the value of an option set in the
+file.
+.Sh EXAMPLES
+Repository configuration file:
+.Bd -literal -offset indent
+FreeBSD: {
+    url: "http://www.ravenports.com/repository/${ABI}",
+    enabled: true,
+    signature_type: "fingerprints",
+    fingerprints: "/raven/etc/keys/rvn",
+}
+.Ed
+.Pp
+Example for rvn.conf:
+.Bd -literal -offset indent
+rvn_dbdir: "/var/db/rvn"
+rvn_cachedir: "/var/cache/rvn"
+handle_rc_scripts: false
+assume_always_yes: false
+repos_dir: [
+     "/raven/etc/rvn/repos",
+]
+syslog: true
+developer_mode: false
+rvn_environ: {
+    http_proxy: "http://myproxy:3128",
+}
+alias: {
+    origin: "info -qo",
+    nonauto: "query -e '%a == 0' '%n-%v'"
+}
+.Ed
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8

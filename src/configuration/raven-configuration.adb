@@ -44,7 +44,6 @@ package body Raven.Configuration is
          when nameserver     => return "NAMESERVER";
          when user_agent     => return "HTTP_USER_AGENT";
          when event_pipe     => return "EVENT_PIPE";
-         when no_timestamp   => return "UNSET_TIMESTAMP";
          when restrict_dir   => return "SSH_RESTRICT_DIR";
          when ssh_args       => return "SSH_ARGS";
          when environ        => return "RVN_ENVIRON";
@@ -66,6 +65,7 @@ package body Raven.Configuration is
          when skip_nls       => return "SKIP_NLS_SUBPKG";
          when skip_man       => return "SKIP_MAN_SUBPKG";
          when skip_doc       => return "SKIP_DOC_SUBPKG";
+         when skip_info      => return "SKIP_INFO_SUBPKG";
          when skip_examples  => return "SKIP_EXAM_SUBPKG";
          when version_source => return "VERSION_SOURCE";
       end case;
@@ -94,10 +94,10 @@ package body Raven.Configuration is
               automerge      |
               create_verbose |
               autoclean      |
-              no_timestamp   |
               skip_dev       |
               skip_doc       |
               skip_examples  |
+              skip_info      |
               skip_man       |
               skip_nls       |
               base_shlibs    => return ThickUCL.data_boolean;
@@ -152,12 +152,12 @@ package body Raven.Configuration is
          when automerge      => return True;
          when create_verbose => return False;
          when autoclean      => return False;
-         when no_timestamp   => return False;
          when base_shlibs    => return False;
          when skip_dev       => return True;
          when skip_nls       => return False;
          when skip_man       => return False;
          when skip_doc       => return False;
+         when skip_info      => return False;
          when skip_examples  => return True;
          when others =>
             raise config_type_mismatch with ci'Img & " is not of type boolean";
