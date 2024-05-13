@@ -655,6 +655,30 @@ package body Raven.Cmd.Genrepo is
    end generate_file;
 
 
+   --------------------------------
+   --  construct_remote_command  --
+   --------------------------------
+   function construct_remote_command
+     (template  : String;
+      digest    : String) return String
+   is
+      braces : constant String := "{}";
+      braces_found : Boolean := Strings.contains (template, braces);
+      result : Text;
+   begin
+      if braces_found then
+         return template & " " & digest;
+      end if;
+      result := Strings.SUS (template);
+      loop
+         exit when not braces_found;
+         result := Strings.replace_substring (result, braces, digest);
+         braces_found := Strings.contains (result, braces);
+      end loop;
+      return Strings.USS (result);
+   end construct_remote_command;
+
+
    -----------------------------
    --  remotely_sign_catalog  --
    -----------------------------
@@ -671,7 +695,7 @@ package body Raven.Cmd.Genrepo is
       signout : constant String := Miscellaneous.get_temporary_filename ("genrepo_sign");
    begin
       digest := Blake_3.hex (Blake_3.file_digest (catalog));
-      Args := OSL.Argument_String_To_List (scommand & " " & digest);
+      Args := OSL.Argument_String_To_List (construct_remote_command(scommand, digest));
       OSL.Spawn
         (Program_Name => Args (Args'First).all,
          Args         => Args (Args'First + 1 .. Args'Last),

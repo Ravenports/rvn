@@ -64,4 +64,10 @@ private
      (path      : String;
       contents  : String);
 
+   --  Replace all "{}" with digest.
+   --  If no "{}" found, add it to the end with a preceeding space
+   function construct_remote_command
+     (template  : String;
+      digest    : String) return String;
+
 end Raven.Cmd.Genrepo;
