@@ -1,0 +1,83 @@
+#!/usr/bin/env python3
+"""
+Tiny web server meant to execute ravensign.
+In order to access the 400 mode private key, Ravensign must be run
+by the owner of the key or by the superuser.  For practical purposes,
+this means a service with appropriate permissions has to run it for
+the regular user.
+
+Possible set up:
+/raven/etc/ravensign/rvnrepo.key (400, rvnuser:rvnuser)
+/raven/etc/ravensign/rvnrepo.pub (644, rvnuser:rvnuser)
+/raven/bin/ravensign             (755, rvnuser:rvnuser)
+/raven/sbin/signserver.py        (644, root:root)
+
+The script would be started by RC Init / systemd manifest
+and run as root or rvnuser.
+The port and host are configurable, default (127.0.0.1:8085)
+
+How to sign with curl internally:
+curl -s 127.0.0.1:8080 --data digest=<64-character-hex-string>
+
+How to sign with curl externally:
+ssh <host> curl -s 127.0.0.1:8080 --data digest=<64-character-hex-string>
+
+The signature and public key passes through standard out
+"""
+
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import parse_qs
+import subprocess
+import sys
+
+class Handler(BaseHTTPRequestHandler):
+
+    def _set_response(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+
+    def do_POST(self):
+        content_length = int(self.headers["Content-Length"])
+        post_data = self.rfile.read(content_length)
+        post_dict = parse_qs(post_data.decode('utf-8'))
+        if "digest" in post_dict:
+            b3sum = post_dict["digest"][0]
+            cmd = [ravensign, b3sum]
+            result = subprocess.run(cmd, capture_output=True)
+            self._set_response()
+            self.wfile.write(result.stdout)
+        else:
+            self._set_response()
+            self.wfile.write(bytes("FAILURE\nmissing digest", "utf8"))
+
+    def log_message(self, format, *args):
+        """
+        Silence standard out and standard error
+        """
+        pass
+
+if __name__ == "__main__":
+    """
+    optional argument 1 is port (default 8085)
+    optional argument 2 is the host (default 127.0.0.1), for all connection use ""
+    optional argument 3 is the path to ravensign
+    """
+    port = 8085
+    host = "127.0.0.1"
+    ravensign = "/raven/bin/ravensign"        
+    if len(sys.argv) >= 2:
+        try:
+            port = int(sys.argv[1])
+        except ValueError:
+            pass
+    if len(sys.argv) >= 3:
+        host = sys.argv[2]
+    if len(sys.argv) >= 4:
+        ravensign = sys.argv[3]
+
+    try:
+        with HTTPServer((host, port), Handler) as server:
+            server.serve_forever()
+    except KeyboardInterrupt:
+        pass
