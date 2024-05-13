@@ -251,49 +251,61 @@ For example
 .Pa /raven/etc/rvn/repos/myrepo.conf .
 .Pp
 A repository file is in UCL format and has the following form:
-.Bl -tag -width ".Cm myrepo:"
+.Bl -tag -width "XXXX"
 .It Cm myrepo:
-.Bl -tag -width ".Cm MIRROR_TYPE: string"
-.It Cm ENV: object
-A list of key value entries that will be passed as environment variable
-for the bundled curl library per repository.
-.It Cm URL: string
-URL for this repository only.
+.Bl -tag -width "XXXXXXXX"
 .It Cm ENABLED: boolean
 The repository will be used only if this option is enabled.
-Default: YES.
+(default: true)
+.It Cm MASTER: boolean
+There can only be one enabled master repository which provides the
+reference digest for the catalog.
+Only mirrors that agree on this checksum and have a catalog that matches
+the checksum will be allowed to provide the catalog and packages.
+Any later enabled masters will be ignored.
+(default: true)
+.It Cm URL: string
+URL for this repository.
 .It Cm MIRROR_TYPE: string
-MIRROR_TYPE for this repository only.
-Default: NONE.
-Any of
+MIRROR_TYPE for this repository.
+Must be
 .Dv HTTP
 or
 .Dv SRV
 or
 .Dv NONE .
+(default: NONE)
 .It Cm SIGNATURE_TYPE: string
 Specifies what type of signature this repository uses.
-Can be one of
+Must be
 .Dv NONE ,
 .Dv PUBKEY or
 .Dv FINGERPRINTS .
 (default: NONE)
 .It Cm PUBKEY: string
-This should be set to a path containing public key for this repository
-only. (default: NONE)
+Set to the path of the public key file for this repository.
+(default: NONE)
 .It Cm FINGERPRINTS: string
-This should be set to a path containing known signatures for the repository.
+Set to the path of the directory containing the trusted and revoked
+subdirectories for this repository.
 .It Cm IP_VERSION: integer
 Restrict network access to specified IP version.
 4 will only allow IPv4 and 6 will only allow IPv6.
 Any other value will use the system default.
 This option overrides the global setting with the same name and can be
 overwritten by a command line option.
-Default: 0.
+(default: 0)
 .It Cm PRIORITY: integer
 Set the priority of the repository.
-Higher values are preferred.
-Default: 0.
+This only applies to repositories that are not serving in a master role,
+in other words, an alternate/backup mirror.
+The mirror with the highest numeric priority are utilized first.
+Upon a tie, the repo whose name is first in the alphabet will have
+a higher priority.
+(default: 0)
+.It Cm ENV: object
+A list of key value entries that will be passed as environment variable
+for the bundled curl library per repository.
 .El
 .El
 .Pp
@@ -399,9 +411,10 @@ file.
 .Sh EXAMPLES
 Repository configuration file:
 .Bd -literal -offset indent
-FreeBSD: {
-    url: "http://www.ravenports.com/repository/${ABI}",
+Ravenports: {
     enabled: true,
+    master: true,
+    url: "http://www.ravenports.com/repository/${ABI}",
     signature_type: "fingerprints",
     fingerprints: "/raven/etc/keys/rvn",
 }
