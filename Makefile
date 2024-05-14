@@ -30,7 +30,7 @@ install:
 
 	# generate rc script from template
 	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
-		-e "s/%%PREFIX%%/${PREFIX}/g" \
+		-e "s|%%PREFIX%%|${PREFIX}|g" \
 		${WRKSRC}/extra/ravensign.in > ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
 	chmod 755 ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
 
