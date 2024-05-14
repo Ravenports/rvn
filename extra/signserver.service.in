@@ -1,0 +1,14 @@
+[Unit]
+Description=Server to remote signing of Ravenports catalogs
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=rvnuser
+ExecStart=%%PREFIX%%/sbin/signserver.py
+
+[Install]
+WantedBy=multi-user.target
