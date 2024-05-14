@@ -13,6 +13,7 @@ install:
 		${DESTDIR}${PREFIX}/bin/
 	${BSD_INSTALL_PROGRAM} ${WRKSRC}/obj-rs/ravensign ${DESTDIR}${PREFIX}/bin/
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.5 ${DESTDIR}${PREFIX}/share/man/man5/
+	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.7 ${DESTDIR}${PREFIX}/share/man/man7/
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.8 ${DESTDIR}${PREFIX}/share/man/man8/
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
 	mkdir -p ${DESTDIR}${PREFIX}/etc/rvn/repos
