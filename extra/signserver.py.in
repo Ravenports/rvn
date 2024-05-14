@@ -7,13 +7,13 @@ this means a service with appropriate permissions has to run it for
 the regular user.
 
 Possible set up:
-/raven/etc/ravensign/rvnrepo.key (400, rvnuser:rvnuser)
-/raven/etc/ravensign/rvnrepo.pub (644, rvnuser:rvnuser)
-/raven/bin/ravensign             (755, rvnuser:rvnuser)
+/raven/etc/ravensign/rvnrepo.key (400, %%USER%%:%%GROUP%%)
+/raven/etc/ravensign/rvnrepo.pub (644, %%USER%%:%%GROUP%%)
+/raven/bin/ravensign             (755, %%USER%%:%%GROUP%%)
 /raven/sbin/signserver.py        (644, root:root)
 
 The script would be started by RC Init / systemd manifest
-and run as root or rvnuser.
+and run as root or rvnsign user.
 The port and host are configurable, default (127.0.0.1:8085)
 
 How to sign with curl internally:

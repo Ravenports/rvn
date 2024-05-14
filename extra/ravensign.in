@@ -29,8 +29,8 @@ rcvar=ravensign_enable
 [ -z "$ravensign_host" ]            && ravensign_host="127.0.0.1"
 [ -z "$ravensign_port" ]            && ravensign_port="8085"
 [ -z "$ravensign_location" ]        && ravensign_location="%%PREFIX%%/bin/ravensign"
-#[ -z "$ravensign_user" ]            && ravensign_user="%%USER%%"
-#[ -z "$ravensign_group" ]           && ravensign_group="%%GROUP%%"
+[ -z "$ravensign_user" ]            && ravensign_user="%%USER%%"
+[ -z "$ravensign_group" ]           && ravensign_group="%%GROUP%%"
 
 procname="%%PYTHON_CMD%%"
 command="%%PREFIX%%/sbin/signserver.py"

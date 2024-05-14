@@ -7,7 +7,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-User=rvnuser
+User=rvnsign
 ExecStart=%%PREFIX%%/sbin/signserver.py
 
 [Install]
