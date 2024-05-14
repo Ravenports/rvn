@@ -9,8 +9,8 @@ the regular user.
 Possible set up:
 /raven/etc/ravensign/rvnrepo.key (400, %%USER%%:%%GROUP%%)
 /raven/etc/ravensign/rvnrepo.pub (644, %%USER%%:%%GROUP%%)
-/raven/bin/ravensign             (755, %%USER%%:%%GROUP%%)
-/raven/sbin/signserver.py        (644, root:root)
+/raven/bin/ravensign             (755, root:wheel)
+/raven/sbin/signserver.py        (644, root:wheel)
 
 The script would be started by RC Init / systemd manifest
 and run as root or rvnsign user.

@@ -16,9 +16,10 @@ install:
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.8 ${DESTDIR}${PREFIX}/share/man/man8/
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
 	mkdir -p ${STAGEDIR}${PREFIX}/etc/rvn/repos
+	mkdir -p ${STAGEDIR}${PREFIX}/etc/ravensign
 
 	# generate signserver.py from template
-	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s/%%PYTHON_CMD%%/${PY3COMMAND}/" \
+	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
 		${WRKSRC}/extra/signserver.py.in > ${DESTDIR}${PREFIX}/sbin/signserver.py
 	chmod 755 ${DESTDIR}${PREFIX}/sbin/signserver.py
 
@@ -28,7 +29,7 @@ install:
 		${WRKSRC}/extra/signserver.service.in > ${DESTDIR}${PREFIX}/share/rvn/signserver.service
 
 	# generate rc script from template
-	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s/%%PYTHON_CMD%%/${PY3COMMAND}/" \
+	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
 		-e "s/%%PREFIX%%/${PREFIX}/g" \
 		${WRKSRC}/extra/ravensign.in > ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
 	chmod 755 ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
