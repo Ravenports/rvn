@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!%%PYTHON_CMD%%
 """
 Tiny web server meant to execute ravensign.
 In order to access the 400 mode private key, Ravensign must be run
@@ -27,6 +27,7 @@ The signature and public key passes through standard out
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs
+import os
 import subprocess
 import sys
 
@@ -75,6 +76,14 @@ if __name__ == "__main__":
         host = sys.argv[2]
     if len(sys.argv) >= 4:
         ravensign = sys.argv[3]
+
+    pid = os.getpid()
+    try:
+        with open("/var/run/signserver.pid", "w") as fout:
+            fout.write(str(pid))
+    except IOError:
+        """Not superuser, just skip"""
+        pass
 
     try:
         with HTTPServer((host, port), Handler) as server:

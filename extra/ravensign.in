@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# PROVIDE: ravensign
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+
+#
+# Add the following lines to /etc/rc.conf to enable ravensign:
+#
+# ravensign_enable (bool):      Default is "NO"
+#                               Set it to "YES" to enable ravensign
+# ravensign_host (str):         Default is "127.0.0.1"  (accessible only locally)
+#                               Set it to "" to accept all connections
+#                               Set it to another value to customize access
+# ravensign_port (str):         Default to "8085" to listen to this port
+#                               Set it to any valid port number
+# ravensign_location (str):     Default to "%%PREFIX%%/bin/ravensign" (standard path to program)
+#                               Set it to path to program
+# ravensign_user (str)          ravensign user: Default to "%%USER%%"
+# ravensign_group (str)         ravensign group: Default to "%%GROUP%%"
+
+
+. /etc/rc.subr
+
+name=ravensign
+rcvar=ravensign_enable
+
+[ -z "$ravensign_enable" ]          && ravensign_enable="NO"
+[ -z "$ravensign_host" ]            && ravensign_host="127.0.0.1"
+[ -z "$ravensign_port" ]            && ravensign_port="8085"
+[ -z "$ravensign_location" ]        && ravensign_location="%%PREFIX%%/bin/ravensign"
+#[ -z "$ravensign_user" ]            && ravensign_user="%%USER%%"
+#[ -z "$ravensign_group" ]           && ravensign_group="%%GROUP%%"
+
+procname="%%PYTHON_CMD%%"
+command="%%PREFIX%%/sbin/signserver.py"
+command_args="${ravensign_port} \"${ravensign_host}\" ${ravensign_location} &"
+pidfile="/var/run/signserver.pid"
+
+load_rc_config "$name"
+run_rc_command "$1"
