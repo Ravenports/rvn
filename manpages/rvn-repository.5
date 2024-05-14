@@ -1,0 +1,182 @@
+.Dd May 14, 2023
+.Dt RVN-REPOSITORY 5
+.Os
+.Sh NAME
+.Nm repository
+.Nd format and operation of Ravenports package repositories
+.Sh DESCRIPTION
+.Nm "Package repositories"
+used by the
+.Xr rvn 8
+program consist of integral mirrored collections of rvn-formatted archives
+together with a catalog and catalog digest.
+.Pp
+Each collection consist of packages suitable for installation on a
+specific system
+.Sy ABI :
+a combination of operating system, CPU architecture, and minimum OS release.
+.Pp
+The package collections are made available to users for download via a
+web server although three other protocols are currently available.
+Embedding the
+.Sy ABI
+value into the repository URL allows
+.Nm rvn
+to use a standard URL setting to select the correct package collection
+by expanding the special token
+.Cm ${ABI}
+in the repository configuration files.
+.Pp
+Repositories may be mirrored over several sites.
+This can done seemlessly with a single repository configuration
+using DNS service records (SRV) or through multiple configurations
+where one repository is considered the reference and the remaining
+are expected to be perfect mirror copies.
+.Sh FILESYSTEM ORGANIZATION
+The following constraints on the repository layout must be met:
+.Bl -bullet
+.It
+A repository may contain several package collections with parallel
+.Cm REPOSITORY_ROOTs
+in order to support diverse system
+.Cm ABIs .
+.It
+All of the content for one
+.Sy ABI
+should be accessible in a filesystem or URL hierarchy beneath the
+.Cm REPOSITORY_ROOT .
+.It
+All packages available beneath one
+.Cm REPOSITORY_ROOT
+should be binary compatible with a specific system
+.Cm ABI .
+.It
+The repository catalog archive is located directly under the
+.Cm REPOSITORY_ROOT .
+.El
+.Pp
+The metadata contained within the repository catalog is sufficient
+to calculate the full URL of the package given the path to the
+.Cm REPOSITORY_ROOT .
+.Pp
+The filesystem hierarchy of the repository is fixed for simplicity:
+.Bl -tag -width "REPOSITORY"
+.It Pa $REPOSITORY_ROOT/files
+This subdirectory contains every package listed in the catalog, all
+compatible with the defined
+.Sy ABI .
+Packages are stored as rvn archives with a predictable filename in the
+form of <Namebase>-<Subpackage>-<Variant>-<Version>.rvn .
+This subdirectory should not contain extra packages that are not
+listed in the catalog.
+.It Pa $REPOSITORY_ROOT/catalog.rvn
+This rvn archive contains the catalog file named
+.Qq catalog.ucl .
+Each line of the catalog file contains the full metadata for a single
+package.
+If the repository is signed, this archive will also contain a file
+named
+.Qq signature
+that is a signed Blake3 digest of the catalog file.
+If the client is expected to verify the signature with a fingerprint,
+the public key needed to do this is provided within the archive as the
+.Qq repository.pub
+file.
+.It Pa $REPOSITORY_ROOT/catalog.sum
+This small file contains the hexidecimal representation of the Blake3
+digest of the catalog.ucl file.
+When multiple repositories are defined, the client will download this
+file from the repository designated as the master in order to verify
+the mirrors have the exact same catalog.
+If the mirror's catalog does not match the the master's, the mirror
+will not be used.
+.El
+.Pp
+The repository is expected to be complete with full integrity.
+Every dependency of every package must be contained within the files
+subdirectory.
+.Sh REPOSITORY ACCESS METHODS
+.Nm rvn
+uses standard network protocols for repository access.
+The following URL schemes are supported:
+.Cm ( HTTP ,
+.Cm HTTPS ,
+.Cm FILE ,
+.Cm TCP )
+as well as remote access over
+.Cm SSH .
+Additional environmental variables affect the download including
+.Ev SSL_NO_VERIFY_PEER ,
+.Ev SSL_NO_VERIFY_HOSTNAME ,
+.Ev HTTP_PROXY ,
+.Ev SSL_CLIENT_KEY_FILE ,
+.Ev SSL_CLIENT_CERT_FILE ,
+.Ev SSL_CA_CERT_FILE and
+.Ev NETRC .
+.Sh REPOSITORY MIRRORING
+Multiple copies of a repository can be provided for redundance or
+to scale up site capacity.
+There is currently only one possiblity to support mirrors sets
+with a single URL.
+.Bl -tag -width "HTTP"
+.It Cm SRV
+For an SRV mirrored repository where the URL is specified as
+.Pa http://pkgrepo.example.org/
+.Cm SRV
+records should be set up in the DNS:
+.Bd -literal -offset indent
+$ORIGIN example.com
+_http._tcp.pkgrepo IN SRV 10 1 80 mirror0
+                   IN SRV 20 1 80 mirror1
+.Ed
+.Pp
+where the
+.Cm SRV
+priority and weight parameters are used to control search order and
+traffic weighting between sites, and the port number and hostname are
+used to construct the individual mirror URLs.
+.El
+.Pp
+Mirrored repositories are assumed to have identical content, so the
+downloaded catalog is assumed to be the reference for all potentially
+reached mirror sites.
+.Sh WORKING WITH MULTIPLE REPOSITORIES
+When multiple repositories are enabled, exactly one must be designated
+as the master reference.
+If none are designated, a notice will be issued and the highest rated
+repository (order by highest priority, then highest alphabetically)
+will be exclusively used.
+If multiple enabled repositories are marked as master, a notice will
+be issued and the lower rated masters will be downgrounded to mirrors.
+.Pp
+The master repository always provides the catalog.sum file.
+The remaining dowloads (packages, catalog) will come from the
+highest rated repository.
+The lower rated repositories (including the master repository) will not
+be used unless the client can not reach the higher rated ones first.
+The exception to this is if the user specifies a certain repository by the
+.Fl r
+flag to
+.Xr rvn-fetch 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-upgrade 8 ,
+.Xr rvn-search 8
+or
+.Xr rvn-rquery 8
+commands.
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-catalog 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-genrepo 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
