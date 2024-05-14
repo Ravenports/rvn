@@ -1,0 +1,98 @@
+.Dd May 12, 2024
+.Dt RAVENSIGN 7
+.Os
+.Sh NAME
+.Nm "ravensign"
+.Nd external signing server
+.Sh DESCRIPTION
+In order for
+.Nm "rvn genrepo"
+to sign repository catalogs with the external signing command option,
+a signing server must be set up first.
+The method described by
+.Nm "pkg repo" using ssh is insecure because the user could just
+view the private key, defeating the purpose of having the RSA keypair
+on a separate server.
+.Pp
+To address that shortcoming, it is recommended to set up a tiny
+webserver that can only be access from the localhost, and use curl
+via ssh on the remote system command the signature generation.
+The web server has to be run by the owner of the RSA keypair of
+the superuser.
+This scheme makes it impossible to obtain the private key.
+.Pp
+Everything required to set up the signing server is provided with the
+.Nm "rvn 8"
+package.
+The web server is located at
+.Ar /raven/sbin/signserver.py .
+In order to set it up as a service on *BSD add the following line to
+.Ar /raven/etc/rc.conf :
+.Bd -literal -offset indent
+ravensign_enable="YES"
+.Ed
+.Pp
+There are other options that be set, e.g. to alter the default port
+of 8085, the default listening host of 127.0.0.0, or the path of
+the ravensign program.
+Accepting the defaults is recommended.
+.Pp
+There is a systemd service manifest located at
+.Ar /raven/share/rvn/signserver.service
+that can be used to install the signserver service on Linux systems.
+.Pp
+The next step is to install the RSA keypair and set ownership to
+.Ar rvnsign
+as seen in the below example:
+Create an RSA key pair:
+.Bd -literal -offset indent
+% cd /raven/etc/ravensign/
+% openssl genrsa -out rvnrepo.key 2048
+% chmod 0400 rvnrepo.key
+% openssl rsa -in rvnrepo.key -out rvnrepo.pub -pubout
+% chown rvnsign:rvnsign rvnrepo.*
+.Ed
+.Pp
+The signserver service can now be started.
+For *BSD, this command should work:
+.Bd -literal -offset indent
+service signserver start
+.Ed
+.Pp
+If the curl program is not yet installed on this server, install
+it now.
+.Pp
+The external sign command for this example is defined as follows:
+.Bd -literal -offset indent
+/usr/bin/ssh <sign-host> curl -s 127.0.0.1:8085 --data digest={}
+.Ed
+.Pp
+Replace <sign-host> with the hostname / IP address of the server
+running the signserver service.
+It is important to use the full path (/usr/bin/ssh vs ssh), otherwise
+the signature will fail.
+The "{}" braces are replaced with digests passed by
+.Nm rvn .
+.Sh TECHNICAL DETAILS
+In case someone wishes to reimplement the ravensign program, the following
+information is needed.
+The signing tool must be given either the Blake3 digest of the catalog.ucl
+file, or it must generate the digest itself.
+The 32-byte chain is signed, not the 64-character hexidecimal representation.
+The b3sum tool available in Ravenports can calculate this digest in both
+binary or hex formats.
+Once it has the has the input to sign, the signing tool should respond
+with text in the following format:
+.Bd -literal -offset indent
+SIGNATURE
+binary signature data here
+CERT
+public RSA key file contents appended here
+END
+.Ed
+.Pp
+That output is what rvn processes to complete the repository generation.
+.Sh SEE ALSO
+.Xr pkg-repo 8 ,
+.Xr rvn 8 ,
+.Xr rvn-genrepo 8

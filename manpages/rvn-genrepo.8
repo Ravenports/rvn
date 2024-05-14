@@ -86,20 +86,10 @@ which also requires the client to provide the RSA fingerprint.
 .Pp
 The external command allows the use of a signing server to keep the
 private key separate from the repository.
-While the signing program may be created, this is not necessary as the
-.Nm ravensign
-program is distributed with
+See
+.Xr ravensign 7
+for details on how to set up a signing server with tools distributed with
 .Nm rvn .
-The external command is appended with the hex-encoded Blake3 hash of the
-repository catalogue.
-The signing server should respond with text in the following format:
-.Bd -literal -offset indent
-SIGNATURE
-binary signature data here
-CERT
-public RSA key here
-END
-.Ed
 .Pp
 When using an external command, the client's
 .Pa rvn.conf
@@ -111,7 +101,10 @@ and
 .Sy FINGERPRINTS
 set to a directory having a
 .Pa trusted
-directory containing a fingerprint style representation of the public key:
+subdirectory containing a fingerprint definition file which
+.Nm rvn
+can generate alongside the repository.
+It has this format:
 .Bd -literal -offset indent
 function: "blake3"
 fingerprint: "<blake3-hash-of-public-key>"
@@ -183,24 +176,18 @@ and
 .Sy FINGERPRINTS
 to a path containing the public key's fingerprint.
 .Bd -literal -offset indent
-# On signing server pick a location, e.g. /usr/local
-# The keys are relatively located ../etc/ravensign from the tool
-#
-# install ravensign tool at /usr/local/bin/
-# install private key at /usr/local/etc/ravensign/rvnrepo.key
-# install public key  at /usr/local/etc/ravensign/rvnrepo.pub
+# An example of using a remote signing server:
 
-# On package server:
-% rvn genrepo --external "/usr/bin/ssh <sign-server> ravensign" -f ~/primary.fingerprint /var/ravenports/primary/packages
-# or if not on the standard search path, use full path, e.g.
-% rvn genrepo --external "/usr/bin/ssh <sign-server> /opt/bin/ravensign" -f ~/primary.fingerprint /var/ravenports/primary/packages
+% rvn genrepo --external "/usr/bin/ssh <sign-server> curl -s 127.0.0.1:8085 --data digest={}" -f ~/primary.fingerprint /var/ravenports/primary/packages
 
 # The command above generated a fingerprint file for the built directory
 # The file or its contents should be published on a trusted site so the clients
 # can install it to be included in the repository configuration, e.g.
-# client> mkdir -p /raven/etc/keys/rvn/trusted
-# client> cp primary.fingerprint /raven/etc/keys/rvn/trusted/
+# client> mkdir -p /raven/etc/rvn/keys/trusted
+# client> cp ~/primary.fingerprint /raven/etc/rvn/keys/trusted/
 .Ed
+.Sh REMOTE SIGNING SERVER
+.Xr ravensign 7
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
