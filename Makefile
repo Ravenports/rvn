@@ -15,8 +15,8 @@ install:
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.5 ${DESTDIR}${PREFIX}/share/man/man5/
 	${BSD_INSTALL_MAN} ${WRKSRC}/manpages/*.8 ${DESTDIR}${PREFIX}/share/man/man8/
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
-	mkdir -p ${STAGEDIR}${PREFIX}/etc/rvn/repos
-	mkdir -p ${STAGEDIR}${PREFIX}/etc/ravensign
+	mkdir -p ${DESTDIR}${PREFIX}/etc/rvn/repos
+	mkdir -p ${DESTDIR}${PREFIX}/etc/ravensign
 
 	# generate signserver.py from template
 	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
@@ -24,7 +24,7 @@ install:
 	chmod 755 ${DESTDIR}${PREFIX}/sbin/signserver.py
 
 	# generate systemd service manifest from template
-	mkdir -p ${STAGEDIR}${PREFIX}/share/rvn
+	mkdir -p ${DESTDIR}${PREFIX}/share/rvn
 	sed -e "s/%%USER%%/${RVNUSER}/" \
 		${WRKSRC}/extra/signserver.service.in > ${DESTDIR}${PREFIX}/share/rvn/signserver.service
 
