@@ -38,6 +38,8 @@ package body Raven.Metadata is
          when scripts         => return "scripts";
          when directories     => return "directories";
          when messages        => return "messages";
+         when rvndigest       => return "rvndigest";
+         when rvnsize         => return "rvnsize";
       end case;
    end metadata_field_label;
 
@@ -72,13 +74,13 @@ package body Raven.Metadata is
    end human_readable_size;
 
 
-   --------------------
-   --  get_flatsize  --
-   --------------------
-   function get_flatsize (metatree : ThickUCL.UclTree) return Int64
+   ----------------
+   --  get_size  --
+   ----------------
+   function get_size (metatree : ThickUCL.UclTree; field : metadata_field) return Int64
    is
       dtype      : ThickUCL.Leaf_type;
-      key        : constant String := metadata_field_label (flatsize);
+      key        : constant String := metadata_field_label (field);
       val        : Ucl.ucl_integer;
    begin
       dtype := ThickUCL.get_data_type (metatree, key);
@@ -88,7 +90,7 @@ package body Raven.Metadata is
             return Int64 (val);
          when others => return 0;
       end case;
-   end get_flatsize;
+   end get_size;
 
 
    -------------------
@@ -479,7 +481,9 @@ package body Raven.Metadata is
       new_pkg.abi        := SUS (get_string_data (metatree, abi, "*:*:0"));
       new_pkg.comment    := SUS (get_string_data (metatree, comment, "<no summary>"));
       new_pkg.desc       := SUS (get_string_data (metatree, description, "<no description>"));
-      new_pkg.flatsize   := Pkgtypes.Package_Size (get_flatsize (metatree));
+      new_pkg.rvndigest  := SUS (get_string_data (metatree, rvndigest, ""));
+      new_pkg.rvnsize    := Pkgtypes.Package_Size (get_size (metatree, rvnsize));
+      new_pkg.flatsize   := Pkgtypes.Package_Size (get_size (metatree, flatsize));
       new_pkg.automatic  := automatic;
 
       set_list (metatree, users, new_pkg.users);

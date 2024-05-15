@@ -421,6 +421,8 @@ package body Raven.Database.Schema is
       col_text (def, "maintainer");
       col_text (def, "prefix");
       col_text (def, "abi");
+      col_text (def, "rvndigest");
+      col_int  (def, "rvnsize");
       col_int  (def, "flatsize");
       col_int  (def, "licenselogic");
       col_int  (def, "automatic");
@@ -668,8 +670,9 @@ package body Raven.Database.Schema is
          when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) VALUES"
               & "(?1, (SELECT dependency_id FROM dependencies WHERE nsv = ?2 AND version = ?3))";
          when main_pkg => return "INSERT OR REPLACE INTO packages(namebase,subpackage,variant," &
-              "version,comment,desc,www,maintainer,prefix,abi,flatsize,licenselogic,automatic) " &
-              "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13)";  --TTTT TTTT TTII I
+              "version,comment,desc,www,maintainer,prefix,abi,rvndigest,rvnsize,flatsize," &
+              "licenselogic,automatic) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)";
+            --TTTT TTTT TTTI III
       end case;
    end prstat_definition;
 

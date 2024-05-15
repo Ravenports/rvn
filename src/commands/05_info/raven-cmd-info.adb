@@ -317,7 +317,7 @@ package body Raven.Cmd.Info is
       if not single then
          TIO.Put (this_label & ": ");
       end if;
-      TIO.Put_Line (MET.human_readable_size (MET.get_flatsize (metatree)));
+      TIO.Put_Line (MET.human_readable_size (MET.get_size (metatree, MET.flatsize)));
    end display_size;
 
 

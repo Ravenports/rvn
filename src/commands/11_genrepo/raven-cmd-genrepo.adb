@@ -302,11 +302,11 @@ package body Raven.Cmd.Genrepo is
 
                --  Insert size of the package file
                features := UNX.get_charactistics (archive_path);  --  regular file verified
-               ThickUCL.insert (metatree, "filesize", Ucl.ucl_integer (features.size));
+               ThickUCL.insert (metatree, "rvnsize", Ucl.ucl_integer (features.size));
 
                --  Insert Blake3 sum of the package
                hash := Blake_3.hex (Blake_3.file_digest (archive_path));
-               ThickUCL.insert (metatree, "b3sum", hash);
+               ThickUCL.insert (metatree, "rvndigest", hash);
 
                ThickUCL.drop_base_keypair (metatree, "directories");
                ThickUCL.drop_base_keypair (metatree, "scripts");

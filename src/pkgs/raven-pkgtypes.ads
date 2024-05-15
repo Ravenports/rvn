@@ -67,8 +67,10 @@ package Raven.Pkgtypes is
          prefix        : Text;
          comment       : Text;
          desc          : Text;
+         rvndigest     : Text;
          licenselogic  : License_Logic;
          automatic     : Boolean;
+         rvnsize       : Package_Size;
          flatsize      : Package_Size;
          users         : Text_List.Vector;
          groups        : Text_List.Vector;

@@ -19,6 +19,8 @@ package Raven.Metadata is
       website,
       maintainer,
       prefix,
+      rvndigest,
+      rvnsize,
       flatsize,
       abi,
       dependencies,
@@ -46,8 +48,8 @@ package Raven.Metadata is
    --  Integers only, round to nearest (xB, xKiB, xMiB, xGiB)
    function human_readable_size (size : int64) return String;
 
-   --  Return metadata flatsize
-   function get_flatsize (metatree : ThickUCL.UclTree) return Int64;
+   --  Return flatsize and rvnsize metadata
+   function get_size (metatree : ThickUCL.UclTree; field : metadata_field) return Int64;
 
    --  Returns the message as function of the phase (install, deinstall, upgrade)
    function get_message

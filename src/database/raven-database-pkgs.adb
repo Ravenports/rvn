@@ -200,9 +200,11 @@ package body Raven.Database.Pkgs is
       SQLite.bind_string (this_stmt, 8, USS (pkg.maintainer));
       SQLite.bind_string (this_stmt, 9, USS (pkg.prefix));
       SQLite.bind_string (this_stmt, 10, USS (pkg.abi));
-      SQLite.bind_integer (this_stmt, 11, SQLite.sql_int64 (pkg.flatsize));
-      SQLite.bind_integer (this_stmt, 12, liclogic);
-      SQLite.bind_integer (this_stmt, 13, automatic);
+      SQLite.bind_string (this_stmt, 11, USS (pkg.rvndigest));
+      SQLite.bind_integer (this_stmt, 12, SQLite.sql_int64 (pkg.rvnsize));
+      SQLite.bind_integer (this_stmt, 13, SQLite.sql_int64 (pkg.flatsize));
+      SQLite.bind_integer (this_stmt, 14, liclogic);
+      SQLite.bind_integer (this_stmt, 15, automatic);
 
       debug_running_stmt (this_stmt);
 
