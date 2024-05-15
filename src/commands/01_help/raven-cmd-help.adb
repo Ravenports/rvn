@@ -83,6 +83,7 @@ package body Raven.Cmd.Help is
             case command is
                when cv_unset   => null;
                when cv_alias   => PL (C, "List the command line aliases");
+               when cv_catalog => PL (C, "Ensures local package catalog is up to date");
                when cv_config  => PL (C, "Display the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
                when cv_genrepo => PL (C, "Creates a package repository catalog");
@@ -101,7 +102,6 @@ package body Raven.Cmd.Help is
                --  when cv_search  => PL (C, "Performs a search of package repository catalogs");
                --  when cv_ssh     => PL (C, "Package server (to be used via ssh)");
                --  when cv_stats   => PL (C, "Displays package database statistics");
-               --  when cv_update  => PL (C, "Updates package repository catalogs");
                --  when cv_upgrade => PL (C, "Performs upgrades of packaged software distributions");
                --  when cv_autoremove => PL (C, "Removes orphan packages");
                --  when cv_check =>

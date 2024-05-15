@@ -22,6 +22,7 @@ private
    type Command_verb is
      (cv_unset,
       cv_alias,
+      cv_catalog,
       cv_config,
       cv_create,
       cv_genrepo,
@@ -46,7 +47,6 @@ private
      --   cv_set,
      --   cv_ssh,
      --   cv_stats,
-     --   cv_update,
      --   cv_upgrade,
 
 
@@ -183,6 +183,11 @@ private
          fprint_file  : Text;
       end record;
 
+   type switches_catalog_cmd is
+      record
+         force_update : Boolean;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -211,15 +216,16 @@ private
 
          pre_command            : pre_command_switches;
          cmd_alias              : switches_config_alias;
+         cmd_catalog            : switches_catalog_cmd;
          cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
+         cmd_genrepo            : switches_genrepo_cmd;
          cmd_info               : switches_info_cmd;
          cmd_install            : switches_install_cmd;
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
          cmd_version            : switches_version_cmd;
          cmd_which              : switches_which_cmd;
-         cmd_genrepo            : switches_genrepo_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

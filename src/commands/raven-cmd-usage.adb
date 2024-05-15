@@ -101,8 +101,10 @@ package body Raven.Cmd.Usage is
       case comline.command is
          when cv_unset   => return True;  -- already verified
          when cv_alias   => return verb_alias (comline);
+         when cv_catalog => return verb_catalog (comline);
          when cv_config  => return verb_config (comline);
          when cv_create  => return verb_create (comline);
+         when cv_genrepo => return verb_genrepo (comline);
          when cv_help    => return verb_help (comline);
          when cv_info    => return verb_info (comline);
          when cv_install => return verb_install (comline);
@@ -110,7 +112,6 @@ package body Raven.Cmd.Usage is
          when cv_shlib   => return verb_shlib (comline);
          when cv_which   => return verb_which (comline);
          when cv_version => return verb_version (comline);
-         when cv_genrepo => return verb_genrepo (comline);
       end case;
    end command_line_valid;
 
@@ -220,6 +221,27 @@ package body Raven.Cmd.Usage is
       end if;
       return True;
    end verb_alias;
+
+
+   --------------------
+   --  verb_catalog  --
+   --------------------
+   function verb_catalog (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "catalog [-fq]";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+      return True;
+   end verb_catalog;
 
 
    -------------------

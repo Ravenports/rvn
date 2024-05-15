@@ -504,6 +504,12 @@ package body Raven.Cmd.Line is
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
+               when cv_catalog =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = "-f" or else datum = "--force" then
+                     data.cmd_catalog.force_update := True;
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -643,6 +649,7 @@ package body Raven.Cmd.Line is
          ("NOTFOUND  ", cv_unset),
          ("alias     ", cv_alias),
          ("config    ", cv_config),
+         ("catalog   ", cv_catalog),
          ("create    ", cv_create),
          ("genrepo   ", cv_genrepo),
          ("help      ", cv_help),
@@ -658,7 +665,6 @@ package body Raven.Cmd.Line is
          --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
          --  ("clean     ", cv_clean),
-         --  ("delete    ", cv_delete),
          --  ("fetch     ", cv_fetch),
          --  ("lock      ", cv_lock),
          --  ("query     ", cv_query),
@@ -670,7 +676,6 @@ package body Raven.Cmd.Line is
          --  ("ssh       ", cv_ssh),
          --  ("stats     ", cv_stats),
          --  ("unlock    ", cv_unlock),
-         --  ("update    ", cv_update),
          --  ("upgrade   ", cv_upgrade),
         );
 

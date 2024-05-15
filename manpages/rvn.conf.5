@@ -186,7 +186,7 @@ Use read locking for query database.
 Default: NO.
 .It Cm REPOS_DIR: array
 List of directories to search for repository configuration files.
-Default: ,
+Default: /etc/rvn ,
 .Pa /raven/etc/rvn/repos/ .
 .It Cm REPO_AUTOUPDATE: boolean
 When true, automatically check for and download updates to
@@ -414,7 +414,7 @@ Ravenports: {
     master: true,
     url: "http://www.ravenports.com/repository/${ABI}",
     signature_type: "fingerprints",
-    fingerprints: "/raven/etc/keys/rvn",
+    fingerprints: "/usr/share/rvn/keys",
 }
 .Ed
 .Pp

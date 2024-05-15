@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm "rvn catalog"
-.Nd update the local catalog of the enabled package repositories
+.Nd ensures local catalog is in sync with remote repository
 .Sh SYNOPSIS
 .Nm
 .Op Fl fq
@@ -21,8 +21,10 @@ but once a download catalog matches the master reference, the process
 is complete.
 .Pp
 The repositories are defined by the configuration files in located in the
+.Pa /etc/rvn
+or
 .Pa /raven/etc/rvn/repos
-directory.
+directories.
 See
 .Xr rvn.conf 5
 for details.
