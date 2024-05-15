@@ -1,0 +1,64 @@
+.Dd May 14, 2024
+.Dt RVN-CLEAN 8
+.Os
+.Sh NAME
+.Nm "rvn clean"
+.Nd clean the local cache of downloaded packages
+.Sh SYNOPSIS
+.Nm
+.Op Fl anqy
+.Pp
+.Nm
+.Op Fl -{all,dry-run,quiet,yes}
+.Sh DESCRIPTION
+.Nm
+is used to cleanup the local cache of packages downloaded from remote
+repositories.
+It removes packages that have been superseded by newer versions or
+that are absent from the catalog entirely.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width F1
+.It Fl a , Fl -all
+Delete all cached packages including those that are still current.
+.It Fl n , Fl -dry-run
+This option shows what packages would be deleted without actually
+deleting them, even when used with
+.Fl y .
+.It Fl q , Fl -quiet
+Be quiet.
+Suppress most output.
+All output is suppressed if
+.Fl y
+is also used.
+.It Fl y , Fl -yes
+Assume a yes answer instead of asking for confirmation before deleting
+packages from the cache.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev ASSUME_ALWAYS_YES
+.It Ev RVN_CACHEDIR
+.El
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-catalog 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-genrepo 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-install 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
