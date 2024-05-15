@@ -10,10 +10,12 @@ package Raven.Database is
 
    type RDB_Connection is limited private;
    type RDB_Connection_Access is access all RDB_Connection;
+   type RDB_Contents is (installed_packages, catalog);
 
 private
 
    localhost_database : constant String := "local.sqlite";
+   localhost_catalog  : constant String := "catalog.sqlite";
 
    type RDB_Connection is limited
       record
@@ -22,5 +24,8 @@ private
       end record;
 
    procedure debug_running_stmt (stmt : SQLite.thick_stmt);
+
+   --  Return localhost_database or localhost_catalog depending on content type
+   function database_filename (contents : RDB_Contents) return String;
 
 end Raven.Database;

@@ -6,11 +6,15 @@ with Raven.Database.Schema;
 
 package Raven.Database.Operations is
 
-   function rdb_open_localdb (db : in out RDB_Connection) return Action_Result;
-   procedure rdb_close       (db : in out RDB_Connection);
+   function rdb_open_localdb
+     (db : in out RDB_Connection;
+      contents : RDB_Contents) return Action_Result;
 
-   function localdb_exists return Boolean;
-   function localdb_path   return String;
+   procedure rdb_close
+     (db : in out RDB_Connection);
+
+   function localdb_exists (contents : RDB_Contents) return Boolean;
+   function localdb_path (contents : RDB_Contents)  return String;
 
    prepared_statements : array (Raven.Database.Schema.prepared_statement) of SQLite.thick_stmt;
    rvnindex_statement  : SQLite.thick_stmt;
@@ -27,7 +31,9 @@ private
 
    internal_srcfile : constant String := "raven-database-operations.adb";
 
-   function establish_localhost_connection (db : in out RDB_Connection) return Action_Result;
+   function establish_localhost_connection
+     (db : in out RDB_Connection;
+      contents : RDB_Contents) return Action_Result;
 
    --  Returns true on success
    function create_localhost_database (db : in out RDB_Connection) return Boolean;

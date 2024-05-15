@@ -116,7 +116,7 @@ package body Raven.Cmd.Install is
          P : constant String := N & "-" & S & "-" & V;
       begin
          if not comline.cmd_install.no_register then
-            case OPS.rdb_open_localdb (rdb) is
+            case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
                when RESULT_OK => null;
                when others => return False;
             end case;

@@ -27,15 +27,15 @@ package body Raven.Cmd.Shell is
       result   : IC.int;
       nada     : aliased ICS.chars_ptr := ICS.Null_Ptr;
    begin
-      if not OPS.localdb_exists then
-         case OPS.rdb_open_localdb (rdb) is
+      if not OPS.localdb_exists (Database.installed_packages) then
+         case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
             when RESULT_OK => OPS.rdb_close (rdb);
             when others => return False;
          end case;
       end if;
 
       declare
-         local_database : constant String := OPS.localdb_path;
+         local_database : constant String := OPS.localdb_path (Database.installed_packages);
       begin
          if local_database'Length + 1 > dbpath'Length then
             Event.emit_error ("Path to sqlite database > 256 characters, prevent shell to open");
@@ -97,7 +97,7 @@ package body Raven.Cmd.Shell is
    -----------------------
    procedure pkgshell_opendb (reponame : access system.Address)
    is
-      local_database : constant String := OPS.localdb_path;
+      local_database : constant String := OPS.localdb_path (Database.installed_packages);
       index : Natural := dbpath'First;
    begin
       dbpath := (others => Character'Val (0));

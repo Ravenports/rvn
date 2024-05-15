@@ -25,11 +25,12 @@ package body Raven.Database.Operations is
    ------------------------
    --  rdb_open_localdb  --
    ------------------------
-   function rdb_open_localdb (db : in out RDB_Connection) return Action_Result
+   function rdb_open_localdb (db : in out RDB_Connection;
+                              contents : RDB_Contents) return Action_Result
    is
       func : constant String := "rdb_open_localdb()";
    begin
-      case establish_localhost_connection (db) is
+      case establish_localhost_connection (db, contents) is
          when RESULT_OK =>
             if not db.prstmt_initialized then
                if not initialize_prepared_statements (db) then
@@ -65,7 +66,8 @@ package body Raven.Database.Operations is
    --------------------------------------
    --  establish_localhost_connection  --
    --------------------------------------
-   function establish_localhost_connection (db : in out RDB_Connection) return Action_Result
+   function establish_localhost_connection (db : in out RDB_Connection;
+                                            contents : RDB_Contents) return Action_Result
    is
       func  : constant String := "establish_localhost_connection()";
       dbdir : constant String := RCU.config_setting (RCU.CFG.dbdir);
@@ -103,8 +105,8 @@ package body Raven.Database.Operations is
          return RESULT_FATAL;
       end if;
 
-      if not Unix.relative_file_readable (dirfd, localhost_database) then
-         if Unix.relative_file_exists (dirfd, localhost_database) then
+      if not Unix.relative_file_readable (dirfd, database_filename (contents)) then
+         if Unix.relative_file_exists (dirfd, database_filename (contents)) then
             --  db file exists but we can't read it, fail
             Event.emit_no_local_db;
             return RESULT_ENODB;
@@ -121,7 +123,8 @@ package body Raven.Database.Operations is
       okay := SQLite.initialize_sqlite;
       SQLite.rdb_syscall_overload;
 
-      if not SQLite.open_sqlite_database_readwrite ("/" & localhost_database, db.handle'Access)
+      if not SQLite.open_sqlite_database_readwrite
+        ("/" & database_filename (contents), db.handle'Access)
       then
          CommonSQL.ERROR_SQLITE (db      => db.handle,
                                  srcfile => internal_srcfile,
@@ -493,23 +496,23 @@ package body Raven.Database.Operations is
    ----------------------
    --  localdb_exists  --
    ----------------------
-   function localdb_exists return Boolean
+   function localdb_exists (contents : RDB_Contents) return Boolean
    is
       dirfd : Unix.File_Descriptor;
    begin
       dirfd := Context.reveal_db_directory_fd;
-      return Unix.relative_file_exists (dirfd, localhost_database);
+      return Unix.relative_file_exists (dirfd, database_filename (contents));
    end localdb_exists;
 
 
    --------------------
    --  localdb_path  --
    --------------------
-   function localdb_path return String
+   function localdb_path (contents : RDB_Contents) return String
    is
       dbdir : constant String := RCU.config_setting (RCU.CFG.dbdir);
    begin
-      return dbdir & "/" & localhost_database;
+      return dbdir & "/" & database_filename (contents);
    end localdb_path;
 
 
