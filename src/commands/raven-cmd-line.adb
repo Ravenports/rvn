@@ -613,6 +613,7 @@ package body Raven.Cmd.Line is
 
       check_create_incompatibilities (data);
       check_implied_info_all (data);
+      check_assume_yes (data);
 
    end parse_secondary_command;
 
@@ -885,6 +886,17 @@ package body Raven.Cmd.Line is
          end if;
       end if;
    end check_implied_info_all;
+
+
+   ------------------------
+   --  check_assume_yes  --
+   ------------------------
+   procedure check_assume_yes (self : in out Cldata) is
+   begin
+      if not self.common_options.assume_yes then
+         self.common_options.assume_yes := Cmd.Unset.config_setting (Cmd.Unset.CFG.always_yes);
+      end if;
+   end check_assume_yes;
 
 
    ----------------------------------
