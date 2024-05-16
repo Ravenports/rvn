@@ -894,7 +894,7 @@ package body Raven.Cmd.Line is
    procedure check_assume_yes (self : in out Cldata) is
    begin
       if not self.common_options.assume_yes then
-         self.common_options.assume_yes := Cmd.Unset.config_setting (Cmd.Unset.CFG.always_yes);
+         self.common_options.assume_yes := Cmd.Unset.config_setting (Cmd.Unset.CFG.assume_yes);
       end if;
    end check_assume_yes;
 
