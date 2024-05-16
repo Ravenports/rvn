@@ -28,7 +28,6 @@ package Raven.Configuration is
       dbdir,          --  RVN_DBDIR (/var/db/rvn)
       cachedir,       --  RVN_CACHEDIR (/var/cache/rvn)
       rc_scripts,     --  HANDLE_RC_SCRIPTS (false)   ??
-      always_yes,     --  DEFAULT_ALWAYS_YES (false)
       assume_yes,     --  ASSUME_ALWAYS_YES (false)
       repos_dir,      --  REPOS_DIR ([/etc/rvn, /raven/etc/rvn/repos])
       keywords_dir,   --  KEYWORDS_DIR (/var/ravenports/conspiracy/Mk/Keywords)
@@ -85,6 +84,7 @@ package Raven.Configuration is
    --                      FILES_IGNORE_GLOB ([])
    --                      FILES_IGNORE_REGEX ([])
    --                      UNSET_TIMESTAMP(false)
+   --                      DEFAULT_ALWAYS_YES(false) (ASSUME_ALWAYS_YES sufficient)
    
    
    --  Retrieve configuration item key given enum

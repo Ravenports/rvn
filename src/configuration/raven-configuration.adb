@@ -29,7 +29,6 @@ package body Raven.Configuration is
          when dbdir          => return "RVN_DBDIR";
          when cachedir       => return "RVN_CACHEDIR";
          when rc_scripts     => return "HANDLE_RC_SCRIPTS";
-         when always_yes     => return "DEFAULT_ALWAYS_YES";
          when assume_yes     => return "ASSUME_ALWAYS_YES";
          when repos_dir      => return "REPOS_DIR";
          when keywords_dir   => return "KEYWORDS_DIR";
@@ -81,7 +80,6 @@ package body Raven.Configuration is
       case ci is
          when
               rc_scripts     |
-              always_yes     |
               assume_yes     |
               syslog         |
               dev_mode       |
@@ -140,7 +138,6 @@ package body Raven.Configuration is
    begin
       case ci is
          when rc_scripts     => return False;
-         when always_yes     => return False;
          when assume_yes     => return False;
          when syslog         => return True;
          when dev_mode       => return False;

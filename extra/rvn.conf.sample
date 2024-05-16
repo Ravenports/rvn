@@ -44,13 +44,12 @@ ALIAS: {
 #ASSUME_ALWAYS_YES: false
 #AUTOCLEAN: false
 #AUTOMERGE: true
-#CACHEDIR: '/var/cache/rvn'
+#RVN_CACHEDIR: '/var/cache/rvn'
 #CASE_SENSITIVE_MATCH: false
 #CREATE_VERBOSE: false
 #RVN_DBDIR: '/var/db/rvn'
 #DEBUG_LEVEL: 0
 #DEBUG_SCRIPTS: false
-#DEFAULT_ALWAYS_YES: false
 #DEVELOPER_MODE: false
 #EVENT_PIPE: ''
 #FETCH_RETRY: 3
