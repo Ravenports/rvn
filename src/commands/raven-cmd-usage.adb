@@ -17,11 +17,11 @@ package body Raven.Cmd.Usage is
       is
          m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>|-r <rootdir>]";
          m2 : constant String := "[-C <configuration file>] [-R <repo config dir>] [-o var=value]";
-         m3 : constant String := "<command> [<args>]";
+         m3 : constant String := "[-4|-6] <command> [<args>]";
       begin
          display_error (error_msg);
          display_usage (m1, True);
-         display_usage (m2 & " [-4|-6]", False);
+         display_usage (m2, False);
          display_usage (m3, False);
          display_help_suggestion (cv_unset);
       end alert;
