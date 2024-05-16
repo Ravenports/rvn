@@ -510,6 +510,16 @@ package body Raven.Cmd.Line is
                   elsif datum = "-f" or else datum = "--force" then
                      data.cmd_catalog.force_update := True;
                   end if;
+               when cv_clean =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                  elsif datum = sws_dryrun or else datum = swl_dryrun then
+                     data.common_options.dry_run := True;
+                  elsif datum = "-a" or else datum = "--all" then
+                     data.cmd_clean.delete_all := True;
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -649,6 +659,7 @@ package body Raven.Cmd.Line is
          ("NOTFOUND  ", cv_unset),
          ("alias     ", cv_alias),
          ("catalog   ", cv_catalog),
+         ("clean     ", cv_clean),
          ("config    ", cv_config),
          ("create    ", cv_create),
          ("genrepo   ", cv_genrepo),
@@ -664,7 +675,6 @@ package body Raven.Cmd.Line is
          --  ("annotate  ", cv_annotate),
          --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
-         --  ("clean     ", cv_clean),
          --  ("fetch     ", cv_fetch),
          --  ("lock      ", cv_lock),
          --  ("query     ", cv_query),

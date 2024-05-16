@@ -47,5 +47,6 @@ private
    function verb_version (comline : Cldata) return Boolean;
    function verb_genrepo (comline : Cldata) return Boolean;
    function verb_catalog (comline : Cldata) return Boolean;
+   function verb_clean   (comline : Cldata) return Boolean;
 
 end Raven.Cmd.Usage;

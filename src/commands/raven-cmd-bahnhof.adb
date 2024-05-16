@@ -14,6 +14,7 @@ with Raven.cmd.Version;
 with Raven.Cmd.Which;
 with Raven.Cmd.Genrepo;
 with Raven.Cmd.Catalog;
+with Raven.Cmd.Clean;
 
 package body Raven.Cmd.Bahnhof is
 
@@ -30,6 +31,7 @@ package body Raven.Cmd.Bahnhof is
    package C10 renames Raven.Cmd.Version;
    package C11 renames Raven.Cmd.Genrepo;
    package C12 renames Raven.Cmd.Catalog;
+   package C13 renames Raven.Cmd.Clean;
 
 
    --------------------------------------------------------------------
@@ -51,10 +53,7 @@ package body Raven.Cmd.Bahnhof is
          when cv_version  => return (C10.execute_version_command (comline));
          when cv_genrepo  => return (C11.execute_genrepo_command (comline));
          when cv_catalog  => return (C12.execute_catalog_command (comline));
-         when others =>
-            TIO.Put_Line ("Command '" & convert_command_enum_to_label (comline.command) &
-                            "' hasn't been implemented yet.  Sorry!");
-            return False;
+         when cv_clean    => return (C13.execute_clean_command (comline));
       end case;
    end execute_command;
 

@@ -23,6 +23,7 @@ private
      (cv_unset,
       cv_alias,
       cv_catalog,
+      cv_clean,
       cv_config,
       cv_create,
       cv_genrepo,
@@ -37,7 +38,6 @@ private
 
      --   cv_annotate,
      --   cv_autoremove,
-     --   cv_check,
      --   cv_clean,
      --   cv_fetch,
      --   cv_query,
@@ -185,7 +185,12 @@ private
 
    type switches_catalog_cmd is
       record
-         force_update : Boolean;
+         force_update : Boolean := False;
+      end record;
+
+   type switches_clean_cmd is
+      record
+         delete_all   : Boolean := False;
       end record;
 
    type pre_command_switches is
@@ -217,6 +222,7 @@ private
          pre_command            : pre_command_switches;
          cmd_alias              : switches_config_alias;
          cmd_catalog            : switches_catalog_cmd;
+         cmd_clean              : switches_clean_cmd;
          cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
          cmd_genrepo            : switches_genrepo_cmd;

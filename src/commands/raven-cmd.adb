@@ -15,6 +15,7 @@ package body Raven.Cmd is
          when cv_unset      => return "";
          when cv_alias      => return "alias";
          when cv_catalog    => return "catalog";
+         when cv_clean      => return "clean";
          when cv_config     => return "config";
          when cv_create     => return "create";
          when cv_info       => return "info";
@@ -28,7 +29,6 @@ package body Raven.Cmd is
          --  when cv_annotate   => return "annotate";
          --  when cv_autoremove => return "autoremove";
          --  when cv_check      => return "check";
-         --  when cv_clean      => return "clean";
       end case;
    end convert_command_enum_to_label;
 
