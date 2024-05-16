@@ -648,8 +648,8 @@ package body Raven.Cmd.Line is
         (
          ("NOTFOUND  ", cv_unset),
          ("alias     ", cv_alias),
-         ("config    ", cv_config),
          ("catalog   ", cv_catalog),
+         ("config    ", cv_config),
          ("create    ", cv_create),
          ("genrepo   ", cv_genrepo),
          ("help      ", cv_help),
