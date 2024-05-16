@@ -109,6 +109,14 @@ package body Raven.Cmd.Clean is
          parent_dir : constant String :=
            Archive.Dirent.parent_directory (SCN.dscan_crate.Element (Position)) & "/";
          fileattr2 : Archive.Unix.File_Characteristics;
+
+         function target_path (pdir, target : String) return String is
+         begin
+            if target (target'First) = '/' then
+               return target;
+            end if;
+            return parent_dir & target;
+         end target_path;
       begin
          fileattr2 := Archive.Unix.get_charactistics (entity_path);
          case fileattr2.ftype is
@@ -116,9 +124,9 @@ package body Raven.Cmd.Clean is
             when others => return;
          end case;
          declare
-            target : constant String := Archive.Unix.link_target (entity_path);
+            raw_target : constant String := Archive.Unix.link_target (entity_path);
          begin
-            if not Archive.Unix.file_exists (parent_dir & target) then
+            if not Archive.Unix.file_exists (target_path (parent_dir, raw_target)) then
                if not Archive.Unix.unlink_file (entity_path) then
                   Event.emit_error ("Failed to delete " & entity_path);
                end if;
