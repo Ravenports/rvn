@@ -36,6 +36,10 @@ is also used.
 Assume a yes answer instead of asking for confirmation before deleting
 packages from the cache.
 .El
+.Pp
+Setting all four switches at once is not permitted as it is pointless.
+No output would be seen by the user, yet no change would occur due to
+being a dry run.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm .

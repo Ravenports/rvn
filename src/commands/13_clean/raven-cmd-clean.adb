@@ -34,6 +34,7 @@ package body Raven.Cmd.Clean is
       purge_list     : SCN.dscan_crate.Vector;
       fileattr : Archive.Unix.File_Characteristics;
       bytes_to_purge : Archive.exabytes := 0;
+      cont  : Character;
 
       procedure check_dirent (Position : SCN.dscan_crate.Cursor)
       is
@@ -151,28 +152,32 @@ package body Raven.Cmd.Clean is
             return True;
          end if;
       end if;
-      if comline.common_options.dry_run then
-         return True;
-      end if;
-      if not comline.common_options.assume_yes then
+      if not (comline.common_options.quiet and then comline.common_options.assume_yes) then
+         --  Always show summary of what would happen unless --quiet and --yes are both set
          declare
             total : constant String := Metadata.human_readable_size (int64 (bytes_to_purge));
             frag  : constant String := " selected for deletion; " & total & " to be freed.";
             fnum  : constant Natural := Natural (purge_list.Length);
-            cont  : Character;
          begin
             if fnum = 1 then
                Event.emit_message ("1 file" & frag);
             else
                Event.emit_message (Strings.int2str (fnum) & " files" & frag);
             end if;
-            Event.emit_message ("Continue? (Y/N)");
-            Ada.Text_IO.Get_Immediate (cont);
-            case cont is
-               when 'Y' | 'y' => null;
-               when others => return True;
-            end case;
          end;
+      end if;
+
+      if comline.common_options.dry_run then
+         return True;
+      end if;
+
+      if not comline.common_options.assume_yes then
+         Event.emit_message ("Continue? (Y/N)");
+         Ada.Text_IO.Get_Immediate (cont);
+         case cont is
+            when 'Y' | 'y' => null;
+            when others => return True;
+         end case;
       end if;
 
       purge_list.Iterate (delete_file'Access);

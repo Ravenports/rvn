@@ -262,6 +262,13 @@ package body Raven.Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       end if;
+      if comline.common_options.quiet and then
+        comline.common_options.assume_yes and then
+        comline.common_options.dry_run and then
+        comline.cmd_clean.delete_all
+      then
+         return alert ("Setting all four options is not permitted, see man page");
+      end if;
       return True;
    end verb_clean;
 
