@@ -1,7 +1,13 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+
+with Raven.Catalog;
+
 package body Raven.Cmd.Catalog is
+
+   package CAT renames Raven.Catalog;
+
 
    -------------------------------
    --  execute_catalog_command  --
@@ -9,7 +15,8 @@ package body Raven.Cmd.Catalog is
    function execute_catalog_command (comline : Cldata) return Boolean
    is
    begin
-      null;
+      --  placeholder
+      return CAT.generate_database;
    end execute_catalog_command;
 
 end Raven.Cmd.Catalog;
