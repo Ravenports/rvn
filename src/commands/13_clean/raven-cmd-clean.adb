@@ -119,7 +119,7 @@ package body Raven.Cmd.Clean is
             target : constant String := Archive.Unix.link_target (entity_path);
          begin
             if not Archive.Unix.file_exists (parent_dir & target) then
-               if not Archive.Unix.unlink_file (parent_dir & entity_path) then
+               if not Archive.Unix.unlink_file (entity_path) then
                   Event.emit_error ("Failed to delete " & entity_path);
                end if;
             end if;
