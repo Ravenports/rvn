@@ -131,6 +131,7 @@ package body Raven.Cmd.Line is
    procedure parse_secondary_command (data : in out Cldata)
    is
       procedure translate_switch (position : string_crate.Cursor);
+      procedure set_illegal_command (datum : String);
       procedure check_version_stdin;
 
       expanded_args : string_crate.Vector;
@@ -183,6 +184,27 @@ package body Raven.Cmd.Line is
          end if;
       end check_version_stdin;
 
+      ---------------------------
+      --  set_illegal_command  --
+      ---------------------------
+      procedure set_illegal_command (datum : String)
+      is
+         unrecognized : Boolean := True;
+      begin
+         --  -x (illegal) --xx (unrecognized)  - (unrecognized) -- (unrecognized)
+         if datum'Length > 1 and then
+           datum (datum'First .. datum'First + 1) = "--"
+         then
+            unrecognized := False;
+         end if;
+
+         if unrecognized then
+            set_error (data, "Unrecognized option: " & datum);
+         else
+            set_error (data, "Illegal option -- " & datum (datum'First + 1 .. datum'Last));
+         end if;
+      end set_illegal_command;
+
       ------------------------
       --  translate_switch  --
       ------------------------
@@ -206,8 +228,6 @@ package body Raven.Cmd.Line is
          sws_help   : constant String := "-h";
          swl_help   : constant String := "--help";
          AME        : constant String := " switches are mutually exclusive.";
-         error_ill  : constant String := "Illegal option -- ";
-         error_rec  : constant String := "Unrecognized option: ";
          error_exp  : constant String := "Unexpected argument: ";
          error_chk  : constant String := "Attempt to redefine check action: ";
          error_ann  : constant String := "Attempt to redefine annotation action: ";
@@ -227,7 +247,7 @@ package body Raven.Cmd.Line is
                   --  We only need to determine what command this was.
                   data.command := get_command (datum);
                   if data.command = cv_unset then
-                     set_error (data, error_rec & datum);
+                     set_illegal_command (datum);
                   elsif data.command = cv_help then
                      last_cmd := help;
                   end if;
@@ -238,14 +258,7 @@ package body Raven.Cmd.Line is
                   elsif datum = "-l" or else datum = "--list" then
                      data.cmd_alias.without_args := True;
                   elsif datum (datum'First) = '-' then
-                     --  -x (illegal) --xx (unrecognized)  - (unrecognized) -- (unrecognized)
-                     if datum'Length = 1 or else
-                       datum (datum'First .. datum'First + 1) = "--"
-                     then
-                        set_error (data, error_rec & datum);
-                     else
-                        set_error (data, error_ill & datum (datum'First + 1 .. datum'Last));
-                     end if;
+                     set_illegal_command (datum);
                   else
                      if IsBlank (data.cmd_alias.alias) then
                         data.cmd_alias.alias := datumtxt;
@@ -278,6 +291,8 @@ package body Raven.Cmd.Line is
                      last_cmd := create_outdir;
                   elsif datum = "-t" or else datum = "--timestamp" then
                      last_cmd := create_timestamp;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
@@ -338,6 +353,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.variant := True;
                   elsif datum = "-F" or else datum = "--file" then
                      last_cmd := info_archive_file;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                      if not IsBlank (data.cmd_info.path_archive_file) then
@@ -376,6 +393,8 @@ package body Raven.Cmd.Line is
                      data.cmd_install.only_register := True;
                   elsif datum = sws_repo or else datum = swl_repo then
                      last_cmd := generic_repo_name;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      handle_pkg_patterns (data, datum, datumtxt);
                   end if;
@@ -390,6 +409,8 @@ package body Raven.Cmd.Line is
                      data.cmd_shlib.provides := True;
                   elsif datum = "-R" or else datum = "--requires" then
                      data.cmd_shlib.requires := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
@@ -403,6 +424,8 @@ package body Raven.Cmd.Line is
                      data.cmd_which.show_match := True;
                   elsif datum = "-p" or else datum = "--path-search" then
                      data.cmd_which.path_search := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
@@ -501,6 +524,8 @@ package body Raven.Cmd.Line is
                      last_cmd := genrepo_sign_cmd;
                   elsif datum = "-f" or else datum = "--fingerprint" then
                      last_cmd := genrepo_finger;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
@@ -509,6 +534,8 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = "-f" or else datum = "--force" then
                      data.cmd_catalog.force_update := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   end if;
                when cv_clean =>
                   if datum = sws_quiet or else datum = swl_quiet then
@@ -519,6 +546,8 @@ package body Raven.Cmd.Line is
                      data.common_options.dry_run := True;
                   elsif datum = "-a" or else datum = "--all" then
                      data.cmd_clean.delete_all := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   end if;
             end case;
          else
