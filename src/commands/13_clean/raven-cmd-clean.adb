@@ -106,6 +106,8 @@ package body Raven.Cmd.Clean is
       is
          entity_path : constant String :=
            Archive.Dirent.full_path (SCN.dscan_crate.Element (Position));
+         parent_dir : constant String :=
+           Archive.Dirent.parent_directory (SCN.dscan_crate.Element (Position)) & "/";
          fileattr2 : Archive.Unix.File_Characteristics;
       begin
          fileattr2 := Archive.Unix.get_charactistics (entity_path);
@@ -116,8 +118,8 @@ package body Raven.Cmd.Clean is
          declare
             target : constant String := Archive.Unix.link_target (entity_path);
          begin
-            if not Archive.Unix.file_exists (target) then
-               if not Archive.Unix.unlink_file (entity_path) then
+            if not Archive.Unix.file_exists (parent_dir & target) then
+               if not Archive.Unix.unlink_file (parent_dir & entity_path) then
                   Event.emit_error ("Failed to delete " & entity_path);
                end if;
             end if;
@@ -148,7 +150,7 @@ package body Raven.Cmd.Clean is
       cache_contents.Iterate (check_dirent'Access);
       if purge_list.Is_Empty then
          if not comline.common_options.quiet then
-            Event.emit_message ("No packages were selected for deletion.");
+            Event.emit_message ("No files were selected for deletion.");
             return True;
          end if;
       end if;
