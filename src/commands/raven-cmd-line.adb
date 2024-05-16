@@ -498,6 +498,8 @@ package body Raven.Cmd.Line is
                         set_error (data, "The -R switch is not compatible with " &
                                      "-S, -I, -T, or -t switches.");
                      end if;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
                   else
                      if data.cmd_version.behavior = compare_against_pattern or else
                        data.cmd_version.behavior = test_versions

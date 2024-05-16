@@ -21,7 +21,7 @@ package body Raven.Cmd.Usage is
       begin
          display_error (error_msg);
          display_usage (m1, True);
-         display_usage (m2, False);
+         display_usage (m2 & " [-4|-6]", False);
          display_usage (m3, False);
          display_help_suggestion (cv_unset);
       end alert;
