@@ -3,6 +3,7 @@
 
 
 with Raven.Event;
+with Raven.Pkgtypes;
 
 package body Raven.Cmd.Clean is
 

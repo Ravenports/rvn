@@ -213,7 +213,7 @@ package body Raven.Cmd.Genrepo is
             item      : Archive.Dirent.Directory_Entity renames SCN.dscan_crate.Element (position);
             filename  : constant String := item.simple_name;
          begin
-            if not Strings.trails (filename, ".rvn") then
+            if not Strings.trails (filename, extension) then
                return;
             end if;
 

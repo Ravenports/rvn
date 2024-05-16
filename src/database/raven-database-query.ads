@@ -39,6 +39,12 @@ package Raven.Database.Query is
       lib_soname : String;
       packages   : in out Pkgtypes.Package_Set.Vector);
 
+   --  Returns map of all packages in the remote repository
+   --  digest10 => <namebase>-<subpackage>-<variant>-<version>~<digest10>.rvn
+   procedure all_remote_packages
+     (db         : RDB_Connection;
+      file_map   : in out Pkgtypes.NV_Pairs.Map);
+
 private
 
    internal_srcfile : constant String := "raven-database-query.adb";

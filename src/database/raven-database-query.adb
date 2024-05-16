@@ -300,4 +300,65 @@ package body Raven.Database.Query is
    end requires_library;
 
 
+   ---------------------------
+   --  all_remote_packages  --
+   ---------------------------
+   procedure all_remote_packages
+     (db         : RDB_Connection;
+      file_map   : in out Pkgtypes.NV_Pairs.Map)
+   is
+      func : constant String := "all_remote_packages";
+      sql  : constant String :=
+        "SELECT namebase, subpackage, variant, version, rvndigest FROM packages";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      file_map.Clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  namebase   : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  subpackage : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  variant    : constant String := SQLite.retrieve_string (new_stmt, 2);
+                  version    : constant String := SQLite.retrieve_string (new_stmt, 3);
+                  digest32   : constant String := SQLite.retrieve_string (new_stmt, 4);
+               begin
+                  if digest32'Length = 64 then
+                     declare
+                        digest10 : constant String (1 .. 10) :=
+                          digest32 (digest32'First .. digest32'first + 9);
+                        filename : constant String := namebase & "-" & subpackage & "-" &
+                          variant & "-" & version & "~" & digest10 & extension;
+                        dkey : constant Text := SUS (digest10);
+                     begin
+                        if file_map.Contains (dkey) then
+                           Event.emit_debug (high_level,
+                                             func & ": hit collison, skipped " & filename);
+                        else
+                           file_map.Insert (dkey, SUS (filename));
+                        end if;
+                     end;
+                  else
+                     Event.emit_debug (moderate, "digest of " & namebase & "-" & subpackage &
+                                         "-" & variant & " is not 64 chars long, ignored");
+                  end if;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data =>
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end all_remote_packages;
+
+
 end Raven.Database.Query;
