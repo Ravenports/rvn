@@ -156,7 +156,7 @@ package body Raven.Cmd.Clean is
          --  Always show summary of what would happen unless --quiet and --yes are both set
          declare
             total : constant String := Metadata.human_readable_size (int64 (bytes_to_purge));
-            frag  : constant String := " selected for deletion; " & total & " to be freed.";
+            frag  : constant String := " selected for deletion (freeing " & total & ")";
             fnum  : constant Natural := Natural (purge_list.Length);
          begin
             if fnum = 1 then
