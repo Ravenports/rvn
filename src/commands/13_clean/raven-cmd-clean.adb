@@ -149,6 +149,11 @@ package body Raven.Cmd.Clean is
       end case;
 
       purge_list.Clear;
+      if not OPS.localdb_exists (Database.catalog) then
+         Event.emit_error
+           ("Catalog database is missing, should be here: " & OPS.localdb_path (Database.catalog));
+         return False;
+      end if;
       case OPS.rdb_open_localdb (rdb, Database.catalog) is
          when RESULT_OK => null;
          when others => return False;
