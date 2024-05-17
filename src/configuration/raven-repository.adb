@@ -201,29 +201,10 @@ package body Raven.Repository is
          end if;
       end process_object;
 
-      procedure set_master (key : Text; Element : in out A_Repo_Config) is
-      begin
-         Element.master := True;
-      end set_master;
-
    begin
       ThickUCL.Files.parse_ucl_file (conf_tree, file_path, expkeys);
       conf_tree.get_base_object_keys (identifiers);
       identifiers.Iterate (process_object'Access);
-      if not remote_repositories.master_assigned then
-         --  None of the enable repositories are remote, so designate the
-         --  highest priority repository to be master
-         if not remote_repositories.search_order.Is_Empty then
-            remote_repositories.master_repository := remote_repositories.search_order.First_Element;
-            declare
-               cursor : constant RepoMap.Cursor :=
-                 remote_repositories.repositories.Find (remote_repositories.master_repository);
-            begin
-               remote_repositories.repositories.Update_Element (cursor, set_master'Access);
-            end;
-            remote_repositories.master_assigned := True;
-         end if;
-      end if;
    exception
       when ThickUCL.Files.ucl_file_unparseable =>
          Event.emit_message ("Repo config: skipped unparsable file " & file_path);
@@ -256,6 +237,12 @@ package body Raven.Repository is
             process_repository_configuration (file_path, set_single_master, remote_repositories);
          end if;
       end ingest_repository_config_file;
+
+      procedure set_master (key : Text; Element : in out A_Repo_Config) is
+      begin
+         Element.master := True;
+      end set_master;
+
    begin
       for line in 1 .. numlines loop
          declare
@@ -274,6 +261,21 @@ package body Raven.Repository is
       end loop;
       if not remote_repositories.repositories.Is_Empty then
          define_search_priority (remote_repositories);
+      end if;
+
+      if not remote_repositories.master_assigned then
+         --  None of the enable repositories are remote, so designate the
+         --  highest priority repository to be master
+         if not remote_repositories.search_order.Is_Empty then
+            remote_repositories.master_repository := remote_repositories.search_order.First_Element;
+            declare
+               cursor : constant RepoMap.Cursor :=
+                 remote_repositories.repositories.Find (remote_repositories.master_repository);
+            begin
+               remote_repositories.repositories.Update_Element (cursor, set_master'Access);
+            end;
+            remote_repositories.master_assigned := True;
+         end if;
       end if;
    end load_repository_configurations;
 
