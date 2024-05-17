@@ -309,8 +309,9 @@ package body Raven.Repository is
       begin
          declare
             reponame    : constant String := USS (identifier);
+            uppername   : constant String := uppercase (reponame);
             invpriority : constant Natural := Natural (Repo_priority'Last - priority);
-            payload     : constant String := zeropad (invpriority, 2) & reponame & sep & reponame;
+            payload     : constant String := zeropad (invpriority, 2) & uppername & sep & reponame;
          begin
             temp_list.Append (SUS (payload));
          end;
