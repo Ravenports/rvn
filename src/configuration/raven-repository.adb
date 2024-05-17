@@ -87,6 +87,7 @@ package body Raven.Repository is
                when ThickUCL.data_string =>
                   declare
                      value : constant String := conf_tree.get_base_value (field_key);
+                     upper_value : constant String := uppercase (value);
                   begin
                      if upper_key = "URL" then
                         rconfig.url := SUS (value);
@@ -95,13 +96,13 @@ package body Raven.Repository is
                      elsif upper_key = "FINGERPRINTS" then
                         rconfig.fprint_dir := SUS (value);
                      elsif upper_key = "MIRROR_TYPE" then
-                        if value = "SRV" then
+                        if upper_value = "SRV" then
                            rconfig.mirror := SRV_mirror;
                         end if;
                      elsif upper_key = "SIGNATURE_TYPE" then
-                        if value = "PUBKEY" then
+                        if upper_value = "PUBKEY" then
                            rconfig.verification := public_key;
-                        elsif value = "FINGERPRINTS" then
+                        elsif upper_value = "FINGERPRINTS" then
                            rconfig.verification := fingerprinted;
                         end if;
                      else
@@ -289,5 +290,78 @@ package body Raven.Repository is
       Pkgtypes.sorter.Sort (temp_list);
       temp_list.Iterate (assemble_search_priority'Access);
    end define_search_priority;
+
+
+   -----------------------------------
+   --  convert_repo_configs_to_ucl  --
+   -----------------------------------
+   procedure convert_repo_configs_to_ucl
+     (remote_repositories : A_Repo_Config_Set;
+      repo_tree           : in out ThickUCL.UclTree)
+   is
+      num_repos : constant Natural := Natural (remote_repositories.search_order.Length);
+
+      function convert (original : Mirror_Type) return String is
+      begin
+         case original is
+            when not_mirrored => return "NONE";
+            when SRV_mirror   => return "SRV";
+         end case;
+      end convert;
+
+      function convert (original : Signature_Type) return String is
+      begin
+         case original is
+            when not_signed    => return "NONE";
+            when public_key    => return "PUBKEY";
+            when fingerprinted => return "FINGERPRINTS";
+         end case;
+      end convert;
+
+      function convert (original : IP_support) return Ucl.ucl_integer is
+      begin
+         case original is
+            when no_restriction => return 0;
+            when IPv4_only      => return 4;
+            when IPv6_only      => return 6;
+         end case;
+      end convert;
+
+      procedure set_environ (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         name_txt : Text renames Pkgtypes.NV_Pairs.Key (Position);
+         val_txt  : Text renames Pkgtypes.NV_Pairs.Element (Position);
+      begin
+         repo_tree.insert (USS (name_txt), USS (val_txt));
+      end set_environ;
+   begin
+      for x in 0 .. num_repos - 1 loop
+         declare
+            index : Text renames remote_repositories.search_order.Element (x);
+            repo_name : constant String := USS (index);
+            repo : A_Repo_Config renames remote_repositories.repositories.Element (index);
+         begin
+            repo_tree.start_object (repo_name);
+            repo_tree.insert ("master", repo.master);
+            repo_tree.insert ("priority", Ucl.ucl_integer (repo.priority));
+            repo_tree.insert ("url", USS (repo.url));
+            repo_tree.insert ("mirror_type", convert (repo.mirror));
+            repo_tree.insert ("signature_type", convert (repo.verification));
+            if not IsBlank (repo.pubkey_path) then
+               repo_tree.insert ("pubkey", USS (repo.pubkey_path));
+            end if;
+            if not IsBlank (repo.fprint_dir) then
+               repo_tree.insert ("fingerprints", USS (repo.fprint_dir));
+            end if;
+            repo_tree.insert ("ip_version", convert (repo.protocol));
+            if not repo.environ_set.Is_Empty then
+               repo_tree.start_object ("env");
+               repo.environ_set.Iterate (set_environ'Access);
+               repo_tree.close_object;
+            end if;
+            repo_tree.close_object;
+         end;
+      end loop;
+   end convert_repo_configs_to_ucl;
 
 end Raven.Repository;

@@ -6,6 +6,7 @@ with Ada.Containers.Hashed_Maps;
 with Raven.Pkgtypes;
 with Raven.Miscellaneous;
 with Raven.Strings;
+with ThickUCL;
 
 package Raven.Repository is
 
@@ -49,6 +50,10 @@ package Raven.Repository is
    procedure load_repository_configurations
      (remote_repositories : in out A_Repo_Config_Set;
       set_single_master   : String := "");
+
+   procedure convert_repo_configs_to_ucl
+     (remote_repositories : A_Repo_Config_Set;
+      repo_tree           : in out ThickUCL.UclTree);
 
 private
 
