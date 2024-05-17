@@ -5,6 +5,7 @@ with Ada.Exceptions;
 with Raven.Cmd.Unset;
 with Raven.Strings;
 with Raven.Event;
+with Archive.Unix;
 with Archive.Misc;
 with Archive.Dirent.Scan;
 with ThickUCL.Files;
@@ -222,8 +223,17 @@ package body Raven.Repository is
       procedure ingest_repository_config_file (Position : DSC.dscan_crate.Cursor)
       is
          file_path : constant String := DSC.dscan_crate.Element (Position).full_path;
+         features  : Archive.Unix.File_Characteristics;
       begin
-         process_repository_configuration (file_path, set_single_master, remote_repositories);
+         --  ignore filenames that don't end in .conf extension, and ensure it is a regular file
+         if trails (file_path, ".conf") then
+            features := Archive.Unix.get_charactistics (file_path);
+            case features.ftype is
+               when Archive.regular => null;
+               when others => return;
+            end case;
+            process_repository_configuration (file_path, set_single_master, remote_repositories);
+         end if;
       end ingest_repository_config_file;
    begin
       for line in 1 .. numlines loop
