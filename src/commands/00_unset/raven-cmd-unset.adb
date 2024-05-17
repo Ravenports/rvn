@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ada.Environment_Variables;
+with Raven.Repository;
 with Raven.Context;
 with Raven.Event;
 with Raven.Unix;
@@ -257,10 +258,14 @@ package body Raven.Cmd.Unset is
    ----------------------------
    --  show_repository_info  --
    ----------------------------
-   procedure show_repository_info is
+   procedure show_repository_info
+   is
+      remote : Repository.A_Repo_Config_Set;
+      repositories : ThickUCL.UclTree;
    begin
-      --  TODO: Re-implement
-      null;
+      Repository.load_repository_configurations (remote);
+      Repository.convert_repo_configs_to_ucl (remote, repositories);
+      TIO.Put_Line (ThickUCL.Emitter.emit_ucl (repositories));
    end show_repository_info;
 
 

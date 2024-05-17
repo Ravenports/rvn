@@ -335,6 +335,7 @@ package body Raven.Repository is
          repo_tree.insert (USS (name_txt), USS (val_txt));
       end set_environ;
    begin
+      repo_tree.start_object ("Repositories");
       for x in 0 .. num_repos - 1 loop
          declare
             index : Text renames remote_repositories.search_order.Element (x);
@@ -362,6 +363,7 @@ package body Raven.Repository is
             repo_tree.close_object;
          end;
       end loop;
+      repo_tree.close_object;
    end convert_repo_configs_to_ucl;
 
 end Raven.Repository;
