@@ -394,7 +394,11 @@ package body Raven.Repository is
             if not IsBlank (repo.fprint_dir) then
                repo_tree.insert ("fingerprints", USS (repo.fprint_dir));
             end if;
-            repo_tree.insert ("ip_version", convert (repo.protocol));
+            case repo.protocol is
+               when no_restriction => null;
+               when others =>
+                  repo_tree.insert ("ip_version", convert (repo.protocol));
+            end case;
             if not repo.environ_set.Is_Empty then
                repo_tree.start_object ("env");
                repo.environ_set.Iterate (set_environ'Access);
