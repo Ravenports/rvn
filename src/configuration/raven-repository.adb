@@ -386,6 +386,7 @@ package body Raven.Repository is
             repo_tree.start_object (repo_name);
             repo_tree.insert ("master", repo.master);
             repo_tree.insert ("priority", Ucl.ucl_integer (repo.priority));
+            repo_tree.insert ("connect_order", Ucl.ucl_integer (x + 1));
             repo_tree.insert ("url", USS (repo.url));
             repo_tree.insert ("mirror_type", convert (repo.mirror));
             repo_tree.insert ("signature_type", convert (repo.verification));
