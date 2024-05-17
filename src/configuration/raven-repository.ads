@@ -46,7 +46,9 @@ package Raven.Repository is
          search_order      : Pkgtypes.Text_List.Vector;
       end record;
 
-   procedure load_repository_configurations (remote_repositories : in out A_Repo_Config_Set);
+   procedure load_repository_configurations
+     (remote_repositories : in out A_Repo_Config_Set;
+      set_single_master   : String := "");
 
 private
 
@@ -57,6 +59,12 @@ private
    --  Normally this is one, but it can handle multiple definitions
    procedure process_repository_configuration
      (file_path : String;
+      set_single_master : String;
       remote_repositories : in out A_Repo_Config_Set);
+
+   --  Establishes the search order vector.
+   --  Criteria 1: priority (higher number is higher priority)
+   --  Criteria 2: alphabetical sort on identical priorities
+   procedure define_search_priority (remote_repositories : in out A_Repo_Config_Set);
 
 end Raven.Repository;

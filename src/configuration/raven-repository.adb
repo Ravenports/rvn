@@ -31,11 +31,13 @@ package body Raven.Repository is
    ----------------------------------------
    procedure process_repository_configuration
      (file_path : String;
+      set_single_master : String;
       remote_repositories : in out A_Repo_Config_Set)
    is
       conf_tree   : ThickUCL.UclTree;
       identifiers : ThickUCL.jar_string.Vector;
       expkeys     : constant String := expansion_keys;
+      override    : constant Boolean := set_single_master /= "";
 
       procedure process_object (identifier_pos : ThickUCL.jar_string.Cursor)
       is
@@ -155,18 +157,30 @@ package body Raven.Repository is
             if unhandled then
                Event.emit_message (identifier & " key '" & field_key & "' unrecognized.");
             end if;
-            if rconfig.enabled then
-               if rconfig.master then
-                  if remote_repositories.master_assigned then
-                     Event.emit_message
-                       ("Master designation on " & identifier & " repository ignored; " &
-                          USS (remote_repositories.master_repository) & " is already master.");
-                     rconfig.master := False;
-                  else
-                     remote_repositories.master_assigned := True;
-                     remote_repositories.master_repository := SUS (identifier);
-                  end if;
+            if override then
+               if identifier = set_single_master then
+                  rconfig.master := True;
+                  rconfig.enabled := True;
+                  remote_repositories.master_assigned := True;
+                  remote_repositories.master_repository := SUS (identifier);
                   remote_repositories.repositories.Insert (SUS (identifier), rconfig);
+               else
+                  Event.emit_debug (high_level, "ignore " & identifier & " repo due to override");
+               end if;
+            else
+               if rconfig.enabled then
+                  if rconfig.master then
+                     if remote_repositories.master_assigned then
+                        Event.emit_message
+                          ("Master designation on " & identifier & " repository ignored; " &
+                             USS (remote_repositories.master_repository) & " is already master.");
+                        rconfig.master := False;
+                     else
+                        remote_repositories.master_assigned := True;
+                        remote_repositories.master_repository := SUS (identifier);
+                     end if;
+                     remote_repositories.repositories.Insert (SUS (identifier), rconfig);
+                  end if;
                end if;
             end if;
          end process_key;
@@ -195,7 +209,8 @@ package body Raven.Repository is
    --------------------------------------
    --  load_repository_configurations  --
    --------------------------------------
-   procedure load_repository_configurations (remote_repositories : in out A_Repo_Config_Set)
+   procedure load_repository_configurations (remote_repositories : in out A_Repo_Config_Set;
+                                             set_single_master   : String := "")
    is
       delim    : constant Character := Character'Val (0);
       delim2   : constant String (1 .. 1) := (others => delim);
@@ -206,7 +221,7 @@ package body Raven.Repository is
       is
          file_path : constant String := DSC.dscan_crate.Element (Position).full_path;
       begin
-         process_repository_configuration (file_path, remote_repositories);
+         process_repository_configuration (file_path, set_single_master, remote_repositories);
       end ingest_repository_config_file;
    begin
       for line in 1 .. numlines loop
@@ -218,6 +233,9 @@ package body Raven.Repository is
             files.Iterate (ingest_repository_config_file'Access);
          end;
       end loop;
+      if not remote_repositories.repositories.Is_Empty then
+         define_search_priority (remote_repositories);
+      end if;
    end load_repository_configurations;
 
 
@@ -233,5 +251,43 @@ package body Raven.Repository is
    begin
       return "ABI=" & abi & "|OSNAME=" & osname & "|ARCH=" & arch & "|RELEASE=" & release;
    end expansion_keys;
+
+
+   ------------------------------
+   --  define_search_priority  --
+   ------------------------------
+   procedure define_search_priority (remote_repositories : in out A_Repo_Config_Set)
+   is
+      temp_list : Pkgtypes.Text_List.Vector;
+      sep       : constant Character := Character'Val (9);
+
+      procedure populate_temp_list (Position : RepoMap.Cursor)
+      is
+         identifier : Text renames RepoMap.Key (Position);
+         priority   : Repo_priority renames RepoMap.Element (Position).priority;
+      begin
+         declare
+            reponame    : constant String := USS (identifier);
+            invpriority : constant Natural := Natural (Repo_priority'Last - priority);
+            payload     : constant String := zeropad (invpriority, 2) & reponame & sep & reponame;
+         begin
+            temp_list.Append (SUS (payload));
+         end;
+      end populate_temp_list;
+
+      procedure assemble_search_priority (Position : Pkgtypes.Text_List.Cursor)
+      is
+         encodingtxt : Text renames Pkgtypes.Text_List.Element (Position);
+         delimiter   : constant String (1 .. 1) := (others => sep);
+         repo_name   : constant String := part_2 (USS (encodingtxt), delimiter);
+      begin
+         remote_repositories.search_order.Append (SUS (repo_name));
+      end assemble_search_priority;
+
+   begin
+      remote_repositories.repositories.Iterate(populate_temp_list'Access);
+      Pkgtypes.sorter.Sort (temp_list);
+      temp_list.Iterate (assemble_search_priority'Access);
+   end define_search_priority;
 
 end Raven.Repository;
