@@ -109,7 +109,7 @@ package body Raven.Cmd.Usage is
          when cv_help    => return verb_help (comline);
          when cv_info    => return verb_info (comline);
          when cv_install => return verb_install (comline);
-         when cv_shell   => return True;  -- never shows usage (all args passed though)
+         when cv_shell   => return verb_shell (comline);
          when cv_shlib   => return verb_shlib (comline);
          when cv_which   => return verb_which (comline);
          when cv_version => return verb_version (comline);
@@ -241,6 +241,9 @@ package body Raven.Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       end if;
+      if not Archive.Unix.user_is_root then
+         return alert ("The catalog command is restricted to the superuser.");
+      end if;
       return True;
    end verb_catalog;
 
@@ -269,8 +272,32 @@ package body Raven.Cmd.Usage is
       then
          return alert ("Setting all four options is not permitted, see man page");
       end if;
+      if not Archive.Unix.user_is_root then
+         return alert ("The clean command is restricted to the superuser.");
+      end if;
       return True;
    end verb_clean;
+
+
+   ------------------
+   --  verb_shell  --
+   ------------------
+   function verb_shell (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "shell [all arguments passed to sqlite]";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         return False;
+      end alert;
+   begin
+      if not Archive.Unix.user_is_root then
+         return alert ("The shell command is restricted to the superuser.");
+      end if;
+      return True;
+   end verb_shell;
 
 
    -------------------
@@ -459,6 +486,10 @@ package body Raven.Cmd.Usage is
          return alert ("--dry-run and --quiet are incompatible options.");
       end if;
 
+      if not Archive.Unix.user_is_root then
+         return alert ("The install command is restricted to the superuser.");
+      end if;
+
       return True;
    end verb_install;
 
@@ -632,6 +663,10 @@ package body Raven.Cmd.Usage is
       if passed_public_key and then not passed_private_key
       then
          return alert ("--pubkey can not be used without --key");
+      end if;
+
+      if not Archive.Unix.user_is_root then
+         return alert ("The genrepo command is restricted to the superuser.");
       end if;
 
        if IsBlank (comline.common_options.name_pattern) then

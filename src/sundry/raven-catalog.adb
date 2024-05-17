@@ -11,6 +11,7 @@ with Raven.Database.Pkgs;
 with Raven.Database.Operations;
 with ThickUCL.Files;
 with Archive.Unpack;
+with Archive.Unix;
 
 package body Raven.Catalog is
 
@@ -31,6 +32,11 @@ package body Raven.Catalog is
       backed_up   : Boolean := False;
       rvndb       : Database.RDB_Connection;
    begin
+      if not Archive.Unix.user_is_root then
+         Event.emit_error (func & "Developer error, this restricted to the superuser.");
+         return False;
+      end if;
+
       if not DIR.Exists (catalog_ucl) then
          Event.emit_error (func & "Missing catalog.ucl file blocks catalog update");
          return False;
