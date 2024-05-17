@@ -57,7 +57,7 @@ package body Raven.Repository is
             case ThickUCL.get_object_data_type (conf_tree, cfg_object, field_key) is
                when ThickUCL.data_boolean =>
                   declare
-                     value : constant Boolean := conf_tree.get_base_value (field_key);
+                     value : constant Boolean := conf_tree.get_object_value (cfg_object, field_key);
                   begin
                      if upper_key = "ENABLED" then
                         rconfig.enabled := value;
@@ -69,7 +69,8 @@ package body Raven.Repository is
                   end;
                when ThickUCL.data_integer =>
                   declare
-                     value : constant Ucl.ucl_integer := conf_tree.get_base_value (field_key);
+                     value : constant Ucl.ucl_integer :=
+                       conf_tree.get_object_value (cfg_object, field_key);
                   begin
                      if upper_key = "IP_VERSION" then
                         case value is
@@ -88,7 +89,7 @@ package body Raven.Repository is
                   end;
                when ThickUCL.data_string =>
                   declare
-                     value : constant String := conf_tree.get_base_value (field_key);
+                     value : constant String := conf_tree.get_object_value (cfg_object, field_key);
                      upper_value : constant String := uppercase (value);
                   begin
                      if upper_key = "URL" then
