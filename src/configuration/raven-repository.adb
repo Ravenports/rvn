@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Exceptions;
 with Raven.Cmd.Unset;
 with Raven.Strings;
 with Raven.Event;
@@ -232,6 +233,12 @@ package body Raven.Repository is
          begin
             DSC.scan_directory (dir_repo_config, files);
             files.Iterate (ingest_repository_config_file'Access);
+         exception
+            when DSC.dscan_open_failure => null;  --  directory probably doesn't exist
+            when unexpected : DSC.dscan_folder_already_open |
+                 DSC.dscan_folder_not_open |
+                 DSC.dscan_close_failure =>  --  unexpected error, add to debug messages
+               Event.emit_debug (high_level, Ada.Exceptions.Exception_Message (unexpected));
          end;
       end loop;
       if not remote_repositories.repositories.Is_Empty then
