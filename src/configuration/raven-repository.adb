@@ -161,32 +161,6 @@ package body Raven.Repository is
             if unhandled then
                Event.emit_message (identifier & " key '" & field_key & "' unrecognized.");
             end if;
-            if override then
-               if identifier = set_single_master then
-                  rconfig.master := True;
-                  rconfig.enabled := True;
-                  remote_repositories.master_assigned := True;
-                  remote_repositories.master_repository := SUS (identifier);
-                  remote_repositories.repositories.Insert (SUS (identifier), rconfig);
-               else
-                  Event.emit_debug (high_level, "ignore " & identifier & " repo due to override");
-               end if;
-            else
-               if rconfig.enabled then
-                  if rconfig.master then
-                     if remote_repositories.master_assigned then
-                        Event.emit_message
-                          ("Master designation on " & identifier & " repository ignored; " &
-                             USS (remote_repositories.master_repository) & " is already master.");
-                        rconfig.master := False;
-                     else
-                        remote_repositories.master_assigned := True;
-                        remote_repositories.master_repository := SUS (identifier);
-                     end if;
-                  end if;
-                  remote_repositories.repositories.Insert (SUS (identifier), rconfig);
-               end if;
-            end if;
          end process_key;
 
       begin
@@ -198,6 +172,33 @@ package body Raven.Repository is
          conf_tree.get_object_object_keys (cfg_object, keys);
          rconfig.identifier := SUS (identifier);
          keys.Iterate (process_key'Access);
+
+         if override then
+            if identifier = set_single_master then
+               rconfig.master := True;
+               rconfig.enabled := True;
+               remote_repositories.master_assigned := True;
+               remote_repositories.master_repository := SUS (identifier);
+               remote_repositories.repositories.Insert (SUS (identifier), rconfig);
+            else
+               Event.emit_debug (high_level, "ignore " & identifier & " repo due to override");
+            end if;
+         else
+            if rconfig.enabled then
+               if rconfig.master then
+                  if remote_repositories.master_assigned then
+                     Event.emit_message
+                       ("Master designation on " & identifier & " repository ignored; " &
+                          USS (remote_repositories.master_repository) & " is already master.");
+                     rconfig.master := False;
+                  else
+                     remote_repositories.master_assigned := True;
+                     remote_repositories.master_repository := SUS (identifier);
+                  end if;
+               end if;
+               remote_repositories.repositories.Insert (SUS (identifier), rconfig);
+            end if;
+         end if;
       end process_object;
 
    begin
