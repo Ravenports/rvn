@@ -183,8 +183,8 @@ package body Raven.Repository is
                         remote_repositories.master_assigned := True;
                         remote_repositories.master_repository := SUS (identifier);
                      end if;
-                     remote_repositories.repositories.Insert (SUS (identifier), rconfig);
                   end if;
+                  remote_repositories.repositories.Insert (SUS (identifier), rconfig);
                end if;
             end if;
          end process_key;
