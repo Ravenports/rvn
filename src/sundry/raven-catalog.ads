@@ -17,6 +17,6 @@ package Raven.Catalog is
    --       - rename ${RVN_DBDIR}/catalog.sqlite.backup to ${RVN_DBDIR}/catalog.sqlite
    --       - return False
 
-   function generate_database return Boolean;
+   function generate_database (tracker : out Natural) return Boolean;
 
 end Raven.Catalog;

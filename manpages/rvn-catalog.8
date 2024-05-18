@@ -7,9 +7,11 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl fq
+.Op Fl r Ar reponame
 .Pp
 .Nm
 .Op Cm --{force,quiet}
+.Op Cm --repository Ar reponame
 .Sh DESCRIPTION
 .Nm
 is used for updating the local copy of the repository catalog
@@ -21,10 +23,11 @@ but once a download catalog matches the master reference, the process
 is complete.
 .Pp
 The repositories are defined by the configuration files in located in the
+repository configuration directories defined by REPOS_DIR which is set to
 .Pa /etc/rvn
 or
 .Pa /raven/etc/rvn/repos
-directories.
+by default.
 See
 .Xr rvn.conf 5
 for details.
@@ -43,6 +46,9 @@ catalog unless inhibited by setting
 to false in
 .Xr rvn.conf 5
 or setting the equivalent by the command line switches.
+.Pp
+However, the REPO_AUTOUPDATE setting is ignored by
+.Nm .
 .Ss Signed repositories
 If the repository catalog is signed, the signature will be verified
 after download.
@@ -52,14 +58,24 @@ The following options are supported by
 .Nm :
 .Bl -tag -width quiet
 .It Fl q , Cm --quiet
-Force quiet output.
+Force quiet output on non-errors.
 .It Fl f , Cm --force
 Force a full download of the repository catalog without regard to the
-respective ages of the local and remote copies of the catalogue.
+respective ages of the local and remote copies of the catalog.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
 .El
-.Sh FILES
-See
-.Xr rvn.conf 5 .
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev REPOS_DIR
+.El
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,

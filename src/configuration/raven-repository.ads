@@ -57,7 +57,10 @@ package Raven.Repository is
       repo_tree           : in out ThickUCL.UclTree);
 
    function create_local_catalog_database
-     (remote_repositories : A_Repo_Config_Set) return Boolean;
+     (remote_repositories  : A_Repo_Config_Set;
+      forced               : Boolean;
+      quiet                : Boolean;
+      from_catalog_command : Boolean := False) return Boolean;
 
    zero_repositories_configured : exception;
    invalid_catalog_digest       : exception;
@@ -83,7 +86,10 @@ private
 
    --  Returns True if the attempt to get the calalog.sum file from the master repository
    --  is successful.
-   function fetch_master_checksum (remote_repositories : A_Repo_Config_Set) return Boolean;
+   function fetch_master_checksum
+     (mirrors : A_Repo_Config_Set;
+      forced  : Boolean;
+      quiet   : Boolean) return Boolean;
 
    --  cache location
    function cache_directory return String;
@@ -106,21 +112,29 @@ private
    function read_catalog_digest return Blake_3.blake3_hash_hex;
 
    --  Returns true if the reference log is in the cache at the end of the routine.
-   function obtain_reference_catalog (mirrors : A_Repo_Config_Set) return Boolean;
+   function obtain_reference_catalog
+     (mirrors : A_Repo_Config_Set;
+      forced  : Boolean;
+      quiet   : Boolean) return Boolean;
 
    --  Returns true if file with the path relative to the mirror's URL was successfully
    --  fetched.  Etags are not used.  If there are multiple sites, all of them are
    --  checked before False is returned.
    function fetch_from_mirror
-     (mirrors : A_Repo_Config_Set;
-      relative_path : String;
+     (mirrors        : A_Repo_Config_Set;
+      relative_path  : String;
       cache_location : String;
-      digest : Blake_3.blake3_hash_hex) return Boolean;
+      digest         : Blake_3.blake3_hash_hex;
+      quiet          : Boolean) return Boolean;
 
    --  Returns true if the file at file_path exists and has a blake3 checksum that matches
    --  the given digest
    function file_verified
      (file_path : String;
       digest : Blake_3.blake3_hash_hex) return Boolean;
+
+   --  Extracts contents of catalog.rvn in place.  No success message.
+   function extract_catalog_contents return Boolean;
+
 
 end Raven.Repository;

@@ -10,6 +10,7 @@ with Raven.Event;
 with Raven.Fetch;
 with Archive.Unix;
 with Archive.Misc;
+with Archive.Unpack;
 with Archive.Dirent.Scan;
 with ThickUCL.Files;
 with Ucl;
@@ -421,7 +422,10 @@ package body Raven.Repository is
    -----------------------------
    --  fetch_master_checksum  --
    -----------------------------
-   function fetch_master_checksum (remote_repositories : A_Repo_Config_Set) return Boolean
+   function fetch_master_checksum
+     (mirrors : A_Repo_Config_Set;
+      forced  : Boolean;
+      quiet   : Boolean) return Boolean
    is
       --  Don't use etag for master checksum
       --  Set the mtime of the cached checksum file for 5 minute in the future
@@ -433,20 +437,39 @@ package body Raven.Repository is
       result      : Fetch.fetch_result;
    begin
       if CAL.target_file_cached (cached_copy) then
-         return True;
+         if forced then
+            if not Archive.Unix.unlink_file (cached_copy) then
+               Event.emit_debug (high_level, "Failed to delete " & cached_copy);
+            end if;
+         else
+            return True;
+         end if;
       end if;
 
-      if remote_repositories.repositories.Is_Empty then
-         Event.emit_debug (high_level, "No sites available from which to fetch checksum");
+      if mirrors.repositories.Is_Empty then
+         Event.emit_error ("No repositories available from which to fetch checksum");
          return False;
       end if;
 
       result := Fetch.download_file
-        (remote_file_url => master_url (catalog_digest, remote_repositories),
+        (remote_file_url => master_url (catalog_digest, mirrors),
          etag_file       => "",
          downloaded_file => cached_copy,
          remote_repo     => True,
-         remote_protocol => master_protocol (remote_repositories));
+         remote_protocol => master_protocol (mirrors));
+
+      declare
+         master_repo : constant String := USS (mirrors.master_repository) & " repository";
+      begin
+         case result is
+            when Fetch.cache_valid | Fetch.file_downloaded =>
+               if not quiet then
+                  Event.emit_message ("Reference checksum obtained from the " & master_repo);
+               end if;
+            when Fetch.retrieval_failed =>
+               Event.emit_error ("Failed to obtain reference checksum from the " & master_repo);
+         end case;
+      end;
 
       case result is
          when Fetch.cache_valid      => return True;  --  impossible
@@ -546,13 +569,15 @@ package body Raven.Repository is
    --------------------------------
    --  obtain_reference_catalog  --
    --------------------------------
-   function obtain_reference_catalog (mirrors : A_Repo_Config_Set) return Boolean
+   function obtain_reference_catalog (mirrors : A_Repo_Config_Set;
+                                      forced  : Boolean;
+                                      quiet   : Boolean) return Boolean
    is
       catalog_digest : Blake_3.blake3_hash_hex;
       cached_copy    : String := downloaded_file_path (catalog_archive);
    begin
-      if not fetch_master_checksum (mirrors) then
-         Event.emit_error ("Failed to obtain the reference checksum from the master repository");
+      if not fetch_master_checksum (mirrors, forced, quiet) then
+         return False;
       end if;
 
       begin
@@ -563,11 +588,21 @@ package body Raven.Repository is
             return False;
       end;
 
-      if file_verified (cached_copy, catalog_digest) then
-         return True;
+      if not forced then
+         if file_verified (cached_copy, catalog_digest) then
+            --  Assume extracted contents still intact in the case
+            if not quiet then
+               Event.emit_message ("Cached catalog is still valid.");
+            end if;
+            return True;
+         end if;
       end if;
 
-      if fetch_from_mirror (mirrors, "catalog.rvn", cached_copy, catalog_digest) then
+      if fetch_from_mirror (mirrors, "catalog.rvn", cached_copy, catalog_digest, quiet) then
+         --  Retrieval of catalog.rvn was successful.  Now we need to extract it.
+         if not extract_catalog_contents then
+            return False;
+         end if;
          return True;
       end if;
 
@@ -580,10 +615,11 @@ package body Raven.Repository is
    -------------------------
    --  fetch_from_mirror  --
    -------------------------
-   function fetch_from_mirror (mirrors : A_Repo_Config_Set;
-                               relative_path : String;
+   function fetch_from_mirror (mirrors        : A_Repo_Config_Set;
+                               relative_path  : String;
                                cache_location : String;
-                               digest : Blake_3.blake3_hash_hex) return Boolean
+                               digest         : Blake_3.blake3_hash_hex;
+                               quiet          : Boolean) return Boolean
    is
       number_sites : constant Natural := Natural (mirrors.search_order.Length);
    begin
@@ -591,8 +627,10 @@ package body Raven.Repository is
          declare
             index : Text renames mirrors.search_order.Element (site_index);
             repo : A_Repo_Config renames mirrors.repositories (index);
-            result    : Fetch.fetch_result;
+            result : Fetch.fetch_result;
+            from_repo : constant String := " from the " & USS (repo.identifier) & " repository";
          begin
+            Event.emit_debug (high_level, "Selecting " & USS (repo.identifier) & " repository");
             result := Fetch.download_file (remote_file_url => USS (repo.url) & "/" & relative_path,
                                            etag_file       => "",
                                            downloaded_file => cache_location,
@@ -601,9 +639,20 @@ package body Raven.Repository is
             case result is
                when Fetch.cache_valid | Fetch.file_downloaded =>
                   if file_verified (cache_location, digest) then
+                     if not quiet then
+                        Event.emit_message ("Downloaded and verified " & relative_path & from_repo);
+                     end if;
                      return True;
+                  else
+                     if not quiet then
+                        Event.emit_message ("Downloaded " & relative_path & from_repo &
+                                              ", but the verification failed.");
+                     end if;
                   end if;
-               when Fetch.retrieval_failed => null;
+               when Fetch.retrieval_failed =>
+                  if not quiet then
+                     Event.emit_message ("Download of " & relative_path & from_repo & "failed.");
+                  end if;
             end case;
          end;
       end loop;
@@ -635,13 +684,60 @@ package body Raven.Repository is
    --  create_local_catalog_database  --
    -------------------------------------
    function create_local_catalog_database
-     (remote_repositories : A_Repo_Config_Set) return Boolean
+     (remote_repositories  : A_Repo_Config_Set;
+      forced               : Boolean;
+      quiet                : Boolean;
+      from_catalog_command : Boolean := False) return Boolean
    is
+      num_records : Natural;
+      success     : Boolean;
    begin
-      if obtain_reference_catalog (remote_repositories) then
-         return Catalog.generate_database;
+      if not from_catalog_command then
+         if not RCU.config_setting (RCU.CFG.autoupdate) then
+            return True;
+         end if;
+      end if;
+
+      if obtain_reference_catalog (remote_repositories, forced, quiet) then
+         success := Catalog.generate_database (num_records);
+         if success then
+            if not quiet then
+               Event.emit_message ("Catalog update completed. " &
+                                     Strings.int2str (num_records) & " packages processed.");
+            end if;
+            return True;
+         end if;
       end if;
       return False;
    end create_local_catalog_database;
+
+
+   --------------------------------
+   --  extract_catalog_contents  --
+   --------------------------------
+   function extract_catalog_contents return Boolean
+   is
+      operation       : Archive.Unpack.Darc;
+      level           : constant Archive.info_level := Archive.silent;
+      archive_path    : constant String := downloaded_file_path (catalog_archive);
+      good_extraction : Boolean;
+   begin
+      operation.open_rvn_archive (archive_path, level);
+      good_extraction := operation.extract_archive
+        (top_directory => cache_directory,
+         set_owners    => True,
+         set_perms     => True,
+         set_modtime   => False,
+         skip_scripts  => True,
+         upgrading     => False);
+      operation.close_rvn_archive;
+
+      if not good_extraction then
+         Event.emit_error ("Failed to extract " & archive_path & " into " & cache_directory);
+         return False;
+      end if;
+
+      return True;
+   end extract_catalog_contents;
 
 end Raven.Repository;

@@ -23,7 +23,7 @@ package body Raven.Catalog is
    -------------------------
    --  generate_database  --
    -------------------------
-   function generate_database return Boolean
+   function generate_database (tracker : out Natural) return Boolean
    is
       func        : constant String := "generate_database: ";
       db_path     : constant String := OPS.localdb_path (Database.catalog);
@@ -32,6 +32,7 @@ package body Raven.Catalog is
       backed_up   : Boolean := False;
       rvndb       : Database.RDB_Connection;
    begin
+      tracker := 0;
       if not Archive.Unix.user_is_root then
          Event.emit_error (func & "Developer error, this restricted to the superuser.");
          return False;
@@ -62,7 +63,6 @@ package body Raven.Catalog is
 
       declare
          cat_handle : TIO.File_Type;
-         tracker : Natural := 0;
       begin
          TIO.Open (cat_handle, TIO.In_File, catalog_ucl);
          While not  TIO.End_Of_File (cat_handle) loop
