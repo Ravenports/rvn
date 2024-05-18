@@ -722,7 +722,21 @@ package body Raven.Repository is
       level           : constant Archive.info_level := Archive.silent;
       archive_path    : constant String := downloaded_file_path (catalog_archive);
       good_extraction : Boolean;
+
+      procedure clean (filename : String) is
+      begin
+         if Archive.Unix.file_exists (filename) then
+            if not Archive.Unix.unlink_file (filename) then
+               Event.emit_debug (high_level, "failed to unlink " & filename);
+            end if;
+         end if;
+      end clean;
    begin
+      --  Remove old files in case new archives have less files
+      clean (cache_directory & "/catalog.ucl");
+      clean (cache_directory & "/signature");
+      clean (cache_directory & "/repository.pub");
+
       operation.open_rvn_archive (archive_path, level);
       good_extraction := operation.extract_archive
         (top_directory => cache_directory,
