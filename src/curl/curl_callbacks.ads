@@ -39,9 +39,12 @@ package curl_callbacks is
    --  returns true if the etag file is found and is a regular file
    function found_etag_file (filename : String) return Boolean;
 
-   --  returns true if the target_file is found, the etag file is found and
+   --  Returns true if the target_file is found, the etag file is found and
    --  the mtime is in the future.
    function target_file_cached (target_file : String; etag_file : String) return Boolean;
+
+   --  Returns true if the target file exists and the mtime is in the future (no etag file used)
+   function target_file_cached (target_file : String) return Boolean;
 
    --  returns a string of the contents of the given file
    function file_to_string (filename : String) return String;

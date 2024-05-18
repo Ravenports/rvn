@@ -165,9 +165,9 @@ package body curl_callbacks is
    end found_etag_file;
 
 
-   --------------------------
-   --  target_file_cached  --
-   --------------------------
+   -----------------------------
+   --  target_file_cached #1  --
+   -----------------------------
    function target_file_cached (target_file : String; etag_file : String) return Boolean
    is
       target : Archive.Unix.Time_Characteristics;
@@ -183,6 +183,24 @@ package body curl_callbacks is
                when others =>
                   null;
             end case;
+         when others =>
+            null;
+      end case;
+      return False;
+   end target_file_cached;
+
+
+   -----------------------------
+   --  target_file_cached #2  --
+   -----------------------------
+   function target_file_cached (target_file : String) return Boolean
+   is
+      target : Archive.Unix.Time_Characteristics;
+   begin
+      target := Archive.Unix.get_time_characteristics (target_file);
+      case target.ftype is
+         when Archive.regular =>
+            return not Archive.Unix.tag_expired (target.mtime);
          when others =>
             null;
       end case;

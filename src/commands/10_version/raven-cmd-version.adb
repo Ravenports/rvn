@@ -300,9 +300,9 @@ package body Raven.Cmd.Version is
    end downloaded_etag_path;
 
 
-   -----------------------
+   --------------------------
    --  download_file_path  --
-   -----------------------
+   --------------------------
    function download_file_path (downfile : download_type) return String is
    begin
       case downfile is

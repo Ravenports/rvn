@@ -131,9 +131,12 @@ package body Raven.Fetch is
       CAL.SIO.Close (data.file_handle);
       curl_header.curl_slist_free_all (header_list);
 
-      if not CAL.set_expiration_time (etag_file, data.max_age) then
-         Event.emit_debug (high_level, "Failed to set mtime of " & etag_file & " in the future");
-         return retrieval_failed;
+      if CAL.found_etag_file (etag_file) then
+         --  Not all URLs produce etag files
+         if not CAL.set_expiration_time (etag_file, data.max_age) then
+            Event.emit_debug (high_level, "Failed to set mtime of " & etag_file & " in the future");
+            return retrieval_failed;
+         end if;
       end if;
 
       response_code := curl_header.get_info_value_long (curlobj,

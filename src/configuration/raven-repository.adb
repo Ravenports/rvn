@@ -4,12 +4,15 @@
 with Ada.Exceptions;
 with Raven.Cmd.Unset;
 with Raven.Strings;
+with Raven.Context;
 with Raven.Event;
+with Raven.Fetch;
 with Archive.Unix;
 with Archive.Misc;
 with Archive.Dirent.Scan;
 with ThickUCL.Files;
 with Ucl;
+with curl_callbacks;
 
 use Raven.Strings;
 
@@ -17,6 +20,7 @@ package body Raven.Repository is
 
    package RCU renames Raven.Cmd.Unset;
    package DSC renames Archive.Dirent.Scan;
+   package CAL renames curl_callbacks;
 
 
    ---------------------------------
@@ -411,5 +415,218 @@ package body Raven.Repository is
       end loop;
       repo_tree.close_object;
    end convert_repo_configs_to_ucl;
+
+
+   -----------------------------
+   --  fetch_master_checksum  --
+   -----------------------------
+   function fetch_master_checksum (remote_repositories : A_Repo_Config_Set) return Boolean
+   is
+      --  Don't use etag for master checksum
+      --  Set the mtime of the cached checksum file for 5 minute in the future
+      --  At beginning of routine, check for existing cached version.  If its mtime is
+      --  in the future, use the cached version.
+      --  With a file smaller than the etag header, using etag costs more than just fetching
+      --  it again.
+      cached_copy : constant String := downloaded_file_path (catalog_digest);
+      result      : Fetch.fetch_result;
+   begin
+      if CAL.target_file_cached (cached_copy) then
+         return True;
+      end if;
+
+      if remote_repositories.repositories.Is_Empty then
+         Event.emit_debug (high_level, "No sites available from which to fetch checksum");
+         return False;
+      end if;
+
+      result := Fetch.download_file
+        (remote_file_url => master_url (catalog_digest, remote_repositories),
+         etag_file       => "",
+         downloaded_file => cached_copy,
+         remote_repo     => True,
+         remote_protocol => master_protocol (remote_repositories));
+
+      case result is
+         when Fetch.cache_valid      => return True;  --  impossible
+         when Fetch.file_downloaded  => return True;
+         when Fetch.retrieval_failed => return False;
+      end case;
+   end fetch_master_checksum;
+
+
+   -----------------------
+   --  cache_directory  --
+   -----------------------
+   function cache_directory return String is
+   begin
+      return Context.reveal_cache_directory & "/remote";
+   end cache_directory;
+
+
+   ----------------------------
+   --  downloaded_etag_path  --
+   ----------------------------
+   function downloaded_etag_path (downfile : download_type) return String is
+   begin
+      case downfile is
+         when catalog_digest  => return cache_directory & "/digest.etag";  -- not used
+         when catalog_archive => return cache_directory & "/rvn-archive.etag";
+      end case;
+   end downloaded_etag_path;
+
+
+   --------------------------
+   --  downloaded_file_path  --
+   --------------------------
+   function downloaded_file_path (downfile : download_type) return String is
+   begin
+      case downfile is
+         when catalog_digest  => return cache_directory & "/catalog.sum";
+         when catalog_archive => return cache_directory & "/catalog.rvn";
+      end case;
+   end downloaded_file_path;
+
+
+   --------------------
+   --  master_url  --
+   --------------------
+   function master_url (downfile : download_type; mirrors : A_Repo_Config_Set) return String is
+   begin
+      if not mirrors.master_assigned then
+         raise zero_repositories_configured;
+      end if;
+
+      declare
+         base_url : constant String :=
+           USS (mirrors.repositories.Element (mirrors.master_repository).url);
+      begin
+         case downfile is
+            when catalog_digest  => return base_url & "/catalog.sum";
+            when catalog_archive => return base_url & "/catalog.rvn";
+         end case;
+      end;
+   end master_url;
+
+
+   -----------------------
+   --  master_protocol  --
+   -----------------------
+   function master_protocol (mirrors : A_Repo_Config_Set) return IP_support is
+   begin
+      if not mirrors.master_assigned then
+         raise zero_repositories_configured;
+      end if;
+      return mirrors.repositories.Element (mirrors.master_repository).protocol;
+   end master_protocol;
+
+
+   -----------------------------
+   --  latest_catalog_digest  --
+   -----------------------------
+   function read_catalog_digest return Blake_3.blake3_hash_hex
+   is
+      --  Ensure file exists before calling this function
+
+      cached_copy : constant String := downloaded_file_path (catalog_digest);
+   begin
+      declare
+         contents : constant String := CAL.file_to_string (cached_copy);
+         line_one : constant String := CAL.first_line (contents);
+      begin
+         if line_one'Length = Blake_3.blake3_hash_hex'Length then
+            return Blake_3.blake3_hash_hex (line_one);
+         end if;
+      end;
+      raise invalid_catalog_digest;
+   end read_catalog_digest;
+
+
+   --------------------------------
+   --  obtain_reference_catalog  --
+   --------------------------------
+   function obtain_reference_catalog (mirrors : A_Repo_Config_Set) return Boolean
+   is
+      catalog_digest : Blake_3.blake3_hash_hex;
+      cached_copy    : String := downloaded_file_path (catalog_archive);
+   begin
+      if not fetch_master_checksum (mirrors) then
+         Event.emit_error ("Failed to obtain the reference checksum from the master repository");
+      end if;
+
+      begin
+         catalog_digest := read_catalog_digest;
+      exception
+         when invalid_catalog_digest =>
+            Event.emit_error ("Reference checksum is not 64 characters long");
+            return False;
+      end;
+
+      if file_verified (cached_copy, catalog_digest) then
+         return True;
+      end if;
+
+      if fetch_from_mirror (mirrors, "catalog.rvn", cached_copy, catalog_digest) then
+         return True;
+      end if;
+
+      Event.emit_error ("Failed to retrieve the catalog archive.");
+      return False;
+
+   end obtain_reference_catalog;
+
+
+   -------------------------
+   --  fetch_from_mirror  --
+   -------------------------
+   function fetch_from_mirror (mirrors : A_Repo_Config_Set;
+                               relative_path : String;
+                               cache_location : String;
+                               digest : Blake_3.blake3_hash_hex) return Boolean
+   is
+      number_sites : constant Natural := Natural (mirrors.search_order.Length);
+   begin
+      for site_index in 0 .. number_sites - 1 loop
+         declare
+            index : Text renames mirrors.search_order.Element (site_index);
+            repo : A_Repo_Config renames mirrors.repositories (index);
+            result    : Fetch.fetch_result;
+         begin
+            result := Fetch.download_file (remote_file_url => USS (repo.url) & "/" & relative_path,
+                                           etag_file       => "",
+                                           downloaded_file => cache_location,
+                                           remote_repo     => True,
+                                           remote_protocol => repo.protocol);
+            case result is
+               when Fetch.cache_valid | Fetch.file_downloaded =>
+                  if file_verified (cache_location, digest) then
+                     return True;
+                  end if;
+               when Fetch.retrieval_failed => null;
+            end case;
+         end;
+      end loop;
+      return False;
+   end fetch_from_mirror;
+
+
+   ---------------------
+   --  file_verified  --
+   ---------------------
+   function file_verified
+     (file_path : String;
+      digest : Blake_3.blake3_hash_hex) return Boolean
+   is
+      features : Archive.Unix.File_Characteristics;
+      actual_digest : Blake_3.blake3_hash_hex;
+   begin
+      features := Archive.Unix.get_charactistics (file_path);
+      case features.ftype is
+         when Archive.regular =>
+            actual_digest := Blake_3.hex (Blake_3.file_digest (file_path));
+            return actual_digest = digest;
+         when others => return False;
+      end case;
+   end file_verified;
 
 end Raven.Repository;
