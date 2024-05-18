@@ -466,16 +466,17 @@ package body Raven.Repository is
                if not quiet then
                   Event.emit_message ("Reference checksum obtained from the " & master_repo);
                end if;
+               --  Set expiration time for 5 minutes in the future
+               if not CAL.set_expiration_time (cached_copy, 300) then
+                  Event.emit_debug (high_level, "Failed to update mtime on " & cached_copy);
+               end if;
+               return True;
             when Fetch.retrieval_failed =>
                Event.emit_error ("Failed to obtain reference checksum from the " & master_repo);
+               return False;
          end case;
       end;
 
-      case result is
-         when Fetch.cache_valid      => return True;  --  impossible
-         when Fetch.file_downloaded  => return True;
-         when Fetch.retrieval_failed => return False;
-      end case;
    end fetch_master_checksum;
 
 
