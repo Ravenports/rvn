@@ -5,6 +5,7 @@ with Ada.Exceptions;
 with Raven.Cmd.Unset;
 with Raven.Strings;
 with Raven.Context;
+with Raven.Catalog;
 with Raven.Event;
 with Raven.Fetch;
 with Archive.Unix;
@@ -628,5 +629,19 @@ package body Raven.Repository is
          when others => return False;
       end case;
    end file_verified;
+
+
+   -------------------------------------
+   --  create_local_catalog_database  --
+   -------------------------------------
+   function create_local_catalog_database
+     (remote_repositories : A_Repo_Config_Set) return Boolean
+   is
+   begin
+      if obtain_reference_catalog (remote_repositories) then
+         return Catalog.generate_database;
+      end if;
+      return False;
+   end create_local_catalog_database;
 
 end Raven.Repository;

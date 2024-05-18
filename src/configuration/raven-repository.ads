@@ -56,6 +56,9 @@ package Raven.Repository is
      (remote_repositories : A_Repo_Config_Set;
       repo_tree           : in out ThickUCL.UclTree);
 
+   function create_local_catalog_database
+     (remote_repositories : A_Repo_Config_Set) return Boolean;
+
    zero_repositories_configured : exception;
    invalid_catalog_digest       : exception;
 
