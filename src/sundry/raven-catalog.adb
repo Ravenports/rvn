@@ -28,7 +28,7 @@ package body Raven.Catalog is
       func        : constant String := "generate_database: ";
       db_path     : constant String := OPS.localdb_path (Database.catalog);
       backup_path : constant String := db_path & ".backup";
-      catalog_ucl : constant String := Context.reveal_cache_directory & "/catalog/catalog.ucl";
+      catalog_ucl : constant String := Context.reveal_cache_directory & "/remote/catalog.ucl";
       backed_up   : Boolean := False;
       rvndb       : Database.RDB_Connection;
    begin
