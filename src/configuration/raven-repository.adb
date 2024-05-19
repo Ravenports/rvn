@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ada.Exceptions;
+with Ada.Directories;
 with Raven.Cmd.Unset;
 with Raven.Strings;
 with Raven.Context;
@@ -439,6 +440,9 @@ package body Raven.Repository is
       cached_copy : constant String := downloaded_file_path (catalog_digest);
       result      : Fetch.fetch_result;
    begin
+      --  ensure cache directory is available
+      Ada.Directories.Create_Path (cache_directory);
+
       if CAL.target_file_cached (cached_copy) then
          if forced then
             if not Archive.Unix.unlink_file (cached_copy) then
