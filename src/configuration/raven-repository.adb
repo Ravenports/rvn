@@ -1027,7 +1027,7 @@ package body Raven.Repository is
          ftree : ThickUCL.UclTree;
       begin
          if not match_found then
-            Event.emit_debug ("looking at " & item.full_path);
+            Event.emit_debug (high_level, "looking at " & item.full_path);
             ThickUCL.Files.parse_ucl_file (ftree, item.full_path, "");
             if not ftree.key_exists ("function") or else
               not ftree.key_exists ("fingerprint")
