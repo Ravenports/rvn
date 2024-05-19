@@ -536,6 +536,8 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = "-f" or else datum = "--force" then
                      data.cmd_catalog.force_update := True;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   end if;

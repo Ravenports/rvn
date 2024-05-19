@@ -231,7 +231,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg : constant String := "catalog [-fq]";
+         msg : constant String := "catalog [-fq] [-r reponame]";
       begin
          display_error (error_msg);
          display_usage (msg, True);
