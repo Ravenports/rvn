@@ -659,6 +659,12 @@ package body Raven.Repository is
                Event.emit_error ("The scheme specified in '" & url_str & "' is invalid.");
                return False;
             end if;
+            case repo.mirror is
+               when not_mirrored => null;
+               when SRV_mirror =>
+                  Event.emit_error ("SRV mirrors are currently unimplemented.");
+                  return False;
+            end case;
             result := Fetch.download_file (remote_file_url => url_str & "/" & relative_path,
                                            etag_file       => "",
                                            downloaded_file => cache_location,
