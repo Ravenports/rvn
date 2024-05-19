@@ -187,11 +187,14 @@ package body Raven.Fetch is
       function source_file return String
       is
          --  file:// length is 7
-         --  silently correct "file://xxx" to "file:///xxx"
+         --  Support file://localhost/
+         --  silently correct invalid "file://xxx" to "file:///xxx"
          offset : Natural := 6;
       begin
          if Strings.leads (remote_file_url, "file:///") then
             offset := 7;
+         elsif Strings.leads (remote_file_url, "file://localhost/") then
+            offset := 16;
          end if;
          return remote_file_url (remote_file_url'First + offset .. remote_file_url'Last);
       end;
