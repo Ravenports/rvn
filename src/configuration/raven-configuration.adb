@@ -231,8 +231,7 @@ package body Raven.Configuration is
             crate.Append (SUS ("https"));
             crate.Append (SUS ("http"));
             crate.Append (SUS ("file"));
-            crate.Append (SUS ("ssh"));
-            crate.Append (SUS ("tcp"));
+            crate.Append (SUS ("scp"));
          when others =>
             raise config_type_mismatch with ci'Img & " is not of type array of string.";
       end case;
