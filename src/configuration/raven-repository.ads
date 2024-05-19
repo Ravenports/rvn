@@ -164,4 +164,8 @@ private
       key_path       : String;
       catalog        : String) return Boolean;
 
+   --  Compares url text before "://" to the array of VALID_URL_SCHEME
+   --  If it matches one of the elements, True is returned.
+   function valid_scheme_specified (url : String) return Boolean;
+
 end Raven.Repository;

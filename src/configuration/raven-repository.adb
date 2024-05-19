@@ -458,16 +458,23 @@ package body Raven.Repository is
          return False;
       end if;
 
-      result := Fetch.download_file
-        (remote_file_url => master_url (catalog_digest, mirrors),
-         etag_file       => "",
-         downloaded_file => cached_copy,
-         remote_repo     => True,
-         remote_protocol => master_protocol (mirrors));
-
       declare
          master_repo : constant String := USS (mirrors.master_repository) & " repository";
+         url_str : constant String := master_url (catalog_digest, mirrors);
       begin
+         if not valid_scheme_specified (url_str) then
+            Event.emit_error ("The scheme specified in '" & url_str & "' is invalid.");
+            return False;
+         end if;
+
+         result := Fetch.download_file
+           (remote_file_url => url_str,
+            etag_file       => "",
+            downloaded_file => cached_copy,
+            remote_repo     => True,
+            remote_protocol => master_protocol (mirrors));
+
+
          case result is
             when Fetch.cache_valid | Fetch.file_downloaded =>
                if not quiet then
@@ -645,9 +652,14 @@ package body Raven.Repository is
             repo : A_Repo_Config renames mirrors.repositories (index);
             result : Fetch.fetch_result;
             from_repo : constant String := " from the " & USS (repo.identifier) & " repository";
+            url_str   : constant String := USS (repo.url);
          begin
             Event.emit_debug (high_level, "Selecting " & USS (repo.identifier) & " repository");
-            result := Fetch.download_file (remote_file_url => USS (repo.url) & "/" & relative_path,
+            if not valid_scheme_specified (url_str) then
+               Event.emit_error ("The scheme specified in '" & url_str & "' is invalid.");
+               return False;
+            end if;
+            result := Fetch.download_file (remote_file_url => url_str & "/" & relative_path,
                                            etag_file       => "",
                                            downloaded_file => cache_location,
                                            remote_repo     => True,
@@ -1021,5 +1033,31 @@ package body Raven.Repository is
 
    end confirm_matching_fingerprints;
 
+
+   ------------------------------
+   --  valid_scheme_specified  --
+   ------------------------------
+   function valid_scheme_specified (url : String) return Boolean
+   is
+      url_delimiter : constant String := "://";
+   begin
+      if not contains (url, url_delimiter) then
+         return False;
+      end if;
+      declare
+         delim       : constant Character := Character'Val (0);
+         delimstr    : constant String (1 .. 1) := (others => delim);
+         scheme      : constant String := part_1 (url, url_delimiter);
+         flat_values : constant String := RCU.config_setting_as_string (RCU.CFG.valid_scheme);
+         num_fields  : constant Natural := count_char (flat_values, delim) + 1;
+      begin
+         for x in 1 .. num_fields loop
+            if specific_field (flat_values, x, delimstr) = scheme then
+               return True;
+            end if;
+         end loop;
+      end;
+      return False;
+   end valid_scheme_specified;
 
 end Raven.Repository;
