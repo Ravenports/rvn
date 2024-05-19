@@ -23,14 +23,14 @@ package curl_callbacks is
       end record;
 
    function write_file
-     (ptr      : IC.Strings.chars_ptr;
+     (ptr      : access IC.unsigned_char;
       size     : IC.size_t;
       nmemb    : IC.size_t;
       userdata : System.Address) return IC.size_t;
    pragma Export (C, write_file);
 
    function process_header
-     (ptr      : IC.Strings.chars_ptr;
+     (ptr      : access IC.unsigned_char;
       size     : IC.size_t;
       nmemb    : IC.size_t;
       userdata : System.Address) return IC.size_t;

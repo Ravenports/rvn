@@ -933,7 +933,7 @@ package curl_header is
    CURL_IPRESOLVE_V6       : constant Long_Integer := 2;
 
    type write_callback is access function
-     (ptr      : IC.Strings.chars_ptr;
+     (ptr      : access IC.unsigned_char;
       size     : IC.size_t;
       nmemb    : IC.size_t;
       userdata : System.Address) return IC.size_t;

@@ -18,7 +18,7 @@ package body curl_callbacks is
    ------------------
    --  write_file  --
    ------------------
-   function write_file (ptr      : IC.Strings.chars_ptr;
+   function write_file (ptr      : access IC.unsigned_char;
                         size     : IC.size_t;
                         nmemb    : IC.size_t;
                         userdata : System.Address) return IC.size_t
@@ -33,14 +33,15 @@ package body curl_callbacks is
       end if;
 
       declare
-         subtype cdatatype is IC.char_array (1 .. nmemb);
+         type cdatatype is array (1 .. nmemb) of IC.unsigned_char;
          subtype adatatype is STM.Stream_Element_Array (1 .. STM.Stream_Element_Offset (nmemb));
 
          function char_to_stream is new Ada.Unchecked_Conversion
            (Source => cdatatype,
             Target => adatatype);
 
-         cdata : cdatatype := IC.Strings.Value (ptr, nmemb);
+         cdata : cdatatype;
+         for cdata'Address use ptr.all'Address;
          adata : adatatype := char_to_stream (cdata);
 
       begin
@@ -57,7 +58,7 @@ package body curl_callbacks is
    --  process_header  --
    ----------------------
    function process_header
-     (ptr      : IC.Strings.chars_ptr;
+     (ptr      : access IC.unsigned_char;
       size     : IC.size_t;
       nmemb    : IC.size_t;
       userdata : System.Address) return IC.size_t
@@ -67,9 +68,10 @@ package body curl_callbacks is
       pragma Import (Ada, zdata);
    begin
       declare
-         subtype cdatatype is IC.char_array (1 .. nmemb);
+         subtype cdatatype is String (1 .. Natural (nmemb));
 
-         cdata : constant String := IC.Strings.Value (ptr, nmemb);
+         cdata : cdatatype;
+         for cdata'Address use ptr.all'Address;
          delim : Natural;
          equalsign : Natural;
       begin

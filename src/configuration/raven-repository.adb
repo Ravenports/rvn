@@ -969,8 +969,8 @@ package body Raven.Repository is
                  Blake_3.hex (Blake_3.file_digest (key_file));
                revoke_msg : constant String :=
                  "The fingerprints defined in the " & USS (repo.identifier) & " repository " &
-                 "configuration has been revoked.  Please obtain trusted fingerprints" &
-                 "try again.";
+                 "configuration has been revoked.  Please obtain trusted fingerprints " &
+                 "and try again.";
                not_found_msg : constant String :=
                  "The fingerprints defined in the " & USS (repo.identifier) & " repository " &
                  "configuration do not correspond with the public key provided with the " &
