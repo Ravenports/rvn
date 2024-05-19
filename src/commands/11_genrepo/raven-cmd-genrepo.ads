@@ -1,7 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
-private with interfaces.C.Strings;
+private with Interfaces.C.Strings;
 private with System.Multiprocessors;
 
 package Raven.Cmd.Genrepo is
@@ -37,12 +37,6 @@ private
 
    --  Signs the Blake3 checksum of the catalog
    function create_signature_file
-     (repo_path : String;
-      key_path  : String;
-      catalog   : String) return Boolean;
-
-   --  Verify the signature against the Blake3 checksum of the catalog
-   function verify_signed_catalog
      (repo_path : String;
       key_path  : String;
       catalog   : String) return Boolean;

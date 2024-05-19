@@ -67,7 +67,8 @@ package Raven.Repository is
 
 private
 
-    type download_type is (catalog_digest, catalog_archive);
+   type download_type is (catalog_digest, catalog_archive);
+   type fprint_status is (trusted, revoked);
 
    --  Populates ABI, OSNAME, ARCH, RELEASE
    function expansion_keys return String;
@@ -125,7 +126,8 @@ private
       relative_path  : String;
       cache_location : String;
       digest         : Blake_3.blake3_hash_hex;
-      quiet          : Boolean) return Boolean;
+      quiet          : Boolean;
+      site_used      : out Natural) return Boolean;
 
    --  Returns true if the file at file_path exists and has a blake3 checksum that matches
    --  the given digest
@@ -136,5 +138,30 @@ private
    --  Extracts contents of catalog.rvn in place.  No success message.
    function extract_catalog_contents return Boolean;
 
+   --  Returns True on unsigned catalogs (signature file not present, repo not expecting it)
+   --  Returns True if signature can be verified
+   function catalog_is_authentic
+     (mirrors    : A_Repo_Config_Set;
+      site_index : Natural;
+      quiet      : Boolean) return Boolean;
+
+   --  Remove files if they exist
+   procedure clean (filename : String);
+
+   --  Remove all files related to the catalog (after failed signature verification)
+   procedure remove_catalog_files;
+
+   --  Search the fprints_path/trusted directory for ucl-formatted fingerprint files
+   --  with blake3 format and fingerprints matching the key_file_digests.  If found, return True
+   function confirm_matching_fingerprints
+     (key_file_digest : Blake_3.blake3_hash_hex;
+      fprints_path    : String;
+      status          : fprint_status) return Boolean;
+
+   --  Verify the signature against the Blake3 checksum of the catalog
+   function verify_signed_catalog
+     (signature_file : String;
+      key_path       : String;
+      catalog        : String) return Boolean;
 
 end Raven.Repository;

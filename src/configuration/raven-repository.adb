@@ -8,6 +8,7 @@ with Raven.Context;
 with Raven.Catalog;
 with Raven.Event;
 with Raven.Fetch;
+with Raven.Unix;
 with Archive.Unix;
 with Archive.Misc;
 with Archive.Unpack;
@@ -15,6 +16,7 @@ with Archive.Dirent.Scan;
 with ThickUCL.Files;
 with Ucl;
 with curl_callbacks;
+with Interfaces.C.Strings;
 
 use Raven.Strings;
 
@@ -23,6 +25,7 @@ package body Raven.Repository is
    package RCU renames Raven.Cmd.Unset;
    package DSC renames Archive.Dirent.Scan;
    package CAL renames curl_callbacks;
+   package IC  renames Interfaces.C;
 
 
    ---------------------------------
@@ -576,6 +579,7 @@ package body Raven.Repository is
    is
       catalog_digest : Blake_3.blake3_hash_hex;
       cached_copy    : String := downloaded_file_path (catalog_archive);
+      site_index     : Natural;
    begin
       if not fetch_master_checksum (mirrors, forced, quiet) then
          return False;
@@ -599,12 +603,17 @@ package body Raven.Repository is
          end if;
       end if;
 
-      if fetch_from_mirror (mirrors, "catalog.rvn", cached_copy, catalog_digest, quiet) then
+      if fetch_from_mirror (mirrors, "catalog.rvn", cached_copy, catalog_digest, quiet,
+                            site_index)
+      then
          --  Retrieval of catalog.rvn was successful.  Now we need to extract it.
          if not extract_catalog_contents then
             return False;
          end if;
-         return True;
+         if catalog_is_authentic (mirrors, site_index, quiet) then
+            return True;
+         end if;
+         remove_catalog_files;
       end if;
 
       Event.emit_error ("Failed to retrieve the catalog archive.");
@@ -620,11 +629,13 @@ package body Raven.Repository is
                                relative_path  : String;
                                cache_location : String;
                                digest         : Blake_3.blake3_hash_hex;
-                               quiet          : Boolean) return Boolean
+                               quiet          : Boolean;
+                               site_used      : out Natural) return Boolean
    is
       number_sites : constant Natural := Natural (mirrors.search_order.Length);
    begin
       for site_index in 0 .. number_sites - 1 loop
+         site_used := site_index;
          declare
             index : Text renames mirrors.search_order.Element (site_index);
             repo : A_Repo_Config renames mirrors.repositories (index);
@@ -713,6 +724,19 @@ package body Raven.Repository is
    end create_local_catalog_database;
 
 
+   -------------
+   --  clean  --
+   -------------
+   procedure clean (filename : String) is
+   begin
+      if Archive.Unix.file_exists (filename) then
+         if not Archive.Unix.unlink_file (filename) then
+            Event.emit_debug (high_level, "failed to unlink " & filename);
+         end if;
+      end if;
+   end clean;
+
+
    --------------------------------
    --  extract_catalog_contents  --
    --------------------------------
@@ -722,15 +746,6 @@ package body Raven.Repository is
       level           : constant Archive.info_level := Archive.silent;
       archive_path    : constant String := downloaded_file_path (catalog_archive);
       good_extraction : Boolean;
-
-      procedure clean (filename : String) is
-      begin
-         if Archive.Unix.file_exists (filename) then
-            if not Archive.Unix.unlink_file (filename) then
-               Event.emit_debug (high_level, "failed to unlink " & filename);
-            end if;
-         end if;
-      end clean;
    begin
       --  Remove old files in case new archives have less files
       clean (cache_directory & "/catalog.ucl");
@@ -754,5 +769,253 @@ package body Raven.Repository is
 
       return True;
    end extract_catalog_contents;
+
+
+   ----------------------------
+   --  remove_catalog_files  --
+   ----------------------------
+   procedure remove_catalog_files is
+   begin
+      clean (cache_directory & "/catalog.rvn");
+      clean (cache_directory & "/catalog.sum");
+      clean (cache_directory & "/catalog.ucl");
+      clean (cache_directory & "/signature");
+      clean (cache_directory & "/repository.pub");
+   end remove_catalog_files;
+
+
+   -----------------------------
+   --  verify_signed_catalog  --
+   -----------------------------
+   function verify_signed_catalog
+     (signature_file : String;
+      key_path  : String;
+      catalog   : String) return Boolean
+   is
+      c_key_path  : IC.Strings.chars_ptr;
+      c_sig_path  : IC.Strings.chars_ptr;
+      c_hash_len  : IC.size_t := IC.size_t (Blake_3.blake3_hash'Length);
+      c_hash      : array (Blake_3.blake3_hash'Range) of aliased IC.unsigned_char;
+      a_digest    : Blake_3.blake3_hash;
+      result      : IC.int;
+
+      use type IC.int;
+   begin
+      a_digest := Blake_3.file_digest (catalog);
+      c_key_path := IC.Strings.New_String (key_path);
+      c_sig_path := IC.Strings.New_String (signature_file);
+      for x in Blake_3.blake3_hash'Range loop
+         c_hash (x) := IC.unsigned_char (Character'Pos (a_digest (x)));
+      end loop;
+
+      result := Unix.C_Verify_Digest
+        (hash     => c_hash (Blake_3.blake3_hash'First)'Access,
+         hash_len => c_hash_len,
+         key_path => c_key_path,
+         sig_path => c_sig_path);
+
+      IC.Strings.Free (c_key_path);
+      IC.Strings.Free (c_sig_path);
+
+      if result /= 0 then
+         Event.emit_debug (high_level, "Verification failed, RC =" & result'Img);
+         return False;
+      end if;
+
+      return True;
+
+   end verify_signed_catalog;
+
+
+   ----------------------------
+   --  catalog_is_authentic  --
+   ----------------------------
+   function catalog_is_authentic
+     (mirrors    : A_Repo_Config_Set;
+      site_index : Natural;
+      quiet      : Boolean) return Boolean
+   is
+      signature : constant String := cache_directory & "/signature";
+      key_file  : constant String := cache_directory & "/repository.pub";
+      catalog   : constant String := cache_directory & "/catalog.ucl";
+      repo_name : Text renames mirrors.search_order.Element (site_index);
+      repo      : A_Repo_Config renames mirrors.repositories.Element (repo_name);
+      LF        : constant Character := Character'Val (10);
+      features  : Archive.Unix.File_Characteristics;
+      found_fingerprints : Boolean;
+      found_public_key   : Boolean;
+      found_signature    : Boolean;
+      found_key_file     : Boolean;
+
+      function error_msg (rsa_key_type : String) return String is
+      begin
+         return "The " & USS (repo.identifier) & " repository configuration defines a " &
+           rsa_key_type & "path" & LF & "but the catalog is unsigned. Either remove " &
+           "the definition, " & LF & "or check if the remote repository should be signed.";
+      end;
+
+   begin
+      found_fingerprints := not IsBlank (repo.fprint_dir);
+      found_public_key   := not IsBlank (repo.pubkey_path);
+      found_signature    := Archive.Unix.file_exists (signature);
+      found_key_file     := Archive.Unix.file_exists (key_file);
+
+      --  nominal unsigned case: no signature file, no fingerprints, and no RSA file
+      if not found_signature and then
+        not found_fingerprints and then
+        not found_public_key
+      then
+         Event.emit_debug (high_level, "Catalog is unsigned which repo configuration expects.");
+         return True;
+      end if;
+
+      --  bad case 1:
+      --  No signature file, but fingerprints or pubkey are not blank
+      if not found_signature then
+         if found_fingerprints then
+            Event.emit_error (error_msg ("fingerprint"));
+            return False;
+         end if;
+         if found_public_key then
+            Event.emit_error (error_msg ("public key"));
+            return False;
+         end if;
+      end if;
+
+      --  At this point, found_signature is guaranteed to be true (4 cases left)
+
+      --  bad case 2:
+      --  signature file present, but fingerprints and pubkey are not defined
+      if not found_fingerprints and then not found_public_key then
+         Event.emit_error
+           ("The catalog archive contains a signature file, but the " &
+              USS (repo.identifier) & " repository " & LF &
+              "does not define paths for fingerprints or a public key.  Please update " &
+              LF & "the repository configuration file.");
+         return False;
+      end if;
+
+      --  cases left: signature + fingerprints and/or public key
+      --  Warn about fingerprints + public_key
+      if found_fingerprints and then found_public_key then
+         if not quiet then
+            Event.emit_message
+              ("The " & USS (repo.identifier) & " repository sets a path for both fingerprints " &
+                 " and a public key." & LF &
+                 "The public key setting has been ignored.  Please remove one from" &
+                 LF & "the repository configuration file.");
+         end if;
+      end if;
+
+      if found_fingerprints then
+         if not found_key_file then
+            Event.emit_error
+              ("The " & USS (repo.identifier) & " repository sets the fingerprints path " &
+                 " but the public key " & LF &
+                 "was not provided.  Please switch to public key verification or contact" & LF &
+                 "maintainers to correct their signature method.");
+            return False;
+         end if;
+         declare
+            --  Calculate digest of provided public key
+            kf_digest : constant Blake_3.blake3_hash_hex :=
+              Blake_3.hex (Blake_3.file_digest (key_file));
+         begin
+            if confirm_matching_fingerprints (kf_digest, USS (repo.fprint_dir), trusted) then
+               --  provided public key is legit.
+               return verify_signed_catalog (signature, key_file, catalog);
+            end if;
+            if confirm_matching_fingerprints (kf_digest,  USS (repo.fprint_dir), revoked) then
+               Event.emit_error
+                 ("The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
+                    "configuration has been revoked.  Please obtain trusted fingerprints" & LF &
+                    "try again.");
+            end if;
+            Event.emit_error
+              ("The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
+                 "configuration do not correspond with the public key provided with the " & LF &
+                 "catalog. Please ensure the trusted fingerprint files are located correctly.");
+            return False;
+         end;
+      end if;
+
+      --  Use the provided public key, but verify it's a file first.
+      features := Archive.Unix.get_charactistics (USS (repo.pubkey_path));
+      case features.ftype is
+         when Archive.regular => null;
+         when others =>
+            Event.emit_error
+              ("The public key path in the " & USS (repo.identifier) & " repository " & LF &
+                 "configuration is not an existing file. Please install the public key " & LF &
+                 "at the indicated location.");
+            return False;
+      end case;
+
+      return verify_signed_catalog (signature, USS (repo.pubkey_path), catalog);
+
+   end catalog_is_authentic;
+
+
+   -------------------------------------
+   --  confirm_matching_fingerprints  --
+   -------------------------------------
+   function confirm_matching_fingerprints
+     (key_file_digest : Blake_3.blake3_hash_hex;
+      fprints_path    : String;
+      status          : fprint_status) return Boolean
+   is
+      --  check <fprints_path>/trusted when status = trusted
+      --  check <fprints_path>/revoked when status = trusted
+      --  Search directory for files within.
+      --  Parse each one with UCL parser
+      --  If parse succeeds, verify "function" defined as "blake3" and "fingerprint" is defined.
+      --  If the value of "fingerprint" matches <key_file_digest> return true.
+      --  Return false when loop ends unsuccessfully.
+
+      file_list   : DSC.dscan_crate.Vector;
+      match_found : Boolean := False;
+
+      function dir_path return String is
+      begin
+         case status is
+            when trusted => return fprints_path & "/trusted";
+            when revoked => return fprints_path & "/revoked";
+         end case;
+      end dir_path;
+
+      procedure check_fingerprint (position : DSC.dscan_crate.Cursor)
+      is
+         item : Archive.Dirent.Directory_Entity renames DSC.dscan_crate.Element (position);
+         ftree : ThickUCL.UclTree;
+      begin
+         if not match_found then
+            ThickUCL.Files.parse_ucl_file (ftree, item.full_path, "");
+            if not ftree.key_exists ("function") or else
+              not ftree.key_exists ("fingerprint")
+            then
+               return;
+            end if;
+            declare
+               algorithm   : constant String := lowercase (ftree.get_base_value ("function"));
+               fingerprint : constant String := lowercase (ftree.get_base_value ("fingerprint"));
+            begin
+               if algorithm = "blake3" and then fingerprint = key_file_digest then
+                  match_found := True;
+               end if;
+            end;
+         end if;
+      exception
+         when ThickUCL.Files.ucl_file_unparseable =>
+            Event.emit_debug (high_level, "check_fingerprint - unparsable: " & item.full_path);
+      end check_fingerprint;
+
+   begin
+
+      DSC.scan_directory (dir_path, file_list);
+      file_list.Iterate (check_fingerprint'Access);
+      return match_found;
+
+   end confirm_matching_fingerprints;
+
 
 end Raven.Repository;
