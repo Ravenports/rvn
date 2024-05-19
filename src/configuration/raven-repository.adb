@@ -812,7 +812,8 @@ package body Raven.Repository is
    function verify_signed_catalog
      (signature_file : String;
       key_path  : String;
-      catalog   : String) return Boolean
+      catalog   : String;
+      quiet     : Boolean) return Boolean
    is
       c_key_path  : IC.Strings.chars_ptr;
       c_sig_path  : IC.Strings.chars_ptr;
@@ -841,6 +842,9 @@ package body Raven.Repository is
 
       if result /= 0 then
          Event.emit_debug (high_level, "Verification failed, RC =" & result'Img);
+         if not quiet then
+            Event.emit_message ("fatal: catalog archive cannot be authenticated.");
+         end if;
          return False;
       end if;
 
@@ -974,7 +978,7 @@ package body Raven.Repository is
             begin
                if confirm_matching_fingerprints (kf_digest, USS (repo.fprint_dir), trusted) then
                   --  provided public key is legit.
-                  return verify_signed_catalog (signature, key_file, catalog);
+                  return verify_signed_catalog (signature, key_file, catalog, quiet);
                end if;
                if confirm_matching_fingerprints (kf_digest,  USS (repo.fprint_dir), revoked) then
                   Event.emit_error (revoke_msg);
@@ -984,7 +988,7 @@ package body Raven.Repository is
                return False;
             end;
          when public_key =>
-            return verify_signed_catalog (signature, USS (repo.pubkey_path), catalog);
+            return verify_signed_catalog (signature, USS (repo.pubkey_path), catalog, quiet);
       end case;
 
    end catalog_is_authentic;

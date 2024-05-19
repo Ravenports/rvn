@@ -162,7 +162,8 @@ private
    function verify_signed_catalog
      (signature_file : String;
       key_path       : String;
-      catalog        : String) return Boolean;
+      catalog        : String;
+      quiet          : Boolean) return Boolean;
 
    --  Compares url text before "://" to the array of VALID_URL_SCHEME
    --  If it matches one of the elements, True is returned.
