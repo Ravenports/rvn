@@ -858,116 +858,130 @@ package body Raven.Repository is
       repo      : A_Repo_Config renames mirrors.repositories.Element (repo_name);
       LF        : constant Character := Character'Val (10);
       features  : Archive.Unix.File_Characteristics;
-      found_fingerprints : Boolean;
-      found_public_key   : Boolean;
-      found_signature    : Boolean;
-      found_key_file     : Boolean;
+      fingerprints_defined : Boolean;
+      public_key_defined   : Boolean;
+      found_signature      : Boolean;
+      found_key_file       : Boolean;
 
       function error_msg (rsa_key_type : String) return String is
       begin
-         return "The " & USS (repo.identifier) & " repository configuration defines a " &
-           rsa_key_type & "path" & LF & "but the catalog is unsigned. Either remove " &
-           "the definition, " & LF & "or check if the remote repository should be signed.";
+         return "Authentication is set to " & rsa_key_type & " by the " &
+           USS (repo.identifier) & LF &
+           "repository, but the catalog is not signed.  Set SIGNATURE_TYPE to 'NONE'" & LF &
+           "or check with the maintainers if the repository should be signed.";
       end;
-
    begin
-      found_fingerprints := not IsBlank (repo.fprint_dir);
-      found_public_key   := not IsBlank (repo.pubkey_path);
-      found_signature    := Archive.Unix.file_exists (signature);
-      found_key_file     := Archive.Unix.file_exists (key_file);
+      fingerprints_defined := not IsBlank (repo.fprint_dir);
+      public_key_defined   := not IsBlank (repo.pubkey_path);
+      found_signature      := Archive.Unix.file_exists (signature);
+      found_key_file       := Archive.Unix.file_exists (key_file);
 
-      --  nominal unsigned case: no signature file, no fingerprints, and no RSA file
-      if not found_signature and then
-        not found_fingerprints and then
-        not found_public_key
-      then
-         Event.emit_debug (high_level, "Catalog is unsigned which repo configuration expects.");
-         return True;
-      end if;
-
-      --  bad case 1:
-      --  No signature file, but fingerprints or pubkey are not blank
-      if not found_signature then
-         if found_fingerprints then
-            Event.emit_error (error_msg ("fingerprint"));
-            return False;
-         end if;
-         if found_public_key then
-            Event.emit_error (error_msg ("public key"));
-            return False;
-         end if;
-      end if;
-
-      --  At this point, found_signature is guaranteed to be true (4 cases left)
-
-      --  bad case 2:
-      --  signature file present, but fingerprints and pubkey are not defined
-      if not found_fingerprints and then not found_public_key then
-         Event.emit_error
-           ("The catalog archive contains a signature file, but the " &
-              USS (repo.identifier) & " repository " & LF &
-              "does not define paths for fingerprints or a public key.  Please update " &
-              LF & "the repository configuration file.");
-         return False;
-      end if;
-
-      --  cases left: signature + fingerprints and/or public key
-      --  Warn about fingerprints + public_key
-      if found_fingerprints and then found_public_key then
-         if not quiet then
-            Event.emit_message
-              ("The " & USS (repo.identifier) & " repository sets a path for both fingerprints " &
-                 " and a public key." & LF &
-                 "The public key setting has been ignored.  Please remove one from" &
-                 LF & "the repository configuration file.");
-         end if;
-      end if;
-
-      if found_fingerprints then
-         if not found_key_file then
-            Event.emit_error
-              ("The " & USS (repo.identifier) & " repository sets the fingerprints path " &
-                 " but the public key " & LF &
-                 "was not provided.  Please switch to public key verification or contact" & LF &
-                 "maintainers to correct their signature method.");
-            return False;
-         end if;
-         declare
-            --  Calculate digest of provided public key
-            kf_digest : constant Blake_3.blake3_hash_hex :=
-              Blake_3.hex (Blake_3.file_digest (key_file));
-         begin
-            if confirm_matching_fingerprints (kf_digest, USS (repo.fprint_dir), trusted) then
-               --  provided public key is legit.
-               return verify_signed_catalog (signature, key_file, catalog);
-            end if;
-            if confirm_matching_fingerprints (kf_digest,  USS (repo.fprint_dir), revoked) then
+      --  if authentication is unsigned, ignore pubkey and fingerprint definitions
+      --  if authentication is fingerprints, it must be defined (files checked later)
+      --  if authentication is public key, it must be defined and key path must be defined
+      case repo.verification is
+         when not_signed => null;
+         when public_key =>
+            if not public_key_defined then
                Event.emit_error
-                 ("The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
-                    "configuration has been revoked.  Please obtain trusted fingerprints" & LF &
-                    "try again.");
+                 ("The " & USS (repo.identifier) & " repository authentication is set to " & LF &
+                    "use a public key, but PUBKEY is undefined.");
+               return False;
             end if;
-            Event.emit_error
-              ("The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
-                 "configuration do not correspond with the public key provided with the " & LF &
-                 "catalog. Please ensure the trusted fingerprint files are located correctly.");
-            return False;
-         end;
-      end if;
-
-      --  Use the provided public key, but verify it's a file first.
-      features := Archive.Unix.get_charactistics (USS (repo.pubkey_path));
-      case features.ftype is
-         when Archive.regular => null;
-         when others =>
-            Event.emit_error
-              ("The public key path in the " & USS (repo.identifier) & " repository " & LF &
-                 "configuration is not an existing file. Please install the public key " & LF &
-                 "at the indicated location.");
-            return False;
+            features := Archive.Unix.get_charactistics (USS (repo.pubkey_path));
+            case features.ftype is
+               when Archive.regular => null;
+               when others =>
+                  Event.emit_error
+                    ("The public key path in the " & USS (repo.identifier) & " repository " & LF &
+                       "configuration is not an existing file. Please install the public " & LF &
+                       "key at the indicated location.");
+                  return False;
+            end case;
+         when fingerprinted =>
+            if not fingerprints_defined then
+               Event.emit_error
+                 ("The " & USS (repo.identifier) & " repository authentication is set to " & LF &
+                    "use fingerprints, but FINGERPRINTS is undefined.");
+               return False;
+            end if;
+            features := Archive.Unix.get_charactistics (USS (repo.fprint_dir));
+            case features.ftype is
+               when Archive.directory => null;
+               when others =>
+                  Event.emit_error
+                    ("The fingerprints path in the " & USS (repo.identifier) & " repository " & LF &
+                       "configuration is not an existing directory. Please install the " &
+                       "fingerprint file in 'trusted' subdirectory.");
+                  return False;
+            end case;
       end case;
 
-      return verify_signed_catalog (signature, USS (repo.pubkey_path), catalog);
+      --  nominal unsigned case: no signature file
+      --  check for bad case where a signature is present but authentication is not set
+      --  check for bad case where authentication is set but the signature is not present
+      case repo.verification is
+         when not_signed =>
+            if found_signature then
+               Event.emit_error
+                 ("The catalog archive contains a signature file, but SIGNATURE_TYPE is" & LF &
+                    "not defined by the " & USS (repo.identifier) & " repository.");
+               return False;
+            else
+               Event.emit_debug (high_level, "Catalog is unsigned as repo expected [good]");
+               return True;
+            end if;
+         when public_key =>
+            if not found_signature then
+               Event.emit_error (error_msg ("public key"));
+               return False;
+            end if;
+         when fingerprinted =>
+            if not found_signature then
+               Event.emit_error (error_msg ("fingerprints"));
+               return False;
+            end if;
+            if not found_key_file then
+               Event.emit_error
+                 ("The " & USS (repo.identifier) & " repository set SIGNATURE_TYPE to " & LF &
+                    "'fingerprints' but the public key was not provided.  Please switch " & LF &
+                    "to public key verification or contact the maintainers to correct " & LF &
+                    "their signature method.");
+            return False;
+            end if;
+      end case;
+
+      --  handle key verification
+       case repo.verification is
+         when not_signed => return False;  --  impossible
+         when fingerprinted =>
+            declare
+               --  Calculate digest of provided public key
+               kf_digest : constant Blake_3.blake3_hash_hex :=
+                 Blake_3.hex (Blake_3.file_digest (key_file));
+               revoke_msg : constant String :=
+                 "The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
+                 "configuration has been revoked.  Please obtain trusted fingerprints" & LF &
+                 "try again.";
+               not_found_msg : constant String :=
+                 "The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
+                 "configuration do not correspond with the public key provided with the " & LF &
+                 "catalog. Please ensure the trusted fingerprint files are located correctly.";
+            begin
+               if confirm_matching_fingerprints (kf_digest, USS (repo.fprint_dir), trusted) then
+                  --  provided public key is legit.
+                  return verify_signed_catalog (signature, key_file, catalog);
+               end if;
+               if confirm_matching_fingerprints (kf_digest,  USS (repo.fprint_dir), revoked) then
+                  Event.emit_error (revoke_msg);
+                  return False;
+               end if;
+               Event.emit_error (not_found_msg);
+               return False;
+            end;
+         when public_key =>
+            return verify_signed_catalog (signature, USS (repo.pubkey_path), catalog);
+      end case;
 
    end catalog_is_authentic;
 
