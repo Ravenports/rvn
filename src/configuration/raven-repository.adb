@@ -1012,6 +1012,7 @@ package body Raven.Repository is
 
       file_list   : DSC.dscan_crate.Vector;
       match_found : Boolean := False;
+      features    : Archive.Unix.File_Characteristics;
 
       function dir_path return String is
       begin
@@ -1049,9 +1050,13 @@ package body Raven.Repository is
       end check_fingerprint;
 
    begin
-
-      DSC.scan_directory (dir_path, file_list);
-      file_list.Iterate (check_fingerprint'Access);
+      features := Archive.Unix.get_charactistics (dir_path);
+      case features.ftype is
+         when Archive.directory =>
+            DSC.scan_directory (dir_path, file_list);
+            file_list.Iterate (check_fingerprint'Access);
+         when others => null;
+      end case;
       return match_found;
 
    end confirm_matching_fingerprints;
