@@ -606,7 +606,8 @@ package body Raven.Configuration is
       end set_configuration;
    begin
       if IsBlank (file_path) then
-         EV.emit_debug (moderate, "Given configuration file " & file_path & " does not exist.");
+         EV.emit_debug
+           (moderate, "Given configuration file " & configuration_file & " does not exist.");
          return;
       end if;
       begin
