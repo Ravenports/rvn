@@ -862,7 +862,6 @@ package body Raven.Repository is
       catalog   : constant String := cache_directory & "/catalog.ucl";
       repo_name : Text renames mirrors.search_order.Element (site_index);
       repo      : A_Repo_Config renames mirrors.repositories.Element (repo_name);
-      LF        : constant Character := Character'Val (10);
       features  : Archive.Unix.File_Characteristics;
       fingerprints_defined : Boolean;
       public_key_defined   : Boolean;
@@ -871,10 +870,9 @@ package body Raven.Repository is
 
       function error_msg (rsa_key_type : String) return String is
       begin
-         return "Authentication is set to " & rsa_key_type & " by the " &
-           USS (repo.identifier) & LF &
-           "repository, but the catalog is not signed.  Set SIGNATURE_TYPE to 'NONE'" & LF &
-           "or check with the maintainers if the repository should be signed.";
+         return "Authentication is set to " & rsa_key_type & " by the " & USS (repo.identifier) &
+           " repository, but the catalog is not signed.  Set SIGNATURE_TYPE to 'NONE' or check " &
+           "with the maintainers if the repository should be signed.";
       end;
    begin
       fingerprints_defined := not IsBlank (repo.fprint_dir);
@@ -890,7 +888,7 @@ package body Raven.Repository is
          when public_key =>
             if not public_key_defined then
                Event.emit_error
-                 ("The " & USS (repo.identifier) & " repository authentication is set to " & LF &
+                 ("The " & USS (repo.identifier) & " repository authentication is set to " &
                     "use a public key, but PUBKEY is undefined.");
                return False;
             end if;
@@ -899,15 +897,15 @@ package body Raven.Repository is
                when Archive.regular => null;
                when others =>
                   Event.emit_error
-                    ("The public key path in the " & USS (repo.identifier) & " repository " & LF &
-                       "configuration is not an existing file. Please install the public " & LF &
+                    ("The public key path in the " & USS (repo.identifier) & " repository " &
+                       "configuration is not an existing file. Please install the public " &
                        "key at the indicated location.");
                   return False;
             end case;
          when fingerprinted =>
             if not fingerprints_defined then
                Event.emit_error
-                 ("The " & USS (repo.identifier) & " repository authentication is set to " & LF &
+                 ("The " & USS (repo.identifier) & " repository authentication is set to " &
                     "use fingerprints, but FINGERPRINTS is undefined.");
                return False;
             end if;
@@ -916,8 +914,8 @@ package body Raven.Repository is
                when Archive.directory => null;
                when others =>
                   Event.emit_error
-                    ("The fingerprints path in the " & USS (repo.identifier) & " repository " & LF &
-                       "configuration is not an existing directory. Please install the " &
+                    ("The fingerprints path in the " & USS (repo.identifier) & " repository " &
+                       "configuration is not an existing directory.  Please install the " &
                        "fingerprint file in 'trusted' subdirectory.");
                   return False;
             end case;
@@ -930,7 +928,7 @@ package body Raven.Repository is
          when not_signed =>
             if found_signature then
                Event.emit_error
-                 ("The catalog archive contains a signature file, but SIGNATURE_TYPE is" & LF &
+                 ("The catalog archive contains a signature file, but SIGNATURE_TYPE is " &
                     "not defined by the " & USS (repo.identifier) & " repository.");
                return False;
             else
@@ -949,9 +947,9 @@ package body Raven.Repository is
             end if;
             if not found_key_file then
                Event.emit_error
-                 ("The " & USS (repo.identifier) & " repository set SIGNATURE_TYPE to " & LF &
-                    "'fingerprints' but the public key was not provided.  Please switch " & LF &
-                    "to public key verification or contact the maintainers to correct " & LF &
+                 ("The " & USS (repo.identifier) & " repository set SIGNATURE_TYPE to " &
+                    "'fingerprints' but the public key was not provided.  Please switch " &
+                    "to public key verification or contact the maintainers to correct " &
                     "their signature method.");
             return False;
             end if;
@@ -966,12 +964,12 @@ package body Raven.Repository is
                kf_digest : constant Blake_3.blake3_hash_hex :=
                  Blake_3.hex (Blake_3.file_digest (key_file));
                revoke_msg : constant String :=
-                 "The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
-                 "configuration has been revoked.  Please obtain trusted fingerprints" & LF &
+                 "The fingerprints defined in the " & USS (repo.identifier) & " repository " &
+                 "configuration has been revoked.  Please obtain trusted fingerprints" &
                  "try again.";
                not_found_msg : constant String :=
-                 "The fingerprints defined in the " & USS (repo.identifier) & " repository " & LF &
-                 "configuration do not correspond with the public key provided with the " & LF &
+                 "The fingerprints defined in the " & USS (repo.identifier) & " repository " &
+                 "configuration do not correspond with the public key provided with the " &
                  "catalog. Please ensure the trusted fingerprint files are located correctly.";
             begin
                if confirm_matching_fingerprints (kf_digest, USS (repo.fprint_dir), trusted) then
