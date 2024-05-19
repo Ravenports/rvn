@@ -779,7 +779,7 @@ package body Raven.Repository is
         (top_directory => cache_directory,
          set_owners    => True,
          set_perms     => True,
-         set_modtime   => False,
+         set_modtime   => True,
          skip_scripts  => True,
          upgrading     => False);
       operation.close_rvn_archive;
