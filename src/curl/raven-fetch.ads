@@ -20,4 +20,14 @@ package Raven.Fetch is
       remote_repo     : Boolean := False;
       remote_protocol : IP_support := no_restriction) return fetch_result;
 
+private
+
+   --  Returns true if url starts with "file://"
+   function using_file_protocol (url : String) return Boolean;
+
+   --  Implements "file://" protocol
+   function copy_local_file
+     (remote_file_url : String;
+      downloaded_file : String) return fetch_result;
+
 end Raven.Fetch;

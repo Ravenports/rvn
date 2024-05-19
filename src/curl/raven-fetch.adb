@@ -1,9 +1,11 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Directories;
 with Ada.Characters.Latin_1;
 with Ada.Environment_Variables;
 with Raven.Event;
+with Raven.Strings;
 with Raven.Context;
 with Raven.Cmd.Unset;
 with curl_header;
@@ -14,6 +16,7 @@ package body Raven.Fetch is
 
    package CAL renames curl_callbacks;
    package RCU renames Raven.Cmd.Unset;
+   package DIR renames Ada.Directories;
    package LAT renames Ada.Characters.Latin_1;
    package ENV renames Ada.Environment_Variables;
 
@@ -34,6 +37,10 @@ package body Raven.Fetch is
       response_code : Long_Integer;
       header_list : curl_header.access_curl_slist := null;
    begin
+      if using_file_protocol (remote_file_url) then
+         return copy_local_file (remote_file_url, downloaded_file);
+      end if;
+
       if CAL.target_file_cached (downloaded_file, etag_file) then
          Event.emit_debug (high_level, "Latest " & downloaded_file & " is already cached.");
          return cache_valid;
@@ -160,5 +167,40 @@ package body Raven.Fetch is
       return retrieval_failed;
    end download_file;
 
+
+   ---------------------------
+   --  using_file_protocol  --
+   ---------------------------
+   function using_file_protocol (url : String) return Boolean is
+   begin
+      return Strings.leads (url, "file://");
+   end using_file_protocol;
+
+
+   -----------------------
+   --  copy_local_file  --
+   -----------------------
+   function copy_local_file
+     (remote_file_url : String;
+      downloaded_file : String) return fetch_result
+   is
+      function source_file return String
+      is
+         --  file:// length is 7
+         --  silently correct "file://xxx" to "file:///xxx"
+         offset : Natural := 6;
+      begin
+         if Strings.leads (remote_file_url, "file:///") then
+            offset := 7;
+         end if;
+         return remote_file_url (remote_file_url'First + offset .. remote_file_url'Last);
+      end;
+   begin
+      DIR.Copy_File (source_file, downloaded_file);
+      return file_downloaded;
+   exception
+      when others =>
+         return retrieval_failed;
+   end copy_local_file;
 
 end Raven.Fetch;
