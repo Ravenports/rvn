@@ -1,6 +1,8 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Raven.Strings;  use Raven.Strings;
+
 package body Raven.Query is
 
    -----------------
@@ -8,6 +10,8 @@ package body Raven.Query is
    -----------------
    function get_token (component : String) return A_Token
    is
+      --  the binary search is case insenstive
+
       total_keywords : constant Positive := A_Token'Pos (A_Token'Last) + 1;
 
       subtype keyword_string is String (1 .. 10);
@@ -75,7 +79,7 @@ package body Raven.Query is
          ("xshadj    ", token_ml_shlibs_adj),
          ("xshpro    ", token_ml_shlibs_pro),
          ("xshreq    ", token_ml_shlibs_req),
-         ("xuser     ",  token_ml_users)
+         ("xuser     ", token_ml_users)
         );
 
       bandolier : keyword_string := (others => ' ');
@@ -89,7 +93,7 @@ package body Raven.Query is
          return token_unrecognized;
       end if;
 
-      bandolier (1 .. component'Length) := component;
+      bandolier (1 .. component'Length) := lowercase (component);
 
       loop
          Mid := (Low + High) / 2;
