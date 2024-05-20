@@ -8,25 +8,25 @@
 .Nm
 .Op Fl AfIMnFqRUy
 .Op Fl r Ar reponame
-.Op Fl Cgi
+.Op Fl CE
 .Ar <pkg-namebase|pkg-namebase-subpackage-variant> ...
 .Pp
 .Nm
 .Op Cm --{automatic,force,no-scripts,ignore-missing}
 .Op Cm --{dry-run,fetch-only,quiet,recursive,no-repo-update,yes}
 .Op Cm --repository Ar reponame
-.Op Cm --{case-sensitive,glob,case-insensitive}
+.Op Cm --{case-sensitive,exact-match}
 .Ar <pkg-namebase|pkg-namebase-subpackage-variant> ...
 .Sh DESCRIPTION
 .Nm
 is used for installation of packages from package repositories or
 local archives.
 Multiple package names can be specified on the command line, either
-explicitly or by matching against package names (or origins) in the repository
-catalogues using shell globbing or regular expressions.
+explicitly or by matching against package names (or origins) in the
+repository catalogs.
 .Pp
 .Nm
-first updates any out of date repository catalogues, unless
+first updates any out of date repository catalogs, unless
 .Cm REPO_AUTOUPDATE
 has been set to
 .Sy NO
@@ -80,7 +80,7 @@ See
 .Xr rvn-repository 5
 for details.
 .Pp
-Package repository catalogues will be automatically updated whenever
+Package repository catalogs will be automatically updated whenever
 .Nm
 is run by a user ID with write access to the package database,
 unless disabled by the
@@ -101,33 +101,21 @@ Will be automatically removed if no other packages depend on them.
 For more information please refer to
 .Xr rvn-autoremove 8 .
 .It Fl C , Cm --case-sensitive
-Make the standard or the regular expression
-.Fl ( x )
-matching against
-.Ar pkg-name
-case sensitive.
+Change default case-insensitive matching to case
+sensitive when searching for
+.Ar pkg-name .
+.It Fl E , Cm --exact-match
+Disable glob searching which is the default setting.
 .It Fl F , Cm --fetch-only
 Do not perform actual installation of packages, merely fetch packages
 that should be upgraded and detect possible conflicts.
 .It Fl f , Cm --force
 Force the reinstallation of the package if already installed.
-.It Fl g , Cm --glob
-Treat the package names as shell glob patterns.
 .It Fl I , Cm --no-scripts
 If any installation scripts (pre-install or post-install) exist for a given
 package, do not execute them.
 When a package is updated, deinstallation scripts (pre-deinstall or
 post-deinstall) are not run either.
-.It Fl i , Cm --case-insensitive
-Make the standard or the regular expression
-.Fl ( x )
-matching against
-.Ar pkg-name
-case insensitive.
-This is the default, unless modified by setting
-.Ev CASE_SENSITIVE_MATCH
-to true in
-.Pa rvn.conf .
 .It Fl M , Cm --ignore-missing
 Force the installation of the package with missing dependencies.
 .It Fl n , Cm --dry-run
@@ -151,9 +139,9 @@ irrespective of the configured
 status from
 .Pa repo.conf .
 .It Fl U , Cm --no-repo-update
-Suppress the automatic update of the local copy of the repository catalogue
+Suppress the automatic update of the local copy of the repository catalog
 from remote.
-Automatic repository catalogue updates are only attempted when the
+Automatic repository catalog updates are only attempted when the
 effective UID of the process has write access to the package database.
 Otherwise they are silently ignored.
 .It Fl y , Cm --yes

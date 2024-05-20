@@ -33,7 +33,7 @@ package body Raven.Cmd.Install is
          return currently_unsupported ("--case-sensitive");
       end if;
       if comline.common_options.exact_match then
-         return currently_unsupported ("--exact");
+         return currently_unsupported ("--exact-match");
       end if;
       if comline.common_options.no_repo_update then
          return currently_unsupported ("--no-repo-update");

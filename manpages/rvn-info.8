@@ -12,7 +12,7 @@
 .Nm
 .Op Fl ABbMDdefIjpqrsNSV
 .Op Fl L | Fl l
-.Op Fl Cgi
+.Op Fl CE
 .Ar pkg-name
 .Nm
 .Op Fl ABbMDdfIjLlpqRsNSV
@@ -29,7 +29,7 @@
 .Op Cm --{full,comment,adjacent-shlibs,prefix}
 .Op Cm --{quiet,required-by,size,namebase,subpackage,variant}
 .Op Cm --list-digests | --list-files
-.Op Cm --{case-sensitive,glob,case-insensitive}
+.Op Cm --{case-sensitive,exact-match}
 .Ar pkg-name
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
@@ -56,17 +56,17 @@ Display all shared libraries used by
 Display all shared libraries provided by
 .Ar pkg-name .
 .It Fl C , Cm --case-sensitive
-Make the standard or the regular expression
-.Fl ( x )
-matching against
-.Ar pkg-name
-case sensitive.
+Change default case-insensitive matching to case
+sensitive when searching for
+.Ar pkg-name .
 .It Fl D , Cm --description
 Show the long description for matching packages.
 .It Fl d , Cm --dependencies
 Display the list of packages on which
 .Ar pkg-name
 depends.
+.It Fl E , Cm --exact-match
+Disable glob searching which is the default setting.
 .It Fl e , Cm --exists
 If
 .Ar pkg-name
@@ -79,22 +79,8 @@ Displays information from the package archive
 Display full information about the packages matching
 .Ar pkg-name .
 This is the default.
-.It Fl g , Cm --glob
-Treat
-.Ar pkg-name
-as a shell glob pattern.
 .It Fl I , Cm --comment
 Display the specified packages and their comments.
-.It Fl i , Cm --case-insensitive
-Make the standard or the regular expression
-.Fl ( x )
-matching against
-.Ar pkg-name
-case insensitive.
-This is the default, unless modified by setting
-.Ev CASE_SENSITIVE_MATCH
-to true in
-.Pa rvn.conf .
 .It Fl j , Cm --adjacent-shlibs
 Display all libraries that were present in the stage directory but not
 present in this package.
