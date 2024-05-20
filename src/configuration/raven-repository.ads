@@ -28,6 +28,8 @@ package Raven.Repository is
          url          : Text;
          pubkey_path  : Text;
          fprint_dir   : Text;
+         scp_private  : Text;
+         scp_public   : Text;
          priority     : Repo_priority := 0;
          environ_set  : Pkgtypes.NV_Pairs.Map;
       end record;
@@ -108,6 +110,12 @@ private
 
    --  Get internet protocol restrictions from master repository
    function master_protocol (mirrors : A_Repo_Config_Set) return IP_support;
+
+   --  Get SCP private key path from the master repository
+   function master_scp_private_key (mirrors : A_Repo_Config_Set) return String;
+
+   --  Get SCP public key path from the master repository
+   function master_scp_public_key (mirrors : A_Repo_Config_Set) return String;
 
    --  Obtain Blake3 digest from cached copy of the master repo's catalog digest
    function read_catalog_digest return Blake_3.blake3_hash_hex;

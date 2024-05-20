@@ -416,6 +416,12 @@ package body Raven.Repository is
                repo.environ_set.Iterate (set_environ'Access);
                repo_tree.close_object;
             end if;
+            if not IsBlank (repo.scp_private) then
+               repo_tree.insert ("scp_private_key", USS (repo.scp_private));
+            end if;
+            if not IsBlank (repo.scp_public) then
+               repo_tree.insert ("scp_public_key", USS (repo.scp_public));
+            end if;
             repo_tree.close_object;
          end;
       end loop;
@@ -472,8 +478,9 @@ package body Raven.Repository is
             etag_file       => "",
             downloaded_file => cached_copy,
             remote_repo     => True,
-            remote_protocol => master_protocol (mirrors));
-
+            remote_protocol => master_protocol (mirrors),
+            remote_prv_key  => master_scp_private_key (mirrors),
+            remote_pub_key  => master_scp_public_key (mirrors));
 
          case result is
             when Fetch.cache_valid | Fetch.file_downloaded =>
@@ -558,6 +565,30 @@ package body Raven.Repository is
       end if;
       return mirrors.repositories.Element (mirrors.master_repository).protocol;
    end master_protocol;
+
+
+   ------------------------------
+   --  master_scp_private_key  --
+   ------------------------------
+   function master_scp_private_key (mirrors : A_Repo_Config_Set) return String is
+   begin
+      if not mirrors.master_assigned then
+         raise zero_repositories_configured;
+      end if;
+       return USS (mirrors.repositories.Element (mirrors.master_repository).scp_private);
+   end master_scp_private_key;
+
+
+   -----------------------------
+   --  master_scp_public_key  --
+   -----------------------------
+   function master_scp_public_key (mirrors : A_Repo_Config_Set) return String is
+   begin
+      if not mirrors.master_assigned then
+         raise zero_repositories_configured;
+      end if;
+      return USS (mirrors.repositories.Element (mirrors.master_repository).scp_public);
+   end master_scp_public_key;
 
 
    -----------------------------
@@ -669,7 +700,9 @@ package body Raven.Repository is
                                            etag_file       => "",
                                            downloaded_file => cache_location,
                                            remote_repo     => True,
-                                           remote_protocol => repo.protocol);
+                                           remote_protocol => repo.protocol,
+                                           remote_prv_key  => USS (repo.scp_private),
+                                           remote_pub_key  => USS (repo.scp_public));
             case result is
                when Fetch.cache_valid | Fetch.file_downloaded =>
                   if file_verified (cache_location, digest) then

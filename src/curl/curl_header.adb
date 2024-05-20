@@ -104,7 +104,7 @@ package body curl_header is
       case result is
          when CURLE_OK => return True;
          when others =>
-            EV.emit_debug ("execute_curl failed, result=" & result'Img);
+            EV.emit_debug (Raven.high_level, "execute_curl failed, result=" & result'Img);
             return False;
       end case;
    end execute_curl;
