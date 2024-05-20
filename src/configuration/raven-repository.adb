@@ -118,6 +118,10 @@ package body Raven.Repository is
                         elsif upper_value = "FINGERPRINTS" then
                            rconfig.verification := fingerprinted;
                         end if;
+                     elsif upper_key = "SCP_PRIVATE_KEY" then
+                        rconfig.scp_private := SUS (value);
+                     elsif upper_key = "SCP_PUBLIC_KEY" then
+                        rconfig.scp_public := SUS (value);
                      else
                         unhandled := True;
                      end if;
