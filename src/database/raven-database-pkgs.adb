@@ -205,6 +205,7 @@ package body Raven.Database.Pkgs is
       SQLite.bind_integer (this_stmt, 13, SQLite.sql_int64 (pkg.flatsize));
       SQLite.bind_integer (this_stmt, 14, liclogic);
       SQLite.bind_integer (this_stmt, 15, automatic);
+      SQLite.bind_integer (this_stmt, 16, SQLite.sql_int64 (pkg.install_time));
 
       debug_running_stmt (this_stmt);
 
@@ -233,8 +234,8 @@ package body Raven.Database.Pkgs is
       func      : constant String := "overwrite_main_pkg";
       sql       : constant String := "UPDATE packages SET namebase = ?1, subpackage = ?2, " &
         "variant = ?3, version = ?4, comment = ?5, desc = ?6, www = ?7, maintainer = ?8, " &
-        "prefix = ?9, abi = ?10, flatsize = ?11, licenselogic = ?12, automatic = ?13 " &
-        "WHERE id = ?14";
+        "prefix = ?9, abi = ?10, flatsize = ?11, licenselogic = ?12, automatic = ?13, " &
+        "installed = ?14 WHERE id = ?15";
    begin
       if pkg.automatic then
          automatic := 1;
@@ -263,7 +264,8 @@ package body Raven.Database.Pkgs is
       SQLite.bind_integer (this_stmt, 11, SQLite.sql_int64 (pkg.flatsize));
       SQLite.bind_integer (this_stmt, 12, liclogic);
       SQLite.bind_integer (this_stmt, 13, automatic);
-      SQLite.bind_integer (this_stmt, 14, SQLite.sql_int64 (pkgid));
+      SQLite.bind_integer (this_stmt, 14, SQLite.sql_int64 (pkg.install_time));
+      SQLite.bind_integer (this_stmt, 15, SQLite.sql_int64 (pkgid));
 
       debug_running_stmt (this_stmt);
       case SQLite.step (this_stmt) is

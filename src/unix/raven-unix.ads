@@ -146,6 +146,10 @@ package Raven.Unix is
       sig_path  : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_Verify_Digest, "verify_digest");
 
+   --  time(3) from libc
+   function unix_time (tloc : access int64) return int64;
+   pragma Import (C, unix_time, "time");
+
 private
 
    last_errno : Integer;

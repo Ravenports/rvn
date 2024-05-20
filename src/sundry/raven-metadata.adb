@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ucl;
+with Raven.Unix;
 with Raven.Strings; Use Raven.Strings;
 
 package body Raven.Metadata is
@@ -485,6 +486,8 @@ package body Raven.Metadata is
       new_pkg.rvnsize    := Pkgtypes.Package_Size (get_size (metatree, rvnsize));
       new_pkg.flatsize   := Pkgtypes.Package_Size (get_size (metatree, flatsize));
       new_pkg.automatic  := automatic;
+
+      new_pkg.install_time := Pkgtypes.Epoch_Timestamp (Unix.unix_time (null));
 
       set_list (metatree, users, new_pkg.users);
       set_list (metatree, groups, new_pkg.groups);

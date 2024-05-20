@@ -426,6 +426,7 @@ package body Raven.Database.Schema is
       col_int  (def, "flatsize");
       col_int  (def, "licenselogic");
       col_int  (def, "automatic");
+      col_int  (def, "installed");
       return close_table (def);
    end table_packages;
 
@@ -671,8 +672,9 @@ package body Raven.Database.Schema is
               & "(?1, (SELECT dependency_id FROM dependencies WHERE nsv = ?2 AND version = ?3))";
          when main_pkg => return "INSERT OR REPLACE INTO packages(namebase,subpackage,variant," &
               "version,comment,desc,www,maintainer,prefix,abi,rvndigest,rvnsize,flatsize," &
-              "licenselogic,automatic) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)";
-            --TTTT TTTT TTTI III
+              "licenselogic,automatic,installed) " &
+              "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16)";
+            --TTTT TTTT TTTI IIII
       end case;
    end prstat_definition;
 

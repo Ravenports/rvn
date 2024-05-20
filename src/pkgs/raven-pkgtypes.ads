@@ -14,6 +14,7 @@ package Raven.Pkgtypes is
 
    type Package_ID         is mod 2**64;
    type Package_Size       is mod 2**64;
+   type Epoch_Timestamp    is mod 2**64;
 
    type License_Logic is (LICENSE_DUAL, LICENSE_MULTI, LICENSE_SINGLE, LICENSE_UNLISTED);
 
@@ -72,6 +73,7 @@ package Raven.Pkgtypes is
          automatic     : Boolean;
          rvnsize       : Package_Size;
          flatsize      : Package_Size;
+         install_time  : Epoch_Timestamp;
          users         : Text_List.Vector;
          groups        : Text_List.Vector;
          licenses      : Text_List.Vector;
