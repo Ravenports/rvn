@@ -419,7 +419,7 @@ package body Raven.Cmd.Line is
                   if datum = sws_quiet or else datum = swl_quiet then
                      data.common_options.quiet := True;
                   elsif datum = "-g" or else datum = "--glob" then
-                     data.common_options.shell_glob := True;
+                     data.cmd_which.glob_input := True;
                   elsif datum = "-m" or else datum = "--show-match" then
                      data.cmd_which.show_match := True;
                   elsif datum = "-p" or else datum = "--path-search" then
@@ -613,7 +613,6 @@ package body Raven.Cmd.Line is
 
       --  TODO:  check_stats_default ??
 
-      check_create_incompatibilities (data);
       check_implied_info_all (data);
       check_assume_yes (data);
 
@@ -808,45 +807,24 @@ package body Raven.Cmd.Line is
       swl_all    : constant String := "--all";
       sws_case   : constant String := "-C";
       swl_case   : constant String := "--case-sensitive";
-      sws_icase  : constant String := "-i";
-      swl_icase  : constant String := "--case-insensitive";
-      sws_glob   : constant String := "-g";
-      swl_glob   : constant String := "--glob";
+      sws_exact  : constant String := "-E";
+      swl_exact  : constant String := "--exact-match";
    begin
-      --  -C/-i are mutually exclusive (both affect same setting)
-      --  Actually all switches are mutually exclusive to the others
-      --  -C > -i > -g > -r
+      --  -C/-E do not conflict.
+      --  --exact implies case sensitivity
+      --  --case-sensitive does not imply exact match (e.g. case-sensitive glob)
 
       if use_all and then (datum = sws_all or else datum = swl_all) then
          self.common_options.all_installed_pkgs := True;
       elsif datum = sws_case or else datum = swl_case then
          self.common_options.case_sensitive := True;
-      elsif datum = sws_icase or else datum = swl_icase then
-         self.common_options.case_insensitive := True;
-      elsif datum = sws_glob or else datum = swl_glob then
-         self.common_options.shell_glob := True;
+      elsif datum = sws_exact or else datum = swl_exact then
+         self.common_options.exact_match := True;
       else
          return False;
       end if;
       return True;
    end aCgix;
-
-
-   --------------------------------------
-   --  check_create_incompatibilities  --
-   --------------------------------------
-   procedure check_create_incompatibilities (self : in out Cldata)
-   is
-      --  This is kind of a legacy check for pkg users.  Probably not really necessary.
-   begin
-      if self.command = cv_create then
-         if self.common_options.all_installed_pkgs or else
-           self.common_options.shell_glob
-         then
-            set_error (self, "Switches -a and -g are invalid - create requires descrete filename");
-         end if;
-      end if;
-   end check_create_incompatibilities;
 
 
    ------------------------------
@@ -872,11 +850,10 @@ package body Raven.Cmd.Line is
                   set_error (self, "--list-extended is not available for installed packages");
                end if;
             else
-               if self.common_options.shell_glob or else
-                 self.common_options.case_insensitive or else
-                 self.common_options.case_insensitive
+               if self.common_options.exact_match or else
+                 self.common_options.case_sensitive
                then
-                  set_error (self, "-Cgi switch settings are invalid with pkg-file");
+                  set_error (self, "-CE switch settings are invalid with pkg-file");
                end if;
             end if;
          end if;

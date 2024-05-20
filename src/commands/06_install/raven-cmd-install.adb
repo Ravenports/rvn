@@ -29,14 +29,11 @@ package body Raven.Cmd.Install is
    is
       install_success : Boolean;
    begin
-      if comline.common_options.case_insensitive then
-         return currently_unsupported ("--case-insensitive");
-      end if;
       if comline.common_options.case_sensitive then
          return currently_unsupported ("--case-sensitive");
       end if;
-      if comline.common_options.shell_glob then
-         return currently_unsupported ("--glob");
+      if comline.common_options.exact_match then
+         return currently_unsupported ("--exact");
       end if;
       if comline.common_options.no_repo_update then
          return currently_unsupported ("--no-repo-update");

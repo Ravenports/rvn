@@ -363,7 +363,7 @@ package body Raven.Cmd.Usage is
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
-         msg3 : constant String := "info [-ABbMDdefIpqrsNSV] [-L|-l] [-Cgix] <pkg-name>";
+         msg3 : constant String := "info [-ABbMDdefIpqrsNSV] [-L|-l] [-CE] <pkg-name>";
          msg4 : constant String := "info [-ABbMDdfIpqRsNSV] [-L|-l|-X] -F <pkg-file>";
       begin
          display_error (error_msg);
@@ -430,7 +430,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "install [-AfIMnFqRUy] [-r reponame] [-Cgix] <pkg-name-pattern>";
+         msg1 : constant String := "install [-AfIMnFqRUy] [-r reponame] [-CE] <pkg-name-pattern>";
          msg2 : constant String := "install --[[no|only]-registration| [--file] <path-rvn-archive>";
       begin
          display_error (error_msg);
@@ -458,11 +458,10 @@ package body Raven.Cmd.Usage is
          if not IsBlank (comline.common_options.repo_name) then
             return alert ("--repository" & not_with_file);
          end if;
-         if comline.common_options.case_insensitive or else
-           comline.common_options.case_sensitive or else
-           comline.common_options.shell_glob
+         if comline.common_options.exact_match or else
+           comline.common_options.case_sensitive
          then
-            return alert ("-Cgi" & not_with_file);
+            return alert ("-CE" & not_with_file);
          end if;
          if comline.common_options.multiple_patterns.Is_Empty then
             return alert ("Missing path to rvn archive");
@@ -553,7 +552,7 @@ package body Raven.Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       end if;
-      if comline.cmd_which.show_match and not comline.common_options.shell_glob then
+      if comline.cmd_which.show_match and not comline.cmd_which.glob_input then
          return alert ("-m can only be used with -g");
       end if;
       if IsBlank (comline.common_options.name_pattern) then
@@ -570,7 +569,7 @@ package body Raven.Cmd.Usage is
    is
       procedure print_usage
       is
-         cegx : constant String := "[-Cegix pattern]";
+         cegx : constant String := "[-CE pattern]";
          msg1 : constant String := "version [-SIR] [qvU] [-l limchar] [-L limchar] " & cegx;
          msg2 : constant String := "        [-r reponame] [-n pkgname]";
          msg3 : constant String := "version -t <version1> <version2>";

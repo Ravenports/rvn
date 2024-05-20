@@ -50,7 +50,7 @@ package body Raven.Cmd.Which is
                if comline.common_options.quiet then
                   Event.emit_message (pkgname);
                else
-                  if comline.common_options.shell_glob then
+                  if comline.cmd_which.glob_input then
                      Event.emit_message (query_path & " was glob searched and found in " & pkgname);
                   else
                      Event.emit_message (query_path & " was installed by " & pkgname);
@@ -61,7 +61,7 @@ package body Raven.Cmd.Which is
             something_found := True;
          end print;
       begin
-         QRY.rvn_which (rdb, query_path, comline.common_options.shell_glob, result_pkgs);
+         QRY.rvn_which (rdb, query_path, comline.cmd_which.glob_input, result_pkgs);
          result_pkgs.Iterate (print'Access);
       end query;
    begin

@@ -73,9 +73,8 @@ private
       record
          verbose            : Boolean := False;
          quiet              : Boolean := False;  --  -q, --quiet
-         case_sensitive     : Boolean := False;  --  -C, --case-sensitive  (priority over -i)
-         case_insensitive   : Boolean := False;  --  -i, --case-insensitive (default)
-         shell_glob         : Boolean := False;  --  -g, --glob
+         case_sensitive     : Boolean := False;  --  -c, --case-sensitive
+         exact_match        : Boolean := False;  --  -e, --exact
          dry_run            : Boolean := False;  --  -n, --dry-run
          assume_yes         : Boolean := False;  --  -y, --yes
          all_installed_pkgs : Boolean := False;  --  -a, --all
@@ -116,6 +115,7 @@ private
       record
          show_match  : Boolean := False;
          path_search : Boolean := False;
+         glob_input  : Boolean := False;
       end record;
 
    type switches_info_cmd is
