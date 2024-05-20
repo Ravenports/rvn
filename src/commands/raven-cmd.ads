@@ -76,7 +76,6 @@ private
          case_sensitive     : Boolean := False;  --  -C, --case-sensitive  (priority over -i)
          case_insensitive   : Boolean := False;  --  -i, --case-insensitive (default)
          shell_glob         : Boolean := False;  --  -g, --glob
-         regex              : Boolean := False;  --  -x, --regex
          dry_run            : Boolean := False;  --  -n, --dry-run
          assume_yes         : Boolean := False;  --  -y, --yes
          all_installed_pkgs : Boolean := False;  --  -a, --all

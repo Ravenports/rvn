@@ -38,9 +38,6 @@ package body Raven.Cmd.Install is
       if comline.common_options.shell_glob then
          return currently_unsupported ("--glob");
       end if;
-      if comline.common_options.regex then
-         return currently_unsupported ("--regex");
-      end if;
       if comline.common_options.no_repo_update then
          return currently_unsupported ("--no-repo-update");
       end if;

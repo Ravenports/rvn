@@ -460,10 +460,9 @@ package body Raven.Cmd.Usage is
          end if;
          if comline.common_options.case_insensitive or else
            comline.common_options.case_sensitive or else
-           comline.common_options.regex or else
            comline.common_options.shell_glob
          then
-            return alert ("-Cgix" & not_with_file);
+            return alert ("-Cgi" & not_with_file);
          end if;
          if comline.common_options.multiple_patterns.Is_Empty then
             return alert ("Missing path to rvn archive");

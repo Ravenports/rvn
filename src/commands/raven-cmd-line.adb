@@ -812,8 +812,6 @@ package body Raven.Cmd.Line is
       swl_icase  : constant String := "--case-insensitive";
       sws_glob   : constant String := "-g";
       swl_glob   : constant String := "--glob";
-      sws_regex  : constant String := "-x";
-      swl_regex  : constant String := "--regex";
    begin
       --  -C/-i are mutually exclusive (both affect same setting)
       --  Actually all switches are mutually exclusive to the others
@@ -827,8 +825,6 @@ package body Raven.Cmd.Line is
          self.common_options.case_insensitive := True;
       elsif datum = sws_glob or else datum = swl_glob then
          self.common_options.shell_glob := True;
-      elsif datum = sws_regex or else datum = swl_regex then
-         self.common_options.regex := True;
       else
          return False;
       end if;
@@ -845,10 +841,9 @@ package body Raven.Cmd.Line is
    begin
       if self.command = cv_create then
          if self.common_options.all_installed_pkgs or else
-           self.common_options.shell_glob or else
-           self.common_options.regex
+           self.common_options.shell_glob
          then
-            set_error (self, "Switches -a, -g, -x invalid - create requires descrete filename");
+            set_error (self, "Switches -a and -g are invalid - create requires descrete filename");
          end if;
       end if;
    end check_create_incompatibilities;
@@ -878,11 +873,10 @@ package body Raven.Cmd.Line is
                end if;
             else
                if self.common_options.shell_glob or else
-                 self.common_options.regex or else
                  self.common_options.case_insensitive or else
                  self.common_options.case_insensitive
                then
-                  set_error (self, "-Cgix switch settings are invalid with pkg-file");
+                  set_error (self, "-Cgi switch settings are invalid with pkg-file");
                end if;
             end if;
          end if;
