@@ -12,7 +12,7 @@
 .Nm
 .Op Fl ABbMDdefIjpqrsNSV
 .Op Fl L | Fl l
-.Op Fl Cgix
+.Op Fl Cgi
 .Ar pkg-name
 .Nm
 .Op Fl ABbMDdfIjLlpqRsNSV
@@ -29,7 +29,7 @@
 .Op Cm --{full,comment,adjacent-shlibs,prefix}
 .Op Cm --{quiet,required-by,size,namebase,subpackage,variant}
 .Op Cm --list-digests | --list-files
-.Op Cm --{case-sensitive,glob,case-insensitive,regex}
+.Op Cm --{case-sensitive,glob,case-insensitive}
 .Ar pkg-name
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
@@ -37,7 +37,6 @@
 .Op Cm --{comment,adjacent-shlibs,prefix}
 .Op Cm --{quiet,raw,size,namebase,subpackage,variant}
 .Op Cm --list-digests | --list-files | --list-extended
-.Op Cm --{case-sensitive,glob,case-insensitive,regex}
 .Cm --file Ar pkg-file
 .Sh DESCRIPTION
 .Nm
@@ -137,12 +136,6 @@ Display the variant (the third part of the package name triplet).
 Display the long format of all files install by
 .Ar pkg-name .
 It is mutually exclusive with -l and -L options.
-.It Fl x , Cm --regex
-Treat
-.Ar pkg-name
-as a regular expression according to the "modern" or "extended" syntax
-of
-.Xr re_format 7 .
 .El
 .Sh ENVIRONMENT
 The following environment variables affect the execution of

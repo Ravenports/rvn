@@ -9,7 +9,7 @@
 .Op Fl SIR
 .Op Fl hqvU
 .Op Fl l Ar limchar | Fl L Ar limchar
-.Op Fl Cegix Ar pattern
+.Op Fl Cgie Ar pattern
 .Op Fl r Ar reponame
 .Op Fl n Ar pkgname
 .Nm
@@ -21,7 +21,7 @@
 .Op Fl -{snapshot,index,remote}
 .Op Fl -{quiet,verbose,no-repo-update}
 .Op Fl -like Ar limchar | -not-like Ar limchar
-.Op Fl -{case-sensitive,exact,glob,case-insensitive,regex} Ar pattern
+.Op Fl -{case-sensitive,glob,case-insensitive,exact} Ar pattern
 .Op Fl -repository Ar reponame
 .Op Fl -match-name Ar pkgname
 .Nm
@@ -159,9 +159,6 @@ This is the default, unless modified by setting
 .Ev CASE_SENSITIVE_MATCH
 to true in
 .Pa rvn.conf .
-.It Fl x Ar pattern , Fl -regex Ar pattern
-Only display the packages that match the regular expression.
-Uses the "modern" or "extended" regex syntax.
 .It Fl g Ar pattern , Fl -glob Ar pattern
 Only display the packages that match the glob expression.
 .It Fl e Ar string , Fl -exact Ar string
