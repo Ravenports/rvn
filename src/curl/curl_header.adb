@@ -96,14 +96,16 @@ package body curl_header is
    --------------------
    --  execute_curl  --
    --------------------
-   procedure execute_curl (curlobj : CURLX)
+   function execute_curl (curlobj : CURLX) return Boolean
    is
       result : CURLcode;
    begin
       result := curl_easy_perform (curlobj);
       case result is
-         when CURLE_OK => null;
-         when others => EV.emit_error ("Failed to execute curl");
+         when CURLE_OK => return True;
+         when others =>
+            EV.emit_debug ("execute_curl failed, result=" & result'Img);
+            return False;
       end case;
    end execute_curl;
 

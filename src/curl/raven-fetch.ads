@@ -18,7 +18,9 @@ package Raven.Fetch is
       etag_file       : String;
       downloaded_file : String;
       remote_repo     : Boolean := False;
-      remote_protocol : IP_support := no_restriction) return fetch_result;
+      remote_protocol : IP_support := no_restriction;
+      remote_prv_key  : String := "";
+      remote_pub_key  : String := "") return fetch_result;
 
 private
 

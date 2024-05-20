@@ -1002,7 +1002,8 @@ package curl_header is
 
    procedure build_header (list : in out access_curl_slist; header_line : String);
 
-   procedure execute_curl (curlobj : CURLX);
+   --  Returns true if mission succeeded
+   function execute_curl (curlobj : CURLX) return Boolean;
 
 private
 

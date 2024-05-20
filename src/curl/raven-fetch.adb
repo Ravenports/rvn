@@ -28,7 +28,9 @@ package body Raven.Fetch is
       etag_file       : String;
       downloaded_file : String;
       remote_repo     : Boolean := False;
-      remote_protocol : IP_support := no_restriction) return fetch_result
+      remote_protocol : IP_support := no_restriction;
+      remote_prv_key  : String := "";
+      remote_pub_key  : String := "") return fetch_result
    is
       temporary_file  : constant String := CAL.randomized_download_target (downloaded_file);
 
@@ -36,6 +38,7 @@ package body Raven.Fetch is
       curlobj : curl_header.CURLX;
       response_code : Long_Integer;
       header_list : curl_header.access_curl_slist := null;
+      successful_execution : Boolean;
    begin
       if using_file_protocol (remote_file_url) then
          return copy_local_file (remote_file_url, downloaded_file);
@@ -101,6 +104,14 @@ package body Raven.Fetch is
                                                            curl_header.CURL_IPRESOLVE_V6);
          end case;
          curl_header.set_curl_option (curlobj, curl_header.CURLOPT_VERBOSE, verbose);
+         if remote_prv_key /= "" then
+            curl_header.set_curl_option
+              (curlobj, curl_header.CURLOPT_SSH_PRIVATE_KEYFILE, remote_prv_key);
+         end if;
+         if remote_pub_key /= "" then
+            curl_header.set_curl_option
+              (curlobj, curl_header.CURLOPT_SSH_PUBLIC_KEYFILE, remote_pub_key);
+         end if;
          if no_verify_peer then
             curl_header.set_curl_option (curlobj, curl_header.CURLOPT_SSL_VERIFYPEER, False);
          end if;
@@ -134,7 +145,7 @@ package body Raven.Fetch is
          end;
       end if;
 
-      curl_header.execute_curl (curlobj);
+      successful_execution := curl_header.execute_curl (curlobj);
       CAL.SIO.Close (data.file_handle);
       curl_header.curl_slist_free_all (header_list);
 
@@ -148,6 +159,18 @@ package body Raven.Fetch is
 
       response_code := curl_header.get_info_value_long (curlobj,
                                                         curl_header.CURLINFO_RESPONSE_CODE);
+      if not Strings.leads (remote_file_url, "http") then
+         --  SCP protocol
+         if successful_execution then
+            CAL.rename_temporary_file (downloaded_file, temporary_file);
+            return file_downloaded;
+         else
+            CAL.remove_temporary_file (temporary_file);
+            return retrieval_failed;
+         end if;
+      end if;
+
+      --  Below pertains to HTTP/HTTPS protocols
       if response_code = 200 then
          CAL.rename_temporary_file (downloaded_file, temporary_file);
       else
