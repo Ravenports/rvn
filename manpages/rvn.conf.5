@@ -400,6 +400,19 @@ Ravenports: {
     signature_type: "fingerprints",
     fingerprints: "/usr/share/rvn/keys",
 }
+
+scptest: {
+    enabled: true
+    ip_version: 4
+    master: false
+    mirror_type: 'NONE'
+    priority: 0
+    scp_private_key: '/root/.ssh/loki-marino-rsa'
+    scp_public_key: '/root/.ssh/loki-marino-rsa.pub'
+    signature_type: 'NONE'
+    url: 'scp://marino@loki.dragonflybsd.org/~/testbed/unsigned'
+}
+
 .Ed
 .Pp
 Example for rvn.conf:
