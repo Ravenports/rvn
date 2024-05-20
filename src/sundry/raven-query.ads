@@ -5,6 +5,8 @@ package Raven.Query is
 
    --  to be private
 
+   token_invalid_for_column : exception;
+
    type A_Token is
      (token_unrecognized,
       token_num_categories,
@@ -47,9 +49,7 @@ package Raven.Query is
       token_ml_groups,
       token_ml_licenses,
       token_ml_notes_key,
-      token_ml_notes_values,
-      token_ml_opt_default,
-      token_ml_opt_desc,
+      token_ml_notes_value,
       token_ml_opt_key,
       token_ml_opt_value,
       token_ml_rdep_namebase,
@@ -62,6 +62,12 @@ package Raven.Query is
       token_ml_shlibs_req,
       token_ml_users);
 
+   type Selection is array (A_Token'Range) of Boolean;
+
    function get_token (component : String) return A_Token;
+
+   --  Returns package column name or subquery to get package data from other tables.
+   --  Will throw token_invalid_for_column for tokens that are not supported.
+   function get_column (token : A_Token) return String;
 
 end Raven.Query;
