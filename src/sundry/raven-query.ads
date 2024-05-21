@@ -92,5 +92,13 @@ private
       columns          : in out Column_Selection;
       num_columns      : out Natural);
 
+   --  Returns True when token points to modifier value for evaluations
+   function valid_for_where_clause (token : A_Token) return Boolean;
+
+   --  Returns true if found tokens are valid.  If "{" found without a mate, that
+   --  will also cause a false return
+   function evaluate_conditions_template
+     (conditions : String;
+      error_hit  : out Boolean) return String;
 
 end Raven.Query;

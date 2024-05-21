@@ -122,8 +122,9 @@ package body Raven.Query is
 
       function count_subquery (table_name, id_name : String) return String is
       begin
+         --  Don't set "AS something" so it can be used in the WHERE clause
          return "(select count(" & id_name & ") from " & table_name &
-           " where " & table_name & "." & id_name & " = id) as " & token'Img;
+           " where " & table_name & "." & id_name & " = id)"; -- as " & token'Img;
       end count_subquery;
    begin
       case token is
@@ -184,6 +185,23 @@ package body Raven.Query is
          when token_ml_users         => return "users.name as user_name";
       end case;
    end get_column;
+
+
+   ------------------------------
+   --  valid_for_where_clause  --
+   ------------------------------
+   function valid_for_where_clause (token : A_Token) return Boolean is
+   begin
+      case token is
+         when token_unrecognized   |
+              token_size_iec_units |
+              token_license_logic  |
+              token_ml_categories .. token_ml_users =>
+            return False;
+         when others =>
+            return True;
+      end case;
+   end valid_for_where_clause;
 
 
    ----------------
@@ -260,6 +278,78 @@ package body Raven.Query is
    end tokenize;
 
 
+   ------------------------------------
+   --  evaluate_conditions_template  --
+   ------------------------------------
+   function evaluate_conditions_template (conditions : String;
+                                          error_hit : out Boolean) return String
+   is
+      func : constant String := "evaluate_conditions_template: ";
+      num_left_braces : Natural := 0;
+      new_result : Text;
+      left_brace  : constant String (1 .. 1) := (others => LAT.Left_Curly_Bracket);
+      right_brace : constant String (1 .. 1) := (others => LAT.Right_Curly_Bracket);
+
+      procedure push (fragment : String) is
+      begin
+         Event.emit_debug (low_level, func & "push '" & fragment & "'");
+         SU.Append (new_result, fragment);
+      end push;
+
+   begin
+      error_hit := False;
+      num_left_braces := count_char (conditions, LAT.Left_Curly_Bracket);
+      if num_left_braces = 0 then
+         return conditions;
+      end if;
+
+      for field_number in 1 .. num_left_braces + 1 loop
+         declare
+            field : constant String := specific_field (conditions, field_number, left_brace);
+            num_right_braces : Natural;
+         begin
+            if field'Length > 0 then
+               if field_number = 1 then
+                  push (field);
+               else
+                  num_right_braces := count_char (field, LAT.Right_Curly_Bracket);
+                  if num_right_braces = 0 then
+                     --  We passed an open bracket which didn't close before the end of the field
+                     error_hit := True;
+                     Event.emit_debug (low_level, func & "curly brace didn't close");
+                     return USS (new_result);
+                  else
+                     declare
+                        left_field  : constant String := part_1 (field, right_brace);
+                        right_field : constant String := part_2 (field, right_brace);
+                        column      : A_Token;
+                     begin
+                        column := get_token (left_field);
+                        case column is
+                           when token_unrecognized =>
+                              error_hit := True;
+                              Event.emit_debug (low_level, func & "token unrecognized");
+                              return USS (new_result);
+                           when others =>
+                              if not valid_for_where_clause (column) then
+                                 error_hit := True;
+                                 Event.emit_debug (low_level, func & "token invalid for WHERE");
+                                 return USS (new_result);
+                              end if;
+                              push (get_column (column));
+                              push (right_field);
+                        end case;
+                     end;
+                  end if;
+               end if;
+            end if;
+         end;
+      end loop;
+      return USS (new_result);
+
+   end evaluate_conditions_template;
+
+
    ------------------------------
    --  query_package_database  --
    ------------------------------
@@ -275,6 +365,7 @@ package body Raven.Query is
       selection_tokens : Pkgtypes.Text_List.Vector;
       columns          : Column_Selection;
       num_columns      : Natural;
+      error_hit        : Boolean;
       sql : Text := SUS ("select namebase || '-' || subpackage || '-' || variant as nsv");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
@@ -286,17 +377,33 @@ package body Raven.Query is
          end loop;
       end if;
       SU.Append (sql, " FROM packages");
+
       --  TODO join logic
+
+      if conditions = "" then
+         SU.Append (sql, " WHERE (1)");
+      else
+         declare
+            populated : constant String := evaluate_conditions_template (conditions, error_hit);
+         begin
+            if error_hit then
+               Event.emit_error ("Failed to parse evaluation clause");
+               return;
+            end if;
+            SU.Append (sql, "WHERE (" & populated & ")");
+         end;
+      end if;
+
       if not all_packages then
          if override_exact then
             if override_csens then
-               SU.Append (sql, " WHERE nsv = ?");
+               SU.Append (sql, " AND nsv = ?");
             else
-               SU.Append (sql, " WHERE nsv LIKE ?");
+               SU.Append (sql, " AND nsv LIKE ?");
             end if;
          else
             --  GLOB is case-sensitive, period.  Catch clash at commandline validation
-            SU.Append (sql, " WHERE GLOB = ?");
+            SU.Append (sql, " AND GLOB = ?");
          end if;
       end if;
 
