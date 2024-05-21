@@ -1,9 +1,14 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Characters.Latin_1;
+with SQLite;
+with Raven.Event;
 with Raven.Strings;  use Raven.Strings;
 
 package body Raven.Query is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    -----------------
    --  get_token  --
@@ -114,7 +119,6 @@ package body Raven.Query is
    function get_column (token : A_Token) return String
    is
       id  : constant String := "package_id";
-      nsv : constant String := "namebase || '-' || subpackage || '-' || variant as nsv";
 
       function count_subquery (table_name, id_name : String) return String is
       begin
@@ -145,7 +149,7 @@ package body Raven.Query is
          when token_license_logic    => return "licenselogic";
          when token_maintainer       => return "maintainer";
          when token_namebase         => return "namebase";
-         when token_nsv              => return nsv;
+         when token_nsv              => return "nsv";
          when token_prefix           => return "prefix";
          when token_size_iec_units   |  --  post-process
               token_size_bytes       => return "flatsize";
@@ -180,5 +184,135 @@ package body Raven.Query is
          when token_ml_users         => return "users.name as user_name";
       end case;
    end get_column;
+
+
+   ----------------
+   --  tokenize  --
+   ----------------
+   procedure tokenize
+     (selection        : String;
+      selection_tokens : in out Pkgtypes.Text_List.Vector;
+      columns          : in out Column_Selection;
+      num_columns      : out Natural)
+   is
+      num_left_braces : Natural := 0;
+      left_brace  : constant String (1 .. 1) := (others => LAT.Left_Curly_Bracket);
+      right_brace : constant String (1 .. 1) := (others => LAT.Right_Curly_Bracket);
+
+      procedure push (fragment : String) is
+      begin
+         Event.emit_debug (low_level, "tokenize: push '" & fragment & "'");
+         selection_tokens.Append (SUS (fragment));
+      end push;
+   begin
+      selection_tokens.clear;
+      columns := (others => False);
+      num_columns := 0;
+      num_left_braces := count_char (selection, LAT.Left_Curly_Bracket);
+
+      if num_left_braces = 0 then
+         --  no placeholders found.  Probably a user mistake.
+         push (selection);
+         return;
+      end if;
+
+      for field_number in 1 .. num_left_braces + 1 loop
+         declare
+            field : constant String := specific_field (selection, field_number, left_brace);
+            num_right_braces : Natural;
+         begin
+            if field'Length > 0 then
+               if field_number = 1 then
+                  push (field);
+               else
+                  --  We are between '{' characters.
+                  --  There might be a '}' here.  If there is, check to see if it's a
+                  --  recognized token.  If not, put the entire selection as text.
+                  --  Otherwise split it into two.
+                  num_right_braces := count_char (field, LAT.Right_Curly_Bracket);
+                  if num_right_braces = 0 then
+                     push (field);
+                  else
+                     declare
+                        left_field  : constant String := part_1 (field, right_brace);
+                        right_field : constant String := part_2 (field, right_brace);
+                        column      : A_Token;
+                     begin
+                        column := get_token (left_field);
+                        case column is
+                           when  token_unrecognized =>
+                              push (field);
+                           when others =>
+                              if not columns (column) then
+                                 num_columns := num_columns + 1;
+                                 columns (column) := True;
+                              end if;
+                              push (left_field);
+                              push (right_field);
+                        end case;
+                     end;
+                  end if;
+               end if;
+            end if;
+         end;
+      end loop;
+
+   end tokenize;
+
+
+   ------------------------------
+   --  query_package_database  --
+   ------------------------------
+   procedure query_package_database
+     (database       : A_Database;
+      selection      : String;
+      conditions     : String;
+      pattern        : String;
+      all_packages   : Boolean;
+      override_csens : Boolean;
+      override_exact : Boolean)
+   is
+      selection_tokens : Pkgtypes.Text_List.Vector;
+      columns          : Column_Selection;
+      num_columns      : Natural;
+      sql : Text := SUS ("select namebase || '-' || subpackage || '-' || variant as nsv");
+   begin
+      tokenize (selection, selection_tokens, columns, num_columns);
+      if num_columns > 0 then
+         for x in A_Token'Range loop
+            if columns (x) then
+               SU.Append (sql, ", " & get_column (x));
+            end if;
+         end loop;
+      end if;
+      SU.Append (sql, " FROM packages");
+      --  TODO join logic
+      if not all_packages then
+         if override_exact then
+            if override_csens then
+               SU.Append (sql, " WHERE nsv = ?");
+            else
+               SU.Append (sql, " WHERE nsv LIKE ?");
+            end if;
+         else
+            --  GLOB is case-sensitive, period.  Catch clash at commandline validation
+            SU.Append (sql, " WHERE GLOB = ?");
+         end if;
+      end if;
+
+      --  declare
+      --     internal_srcfile : constant String := "query_package_database";
+      --     new_stmt : SQLite.thick_stmt;
+      --  begin
+      --     if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
+      --        Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+      --     return;
+      --     end if;
+      --     debug_running_stmt (new_stmt);
+      --  end;
+
+   end query_package_database;
+
+
 
 end Raven.Query;

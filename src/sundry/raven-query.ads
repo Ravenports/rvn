@@ -1,9 +1,25 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Raven.Pkgtypes;
+
 package Raven.Query is
 
-   --  to be private
+
+   type A_Database is (installation_database, catalog_database);
+
+   --  if all_packages is true, pattern needs to be blank
+   --  if all_packages is false, pattern cannot be blank
+   procedure query_package_database
+     (database       : A_Database;
+      selection      : String;
+      conditions     : String;
+      pattern        : String;
+      all_packages   : Boolean;
+      override_csens : Boolean;
+      override_exact : Boolean);
+
+private
 
    token_invalid_for_column : exception;
 
@@ -62,12 +78,19 @@ package Raven.Query is
       token_ml_shlibs_req,
       token_ml_users);
 
-   type Selection is array (A_Token'Range) of Boolean;
+   type Column_Selection is array (A_Token'Range) of Boolean;
 
    function get_token (component : String) return A_Token;
 
    --  Returns package column name or subquery to get package data from other tables.
    --  Will throw token_invalid_for_column for tokens that are not supported.
    function get_column (token : A_Token) return String;
+
+   procedure tokenize
+     (selection        : String;
+      selection_tokens : in out Pkgtypes.Text_List.Vector;
+      columns          : in out Column_Selection;
+      num_columns      : out Natural);
+
 
 end Raven.Query;
