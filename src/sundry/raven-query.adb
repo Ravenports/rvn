@@ -244,6 +244,15 @@ package body Raven.Query is
          Event.emit_debug (low_level, "tokenize: push '" & fragment & "'");
          selection_tokens.Append (SUS (fragment));
       end push;
+
+      procedure no_replacement_push (field_number : Natural; fragment : String) is
+      begin
+         if field_number > 1 then
+            push ('{' & fragment);
+         elsif fragment'Length > 0 then
+            push (fragment);
+         end if;
+      end no_replacement_push;
    begin
       selection_tokens.clear;
       columns := (others => False);
@@ -261,37 +270,35 @@ package body Raven.Query is
             field : constant String := specific_field (selection, field_number, left_brace);
             num_right_braces : Natural;
          begin
-            if field'Length > 0 then
-               if field_number = 1 then
-                  push (field);
+            if field'Length < 4 then
+               no_replacement_push (field_number, field);
+            else
+               --  We are between '{' characters.
+               --  There might be a '}' here.  If there is, check to see if it's a
+               --  recognized token.  If not, put the entire selection as text.
+               --  Otherwise split it into two.
+               num_right_braces := count_char (field, LAT.Right_Curly_Bracket);
+               if num_right_braces = 0 then
+                     no_replacement_push (field_number, field);
                else
-                  --  We are between '{' characters.
-                  --  There might be a '}' here.  If there is, check to see if it's a
-                  --  recognized token.  If not, put the entire selection as text.
-                  --  Otherwise split it into two.
-                  num_right_braces := count_char (field, LAT.Right_Curly_Bracket);
-                  if num_right_braces = 0 then
-                     push (field);
-                  else
-                     declare
-                        left_field  : constant String := part_1 (field, right_brace);
-                        right_field : constant String := part_2 (field, right_brace);
-                        column      : A_Token;
-                     begin
-                        column := get_token (left_field);
-                        case column is
-                           when  token_unrecognized =>
-                              push (field);
-                           when others =>
-                              if not columns (column) then
-                                 num_columns := num_columns + 1;
-                                 columns (column) := True;
-                              end if;
-                              push (left_field);
-                              push (right_field);
-                        end case;
-                     end;
-                  end if;
+                  declare
+                     left_field  : constant String := part_1 (field, right_brace);
+                     right_field : constant String := part_2 (field, right_brace);
+                     column      : A_Token;
+                  begin
+                     column := get_token (left_field);
+                     case column is
+                        when token_unrecognized =>
+                              no_replacement_push (field_number, field);
+                        when others =>
+                           if not columns (column) then
+                              num_columns := num_columns + 1;
+                              columns (column) := True;
+                           end if;
+                           push (left_field);
+                           push (right_field);
+                     end case;
+                  end;
                end if;
             end if;
          end;
