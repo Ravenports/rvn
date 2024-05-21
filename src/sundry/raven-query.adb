@@ -355,69 +355,236 @@ package body Raven.Query is
                                           error_hit : out Boolean) return String
    is
       func : constant String := "evaluate_conditions_template: ";
-      num_left_braces : Natural := 0;
-      new_result : Text;
-      left_brace  : constant String (1 .. 1) := (others => LAT.Left_Curly_Bracket);
-      right_brace : constant String (1 .. 1) := (others => LAT.Right_Curly_Bracket);
-
-      procedure push (fragment : String) is
-      begin
-         Event.emit_debug (low_level, func & "push '" & fragment & "'");
-         SU.Append (new_result, fragment);
-      end push;
-
    begin
       error_hit := False;
-      num_left_braces := count_char (conditions, LAT.Left_Curly_Bracket);
-      if num_left_braces = 0 then
-         return conditions;
+      if IsBlank (trim (conditions)) then
+         return "";
       end if;
-
-      for field_number in 1 .. num_left_braces + 1 loop
-         declare
-            field : constant String := specific_field (conditions, field_number, left_brace);
-            num_right_braces : Natural;
-         begin
-            if field'Length > 0 then
-               if field_number = 1 then
-                  push (field);
-               else
-                  num_right_braces := count_char (field, LAT.Right_Curly_Bracket);
-                  if num_right_braces = 0 then
-                     --  We passed an open bracket which didn't close before the end of the field
-                     error_hit := True;
-                     Event.emit_debug (low_level, func & "curly brace didn't close");
-                     return USS (new_result);
+      declare
+         num_spaces : Natural;
+         spaced_out : constant String := expand_original_condition (conditions);
+         processor  : Condition_Box;
+      begin
+         num_spaces := count_char (spaced_out, LAT.Space);
+         for field_num in 1 .. num_spaces + 1 loop
+            declare
+               field : constant String := specific_field (spaced_out, field_num);
+            begin
+               if field'Length > 0 then
+                  if next_token_valid (processor.machine, field) then
+                     process_token (processor, field);
                   else
-                     declare
-                        left_field  : constant String := part_1 (field, right_brace);
-                        right_field : constant String := part_2 (field, right_brace);
-                        column      : A_Token;
-                     begin
-                        column := get_token (left_field);
-                        case column is
-                           when token_unrecognized =>
-                              error_hit := True;
-                              Event.emit_debug (low_level, func & "token unrecognized");
-                              return USS (new_result);
-                           when others =>
-                              if not valid_for_where_clause (column) then
-                                 error_hit := True;
-                                 Event.emit_debug (low_level, func & "token invalid for WHERE");
-                                 return USS (new_result);
-                              end if;
-                              push (get_column (column));
-                              push (right_field);
-                        end case;
-                     end;
+                     error_hit := True;
+                     Event.emit_debug (moderate, "invalid token '" & field & "' for state " &
+                                         processor.machine'Img);
+                     return "invalid token";
                   end if;
                end if;
-            end if;
-         end;
-      end loop;
-      return USS (new_result);
+            end;
+         end loop;
+         if processor.parens_open = 0 then
+            case processor.machine is
+               when start | post_num | post_str | post_close | done =>
+                  processor.machine := done;
+               when others => null;
+            end case;
+         end if;
 
+         case processor.machine is
+            when done =>
+               return USS (processor.where_clause);
+            when others =>
+               error_hit := True;
+               Event.emit_debug
+                 (moderate, "no more tokens, but the evaluation close is incomplete");
+               return "incomplete";
+         end case;
+      end;
+   exception
+      when control_char_found =>
+         error_hit := True;
+         Event.emit_debug (moderate, "condition clause had illegal control characters in it");
+         return "control char exception";
    end evaluate_conditions_template;
+
+
+   ------------------------
+   --  next_token_valid  --
+   ------------------------
+   function next_token_valid
+     (machine : State_Machine;
+      next_token : String) return Boolean
+   is
+   begin
+      case machine is
+         when start | post_open =>
+            if next_token = "(" then
+               return True;
+            end if;
+            declare
+               test_token : constant A_Token := get_token (next_token);
+               can_eval : constant evaluation_type := next_operator (test_token);
+            begin
+               case can_eval is
+                  when unsupported => return False;
+                  when numeric | textual => return True;
+               end case;
+            end;
+         when post_var_num =>
+            return
+              uppercase (next_token) = "EQ" or else
+              next_token = ">=" or else
+              next_token = "<=" or else
+              next_token = ">" or else
+              next_token = "<";
+         when post_var_str =>
+            return
+              next_token = "~" or else
+              next_token = "=" or else
+              next_token = "^" or else
+              next_token = "!~" or else
+              next_token = "!=" or else
+              next_token = "!^";
+         when post_op_num =>
+            return IsNumeric (next_token);
+         when post_op_str =>
+            return True;
+         when post_num | post_str | post_close =>
+            return next_token = "&" or else
+              next_token = "|" or else
+              next_token = ")";
+         when done =>
+            return False;
+      end case;
+   end next_token_valid;
+
+
+   ---------------------
+   --  process_token  --
+   ---------------------
+   procedure process_token
+     (processor  : in out Condition_Box;
+      next_token : String)
+   is
+   begin
+      case processor.machine is
+         when start | post_open =>
+            if next_token = "(" then
+               SU.Append (processor.where_clause, next_token);
+               processor.parens_open := processor.parens_open + 1;
+               processor.machine := post_open;
+            end if;
+            --  must be a valid token
+            declare
+               test_token : constant A_Token := get_token (next_token);
+               can_eval : constant evaluation_type := next_operator (test_token);
+            begin
+               case can_eval is
+                  when unsupported => null;  -- impossible
+                  when numeric =>
+                     processor.machine := post_var_num;
+                  when textual =>
+                     processor.machine := post_var_str;
+               end case;
+               SU.Append (processor.where_clause, get_column (test_token));
+            end;
+         when post_var_num =>
+            if uppercase (next_token) = "EQ" then
+               SU.append (processor.where_clause, " = ");
+            else
+               SU.Append (processor.where_clause, LAT.Space & next_token & LAT.Space);
+            end if;
+            processor.machine := post_op_num;
+         when post_var_str =>
+            if next_token = "~" then
+               SU.Append (processor.where_clause, " GLOB ");
+            elsif next_token = "!~" then
+              SU.Append (processor.where_clause, " NOT GLOB ");
+            elsif next_token = "=" then
+               SU.Append (processor.where_clause, " = ");
+            elsif next_token = "!=" then
+               SU.Append (processor.where_clause, " <> ");
+            elsif next_token = "^" then
+               SU.Append (processor.where_clause, " LIKE ");
+            elsif next_token = "!^" then
+               SU.Append (processor.where_clause, " NOT LIKE ");
+            end if;
+            processor.machine := post_op_str;
+         when post_op_num =>
+            SU.Append (processor.where_clause, next_token);
+            processor.machine := post_num;
+         when post_op_str =>
+            SU.Append (processor.where_clause, encode_string_operand (next_token));
+            processor.machine := post_str;
+         when post_num | post_str | post_close =>
+            if next_token = ")" then
+               SU.Append (processor.where_clause, next_token);
+               processor.parens_open := processor.parens_open - 1;
+               processor.machine := post_close;
+            elsif next_token = "|" then
+               SU.Append (processor.where_clause, " OR ");
+               processor.machine := start;
+            elsif next_token = "&" then
+               SU.Append (processor.where_clause, " AND ");
+               processor.machine := start;
+            end if;
+         when done =>
+            null;
+      end case;
+   end process_token;
+
+
+   -----------------------------
+   --  encode_string_operand  --
+   -----------------------------
+   function encode_string_operand (raw : String) return String
+   is
+      num_quote : constant Natural := count_char (raw, LAT.Apostrophe);
+
+      function escape_quote (dirty : String) return String
+      is
+         --  guaranteed dirty_length is at least 1
+         num_replacements : constant Natural := count_char (dirty, LAT.Apostrophe);
+         canvas : string (1 .. dirty'Length + num_replacements);
+         index : Natural := canvas'First;
+      begin
+         for x in dirty'Range loop
+            case dirty(x) is
+               when LAT.Apostrophe =>
+                  canvas (index) := LAT.Apostrophe;
+                  index := index + 1;
+                  canvas (index) := LAT.Apostrophe;
+               when others =>
+                  canvas (index) := dirty(x);
+            end case;
+            index := index + 1;
+         end loop;
+         return canvas;
+      end escape_quote;
+   begin
+      if num_quote = 0 then
+         return LAT.Apostrophe & raw & LAT.Apostrophe;
+      end if;
+
+      if raw (raw'First) = LAT.Apostrophe and then
+        raw (raw'Last) = LAT.Apostrophe
+      then
+         if num_quote = 1 then
+            return "''''";
+         end if;
+
+         if num_quote = 2 then
+            return raw;
+         end if;
+
+         --  num_quote > 2, meaning at least one internal character is a quote
+         --  that's pretty much a user error but it would break to query
+         return LAT.Apostrophe & escape_quote (raw(raw'First + 1 .. raw'Last - 1)) & LAT.Apostrophe;
+
+      end if;
+
+      return escape_quote (raw);
+   end;
 
 
    ------------------------------

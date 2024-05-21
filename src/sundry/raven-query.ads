@@ -97,7 +97,6 @@ private
       record
          machine      : State_Machine := start;
          parens_open  : Natural := 0;
-         can_close    : Boolean := True;
          where_clause : Text := SU.Null_Unbounded_String;
       end record;
 
@@ -124,6 +123,20 @@ private
    --  Adds spaces around specific characters to help with parsing
    --  Masks spaces that are inside single quotes
    function expand_original_condition (original : String) return String;
+
+   --  Pass the next token and the current state of the machine to determine if the next
+   --  token is valid.
+   function next_token_valid
+     (machine    : State_Machine;
+      next_token : String) return Boolean;
+
+   --  Build up internal condition clause based on machine state and token
+   procedure process_token
+     (processor  : in out Condition_Box;
+      next_token : String);
+
+   --  Ensures string is wrapped with escaped single quotes.
+   function encode_string_operand (raw : String) return String;
 
    --  Returns true if found tokens are valid.  If "{" found without a mate, that
    --  will also cause a false return
