@@ -204,6 +204,28 @@ package body Raven.Query is
    end valid_for_where_clause;
 
 
+   ---------------------
+   --  next_operator  --
+   ---------------------
+   function next_operator (token : A_Token) return evaluation_type is
+   begin
+      case token is
+         when token_unrecognized |
+              token_size_iec_units |
+              token_ml_categories .. token_ml_users => return unsupported;
+         when token_num_categories .. token_num_users |
+              token_size_bytes |
+              token_automatic |
+              token_install_time => return numeric;
+         when token_abi |
+              token_subpackage |
+              token_variant |
+              token_www_site |
+              token_comment .. token_prefix => return textual;
+      end case;
+   end next_operator;
+
+
    ----------------
    --  tokenize  --
    ----------------
@@ -276,6 +298,54 @@ package body Raven.Query is
       end loop;
 
    end tokenize;
+
+
+   ---------------------------------
+   --  expand_original_condition  --
+   ---------------------------------
+   function expand_original_condition (original : String) return String
+   is
+      quote_open : Boolean := false;
+      result : Text := Strings.blank;
+      c : Character;
+   begin
+      for ndx in original'Range loop
+         c := original (ndx);
+         if quote_open then
+            case c is
+               when Character'Val (0) .. Character'Val (31) =>
+                  raise control_char_found;
+               when LAT.Space =>
+                  SU.Append (result, Character'Val (0));
+               when LAT.Apostrophe =>
+                  SU.Append (result, c & LAT.Space);
+                  quote_open := False;
+               when others =>
+                  SU.Append (result, c);
+            end case;
+         else
+            case c is
+               when LAT.Vertical_Line |
+                    LAT.Ampersand |
+                    LAT.Left_Parenthesis |
+                    LAT.Right_Parenthesis =>
+                  SU.Append (result, LAT.Space & c & LAT.Space);
+               when LAT.Left_Curly_Bracket =>
+                  SU.Append (result, LAT.space & c);
+               when LAT.Right_Curly_Bracket =>
+                  SU.Append (result, c & LAT.Space);
+               when LAT.Apostrophe =>
+                  SU.Append (result, LAT.Space & c);
+                  quote_open := True;
+               when Character'Val (0) .. Character'Val (31) =>
+                  raise control_char_found;
+               when others =>
+                  SU.Append (result, c);
+            end case;
+         end if;
+      end loop;
+      return USS (result);
+   end expand_original_condition;
 
 
    ------------------------------------

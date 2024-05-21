@@ -22,6 +22,7 @@ package Raven.Query is
 private
 
    token_invalid_for_column : exception;
+   control_char_found       : exception;
 
    type A_Token is
      (token_unrecognized,
@@ -79,6 +80,26 @@ private
       token_ml_users);
 
    type Column_Selection is array (A_Token'Range) of Boolean;
+   type evaluation_type is (unsupported, numeric, textual);
+   type State_Machine is
+     (start,
+      post_open,
+      post_var_num,
+      post_op_num,
+      post_num,
+      post_var_str,
+      post_op_str,
+      post_str,
+      post_close,
+      done);
+
+   type Condition_Box is
+      record
+         machine      : State_Machine := start;
+         parens_open  : Natural := 0;
+         can_close    : Boolean := True;
+         where_clause : Text := SU.Null_Unbounded_String;
+      end record;
 
    function get_token (component : String) return A_Token;
 
@@ -94,6 +115,15 @@ private
 
    --  Returns True when token points to modifier value for evaluations
    function valid_for_where_clause (token : A_Token) return Boolean;
+
+   --  Returns 'unsupported' for tokens not suitable for evaluation clause
+   --  Otherwise the token is classified as numerical or string-based, used to determine
+   --  if the next operator is valid
+   function next_operator (token : A_Token) return evaluation_type;
+
+   --  Adds spaces around specific characters to help with parsing
+   --  Masks spaces that are inside single quotes
+   function expand_original_condition (original : String) return String;
 
    --  Returns true if found tokens are valid.  If "{" found without a mate, that
    --  will also cause a false return
