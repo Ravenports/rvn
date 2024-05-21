@@ -582,6 +582,14 @@ package body Raven.Cmd.Line is
                         data.help_command2 := cv2_main_conf;
                      elsif datum = "repository" then
                         data.help_command2 := cv2_repository;
+                     elsif datum = "scripts" then
+                        data.help_command2 := cv2_scripts;
+                     elsif datum = "lua-scripts" then
+                        data.help_command2 := cv2_luascripts;
+                     elsif datum = "keywords" then
+                        data.help_command2 := cv2_keywords;
+                     elsif datum = "ravensign" then
+                        data.help_command2 := cv2_ravensign;
                      else
                         set_error (data, SQ (datum) & " is not a recognized command");
                      end if;

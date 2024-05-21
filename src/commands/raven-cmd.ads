@@ -54,6 +54,10 @@ private
      (cv2_unset,
       cv2_main,
       cv2_repository,
+      cv2_keywords,
+      cv2_scripts,
+      cv2_luascripts,
+      cv2_ravensign,
       cv2_main_conf
      );
 

@@ -21,6 +21,26 @@ package body Raven.Cmd.Help is
    function execute_help_command (comline : Cldata) return Boolean
    is
    begin
+      --  Check for non-command help pages first, otherwise they never show.
+      case comline.help_command2 is
+         when cv2_unset => null;
+         when cv2_main =>
+            return show_man_page (progname, '8');
+         when cv2_main_conf =>
+            return show_man_page (progname & ".conf", '5');
+         when cv2_repository =>
+            return show_man_page (progname & "-repository", '5');
+         when cv2_keywords =>
+            return show_man_page (progname & "-keywords", '5');
+         when cv2_scripts =>
+            return show_man_page (progname & "-scripts", '5');
+         when cv2_luascripts =>
+            return show_man_page (progname & "-lua-scripts", '5');
+         when cv2_ravensign =>
+            return show_man_page ("ravensign", '7');
+      end case;
+
+
       --  There's no man page rvn-help.8.  Trying "rvn help help" will result
       --  in a manpage not found error.
       if comline.help_command = cv_unset or else
@@ -32,19 +52,11 @@ package body Raven.Cmd.Help is
          TIO.Put_Line ("For more information on the different commands see "
                        & SQ (progname & " help <command>") & ".");
          return True;
-      else
-         case comline.help_command2 is
-            when cv2_unset =>
-               return show_man_page
-                 (progname & "-" & convert_command_enum_to_label (comline.help_command), '8');
-            when cv2_main =>
-               return show_man_page (progname, '8');
-            when cv2_main_conf =>
-               return show_man_page (progname & "-" & progname & ".conf", '5');
-            when cv2_repository =>
-               return show_man_page (progname & "-repository", '5');
-         end case;
       end if;
+
+      return show_man_page
+        (progname & "-" & convert_command_enum_to_label (comline.help_command), '8');
+
    end execute_help_command;
 
 
@@ -154,8 +166,8 @@ package body Raven.Cmd.Help is
       function manpage_location return String
       is
          --  search priority
-         --  realpath (../share/man/<manpage>.gz)
-         --  realpath (../share/man/<manpage>)
+         --  realpath (../share/man/man<section>/<manpage>.gz)
+         --  realpath (../share/man/man<section>/<manpage>)
          zero : constant String := head (Ada.Command_Line.Command_Name, "/") & "/../share/man/man";
          base : constant String := zero & section & "/" & manpage & "." & section;
          first_choice : constant String := Archive.Unix.real_path (base & ".gz");
