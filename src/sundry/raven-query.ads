@@ -144,4 +144,14 @@ private
      (conditions : String;
       error_hit  : out Boolean) return String;
 
+   --  There's a restriction to 1 multiline column.  Count the selection so we can
+   --  see if we have more than 1 selected.
+   function number_multiline_columns (columns : Column_Selection) return Natural;
+
+   --  Send out JOIN TABLE lines of the query
+   function multicolumn_join_lines (columns : Column_Selection) return String;
+
+   --  If one of the ml reverse depends columns set, use ml.nsv instead of nsv
+   function get_selection_column (columns : Column_Selection) return String;
+
 end Raven.Query;

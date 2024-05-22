@@ -159,11 +159,11 @@ package body Raven.Query is
          when token_variant          => return "variant";
          when token_www_site         => return "www";
             --  The remaining enumerations require joins (limited to one per unique table)
-         when token_ml_categories    => return "categories.name AS category";
+         when token_ml_categories    => return "ml.name";
          when token_ml_deps_namebase |  --  post-process
               token_ml_deps_variant  |  --  post-process
               token_ml_deps_spkg     |  --  post-process
-              token_ml_deps_nsv      => return "dependencies.nsv as dep_nsv";
+              token_ml_deps_nsv      => return "ml.nsv";
          when token_ml_deps_version  => return "dependencies.version as dep_version";
          when token_ml_directories   => return "directories.path as dir_path";
          when token_ml_files_path    => return "pkg_files.path as file_path";
@@ -174,11 +174,11 @@ package body Raven.Query is
          when token_ml_notes_value   => return "pkg_annotations.annotation as ann_value";
          when token_ml_opt_key       => return "options.option_name as opt_key";
          when token_ml_opt_value     => return "pkg_options.option_setting as opt_val";
-         when token_ml_rdep_namebase |  --  post-process
-              token_ml_rdep_spkg     |  --  post-process
-              token_ml_rdep_variant  |  --  post-process
-              token_ml_rdep_nsv      => return "dependencies.nsv as rdep_nsv";
-         when token_ml_rdep_version  => return "dependencies.version as rdep_version";
+         when token_ml_rdep_namebase => return "namebase";
+         when token_ml_rdep_spkg     => return "subpackage";
+         when token_ml_rdep_variant  => return "variant";
+         when token_ml_rdep_nsv      => return "nsv";
+         when token_ml_rdep_version  => return "version";
          when token_ml_shlibs_adj    => return "libraries.name as adj_lib";
          when token_ml_shlibs_pro    => return "libraries.name as pro_lib";
          when token_ml_shlibs_req    => return "libraries.name as pro_req";
@@ -594,6 +594,97 @@ package body Raven.Query is
    end;
 
 
+   --------------------------------
+   --  number_multiline_columns  --
+   --------------------------------
+   function number_multiline_columns (columns : Column_Selection) return Natural
+   is
+      multiline : Natural := 0;
+
+      --  Some groups of ML data are considered "1" column since they all use the same join
+      type mlc is
+        (depends, revdeps, categories, files, directories, options, licenses, users, groups,
+         libsreq, libsprov, libsadj, notes);
+      seen : array (mlc'Range) of Boolean;
+   begin
+      seen := (others => False);
+      for x in A_Token'Range loop
+         case x is
+            when token_ml_categories => seen (categories) := True;
+            when token_ml_deps_namebase .. token_ml_deps_version => seen (depends) := True;
+            when token_ml_directories => seen (directories) := True;
+            when token_ml_files_path .. token_ml_files_digest => seen (files) := True;
+            when token_ml_groups => seen (groups) := True;
+            when token_ml_licenses => seen (licenses) := True;
+            when token_ml_notes_key .. token_ml_notes_value => seen (notes) := True;
+            when token_ml_opt_key .. token_ml_opt_value => seen (options) := True;
+            when token_ml_rdep_namebase .. token_ml_rdep_version => seen (revdeps) := True;
+            when token_ml_shlibs_adj => seen (libsadj) := True;
+            when token_ml_shlibs_pro => seen (libsprov) := True;
+            when token_ml_shlibs_req => seen (libsreq) := True;
+            when token_ml_users => seen (users) := True;
+            when others => null;
+         end case;
+      end loop;
+
+      for x in mlc'Range loop
+         if seen (x) then
+            multiline := multiline + 1;
+         end if;
+      end loop;
+      return multiline;
+
+   end number_multiline_columns;
+
+
+   ----------------------------
+   --  get_selection_column  --
+   ----------------------------
+   function get_selection_column (columns : Column_Selection) return String is
+   begin
+      if columns (token_ml_deps_namebase) or else
+        columns (token_ml_deps_nsv) or else
+        columns (token_ml_deps_spkg) or else
+        columns (token_ml_deps_variant) or else
+        columns (token_ml_deps_version)
+      then
+         return "ml.nsv";
+      end if;
+      return "nsv";
+   end get_selection_column;
+
+
+   ------------------------------
+   --  multicolumn_join_lines  --
+   ------------------------------
+   function multicolumn_join_lines (columns : Column_Selection) return String is
+   begin
+      for x in A_Token'Range loop
+         case x is
+            when token_ml_categories =>
+               return
+                 " JOIN pkg_categories x on x.package_id = packages.id" &
+                 " JOIN categories ml on ml.category_id = x.category_id";
+            when token_ml_deps_namebase |
+                 token_ml_deps_spkg     |
+                 token_ml_deps_variant  |
+                 token_ml_deps_nsv      |
+                 token_ml_deps_version  |
+                 token_ml_rdep_namebase |
+                 token_ml_rdep_spkg     |
+                 token_ml_rdep_variant  |
+                 token_ml_rdep_nsv      |
+                 token_ml_rdep_version  =>
+               return
+                 " JOIN pkg_dependencies x on x.package_id = id" &
+                 " JOIN dependencies ml on ml.dependency_id = x.dependency_id";
+            when others => null;
+         end case;
+      end loop;
+      return " IMPOSSIBLE";
+   end multicolumn_join_lines;
+
+
    ------------------------------
    --  query_package_database  --
    ------------------------------
@@ -610,9 +701,15 @@ package body Raven.Query is
       columns          : Column_Selection;
       num_columns      : Natural;
       error_hit        : Boolean;
+      num_multi        : Natural;
       sql : Text := SUS ("select namebase || '-' || subpackage || '-' || variant as nsv");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
+      num_multi := number_multiline_columns (columns);
+      if num_multi > 1 then
+         Event.emit_error ("Limit of 1 multiline pattern exceeded");
+         return;
+      end if;
       if num_columns > 0 then
          for x in A_Token'Range loop
             if columns (x) then
@@ -622,7 +719,9 @@ package body Raven.Query is
       end if;
       SU.Append (sql, " FROM packages");
 
-      --  TODO join logic
+      if num_multi > 0 then
+         SU.append (sql, multicolumn_join_lines (columns));
+      end if;
 
       if conditions = "" then
          SU.Append (sql, " WHERE (1)");
@@ -639,16 +738,20 @@ package body Raven.Query is
       end if;
 
       if not all_packages then
-         if override_exact then
-            if override_csens then
-               SU.Append (sql, " AND nsv = ?");
+         declare
+            crit : constant String := get_selection_column (columns);
+         begin
+            if override_exact then
+               if override_csens then
+                  SU.Append (sql, " AND " & crit & " = ?");
+               else
+                  SU.Append (sql, " AND " & crit & " LIKE ?");
+               end if;
             else
-               SU.Append (sql, " AND nsv LIKE ?");
+               --  GLOB is case-sensitive, period.  Catch clash at commandline validation
+               SU.Append (sql, " AND " & crit & " GLOB ?");
             end if;
-         else
-            --  GLOB is case-sensitive, period.  Catch clash at commandline validation
-            SU.Append (sql, " AND GLOB = ?");
-         end if;
+         end;
       end if;
 
       --  declare
