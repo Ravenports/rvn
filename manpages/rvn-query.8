@@ -1,0 +1,115 @@
+.Dd May 22, 2024
+.Dt RVN-QUERY 8
+.Os
+.Sh NAME
+.Nm "rvn query"
+.Nd query installed packages database
+.Sh SYNOPSIS
+.Nm
+.Ao query-format Ac Ao namebase-subpackage-variant Ac
+.Pp
+.Nm
+.Op Fl a
+.Ao query-format Ac
+.Nm
+.Op Fl CE
+.Op Fl e Ao evaluation-condition Ac
+.Ao query-format Ac Ao pattern Ac
+.Pp
+.Nm
+.Op Cm --all
+.Ao query-format Ac
+.Nm
+.Op Cm --{case-sensitive,exact-match}
+.Op Cm --evaluate Ao evaluation-condition Ac
+.Ao query-format Ac Ao pattern Ac
+.Sh DESCRIPTION
+.Nm
+is used for displaying information about installed packages.
+The formatting for the queries is documented in the
+.Sx QUERY FORMAT
+section of
+.Xr rvn-query-format 7
+man page.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width evaluate
+.It Fl a , Cm --all
+Match all packages from the database.
+This switch is incompatible with the
+.Ar pattern
+argument.
+.It Fl C , Cm --case-sensitive
+Switch to glob matching of the
+.Ar pattern .
+which is inherently case-sensitive .
+.It Fl E , Cm --exact-match
+Disables explicit and inplied wildcards so when the
+.Ar pattern .
+exactly matches the namebase-subpackage-variant
+package name is successful.
+.It Fl e , Cm --evaluate
+Match packages using the given
+.Ar evaluation-condition .
+See
+.Sx EVALUATION FORMAT
+section of
+.Xr rvn-query-format 7
+for details.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev CASE_SENSITIVE_MATCH
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+List all installed packages by fullname-version:
+.Dl $ rvn query '{nsv}-{version}'
+.Pp
+List all dependencies by package name-version:
+.Dl $ rvn query '{xdep:n}-{xdep:v}' 'subversion-*'
+.Pp
+List all reverse dependencies for a package:
+.Dl $ rvn query '{xrdep:nsv}' 'perl-5.??-primary-standard'
+.Pp
+List all files and their known checksums for a package:
+.Dl $ rvn query '{xfile:sum} {xfile:path}' 'joe-single-standard'
+.Pp
+List all files for all packages:
+.Dl $ rvn query '{nsv} {xfile:path}'
+.Pp
+List all packages with no reverse dependencies:
+.Dl $ rvn query -e '{#rdeps} = 0' '{name}:{subpkg}:{variant}'
+.Pp
+List non-automatic packages:
+.Dl $ rvn query -e '{auto} = 0' '{nsv}'
+.Pp
+List automatic packages:
+.Dl $ rvn query -e '{auto} = 1' '{nsv}'
+.Pp
+List unmaintained packages:
+.Dl $ rvn query -e '{maint} = nobody' '{nsv}'
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-catalog 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-genrepo 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
