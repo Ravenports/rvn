@@ -94,11 +94,14 @@ The following options are supported by
 .Nm :
 .Bl -tag -width repository
 .It Fl C , Cm --case-sensitive
-Change default case-insensitive matching to case
-sensitive when searching for
-.Ar pkg-name .
+Switch to glob matching of the
+.Ar pattern .
+which is inherently case-sensitive .
 .It Fl E , Cm --exact-match
-Disable glob searching which is the default setting.
+Disables explicit and implied wildcards so when the
+.Ar pattern .
+exactly matches the namebase-subpackage-variant
+package name is successful.
 .It Fl S , Fl -snapshot
 Use the most current
 .Pa repology.json

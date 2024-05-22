@@ -9,14 +9,14 @@
 .Op Fl AfIMnFqRUy
 .Op Fl r Ar reponame
 .Op Fl CE
-.Ar <pkg-namebase|pkg-namebase-subpackage-variant> ...
+.Ar pkg-name ...
 .Pp
 .Nm
 .Op Cm --{automatic,force,no-scripts,ignore-missing}
 .Op Cm --{dry-run,fetch-only,quiet,recursive,no-repo-update,yes}
 .Op Cm --repository Ar reponame
 .Op Cm --{case-sensitive,exact-match}
-.Ar <pkg-namebase|pkg-namebase-subpackage-variant> ...
+.Ar pkg-name ...
 .Sh DESCRIPTION
 .Nm
 is used for installation of packages from package repositories or
@@ -101,11 +101,14 @@ Will be automatically removed if no other packages depend on them.
 For more information please refer to
 .Xr rvn-autoremove 8 .
 .It Fl C , Cm --case-sensitive
-Change default case-insensitive matching to case
-sensitive when searching for
-.Ar pkg-name .
+Switch to glob matching of the
+.Ar pkg-name 
+which is inherently case-sensitive .
 .It Fl E , Cm --exact-match
-Disable glob searching which is the default setting.
+Disables explicit and implied wildcards so when the
+.Ar pkg-name
+exactly matches the namebase-subpackage-variant
+package name is successful.
 .It Fl F , Cm --fetch-only
 Do not perform actual installation of packages, merely fetch packages
 that should be upgraded and detect possible conflicts.

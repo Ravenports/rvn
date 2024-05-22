@@ -56,9 +56,9 @@ Display all shared libraries used by
 Display all shared libraries provided by
 .Ar pkg-name .
 .It Fl C , Cm --case-sensitive
-Change default case-insensitive matching to case
-sensitive when searching for
-.Ar pkg-name .
+Switch to glob matching of the
+.Ar pkg-name 
+which is inherently case-sensitive .
 .It Fl D , Cm --description
 Show the long description for matching packages.
 .It Fl d , Cm --dependencies
@@ -66,7 +66,10 @@ Display the list of packages on which
 .Ar pkg-name
 depends.
 .It Fl E , Cm --exact-match
-Disable glob searching which is the default setting.
+Disables explicit and implied wildcards so when the
+.Ar pkg-name
+exactly matches the namebase-subpackage-variant
+package name is successful.
 .It Fl e , Cm --exists
 If
 .Ar pkg-name
