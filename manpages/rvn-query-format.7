@@ -1,0 +1,280 @@
+.Dd May 22, 2024
+.Dt QUERY-FORMAT 7
+.Os
+.Sh NAME
+.Nm "rvn query format"
+.Nd Description of rvn query parameters
+.Sh DESCRIPTION
+The query format is used by
+.Nm rvn query
+and
+.Nm rvn rquery
+commands to interogate the installed package and catalog database
+respectively.
+There are two categories of keywords: those used to specify the
+data to display and those used to select which packages to return.
+.Sh QUERY FORMAT
+There are two types of keywords for the display format: the multiline
+and the normal one.
+The normal one returns a single line per package while the multiline
+keywords have no line limit.
+Queries are restricted to a single multiline keyword.
+A few descriptions are preceded by an asterisk which signifies that
+the keyword is specific to the installed package database and will
+return nothing / zero if used on the catalog database.
+.Ss Normal patterns
+.Bl -tag -width _xxxxxxxxxx_
+.It Cm {name}
+Namebase component of the matched package name triplet
+.It Cm {subpkg}
+Subpackage component of the matched package name triplet
+.It Cm {variant}
+Variant component of the matched package name triplet
+.It Cm {nsv}
+Namebase-Subpackage-Variant package name triplet
+.It Cm {version}
+Version of the matched package
+.It Cm {prefix}
+Installation prefix of the matched package
+.It Cm {maint}
+Maintainer of the matched package
+.It Cm {comment}
+Single line summary of the matched package
+.It Cm {desc}
+Long description of the matched package
+.It Cm {www}
+Home page of the matched package
+.It Cm {abi}
+A triple tuple containing the operating system name, the CPU architecture,
+and the operating system release.
+Example:
+.Dq dragonfly:x86_64:6.4
+.It Cm {logic}
+Description of the license scheme defined in the package specification.
+One of
+.Dq solo ,
+.Dq dual ,
+.Dq multi
+.It Cm {size:bytes}
+Combined size of the files in bytes after extracting them from rvn archive
+.It Cm {size:iec}
+Combined size of the extract files expressed in IEC format (KiB, MiB, etc)
+.It Cm {auto}
+* Returns 1 if this package was automatically installed as a dependency of
+another package, 0 otherwise.
+This allows the package to be automatically removed via
+.Nm rvn autoremove
+when zero packages depend on it.
+.It Cm {timestamp}
+* Unix timestamp indicating when the package was installed
+.It Cm {#deps}
+Number of dependencies required by this package
+.It Cm {#rdeps}
+Number of packages that require this package
+.It Cm {#cats}
+Number of categories listed in the package specification
+.It Cm {#opts}
+Number of options defined for this package
+.It Cm {#lics}
+Number of unique licenses defined for this package
+.It Cm {#shreq}
+Number of shared libraries this package requires
+.It Cm {#shpro}
+Number of shared libraries this package provides
+.It Cm {#shadj}
+Number of shared libraries provided by sibling subpackages
+.It Cm {#notes}
+Number of annotations encoded into the package
+.It Cm {#files}
+* Number of files this package installs
+.It Cm {#dirs}
+* Number of empty directories this package creates
+.It Cm {#users}
+* Number of users this package will create as necessary
+.It Cm {#groups}
+* Number of groups this package will create as necessary
+.El
+.Ss Multiline patterns
+.Bl -tag -width _xxxxxxxxxx_
+.It Cm {xdep:n}
+Expands package result to include the namebase of all dependencies.
+May be used with other xdep: patterns.
+.It Cm (xdep:s}
+Expands package result to include the subpackage of all dependencies.
+May be used with other xdep: patterns.
+.It Cm {xdep:v}
+Expands package result to include the variant of all dependencies.
+May be used with other xdep: patterns.
+.It Cm {xdep:nsv}
+Expands package result to include the full NSV triplet name of all dependencies.
+May be used with other xdep: patterns.
+.It Cm {xdep:ver}
+Expands package result to include the version of all dependencies.
+May be used with other xdep: patterns.
+.It Cm {xrdep:n}
+Expands package result to include the namebase of all reverse dependencies.
+May be used with other xrdep: patterns.
+.It Cm {xrdep:s}
+Expands package result to include the subpackage of all reverse dependencies.
+May be used with other xrdep: patterns.
+.It Cm {xrdep:v}
+Expands package result to include the variant of all reverse dependencies.
+May be used with other xrdep: patterns.
+.It Cm {xrdep:nsv}
+Expands package result to include the full NSV triplet name of all reverse
+dependencies.
+May be used with other xrdep: patterns.
+.It Cm {xrdep:ver}
+Expands package result to include the version of all reverse dependencies.
+May be used with other xrdep: patterns.
+.It Cm {xcat}
+Expands package result to include all defined categories.
+.It Cm {xlic}
+Expands package result to include all defined licenses.
+.It Cm {xshreq}
+Expands package result to include all required shared libraries.
+.It Cm {xshpro}
+Expands package result to include all provided shared libraries.
+.It Cm {xshadj}
+Expands package result to include all subpackage-sibling provided libraries.
+.It Cm {xnote:key}
+Expands package result to include the tags of all defined annotations.
+May be used with the xnote:val pattern.
+.It Cm {xnote:val}
+Expands package result to include the tags of all defined annotations.
+May be used with the xnote:key pattern.
+.It Cm {xopt:key}
+Expands package result to include defined option names.
+May be used with the xopt:val pattern.
+.It Cm {xopt:val}
+Expands package result to include the built option settings.
+May be used with the xopt:key pattern.
+.It Cm {xfile:path}
+* Expands package result to include the paths of all installed files.
+May be used with the xfile:sum pattern.
+.It Cm {xfile:sum}
+* Expands package result to include the Blake3 digest of all installed files.
+May be used with the xfile:path pattern.
+.It Cm {xdir}
+* Expands package result to include empty directory paths created upon
+installation.
+.It Cm {xuser}
+* Expands package result to include all users that may be created during
+installation.
+.It Cm {xgroup}
+* Expands package result to include all groups that may be created during
+installation.
+.El
+.Sh EVALUATION FORMAT
+Packages can be selected or excluded by using expressions comparing
+.Ar Variables
+(see below) to string or integer values.
+The mode of comparison is specified by the
+.Ar Operator
+(also listed below).
+Expressions can be combined using
+.Dq &
+(AND operator) and
+.Dq |
+(OR operator).
+Parentheses can be used for grouping in the usual manner.
+.Pp
+String values are either any text not containing whitespace or any text
+enclosed in single quotes.
+.Ss Variables
+.Bl -tag -width _xxxxxxxxxx_
+.It Cm {name}
+Namebase of the package
+.It Cm {subpkg}
+Subpackage of the package
+.It Cm {variant}
+Variant of the package
+.It Cm {nsv}
+Namebase-Subpackage-Variant package name triplet
+.It Cm {abi}
+Triplet identifying which platform the package is intended to run on.
+.It Cm {prefix}
+Installation prefix of the package
+.It Cm {maint}
+Maintainer of the package
+.It Cm {comment}
+Single line summary of the package
+.It Cm {desc}
+Long description of the package
+.It Cm {www}
+Official website of the package
+.It Cm {flat}
+Combined size in bytes of all files contained in the package
+.It Cm {#deps}
+(integer) Number of package dependencies
+.It Cm {#rdeps}
+(integer) Number of packages that need this one (reverse dependencies)
+.It Cm {#cats}
+(integer) Number of categories defined in the package
+.It Cm {#opts}
+(integer) Number of options defined in the package
+.It Cm {#lics}
+(integer) Number of licenses defined in the package
+.It Cm {#shreq}
+(integer) Number of shared libraries required by the package
+.It Cm {#shpro}
+(integer) Number of shared libraries provided by the package
+.It Cm {#shadj}
+(integer) Number of shared libraries provided by subpackage siblings
+.It Cm {#notes}
+(integer) Number of annotations defined in the package
+.It Cm {auto}
+* (integer) automatically installed flag (0 means explicitly installed)
+.It Cm {timestamp}
+* (integer) Unix timestamp for package installation time
+.El
+.Ss Operators
+.Bl -tag -width F1
+.It Va var Cm > Ns Oo = Oc Ar num
+The numerical value of
+.Va var
+is greater than
+.Op or equal to
+the given number.
+.It Va var Cm < Ns Oo = Oc Ar num
+The numerical value of
+.Va var
+is less than
+.Op or equal to
+the given number.
+.It Va var Cm eq Ar num
+The value of
+.Va var
+is equal to the given number.
+.It Va var Cm ne Ar num
+The value of
+.Va var
+is not equal to the given number.
+.It Va var Cm = Ar string
+The value of
+.Va var
+is equivalent to the given string (case sensitive).
+.It Va var Cm != Ar string
+The value of
+.Va var
+is not equivalent to the given string (case sensitive).
+.It Va var Cm ^ Ar string
+The value of
+.Va var
+is equivalent to the given string (case insensitive).
+.It Va var Cm !^ Ar string
+The value of
+.Va var
+is not equivalent to the given string (case insensitive).
+.It Va var Cm ~ Ar glob
+The string value of
+.Va var
+matches the given glob pattern.
+.It Va var Cm !~ Ar glob
+The string value of
+.Va var
+does not match the given glob pattern.
+.El
+.Sh SEE ALSO
+.Xr rvn-query 8 ,
+.Xr rvn-rquery 8
