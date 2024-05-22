@@ -657,72 +657,83 @@ package body Raven.Query is
    ------------------------------
    --  multicolumn_join_lines  --
    ------------------------------
-   function multicolumn_join_lines (columns : Column_Selection) return String is
+   function multicolumn_join_lines (columns : Column_Selection) return String
+   is
+      ml_column : A_Token := token_unrecognized;
    begin
       for x in A_Token'Range loop
          case x is
-            when token_ml_categories =>
-               return
-                 " JOIN pkg_categories x on x.package_id = packages.id" &
-                 " JOIN categories ml on ml.category_id = x.category_id";
-            when token_ml_deps_namebase |
-                 token_ml_deps_spkg     |
-                 token_ml_deps_variant  |
-                 token_ml_deps_nsv      |
-                 token_ml_deps_version  |
-                 token_ml_rdep_namebase |
-                 token_ml_rdep_spkg     |
-                 token_ml_rdep_variant  |
-                 token_ml_rdep_nsv      |
-                 token_ml_rdep_version  =>
-               return
-                 " JOIN pkg_dependencies x on x.package_id = id" &
-                 " JOIN dependencies ml on ml.dependency_id = x.dependency_id";
-            when token_ml_directories =>
-               return
-                 " JOIN pkg_directories x on x.package_id = packages.id" &
-                 " JOIN directories ml on ml.directory_id = x.directory_id";
-            when token_ml_files_digest |
-                 token_ml_files_path   =>
-               return
-                 " JOIN pkg_files ml on ml.package_id = packages.id";
-            when token_ml_groups =>
-               return
-                 " JOIN pkg_groups x on x.package_id = packages.id" &
-                 " JOIN groups ml on ml.group_id = x.group_id";
-            when token_ml_licenses =>
-               return
-                 " JOIN pkg_licenses x on x.package_id = packages.id" &
-                 " JOIN licenses ml on ml.license_id = x.license_id";
-            when token_ml_notes_key |
-                 token_ml_notes_value =>
-               return
-                 " JOIN pkg_annotations x on x.package_id = packages.id" &
-                 " JOIN annotations ml on ml.annotation_id = x.annotation_id";
-            when token_ml_opt_key |
-                 token_ml_opt_value =>
-               return
-                 " JOIN pkg_options x on x.package_id = packages.id" &
-                 " JOIN options ml on ml.option_id = x.option_id";
-            when token_ml_shlibs_adj =>
-              return
-                 " JOIN pkg_libs_adjacent x on x.package_id = packages.id" &
-                 " JOIN libraries ml on ml.library_id = x.library_id";
-            when token_ml_shlibs_pro =>
-               return
-                 " JOIN pkg_libs_provided x on x.package_id = packages.id" &
-                 " JOIN libraries ml on ml.library_id = x.library_id";
-            when token_ml_shlibs_req =>
-                return
-                 " JOIN pkg_libs_required x on x.package_id = packages.id" &
-                 " JOIN libraries ml on ml.library_id = x.library_id";
-            when token_ml_users =>
-               return
-                 " JOIN pkg_users x on x.package_id = packages.id" &
-                 " JOIN users ml on ml.user_id = x.user_id";
+            when token_ml_categories .. token_ml_users =>
+               if columns (x) then
+                  ml_column := x;
+                  exit;
+               end if;
             when others => null;
          end case;
       end loop;
+      case ml_column is
+         when token_ml_categories =>
+            return
+              " JOIN pkg_categories x on x.package_id = packages.id" &
+              " JOIN categories ml on ml.category_id = x.category_id";
+         when token_ml_deps_namebase |
+              token_ml_deps_spkg     |
+              token_ml_deps_variant  |
+              token_ml_deps_nsv      |
+              token_ml_deps_version  |
+              token_ml_rdep_namebase |
+              token_ml_rdep_spkg     |
+              token_ml_rdep_variant  |
+              token_ml_rdep_nsv      |
+              token_ml_rdep_version  =>
+            return
+              " JOIN pkg_dependencies x on x.package_id = id" &
+              " JOIN dependencies ml on ml.dependency_id = x.dependency_id";
+         when token_ml_directories =>
+            return
+              " JOIN pkg_directories x on x.package_id = packages.id" &
+              " JOIN directories ml on ml.directory_id = x.directory_id";
+         when token_ml_files_digest |
+              token_ml_files_path   =>
+            return
+              " JOIN pkg_files ml on ml.package_id = packages.id";
+         when token_ml_groups =>
+            return
+              " JOIN pkg_groups x on x.package_id = packages.id" &
+              " JOIN groups ml on ml.group_id = x.group_id";
+         when token_ml_licenses =>
+            return
+              " JOIN pkg_licenses x on x.package_id = packages.id" &
+              " JOIN licenses ml on ml.license_id = x.license_id";
+         when token_ml_notes_key |
+              token_ml_notes_value =>
+            return
+              " JOIN pkg_annotations x on x.package_id = packages.id" &
+              " JOIN annotations ml on ml.annotation_id = x.annotation_id";
+         when token_ml_opt_key |
+              token_ml_opt_value =>
+            return
+              " JOIN pkg_options x on x.package_id = packages.id" &
+              " JOIN options ml on ml.option_id = x.option_id";
+         when token_ml_shlibs_adj =>
+            return
+              " JOIN pkg_libs_adjacent x on x.package_id = packages.id" &
+              " JOIN libraries ml on ml.library_id = x.library_id";
+         when token_ml_shlibs_pro =>
+            return
+              " JOIN pkg_libs_provided x on x.package_id = packages.id" &
+              " JOIN libraries ml on ml.library_id = x.library_id";
+         when token_ml_shlibs_req =>
+            return
+              " JOIN pkg_libs_required x on x.package_id = packages.id" &
+              " JOIN libraries ml on ml.library_id = x.library_id";
+         when token_ml_users =>
+            return
+              " JOIN pkg_users x on x.package_id = packages.id" &
+              " JOIN users ml on ml.user_id = x.user_id";
+         when others => null;
+      end case;
+
       return " IMPOSSIBLE";
    end multicolumn_join_lines;
 
