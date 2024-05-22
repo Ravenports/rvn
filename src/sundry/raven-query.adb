@@ -164,25 +164,25 @@ package body Raven.Query is
               token_ml_deps_variant  |  --  post-process
               token_ml_deps_spkg     |  --  post-process
               token_ml_deps_nsv      => return "ml.nsv";
-         when token_ml_deps_version  => return "dependencies.version as dep_version";
-         when token_ml_directories   => return "directories.path as dir_path";
-         when token_ml_files_path    => return "pkg_files.path as file_path";
-         when token_ml_files_digest  => return "pkg_files.b3digest as file_sum";
-         when token_ml_groups        => return "groups.name as grp_name";
-         when token_ml_licenses      => return "licenses.name as lic_name";
-         when token_ml_notes_key     => return "annotations.note_key as ann_key";
-         when token_ml_notes_value   => return "pkg_annotations.annotation as ann_value";
-         when token_ml_opt_key       => return "options.option_name as opt_key";
-         when token_ml_opt_value     => return "pkg_options.option_setting as opt_val";
+         when token_ml_deps_version  => return "ml.version";
+         when token_ml_directories   => return "ml.path";
+         when token_ml_files_path    => return "ml.path";
+         when token_ml_files_digest  => return "ml.b3digest";
+         when token_ml_groups        => return "ml.name";
+         when token_ml_licenses      => return "ml.name";
+         when token_ml_notes_key     => return "ml.note_key";
+         when token_ml_notes_value   => return "ml.annotation";
+         when token_ml_opt_key       => return "ml.option_name";
+         when token_ml_opt_value     => return "ml.option_setting";
          when token_ml_rdep_namebase => return "namebase";
          when token_ml_rdep_spkg     => return "subpackage";
          when token_ml_rdep_variant  => return "variant";
          when token_ml_rdep_nsv      => return "nsv";
          when token_ml_rdep_version  => return "version";
-         when token_ml_shlibs_adj    => return "libraries.name as adj_lib";
-         when token_ml_shlibs_pro    => return "libraries.name as pro_lib";
-         when token_ml_shlibs_req    => return "libraries.name as pro_req";
-         when token_ml_users         => return "users.name as user_name";
+         when token_ml_shlibs_adj    => return "ml.name";
+         when token_ml_shlibs_pro    => return "ml.name";
+         when token_ml_shlibs_req    => return "ml.name";
+         when token_ml_users         => return "ml.name";
       end case;
    end get_column;
 
@@ -678,6 +678,48 @@ package body Raven.Query is
                return
                  " JOIN pkg_dependencies x on x.package_id = id" &
                  " JOIN dependencies ml on ml.dependency_id = x.dependency_id";
+            when token_ml_directories =>
+               return
+                 " JOIN pkg_directories x on x.package_id = packages.id" &
+                 " JOIN directories ml on ml.directory_id = x.directory_id";
+            when token_ml_files_digest |
+                 token_ml_files_path   =>
+               return
+                 " JOIN pkg_files ml on ml.package_id = packages.id";
+            when token_ml_groups =>
+               return
+                 " JOIN pkg_groups x on x.package_id = packages.id" &
+                 " JOIN groups ml on ml.group_id = x.group_id";
+            when token_ml_licenses =>
+               return
+                 " JOIN pkg_licenses x on x.package_id = packages.id" &
+                 " JOIN licenses ml on ml.license_id = x.license_id";
+            when token_ml_notes_key |
+                 token_ml_notes_value =>
+               return
+                 " JOIN pkg_annotations x on x.package_id = packages.id" &
+                 " JOIN annotations ml on ml.annotation_id = x.annotation_id";
+            when token_ml_opt_key |
+                 token_ml_opt_value =>
+               return
+                 " JOIN pkg_options x on x.package_id = packages.id" &
+                 " JOIN options ml on ml.option_id = x.option_id";
+            when token_ml_shlibs_adj =>
+              return
+                 " JOIN pkg_libs_adjacent x on x.package_id = packages.id" &
+                 " JOIN libraries ml on ml.library_id = x.library_id";
+            when token_ml_shlibs_pro =>
+               return
+                 " JOIN pkg_libs_provided x on x.package_id = packages.id" &
+                 " JOIN libraries ml on ml.library_id = x.library_id";
+            when token_ml_shlibs_req =>
+                return
+                 " JOIN pkg_libs_required x on x.package_id = packages.id" &
+                 " JOIN libraries ml on ml.library_id = x.library_id";
+            when token_ml_users =>
+               return
+                 " JOIN pkg_users x on x.package_id = packages.id" &
+                 " JOIN users ml on ml.user_id = x.user_id";
             when others => null;
          end case;
       end loop;
