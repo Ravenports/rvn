@@ -3,15 +3,12 @@
 
 with Raven.Pkgtypes;
 
-package Raven.Query is
-
-
-   type A_Database is (installation_database, catalog_database);
+package Raven.Database.UserQuery is
 
    --  if all_packages is true, pattern needs to be blank
    --  if all_packages is false, pattern cannot be blank
    procedure query_package_database
-     (database       : A_Database;
+     (contents       : RDB_Contents;
       selection      : String;
       conditions     : String;
       pattern        : String;
@@ -154,4 +151,4 @@ private
    --  If one of the ml reverse depends columns set, use ml.nsv instead of nsv
    function get_selection_column (columns : Column_Selection) return String;
 
-end Raven.Query;
+end Raven.Database.UserQuery;

@@ -6,7 +6,7 @@ with SQLite;
 with Raven.Event;
 with Raven.Strings;  use Raven.Strings;
 
-package body Raven.Query is
+package body Raven.Database.UserQuery is
 
    package LAT renames Ada.Characters.Latin_1;
 
@@ -742,7 +742,7 @@ package body Raven.Query is
    --  query_package_database  --
    ------------------------------
    procedure query_package_database
-     (database       : A_Database;
+     (contents       : RDB_Contents;
       selection      : String;
       conditions     : String;
       pattern        : String;
@@ -822,4 +822,4 @@ package body Raven.Query is
 
 
 
-end Raven.Query;
+end Raven.Database.UserQuery;
