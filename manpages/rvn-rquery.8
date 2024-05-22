@@ -1,9 +1,9 @@
 .Dd May 22, 2024
-.Dt RVN-QUERY 8
+.Dt RVN-RQUERY 8
 .Os
 .Sh NAME
-.Nm "rvn query"
-.Nd query installed packages database
+.Nm "rvn rquery"
+.Nd query remote catalog
 .Sh SYNOPSIS
 .Nm
 .Ao query-format Ac Ao namebase-subpackage-variant Ac
@@ -12,25 +12,41 @@
 .Op Fl a
 .Ao query-format Ac
 .Nm
+.Op Fl U
 .Op Fl CE
 .Op Fl e Ao evaluation-condition Ac
+.Op Fl r Ar reponame
 .Ao query-format Ac Ao pattern Ac
 .Pp
 .Nm
 .Op Cm --all
 .Ao query-format Ac
 .Nm
+.Op Cm --no-repo-update
 .Op Cm --{case-sensitive,exact-match}
 .Op Cm --evaluate Ao evaluation-condition Ac
+.Op Cm --repository Ar reponame
 .Ao query-format Ac Ao pattern Ac
 .Sh DESCRIPTION
 .Nm
-is used for displaying information about installed packages.
+is used for displaying information about remote packages listed in
+the repository catalog.
 The formatting for the queries is documented in the
 .Sx QUERY FORMAT
 section of
 .Xr rvn-query-format 7
 man page.
+.Pp
+The package repository catalog will be automatically updated whenever
+.Nm
+is run by the effective superuser unless disabled by the
+.Fl U
+flag or setting
+.Va REPO_AUTOUPDATE
+to
+.Dq Li NO
+in
+.Xr rvn.conf 5 .
 .Sh OPTIONS
 The following options are supported by
 .Nm :
@@ -57,6 +73,18 @@ See
 section of
 .Xr rvn-query-format 7
 for details.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
+.It Fl U , Fl -no-repo-update
+Suppress the automatic update of the local copy of the repository catalog
+from remote.
+Automatic repository catalog updates are only attempted when the
+effective UID of the process has write access to the package database,
+otherwise the update attempt is skipped.
 .El
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
@@ -71,32 +99,17 @@ for further description.
 .Sh EXIT STATUS
 .Ex -std
 .Sh EXAMPLES
-List all installed packages by fullname-version:
-.Dl $ rvn query '{nsv}-{version}'
-.Pp
 List all dependencies by package name-version:
-.Dl $ rvn query '{xdep:n}-{xdep:v}' 'subversion-*'
+.Dl $ rvn rquery '{xdep:n}-{xdep:v}' 'subversion-*'
 .Pp
-List all reverse dependencies for a package, using glob:
-.Dl $ rvn query -C '{xrdep:nsv}' 'perl-5.??-primary-standard'
+List all reverse dependencies for a package:
+.Dl $ rvn query '{xrdep:nsv}' 'glib-primary-standard'
 .Pp
 List all files and their known checksums for a package:
-.Dl $ rvn query '{xfile:sum} {xfile:path}' 'joe-single-standard'
-.Pp
-List all files for all packages:
-.Dl $ rvn query '{nsv} {xfile:path}'
-.Pp
-List all packages with no reverse dependencies:
-.Dl $ rvn query -e '{#rdeps} = 0' '{name}:{subpkg}:{variant}'
-.Pp
-List non-automatic packages:
-.Dl $ rvn query -e '{auto} = 0' '{nsv}'
-.Pp
-List automatic packages:
-.Dl $ rvn query -e '{auto} = 1' '{nsv}'
+.Dl $ rvn rquery '{xfile:sum} {xfile:path}' 'joe-single-standard'
 .Pp
 List unmaintained packages:
-.Dl $ rvn query -e '{maint} = nobody' '{nsv}'
+.Dl $ rvn rquery -e '{maint} = nobody' '{nsv}'
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
