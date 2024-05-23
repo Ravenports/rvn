@@ -381,6 +381,7 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
                      data.common_options.assume_yes := True;
+                     override_configuration ("ASSUME_ALWAYS_YES=true");
                   elsif datum = sws_dryrun or else datum = swl_dryrun then
                      data.common_options.dry_run := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
@@ -561,6 +562,7 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
                      data.common_options.assume_yes := True;
+                     override_configuration ("ASSUME_ALWAYS_YES=true");
                   elsif datum = sws_dryrun or else datum = swl_dryrun then
                      data.common_options.dry_run := True;
                   elsif datum = "-a" or else datum = "--all" then

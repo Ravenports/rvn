@@ -10,6 +10,7 @@ with Raven.Metadata;
 with Raven.Pkgtypes;
 with Raven.Database.Query;
 with Raven.Database.Operations;
+with Raven.Cmd.Unset;
 with Archive.Dirent.Scan;
 with Archive.Unix;
 
@@ -17,6 +18,7 @@ package body Raven.Cmd.Clean is
 
    package QRY renames Raven.Database.Query;
    package OPS renames Raven.Database.Operations;
+   package RCU renames Raven.Cmd.Unset;
    package SCN renames Archive.Dirent.Scan;
 
    -----------------------------
@@ -186,7 +188,7 @@ package body Raven.Cmd.Clean is
          return True;
       end if;
 
-      if not comline.common_options.assume_yes then
+      if not RCU.config_setting (RCU.CFG.assume_yes) then
          Event.emit_message ("Continue? (Y/N)");
          Ada.Text_IO.Get_Immediate (cont);
          case cont is
