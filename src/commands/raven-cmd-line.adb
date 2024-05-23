@@ -133,9 +133,23 @@ package body Raven.Cmd.Line is
       procedure translate_switch (position : string_crate.Cursor);
       procedure set_illegal_command (datum : String);
       procedure check_version_stdin;
+      procedure override_configuration (option_setting : String);
 
       expanded_args : string_crate.Vector;
       last_cmd      : Clswitch := nothing_pending;
+
+
+      ------------------------------
+      --  override_configuration  --
+      ------------------------------
+      procedure override_configuration (option_setting : String) is
+      begin
+         if IsBlank (data.pre_command.option_nvpairs) then
+            data.pre_command.option_nvpairs := SUS (option_setting);
+         else
+            SU.Append (data.pre_command.option_nvpairs, LAT.Vertical_Line & option_setting);
+         end if;
+      end override_configuration;
 
       ---------------------------
       --  check_version_stdin  --
@@ -371,6 +385,7 @@ package body Raven.Cmd.Line is
                      data.common_options.dry_run := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
+                     override_configuration ("REPO_AUTOUPDATE=false");
                   elsif aCgix (data, datum, False) then
                      null;
                   elsif datum = "-A" or else datum = "--automatic" then
@@ -572,6 +587,7 @@ package body Raven.Cmd.Line is
                      null;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
+                     override_configuration ("REPO_AUTOUPDATE=false");
                   elsif datum = sws_repo or else datum = swl_repo then
                      last_cmd := generic_repo_name;
                   elsif datum (datum'First) = '-' then
