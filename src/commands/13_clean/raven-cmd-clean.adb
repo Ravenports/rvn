@@ -161,6 +161,7 @@ package body Raven.Cmd.Clean is
          when others => return False;
       end case;
       QRY.all_remote_packages (rdb, catalog_map);
+      OPS.rdb_close (rdb);
       SCN.scan_directory (cachedir, cache_contents);
       cache_contents.Iterate (check_dirent'Access);
       if purge_list.Is_Empty then
@@ -169,7 +170,7 @@ package body Raven.Cmd.Clean is
             return True;
          end if;
       end if;
-      if not (comline.common_options.quiet and then comline.common_options.assume_yes) then
+      if not (comline.common_options.quiet and then RCU.config_setting (RCU.CFG.assume_yes) then
          --  Always show summary of what would happen unless --quiet and --yes are both set
          declare
             total : constant String := Metadata.human_readable_size (int64 (bytes_to_purge));
