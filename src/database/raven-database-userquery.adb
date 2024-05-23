@@ -440,6 +440,7 @@ package body Raven.Database.UserQuery is
          when post_var_num =>
             return
               uppercase (next_token) = "EQ" or else
+              uppercase (next_token) = "NE" or else
               next_token = ">=" or else
               next_token = "<=" or else
               next_token = ">" or else
@@ -498,6 +499,8 @@ package body Raven.Database.UserQuery is
          when post_var_num =>
             if uppercase (next_token) = "EQ" then
                SU.append (processor.where_clause, " = ");
+            elsif uppercase (next_token) = "NE" then
+               SU.append (processor.where_clause, " <> ");
             else
                SU.Append (processor.where_clause, LAT.Space & next_token & LAT.Space);
             end if;
