@@ -8,7 +8,7 @@ package Raven.Database.UserQuery is
    --  if all_packages is true, pattern needs to be blank
    --  if all_packages is false, pattern cannot be blank
    procedure query_package_database
-     (contents       : RDB_Contents;
+     (db             : in out RDB_Connection;
       selection      : String;
       conditions     : String;
       pattern        : String;
@@ -17,6 +17,8 @@ package Raven.Database.UserQuery is
       override_exact : Boolean);
 
 private
+
+   internal_srcfile : constant String := "raven-database-userquery.adb";
 
    token_invalid_for_column : exception;
    control_char_found       : exception;

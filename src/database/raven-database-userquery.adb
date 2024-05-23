@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with SQLite;
 with Raven.Event;
+with Raven.Database.CommonSQL;
 with Raven.Strings;  use Raven.Strings;
 
 package body Raven.Database.UserQuery is
@@ -745,7 +746,7 @@ package body Raven.Database.UserQuery is
    --  query_package_database  --
    ------------------------------
    procedure query_package_database
-     (contents       : RDB_Contents;
+     (db             : in out RDB_Connection;
       selection      : String;
       conditions     : String;
       pattern        : String;
@@ -810,16 +811,18 @@ package body Raven.Database.UserQuery is
          end;
       end if;
 
-      --  declare
-      --     internal_srcfile : constant String := "query_package_database";
-      --     new_stmt : SQLite.thick_stmt;
-      --  begin
-      --     if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
-      --        Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
-      --     return;
-      --     end if;
-      --     debug_running_stmt (new_stmt);
-      --  end;
+      declare
+         func     : constant String := "query_package_database";
+         new_stmt : SQLite.thick_stmt;
+      begin
+         if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
+            Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
+            return;
+         end if;
+         debug_running_stmt (new_stmt);
+
+         SQLite.finalize_statement (new_stmt);
+      end;
 
    end query_package_database;
 
