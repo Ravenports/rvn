@@ -38,6 +38,8 @@ package body Raven.Cmd.Help is
             return show_man_page (progname & "-lua-scripts", '5');
          when cv2_ravensign =>
             return show_man_page ("ravensign", '7');
+         when cv2_query_format =>
+            return show_man_page (progname & "-query-format", '7');
       end case;
 
 
@@ -103,14 +105,14 @@ package body Raven.Cmd.Help is
                when cv_help    => PL (C, "Displays help information");
                when cv_info    => PL (C, "Displays information about installed packages");
                when cv_install => PL (C, "Installs packages from remote and local repositories");
+               when cv_query   => PL (C, "Queries installed packages database");
+               when cv_rquery  => PL (C, "Queries remote catalog");
                when cv_shell   => PL (C, "Opens a debug shell for SQLite");
                when cv_shlib   => PL (C, "Displays packages that link against a specific library");
                when cv_version => PL (C, "Displays the currency of installed packages");
                when cv_which   => PL (C, "Displays which package installed a specific file");
                --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
                --  when cv_fetch   => PL (C, "Fetches packages from a remote repository");
-               --  when cv_query   => PL (C, "Queries information about installed packages");
-               --  when cv_rquery  => PL (C, "Queries information in repository catalogs");
                --  when cv_search  => PL (C, "Performs a search of package repository catalogs");
                --  when cv_ssh     => PL (C, "Package server (to be used via ssh)");
                --  when cv_stats   => PL (C, "Displays package database statistics");

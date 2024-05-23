@@ -30,6 +30,8 @@ private
       cv_help,
       cv_info,
       cv_install,
+      cv_query,
+      cv_rquery,
       cv_shell,
       cv_shlib,
       cv_version,
@@ -40,9 +42,7 @@ private
      --   cv_autoremove,
      --   cv_clean,
      --   cv_fetch,
-     --   cv_query,
      --   cv_remove,
-     --   cv_rquery,
      --   cv_search,
      --   cv_set,
      --   cv_ssh,
@@ -57,6 +57,7 @@ private
       cv2_keywords,
       cv2_scripts,
       cv2_luascripts,
+      cv2_query_format,
       cv2_ravensign,
       cv2_main_conf
      );
@@ -196,6 +197,18 @@ private
          delete_all   : Boolean := False;
       end record;
 
+   type switches_query_cmd is
+      record
+         evaluate     : Text;
+         query_format : Text;
+      end record;
+
+   type switches_rquery_cmd is
+      record
+         evaluate     : Text;
+         query_format : Text;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -231,6 +244,8 @@ private
          cmd_genrepo            : switches_genrepo_cmd;
          cmd_info               : switches_info_cmd;
          cmd_install            : switches_install_cmd;
+         cmd_query              : switches_query_cmd;
+         cmd_rquery             : switches_rquery_cmd;
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
          cmd_version            : switches_version_cmd;

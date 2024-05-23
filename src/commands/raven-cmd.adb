@@ -22,6 +22,8 @@ package body Raven.Cmd is
          when cv_genrepo    => return "genrepo";
          when cv_help       => return "help";
          when cv_install    => return "install";
+         when cv_query      => return "query";
+         when cv_rquery     => return "rquery";
          when cv_shell      => return "shell";
          when cv_shlib      => return "shlib";
          when cv_version    => return "version";

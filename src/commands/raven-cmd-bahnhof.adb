@@ -15,6 +15,8 @@ with Raven.Cmd.Which;
 with Raven.Cmd.Genrepo;
 with Raven.Cmd.Catalog;
 with Raven.Cmd.Clean;
+with Raven.Cmd.Query;
+with Raven.Cmd.RQuery;
 
 package body Raven.Cmd.Bahnhof is
 
@@ -32,6 +34,8 @@ package body Raven.Cmd.Bahnhof is
    package C11 renames Raven.Cmd.Genrepo;
    package C12 renames Raven.Cmd.Catalog;
    package C13 renames Raven.Cmd.Clean;
+   package C14 renames Raven.Cmd.Query;
+   package C15 renames Raven.Cmd.RQuery;
 
 
    --------------------------------------------------------------------
@@ -54,6 +58,8 @@ package body Raven.Cmd.Bahnhof is
          when cv_genrepo  => return (C11.execute_genrepo_command (comline));
          when cv_catalog  => return (C12.execute_catalog_command (comline));
          when cv_clean    => return (C13.execute_clean_command (comline));
+         when cv_query    => return (C14.execute_query_command (comline));
+         when cv_rquery   => return (C15.execute_rquery_command (comline));
       end case;
    end execute_command;
 

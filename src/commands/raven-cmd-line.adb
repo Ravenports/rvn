@@ -553,6 +553,34 @@ package body Raven.Cmd.Line is
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   end if;
+               when cv_query =>
+                  if datum = "-e" or else datum = "--evaluate" then
+                     last_cmd := query_evaluate;
+                  elsif aCgix (data, datum) then
+                     null;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  elsif isBlank (data.cmd_query.query_format) then
+                     data.cmd_query.query_format := datumtxt;
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
+               when cv_rquery =>
+                  if datum = "-e" or else datum = "--evaluate" then
+                     last_cmd := rquery_evaluate;
+                  elsif aCgix (data, datum) then
+                     null;
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  elsif isBlank (data.cmd_rquery.query_format) then
+                     data.cmd_rquery.query_format := datumtxt;
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -573,23 +601,27 @@ package body Raven.Cmd.Line is
                when genrepo_pubkey     => data.cmd_genrepo.key_public     := datumtxt;
                when genrepo_sign_cmd   => data.cmd_genrepo.sign_command   := datumtxt;
                when genrepo_finger     => data.cmd_genrepo.fprint_file    := datumtxt;
+               when query_evaluate     => data.cmd_query.evaluate         := datumtxt;
+               when rquery_evaluate    => data.cmd_rquery.evaluate        := datumtxt;
                when help =>
                   data.help_command := get_command (datum);
                   if data.help_command = cv_unset then
                      if datum = progname then
                         data.help_command2 := cv2_main;
-                     elsif datum = progname & ".conf" then
+                     elsif datum = "rvn.conf" then
                         data.help_command2 := cv2_main_conf;
-                     elsif datum = "repository" then
+                     elsif datum = "repository" or datum = "rvn-repository" then
                         data.help_command2 := cv2_repository;
-                     elsif datum = "scripts" then
+                     elsif datum = "scripts" or else datum = "rvn-scripts" then
                         data.help_command2 := cv2_scripts;
-                     elsif datum = "lua-scripts" then
+                     elsif datum = "lua-scripts" or else datum = "rvn-lua-scripts" then
                         data.help_command2 := cv2_luascripts;
-                     elsif datum = "keywords" then
+                     elsif datum = "keywords" or else datum = "rvn-keywords" then
                         data.help_command2 := cv2_keywords;
                      elsif datum = "ravensign" then
                         data.help_command2 := cv2_ravensign;
+                     elsif datum = "query-format" or else datum = "rvn-query-format" then
+                        data.help_command2 := cv2_query_format;
                      else
                         set_error (data, SQ (datum) & " is not a recognized command");
                      end if;
@@ -612,12 +644,6 @@ package body Raven.Cmd.Line is
       --  check_annotate_stdin;
 
       check_version_stdin;
-
-      --  TODO: when rquery implemented:
-      --  check_implied_rquery_all;
-
-      --  TODO: when query implemented:
-      --  check_implied_query_all;
 
       --  TODO:  check_stats_default ??
 
@@ -707,6 +733,8 @@ package body Raven.Cmd.Line is
          ("help      ", cv_help),
          ("info      ", cv_info),
          ("install   ", cv_install),
+         ("query     ", cv_query),
+         ("rquery    ", cv_rquery),
          ("shell     ", cv_shell),
          ("shlib     ", cv_shlib),
          ("version   ", cv_version),
@@ -718,10 +746,8 @@ package body Raven.Cmd.Line is
          --  ("check     ", cv_check),
          --  ("fetch     ", cv_fetch),
          --  ("lock      ", cv_lock),
-         --  ("query     ", cv_query),
          --  ("register  ", cv_register),
          --  ("remove    ", cv_remove),
-         --  ("rquery    ", cv_rquery),
          --  ("search    ", cv_search),
          --  ("set       ", cv_set),
          --  ("ssh       ", cv_ssh),

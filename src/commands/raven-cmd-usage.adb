@@ -109,6 +109,8 @@ package body Raven.Cmd.Usage is
          when cv_help    => return verb_help (comline);
          when cv_info    => return verb_info (comline);
          when cv_install => return verb_install (comline);
+         when cv_query   => return verb_query (comline);
+         when cv_rquery  => return verb_rquery (comline);
          when cv_shell   => return verb_shell (comline);
          when cv_shlib   => return verb_shlib (comline);
          when cv_which   => return verb_which (comline);
@@ -740,5 +742,89 @@ package body Raven.Cmd.Usage is
 
    end verb_genrepo;
 
+
+   ------------------
+   --  verb_query  --
+   ------------------
+   function verb_query (comline : CLdata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "query [-a] <query-format>";
+         msg2 : constant String := "query [-CE] [-e <eval-condition>] <query-format> <pattern>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_help_suggestion (cv_query);
+         return False;
+      end alert;
+   begin
+      if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
+      if IsBlank (comline.cmd_query.query_format) then
+         return alert ("<query-format> cannot be undefined");
+      end if;
+
+      if comline.common_options.all_installed_pkgs then
+        if not IsBlank (comline.common_options.name_pattern) then
+            return alert ("--all is incompatible with <pattern>");
+         end if;
+      else
+         if IsBlank (comline.common_options.name_pattern) then
+            return alert ("<pattern> cannot be undefined without --all switch set");
+         end if;
+      end if;
+
+      return True;
+
+   end verb_query;
+
+
+   -------------------
+   --  verb_rquery  --
+   -------------------
+   function verb_rquery (comline : CLdata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "query [-a] <query-format>";
+         msg2 : constant String := "query [-U] [-CE] [-r reponame] [-e <eval-condition>] ";
+         msg3 : constant String := "      <query-format> <pattern>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage_multiline (msg3);
+         display_help_suggestion (cv_rquery);
+         return False;
+      end alert;
+   begin
+      if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
+      if IsBlank (comline.cmd_rquery.query_format) then
+         return alert ("<query-format> cannot be undefined");
+      end if;
+
+      if comline.common_options.all_installed_pkgs then
+        if not IsBlank (comline.common_options.name_pattern) then
+            return alert ("--all is incompatible with <pattern>");
+         end if;
+      else
+         if IsBlank (comline.common_options.name_pattern) then
+            return alert ("<pattern> cannot be undefined without --all switch set");
+         end if;
+      end if;
+
+      return True;
+   end verb_rquery;
 
 end Raven.Cmd.Usage;

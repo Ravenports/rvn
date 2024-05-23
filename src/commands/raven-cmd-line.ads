@@ -58,12 +58,11 @@ private
          genrepo_key,
          genrepo_pubkey,
          genrepo_sign_cmd,
-         genrepo_finger
+         genrepo_finger,
+         query_evaluate,
+         rquery_evaluate
 
          --  fetch_destdir,
-         --  query_condition,
-         --  query_filename,
-         --  rquery_eval_cond,
          --  search_modifier,
          --  search_field,
          --  search_label,
