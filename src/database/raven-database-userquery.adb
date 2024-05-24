@@ -615,22 +615,24 @@ package body Raven.Database.UserQuery is
    begin
       seen := (others => False);
       for x in A_Token'Range loop
-         case x is
-            when token_ml_categories => seen (categories) := True;
-            when token_ml_deps_namebase .. token_ml_deps_version => seen (depends) := True;
-            when token_ml_directories => seen (directories) := True;
-            when token_ml_files_path .. token_ml_files_digest => seen (files) := True;
-            when token_ml_groups => seen (groups) := True;
-            when token_ml_licenses => seen (licenses) := True;
-            when token_ml_notes_key .. token_ml_notes_value => seen (notes) := True;
-            when token_ml_opt_key .. token_ml_opt_value => seen (options) := True;
-            when token_ml_rdep_namebase .. token_ml_rdep_version => seen (revdeps) := True;
-            when token_ml_shlibs_adj => seen (libsadj) := True;
-            when token_ml_shlibs_pro => seen (libsprov) := True;
-            when token_ml_shlibs_req => seen (libsreq) := True;
-            when token_ml_users => seen (users) := True;
-            when others => null;
-         end case;
+         if columns (x) then
+            case x is
+               when token_ml_categories => seen (categories) := True;
+               when token_ml_deps_namebase .. token_ml_deps_version => seen (depends) := True;
+               when token_ml_directories => seen (directories) := True;
+               when token_ml_files_path .. token_ml_files_digest => seen (files) := True;
+               when token_ml_groups => seen (groups) := True;
+               when token_ml_licenses => seen (licenses) := True;
+               when token_ml_notes_key .. token_ml_notes_value => seen (notes) := True;
+               when token_ml_opt_key .. token_ml_opt_value => seen (options) := True;
+               when token_ml_rdep_namebase .. token_ml_rdep_version => seen (revdeps) := True;
+               when token_ml_shlibs_adj => seen (libsadj) := True;
+               when token_ml_shlibs_pro => seen (libsprov) := True;
+               when token_ml_shlibs_req => seen (libsreq) := True;
+               when token_ml_users => seen (users) := True;
+               when others => null;
+            end case;
+         end if;
       end loop;
 
       for x in mlc'Range loop
