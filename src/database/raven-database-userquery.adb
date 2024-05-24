@@ -513,6 +513,7 @@ package body Raven.Database.UserQuery is
                SU.Append (processor.where_clause, next_token);
                processor.parens_open := processor.parens_open + 1;
                processor.machine := post_open;
+               return;
             end if;
             --  must be a valid token
             declare
