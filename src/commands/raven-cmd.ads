@@ -34,6 +34,7 @@ private
       cv_rquery,
       cv_shell,
       cv_shlib,
+      cv_stats,
       cv_version,
       cv_which
      );
@@ -46,7 +47,6 @@ private
      --   cv_search,
      --   cv_set,
      --   cv_ssh,
-     --   cv_stats,
      --   cv_upgrade,
 
 
@@ -114,6 +114,12 @@ private
       record
          provides : Boolean := False;
          requires : Boolean := False;
+      end record;
+
+   type switches_stats_cmd is
+      record
+         catalog_only : Boolean := False;
+         local_only   : Boolean := False;
       end record;
 
    type switches_which_cmd is
@@ -248,6 +254,7 @@ private
          cmd_rquery             : switches_rquery_cmd;
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
+         cmd_stats              : switches_stats_cmd;
          cmd_version            : switches_version_cmd;
          cmd_which              : switches_which_cmd;
       end record;

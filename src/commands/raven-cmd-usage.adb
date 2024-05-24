@@ -113,6 +113,7 @@ package body Raven.Cmd.Usage is
          when cv_rquery  => return verb_rquery (comline);
          when cv_shell   => return verb_shell (comline);
          when cv_shlib   => return verb_shlib (comline);
+         when cv_stats   => return verb_stats (comline);
          when cv_which   => return verb_which (comline);
          when cv_version => return verb_version (comline);
       end case;
@@ -826,5 +827,30 @@ package body Raven.Cmd.Usage is
 
       return True;
    end verb_rquery;
+
+
+   ------------------
+   --  verb_stats  --
+   ------------------
+   function verb_stats (comline : CLdata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "stats [-U] [-lc] [-r reponame]";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_help_suggestion (cv_stats);
+         return False;
+      end alert;
+   begin
+      if comline.cmd_stats.catalog_only and then
+        comline.cmd_stats.local_only
+      then
+         return alert ("--local and --catalog are mutually exclusive.");
+      end if;
+
+      return True;
+   end verb_stats;
 
 end Raven.Cmd.Usage;

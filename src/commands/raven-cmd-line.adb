@@ -609,6 +609,19 @@ package body Raven.Cmd.Line is
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
+               when cv_stats =>
+                  if datum = "-l" or else datum = "--local" then
+                     data.cmd_stats.local_only := True;
+                  elsif datum = "-c" or else datum = "--catalog" then
+                     data.cmd_stats.catalog_only := True;
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                     override_configuration ("REPO_AUTOUPDATE=false");
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -672,9 +685,6 @@ package body Raven.Cmd.Line is
       --  check_annotate_stdin;
 
       check_version_stdin;
-
-      --  TODO:  check_stats_default ??
-
       check_implied_info_all (data);
       check_assume_yes (data);
 
@@ -765,6 +775,7 @@ package body Raven.Cmd.Line is
          ("rquery    ", cv_rquery),
          ("shell     ", cv_shell),
          ("shlib     ", cv_shlib),
+         ("stats     ", cv_stats),
          ("version   ", cv_version),
          ("which     ", cv_which)
 
@@ -779,7 +790,6 @@ package body Raven.Cmd.Line is
          --  ("search    ", cv_search),
          --  ("set       ", cv_set),
          --  ("ssh       ", cv_ssh),
-         --  ("stats     ", cv_stats),
          --  ("unlock    ", cv_unlock),
          --  ("upgrade   ", cv_upgrade),
         );
