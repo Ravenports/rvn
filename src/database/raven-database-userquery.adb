@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with SQLite;
 with Raven.Event;
+with Raven.Pkgtypes;
 with Raven.Metadata;
 with Raven.Cmd.Unset;
 with Raven.Database.CommonSQL;
@@ -860,6 +861,15 @@ package body Raven.Database.UserQuery is
                            when token_size_iec_units =>
                               SU.Append (outline, Metadata.human_readable_size
                                          (int64'Value (USS (result (token)))));
+                           when token_license_logic =>
+                              case Pkgtypes.License_Logic'Val (Natural'Value
+                                                               (USS (result (token))))
+                              is
+                                 when Pkgtypes.LICENSE_DUAL     => SU.Append (outline, "dual");
+                                 when Pkgtypes.LICENSE_MULTI    => SU.Append (outline, "multi");
+                                 when Pkgtypes.LICENSE_SINGLE   => SU.Append (outline, "single");
+                                 when Pkgtypes.LICENSE_UNLISTED => SU.Append (outline, "unlisted");
+                              end case;
                            when others =>
                               SU.Append (outline, result (token));
                         end case;
