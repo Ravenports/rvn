@@ -807,7 +807,7 @@ package body Raven.Database.UserQuery is
                Event.emit_error ("Failed to parse evaluation clause");
                return False;
             end if;
-            SU.Append (sql, "WHERE (" & populated & ")");
+            SU.Append (sql, " WHERE (" & populated & ")");
          end;
       end if;
 
