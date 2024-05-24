@@ -59,6 +59,24 @@ def write_array(handle, key, json_object):
         handle.write(key + ": ['" + value + "']\n")
 
 
+def write_directories(handle, key, json_object):
+    """
+    If list is not empty, write it
+    original: "directories":{"/var/spool/postfix":"y"}
+    new:      directories: [{path: "/var/spool/postfix"}]
+    """
+    if key in json_object:
+        paths = json_object[key].keys()
+        valuelist = []
+        if len(paths) == 0:
+            return
+        for path in paths:
+            valuelist.append("{path:'" + path + "'}");
+
+        value = ",".join(valuelist)
+        handle.write(key + ": [" + value + "]\n")
+
+
 def write_nvpairs(handle, key, json_object):
     """
     if object is not empty, write it
@@ -138,7 +156,7 @@ def metadata_converter(dir_path):
         write_array (fout, "licenses", data)
         write_array (fout, "users", data)
         write_array (fout, "groups", data)
-        write_array (fout, "directories", data)   # this is wrong
+        write_directories (fout, "directories", data)   # this is wrong
         # rvn handles shlibs
         # write_array (fout, "shlibs_provided", data)
         # write_array (fout, "shlibs_required", data)
