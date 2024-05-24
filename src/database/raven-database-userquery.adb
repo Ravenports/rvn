@@ -662,7 +662,7 @@ package body Raven.Database.UserQuery is
       then
          return "ml.nsv";
       end if;
-      return "nsv";
+      return "nsv000";
    end get_selection_column;
 
 
@@ -766,7 +766,7 @@ package body Raven.Database.UserQuery is
       num_columns      : Natural;
       error_hit        : Boolean;
       num_multi        : Natural;
-      sql : Text := SUS ("select " & nsv_formula & " as nsv");
+      sql : Text := SUS ("select " & nsv_formula & " as nsv000");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
       num_multi := number_multiline_columns (columns);
