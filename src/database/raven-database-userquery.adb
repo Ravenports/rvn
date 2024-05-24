@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with SQLite;
 with Raven.Event;
+with Raven.Metadata;
 with Raven.Cmd.Unset;
 with Raven.Database.CommonSQL;
 with Raven.Strings;  use Raven.Strings;
@@ -128,7 +129,7 @@ package body Raven.Database.UserQuery is
       begin
          --  Don't set "AS something" so it can be used in the WHERE clause
          return "(select count(" & id_name & ") from " & table_name &
-           " where " & table_name & "." & id_name & " = id)"; -- as " & token'Img;
+           " where " & table_name & "." & id_name & " = p.id)"; -- as " & token'Img;
       end count_subquery;
    begin
       case token is
@@ -147,22 +148,22 @@ package body Raven.Database.UserQuery is
          when token_num_shlibs_pro   => return count_subquery ("pkg_libs_required", id);
          when token_num_shlibs_req   => return count_subquery ("pkg_libs_provided", id);
          when token_num_users        => return count_subquery ("pkg_users", id);
-         when token_abi              => return "abi";
-         when token_automatic        => return "automatic";
-         when token_comment          => return "comment";
-         when token_description      => return "desc";
-         when token_license_logic    => return "licenselogic";
-         when token_maintainer       => return "maintainer";
-         when token_namebase         => return "namebase";
+         when token_abi              => return "p.abi";
+         when token_automatic        => return "p.automatic";
+         when token_comment          => return "p.comment";
+         when token_description      => return "p.desc";
+         when token_license_logic    => return "p.licenselogic";
+         when token_maintainer       => return "p.maintainer";
+         when token_namebase         => return "p.namebase";
          when token_nsv              => return nsv_formula;
-         when token_prefix           => return "prefix";
+         when token_prefix           => return "p.prefix";
          when token_size_iec_units   |  --  post-process
-              token_size_bytes       => return "flatsize";
-         when token_subpackage       => return "subpackage";
-         when token_install_time     => return "installed";
-         when token_variant          => return "variant";
-         when token_version          => return "version";
-         when token_www_site         => return "www";
+              token_size_bytes       => return "p.flatsize";
+         when token_subpackage       => return "p.subpackage";
+         when token_install_time     => return "p.installed";
+         when token_variant          => return "p.variant";
+         when token_version          => return "p.version";
+         when token_www_site         => return "p.www";
             --  The remaining enumerations require joins (limited to one per unique table)
          when token_ml_categories    => return "ml.name";
          when token_ml_deps_namebase |  --  post-process
@@ -180,10 +181,10 @@ package body Raven.Database.UserQuery is
          when token_ml_opt_key       => return "ml.option_name";
          when token_ml_opt_value     => return "ml.option_setting";
          when token_ml_rdep_namebase => return "namebase";
-         when token_ml_rdep_spkg     => return "subpackage";
-         when token_ml_rdep_variant  => return "variant";
+         when token_ml_rdep_spkg     => return "p.subpackage";
+         when token_ml_rdep_variant  => return "p.variant";
          when token_ml_rdep_nsv      => return nsv_formula;
-         when token_ml_rdep_version  => return "version";
+         when token_ml_rdep_version  => return "p.version";
          when token_ml_shlibs_adj    => return "ml.name";
          when token_ml_shlibs_pro    => return "ml.name";
          when token_ml_shlibs_req    => return "ml.name";
@@ -780,7 +781,7 @@ package body Raven.Database.UserQuery is
             end if;
          end loop;
       end if;
-      SU.Append (sql, " FROM packages");
+      SU.Append (sql, " FROM packages as p");
 
       if num_multi > 0 then
          SU.append (sql, multicolumn_join_lines (columns));
@@ -853,6 +854,9 @@ package body Raven.Database.UserQuery is
                               SU.Append (outline, specific_field (USS (result (token)), 2, "-"));
                            when token_ml_deps_variant =>
                               SU.Append (outline, specific_field (USS (result (token)), 3, "-"));
+                           when token_size_iec_units =>
+                              SU.Append (outline, Metadata.human_readable_size
+                                         (int64'Value (USS (result (token)))));
                            when others =>
                               SU.Append (outline, result (token));
                         end case;
