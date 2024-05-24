@@ -501,7 +501,7 @@ package body Raven.Database.UserQuery is
             declare
                candidate  : constant String :=
                             next_token (next_token'First + 1 .. next_token'Last - 1);
-               test_token : constant A_Token := get_token (next_token);
+               test_token : constant A_Token := get_token (candidate);
                can_eval : constant evaluation_type := next_operator (test_token);
             begin
                case can_eval is
