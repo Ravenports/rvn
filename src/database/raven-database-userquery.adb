@@ -178,7 +178,7 @@ package body Raven.Database.UserQuery is
          when token_ml_groups        => return "ml.name";
          when token_ml_licenses      => return "ml.name";
          when token_ml_notes_key     => return "ml.note_key";
-         when token_ml_notes_value   => return "ml.annotation";
+         when token_ml_notes_value   => return "x.annotation";
          when token_ml_opt_key       => return "ml.option_name";
          when token_ml_opt_value     => return "ml.option_setting";
          when token_ml_rdep_namebase |  --  post-process
