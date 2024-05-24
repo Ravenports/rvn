@@ -1,0 +1,80 @@
+.Dd May 24, 2024
+.Dt RVN-STATS 8
+.Os
+.Sh NAME
+.Nm "rvn stats"
+.Nd display package database statistics
+.Sh SYNOPSIS
+.Nm
+.Op Fl lc
+.Op Fl U
+.Op Fl r Ar reponame
+.Pp
+.Nm
+.Op Cm --{local,catalog}
+.Op Cm --no-repo-update
+.Op Cm --repository Ar reponame
+.Sh DESCRIPTION
+.Nm
+is used to display some statistics about the package databases.
+.Pp
+The report on the remote catalog displays
+the total number of available subpackages,
+the total number of variants (related subpackage grouped),
+the total number of ports (related variants grouped),
+the space required to install everything in bytes,
+and space required to install everything in IEC units.
+.Pp
+The report on the locally installed packages displays
+the total number of installed subpackages,
+the total number of variants related subpackage grouped),
+the disk space occupied in bytes,
+and the disk space occupied in IEC units.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width remote
+.It Fl c , Cm --catalog
+Display statistics only for the remote catalog database.
+.It Fl l , Cm --local
+Display statistics only for the installed package database.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
+.It Fl U , Fl -no-repo-update
+Suppress the automatic update of the local copy of the repository catalog
+from remote.
+Automatic repository catalog updates are only attempted when the
+effective UID of the process has write access to the package database,
+otherwise the update attempt is skipped.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev REPO_AUTOUPDATE
+.El
+.Sh FILES
+See
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-catalog 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-genrepo 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
