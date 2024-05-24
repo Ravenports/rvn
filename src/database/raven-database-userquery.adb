@@ -391,7 +391,20 @@ package body Raven.Database.UserQuery is
                      process_token (processor, field);
                   else
                      error_hit := True;
-                     Event.emit_error (errmsg & "'" & field & "' not recognized");
+                     case processor.machine is
+                        when start | post_open =>
+                           Event.emit_error (errmsg & "'" & field & "' not recognized");
+                        when post_var_num =>
+                           Event.emit_error (errmsg & "invalid operator for number comparison");
+                        when post_var_str =>
+                           Event.emit_error (errmsg & "invalid operator for string comparison");
+                        when post_op_num =>
+                           Event.emit_error (errmsg & "'" & field & "' is not numeric");
+                        when post_num | post_str | post_close =>
+                           Event.emit_error (errmsg & "'" & field & "', but expected &,|,)");
+                        when post_op_str | done =>
+                           null;  --  impossible
+                     end case;
                      Event.emit_debug (moderate, "invalid token '" & field & "' for state " &
                                          processor.machine'Img);
                      return "invalid token";
