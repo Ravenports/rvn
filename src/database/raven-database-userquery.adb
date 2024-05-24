@@ -154,7 +154,7 @@ package body Raven.Database.UserQuery is
          when token_license_logic    => return "licenselogic";
          when token_maintainer       => return "maintainer";
          when token_namebase         => return "namebase";
-         when token_nsv              => return "nsv";
+         when token_nsv              => return nsv_formula;
          when token_prefix           => return "prefix";
          when token_size_iec_units   |  --  post-process
               token_size_bytes       => return "flatsize";
@@ -182,7 +182,7 @@ package body Raven.Database.UserQuery is
          when token_ml_rdep_namebase => return "namebase";
          when token_ml_rdep_spkg     => return "subpackage";
          when token_ml_rdep_variant  => return "variant";
-         when token_ml_rdep_nsv      => return "nsv";
+         when token_ml_rdep_nsv      => return nsv_formula;
          when token_ml_rdep_version  => return "version";
          when token_ml_shlibs_adj    => return "ml.name";
          when token_ml_shlibs_pro    => return "ml.name";
@@ -765,7 +765,7 @@ package body Raven.Database.UserQuery is
       num_columns      : Natural;
       error_hit        : Boolean;
       num_multi        : Natural;
-      sql : Text := SUS ("select namebase || '-' || subpackage || '-' || variant as nsv");
+      sql : Text := SUS ("select " & nsv_formula & " as nsv");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
       num_multi := number_multiline_columns (columns);
@@ -847,6 +847,12 @@ package body Raven.Database.UserQuery is
                         case token is
                            when token_unrecognized =>
                               SU.Append (outline, component);
+                           when token_ml_deps_namebase =>
+                              SU.Append (outline, specific_field (USS (result (token)), 1, "-"));
+                           when token_ml_deps_spkg =>
+                              SU.Append (outline, specific_field (USS (result (token)), 2, "-"));
+                           when token_ml_deps_variant =>
+                              SU.Append (outline, specific_field (USS (result (token)), 3, "-"));
                            when others =>
                               SU.Append (outline, result (token));
                         end case;

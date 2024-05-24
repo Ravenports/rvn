@@ -19,6 +19,7 @@ package Raven.Database.UserQuery is
 private
 
    internal_srcfile : constant String := "raven-database-userquery.adb";
+   nsv_formula      : constant String := "namebase || '-' || subpackage || '-' || variant";
 
    token_invalid_for_column : exception;
    control_char_found       : exception;
