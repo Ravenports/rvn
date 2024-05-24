@@ -7,6 +7,7 @@ with Raven.Repository;
 with Raven.Database.UserQuery;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
+with Archive.Unix;
 
 
 package body Raven.Cmd.RQuery is
@@ -24,13 +25,15 @@ package body Raven.Cmd.RQuery is
       single  : constant String := Strings.USS (comline.common_options.repo_name);
       success : Boolean;
    begin
-      Repository.load_repository_configurations (mirrors, single);
-      if not Repository.create_local_catalog_database
-        (remote_repositories  => mirrors,
-         forced               => False,
-         quiet                => True)
-      then
-         Event.emit_error ("Failed to update the local catalog");
+      if Archive.Unix.user_is_root then
+         Repository.load_repository_configurations (mirrors, single);
+         if not Repository.create_local_catalog_database
+           (remote_repositories  => mirrors,
+            forced               => False,
+            quiet                => True)
+         then
+            Event.emit_error ("Failed to update the local catalog");
+         end if;
       end if;
 
       if not OPS.localdb_exists (Database.catalog) then
