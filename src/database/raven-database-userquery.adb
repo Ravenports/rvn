@@ -180,11 +180,11 @@ package body Raven.Database.UserQuery is
          when token_ml_notes_value   => return "ml.annotation";
          when token_ml_opt_key       => return "ml.option_name";
          when token_ml_opt_value     => return "ml.option_setting";
-         when token_ml_rdep_namebase => return "p.namebase";
-         when token_ml_rdep_spkg     => return "p.subpackage";
-         when token_ml_rdep_variant  => return "p.variant";
-         when token_ml_rdep_nsv      => return nsv_formula;
-         when token_ml_rdep_version  => return "p.version";
+         when token_ml_rdep_namebase |  --  post-process
+              token_ml_rdep_spkg     |  --  post-process
+              token_ml_rdep_variant  |  --  post-process
+              token_ml_rdep_nsv      => return "ml.nsv";
+         when token_ml_rdep_version  => return "ml.version";
          when token_ml_shlibs_adj    => return "ml.name";
          when token_ml_shlibs_pro    => return "ml.name";
          when token_ml_shlibs_req    => return "ml.name";
@@ -848,11 +848,14 @@ package body Raven.Database.UserQuery is
                         case token is
                            when token_unrecognized =>
                               SU.Append (outline, component);
-                           when token_ml_deps_namebase =>
+                           when token_ml_deps_namebase |
+                                token_ml_rdep_namebase =>
                               SU.Append (outline, specific_field (USS (result (token)), 1, "-"));
-                           when token_ml_deps_spkg =>
+                           when token_ml_deps_spkg |
+                                token_ml_rdep_spkg =>
                               SU.Append (outline, specific_field (USS (result (token)), 2, "-"));
-                           when token_ml_deps_variant =>
+                           when token_ml_deps_variant |
+                                token_ml_rdep_variant =>
                               SU.Append (outline, specific_field (USS (result (token)), 3, "-"));
                            when token_size_iec_units =>
                               SU.Append (outline, Metadata.human_readable_size
