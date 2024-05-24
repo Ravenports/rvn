@@ -35,7 +35,7 @@ package body Raven.Database.UserQuery is
       --  Keep in alphabetical order (critical!)
       all_keywords : constant array (1 .. total_keywords) of keyword_pair :=
         (
-         ("NOTFOUND  ", token_unrecognized),
+         ("#NOTFOUND ", token_unrecognized),
          ("#cats     ", token_num_categories),
          ("#deps     ", token_num_dependencies),
          ("#dirs     ", token_num_directories),
