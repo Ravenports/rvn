@@ -370,6 +370,7 @@ package body Raven.Database.UserQuery is
                                           error_hit : out Boolean) return String
    is
       func : constant String := "evaluate_conditions_template: ";
+      errmsg : constant String := "evaluation problem: ";
    begin
       error_hit := False;
       if IsBlank (trim (conditions)) then
@@ -390,6 +391,7 @@ package body Raven.Database.UserQuery is
                      process_token (processor, field);
                   else
                      error_hit := True;
+                     Event.emit_error (errmsg & "'" & field & "' not recognized");
                      Event.emit_debug (moderate, "invalid token '" & field & "' for state " &
                                          processor.machine'Img);
                      return "invalid token";
@@ -410,6 +412,7 @@ package body Raven.Database.UserQuery is
                return USS (processor.where_clause);
             when others =>
                error_hit := True;
+               Event.emit_error (errmsg & "clause is incomplete");
                Event.emit_debug
                  (moderate, "no more tokens, but the evaluation close is incomplete");
                return "incomplete";
@@ -418,6 +421,7 @@ package body Raven.Database.UserQuery is
    exception
       when control_char_found =>
          error_hit := True;
+         Event.emit_error (errmsg & "illegal control character found");
          Event.emit_debug (moderate, "condition clause had illegal control characters in it");
          return "control char exception";
    end evaluate_conditions_template;
@@ -804,7 +808,6 @@ package body Raven.Database.UserQuery is
             populated : constant String := evaluate_conditions_template (conditions, error_hit);
          begin
             if error_hit then
-               Event.emit_error ("Failed to parse evaluation clause");
                return False;
             end if;
             SU.Append (sql, " WHERE (" & populated & ")");
