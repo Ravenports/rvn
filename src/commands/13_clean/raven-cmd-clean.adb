@@ -170,7 +170,7 @@ package body Raven.Cmd.Clean is
             return True;
          end if;
       end if;
-      if not (comline.common_options.quiet and then RCU.config_setting (RCU.CFG.assume_yes) then
+      if not comline.common_options.quiet and then RCU.config_setting (RCU.CFG.assume_yes) then
          --  Always show summary of what would happen unless --quiet and --yes are both set
          declare
             total : constant String := Metadata.human_readable_size (int64 (bytes_to_purge));

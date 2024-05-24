@@ -79,6 +79,7 @@ private
       token_ml_users);
 
    type Column_Selection is array (A_Token'Range) of Boolean;
+   type Column_Result is array (A_Token'Range) of Text;
    type evaluation_type is (unsupported, numeric, textual);
    type State_Machine is
      (start,

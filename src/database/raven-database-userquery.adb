@@ -820,7 +820,46 @@ package body Raven.Database.UserQuery is
             Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
             return False;
          end if;
+         if not all_packages then
+            SQLite.bind_string (new_stmt, 1, pattern);
+         end if;
          debug_running_stmt (new_stmt);
+
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => null;
+            when SQLite.row_present =>
+               declare
+                  col_index : Natural := 1;  -- base nsv
+                  result    : Column_Result;
+                  outline   : Text := blank;
+
+                  procedure assemble (Position : Pkgtypes.Text_List.Cursor)
+                  is
+                     component : constant String := USS (Pkgtypes.Text_List.Element (Position));
+                     token     : constant A_Token := get_token (component);
+                  begin
+                     case token is
+                        when token_unrecognized =>
+                           SU.Append (outline, component);
+                        when others =>
+                           SU.Append (outline, result (token));
+                     end case;
+                  end assemble;
+               begin
+                  for x in A_Token'Range loop
+                     if columns (x) then
+                        col_index := col_index + 1;
+                        result (x) := SUS (SQLite.retrieve_string (new_stmt, col_index));
+                     end if;
+                  end loop;
+                  selection_tokens.Iterate (assemble'Access);
+                  Event.emit_message (USS (outline));
+               end;
+               --  installed := Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 1));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
 
          SQLite.finalize_statement (new_stmt);
          return True;
