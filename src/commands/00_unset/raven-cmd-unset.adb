@@ -70,7 +70,7 @@ package body Raven.Cmd.Unset is
    is
       -- start with support for 15 commands (not including unset)
       -- As this is exceeded add an additional row of 5 columns
-      type rows is range 1 .. 3;
+      type rows is range 1 .. 4;
       type cols is range 1 .. 5;
       type A_column is array (rows) of Command_verb;
       matrix : array (cols) of A_column;
