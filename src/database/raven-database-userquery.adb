@@ -436,8 +436,15 @@ package body Raven.Database.UserQuery is
             if next_token = "(" then
                return True;
             end if;
+            --  Should be {token}, but the curly braces need to be stripped to check.
+            --  Smallest next_token can be is 5 characters long
+            if next_token'Length < 5 then
+               return False;
+            end if;
             declare
-               test_token : constant A_Token := get_token (next_token);
+               candidate  : constant String :=
+                            next_token (next_token'First + 1 .. next_token'Last - 1);
+               test_token : constant A_Token := get_token (candidate);
                can_eval : constant evaluation_type := next_operator (test_token);
             begin
                case can_eval is
@@ -492,6 +499,8 @@ package body Raven.Database.UserQuery is
             end if;
             --  must be a valid token
             declare
+               candidate  : constant String :=
+                            next_token (next_token'First + 1 .. next_token'Last - 1);
                test_token : constant A_Token := get_token (next_token);
                can_eval : constant evaluation_type := next_operator (test_token);
             begin
