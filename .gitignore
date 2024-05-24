@@ -28,3 +28,6 @@ sqlite/libcustom_sqlite_pic.a
 
 # build scripts
 buildme.sh
+
+# manpage symlinks
+share/man
