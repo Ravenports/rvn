@@ -52,6 +52,7 @@ private
       token_subpackage,
       token_install_time,
       token_variant,
+      token_version,
       token_www_site,
       token_ml_categories,
       token_ml_deps_namebase,

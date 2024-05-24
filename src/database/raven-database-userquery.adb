@@ -61,6 +61,7 @@ package body Raven.Database.UserQuery is
          ("subpkg    ", token_subpackage),
          ("timestamp ", token_install_time),
          ("variant   ", token_variant),
+         ("version   ", token_version),
          ("www       ", token_www_site),
          ("xcat      ", token_ml_categories),
          ("xdep:n    ", token_ml_deps_namebase),
@@ -160,6 +161,7 @@ package body Raven.Database.UserQuery is
          when token_subpackage       => return "subpackage";
          when token_install_time     => return "installed";
          when token_variant          => return "variant";
+         when token_version          => return "version";
          when token_www_site         => return "www";
             --  The remaining enumerations require joins (limited to one per unique table)
          when token_ml_categories    => return "ml.name";
@@ -223,6 +225,7 @@ package body Raven.Database.UserQuery is
          when token_abi |
               token_subpackage |
               token_variant |
+              token_version |
               token_www_site |
               token_comment .. token_prefix => return textual;
       end case;
