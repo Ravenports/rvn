@@ -7,14 +7,14 @@ package Raven.Database.UserQuery is
 
    --  if all_packages is true, pattern needs to be blank
    --  if all_packages is false, pattern cannot be blank
-   procedure query_package_database
+   --  Returns false if error encountered
+   function query_package_database
      (db             : in out RDB_Connection;
       selection      : String;
       conditions     : String;
       pattern        : String;
       all_packages   : Boolean;
-      override_csens : Boolean;
-      override_exact : Boolean);
+      override_exact : Boolean) return Boolean;
 
 private
 

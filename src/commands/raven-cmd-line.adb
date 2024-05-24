@@ -324,7 +324,9 @@ package body Raven.Cmd.Line is
                   if datum = sws_quiet or else datum = swl_quiet then
                      data.common_options.quiet := True;
                   elsif aCgix (data, datum) then
-                     null;
+                     if data.common_options.case_sensitive then
+                        override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     end if;
                   elsif datum = "-A" or else datum = "--annotations" then
                      data.cmd_info.annotations := True;
                   elsif datum = "-B" or else datum = "--required-shlibs" then
@@ -388,7 +390,9 @@ package body Raven.Cmd.Line is
                      data.common_options.no_repo_update := True;
                      override_configuration ("REPO_AUTOUPDATE=false");
                   elsif aCgix (data, datum, False) then
-                     null;
+                     if data.common_options.case_sensitive then
+                        override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     end if;
                   elsif datum = "-A" or else datum = "--automatic" then
                      data.cmd_install.automatic := True;
                   elsif datum = "-F" or else datum = "--fetch-only" then
@@ -462,7 +466,9 @@ package body Raven.Cmd.Line is
                                      "-S, -I, -t, or -T switches.");
                      end if;
                   elsif aCgix (data, datum) then
-                     null;
+                     if data.common_options.case_sensitive then
+                        override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     end if;
                   elsif datum = "-e" or else datum = "--exact" then
                      data.cmd_version.exact_match := True;
                   elsif datum = "-l" or else datum = "--like" then
@@ -574,7 +580,9 @@ package body Raven.Cmd.Line is
                   if datum = "-e" or else datum = "--evaluate" then
                      last_cmd := query_evaluate;
                   elsif aCgix (data, datum) then
-                     null;
+                     if data.common_options.case_sensitive then
+                        override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     end if;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   elsif isBlank (data.cmd_query.query_format) then
@@ -586,7 +594,9 @@ package body Raven.Cmd.Line is
                   if datum = "-e" or else datum = "--evaluate" then
                      last_cmd := rquery_evaluate;
                   elsif aCgix (data, datum) then
-                     null;
+                     if data.common_options.case_sensitive then
+                        override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     end if;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
                      override_configuration ("REPO_AUTOUPDATE=false");

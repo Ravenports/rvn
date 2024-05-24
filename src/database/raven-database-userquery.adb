@@ -4,12 +4,14 @@
 with Ada.Characters.Latin_1;
 with SQLite;
 with Raven.Event;
+with Raven.Cmd.Unset;
 with Raven.Database.CommonSQL;
 with Raven.Strings;  use Raven.Strings;
 
 package body Raven.Database.UserQuery is
 
    package LAT renames Ada.Characters.Latin_1;
+   package RCU renames Raven.Cmd.Unset;
 
    -----------------
    --  get_token  --
@@ -745,14 +747,13 @@ package body Raven.Database.UserQuery is
    ------------------------------
    --  query_package_database  --
    ------------------------------
-   procedure query_package_database
+   function query_package_database
      (db             : in out RDB_Connection;
       selection      : String;
       conditions     : String;
       pattern        : String;
       all_packages   : Boolean;
-      override_csens : Boolean;
-      override_exact : Boolean)
+      override_exact : Boolean) return Boolean
    is
       selection_tokens : Pkgtypes.Text_List.Vector;
       columns          : Column_Selection;
@@ -765,7 +766,7 @@ package body Raven.Database.UserQuery is
       num_multi := number_multiline_columns (columns);
       if num_multi > 1 then
          Event.emit_error ("Limit of 1 multiline pattern exceeded");
-         return;
+         return False;
       end if;
       if num_columns > 0 then
          for x in A_Token'Range loop
@@ -788,7 +789,7 @@ package body Raven.Database.UserQuery is
          begin
             if error_hit then
                Event.emit_error ("Failed to parse evaluation clause");
-               return;
+               return False;
             end if;
             SU.Append (sql, "WHERE (" & populated & ")");
          end;
@@ -799,7 +800,7 @@ package body Raven.Database.UserQuery is
             crit : constant String := get_selection_column (columns);
          begin
             if override_exact then
-               if override_csens then
+               if RCU.config_setting (RCU.CFG.case_match) then
                   SU.Append (sql, " AND " & crit & " = ?");
                else
                   SU.Append (sql, " AND " & crit & " LIKE ?");
@@ -817,11 +818,12 @@ package body Raven.Database.UserQuery is
       begin
          if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
             Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
-            return;
+            return False;
          end if;
          debug_running_stmt (new_stmt);
 
          SQLite.finalize_statement (new_stmt);
+         return True;
       end;
 
    end query_package_database;

@@ -1,7 +1,19 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+
+with Raven.Event;
+with Raven.Repository;
+with Raven.Database.UserQuery;
+with Raven.Database.Operations;
+with Raven.Strings; use Raven.Strings;
+
+
 package body Raven.Cmd.RQuery is
+
+   package DUC renames Raven.Database.UserQuery;
+   package OPS renames Raven.Database.Operations;
+
 
    ------------------------------
    --  execute_rquery_command  --
@@ -10,6 +22,7 @@ package body Raven.Cmd.RQuery is
    is
       mirrors : Repository.A_Repo_Config_Set;
       single  : constant String := Strings.USS (comline.common_options.repo_name);
+      success : Boolean;
    begin
       Repository.load_repository_configurations (mirrors, single);
       if not Repository.create_local_catalog_database
@@ -31,12 +44,17 @@ package body Raven.Cmd.RQuery is
          when others => return False;
       end case;
 
-
+      success := DUC.query_package_database
+        (db             => rdb,
+         selection      => USS (comline.cmd_rquery.query_format),
+         conditions     => USS (comline.cmd_rquery.evaluate),
+         pattern        => USS (comline.common_options.name_pattern),
+         all_packages   => comline.common_options.all_installed_pkgs,
+         override_exact => comline.common_options.exact_match);
 
       OPS.rdb_close (rdb);
+      return success;
 
-
-      return False;
    end execute_rquery_command;
 
 end Raven.Cmd.RQuery;
