@@ -835,7 +835,7 @@ package body Raven.Database.UserQuery is
                when SQLite.no_more_data => exit;
                when SQLite.row_present =>
                   declare
-                     col_index : Natural := 1;  -- base nsv
+                     col_index : Natural := 0;  -- base nsv
                      result    : Column_Result;
                      outline   : Text := blank;
 
