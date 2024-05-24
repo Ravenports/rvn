@@ -180,7 +180,7 @@ package body Raven.Database.UserQuery is
          when token_ml_notes_value   => return "ml.annotation";
          when token_ml_opt_key       => return "ml.option_name";
          when token_ml_opt_value     => return "ml.option_setting";
-         when token_ml_rdep_namebase => return "namebase";
+         when token_ml_rdep_namebase => return "p.namebase";
          when token_ml_rdep_spkg     => return "p.subpackage";
          when token_ml_rdep_variant  => return "p.variant";
          when token_ml_rdep_nsv      => return nsv_formula;
@@ -654,11 +654,11 @@ package body Raven.Database.UserQuery is
    ----------------------------
    function get_selection_column (columns : Column_Selection) return String is
    begin
-      if columns (token_ml_deps_namebase) or else
-        columns (token_ml_deps_nsv) or else
-        columns (token_ml_deps_spkg) or else
-        columns (token_ml_deps_variant) or else
-        columns (token_ml_deps_version)
+      if columns (token_ml_rdep_namebase) or else
+        columns (token_ml_rdep_nsv) or else
+        columns (token_ml_rdep_spkg) or else
+        columns (token_ml_rdep_variant) or else
+        columns (token_ml_rdep_version)
       then
          return "ml.nsv";
       end if;
