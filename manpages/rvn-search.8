@@ -116,12 +116,14 @@ Additional data from the repository catalog to print for each matched
 package.
 Multiple output modifiers can be combined.
 The use of this option requires multiple lines to be displayed per match.
-For brevity, any unambiguous prefix of the modifier may be used.
+For brevity, any unambiguous prefix of the case-insensitive modifier
+may be used.
 Thus
 .Fl "Q m" ,
-.Fl "Q maint"
+.Fl "Q maint" ,
+.Fl "Q maintainer" ,
 and
-.Fl "Q maintainer"
+.Fl "Q MAIN"
 are all equivalent.
 .Bl -tag -width xxxx
 .It Sy an[notations]

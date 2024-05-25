@@ -997,7 +997,9 @@ package body Raven.Cmd.Line is
       is
          mlen : constant Natural := standard'Length;
       begin
-         if mlen = 1 then
+         if mlen = 0 then
+            return True;
+         elsif mlen = 1 then
             if standard = "a" or else
               standard = "c" or else
               standard = "d" or else
