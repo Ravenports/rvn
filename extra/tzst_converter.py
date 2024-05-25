@@ -95,6 +95,8 @@ def write_scripts(handle, json_object):
     """
     1) reformat to new structure (args are blank)
     2) HEREDOC on actual scripts
+    Per code, this is the expected format:
+    # scripts: {"phase1": [{args: "", code:""},{}],"phase2": [...]
     """
     lines = []
     key = "scripts"
@@ -103,13 +105,14 @@ def write_scripts(handle, json_object):
         handle.write(key + ": ")
         for phase in phases:
             code = json_object[key][phase]
-            lines.append(phase + ": {args: '',code: <<EOD\n" + code + "\nEOD\n}")
+            lines.append(phase + ": [{args: '',code: <<EOD\n" + code + "\nEOD\n}]")
         valuelist = "{" + ",".join(lines) + "}\n";
         handle.write(valuelist);
 
 
 def write_nested_objs(handle, key, json_object):
     """
+    this was broken and it's not even the correct format
     if object is not empty, write it
     # "deps":{"nss-caroot-standard":{"origin":"nss:standard","version":"3.100"},
     """
@@ -126,6 +129,21 @@ def write_nested_objs(handle, key, json_object):
             valuelist = ",".join(inner);
             lines.append(dep + ":{" + valuelist + "}")
         handle.write("{" + ",".join(lines) + "}\n");
+
+def write_dependencies(handle, json_object):
+    """
+    tzst format> deps: {"<nsv>": {origin: "<n:v>", version: "<ver>"}, .. }
+    rvn format>  deps: {"<nsv>": "<ver>"}, ...}
+    """
+    lines = []
+    key = "deps"
+    if key in json_object:
+        dep_nsv = json_object[key].keys()
+        handle.write(key + ": ")
+        for nsv in dep_nsv:
+            lines.append(nsv + ":'" + json_object[key][nsv]["version"] + "'")
+            valuelist = "{" + ",".join(lines) + "}\n";
+        handle.write(valuelist);
 
 
 def metadata_converter(dir_path):
@@ -162,7 +180,7 @@ def metadata_converter(dir_path):
         # write_array (fout, "shlibs_required", data)
         write_nvpairs (fout, "annotations", data)
         write_nvpairs (fout, "options", data)
-        write_nested_objs (fout, "deps", data)
+        write_dependencies (fout, data)
         write_scripts (fout, data)
 
 
