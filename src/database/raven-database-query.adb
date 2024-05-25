@@ -371,8 +371,8 @@ package body Raven.Database.Query is
       func : constant String := "package_measurement";
       sql  : constant String :=
         "SELECT COUNT(*) as num_packages, " &
-        "COUNT(DISTINCT(name)) as num_ports, " &
-        "COUNT(DISTINCT CONCAT(name, variant)) as num_variants, " &
+        "COUNT(DISTINCT(namebase)) as num_ports, " &
+        "COUNT(DISTINCT CONCAT(namebase, variant)) as num_variants, " &
         "SUM(flatsize) as sum_flatsize, " &
         "SUM(rvnsize) as sum_pkgsize " &
         "FROM packages";

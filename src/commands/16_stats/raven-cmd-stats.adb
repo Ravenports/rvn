@@ -84,9 +84,9 @@ package body Raven.Cmd.Stats is
          Event.emit_message ("  Number of packages      : " & int2str (measurements.num_packages));
          Event.emit_message ("  Number of variants      : " & int2str (measurements.num_variants));
          Event.emit_message ("  Number of ports         : " & int2str (measurements.num_ports));
-         Event.emit_message ("  Combined package size   :" &
+         Event.emit_message ("  Combined package size   : " &
                                Metadata.human_readable_size (int64 (measurements.sum_pkgsize)));
-         Event.emit_message ("  Combined extracted size :" &
+         Event.emit_message ("  Combined extracted size : " &
                                Metadata.human_readable_size (int64 (measurements.sum_flatsize)));
       end;
 
@@ -123,7 +123,7 @@ package body Raven.Cmd.Stats is
          Event.emit_message ("  Variant subset      : " & int2str (measurements.num_variants));
          Event.emit_message ("  Port subset         : " & int2str (measurements.num_ports));
          Event.emit_message ("  Disk space occupied :" & measurements.sum_flatsize'Img & " bytes");
-         Event.emit_message ("  Disk space occupied :" &
+         Event.emit_message ("  Disk space occupied : " &
                                Metadata.human_readable_size (int64 (measurements.sum_flatsize)));
       end;
 
