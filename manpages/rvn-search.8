@@ -1,0 +1,232 @@
+.Dd May 25, 2024
+.Dt RVN-SEARCH 8
+.Os
+.Sh NAME
+.Nm "rvn search"
+.Nd search package repository catalog
+.Sh SYNOPSIS
+.Nm
+.Op Fl U
+.Op Fl r Ar reponame
+.Op Fl CEg
+.Op Fl cdnt
+.Op Fl q
+.Op Fl Q Ar query-modifier
+.Ar search-pattern
+.Pp
+.Nm
+.Op Cm --no-repo-update
+.Op Cm --repository Ar reponame
+.Op Cm --{case-sensitive,exact-match,glob}
+.Op Cm --{comment,description,namebase,triplet}
+.Op Cm --quiet
+.Op Cm --query-modifier Ar query-modifier
+.Ar search-pattern
+.Sh DESCRIPTION
+.Nm
+is used for searching the remote repository catalog.
+Packages can be matched by the namebase (default), by the full
+namebase-subpackage-variant triplet, by text within the package
+short summary or the long description.
+.Pp
+If no query modifiers are set, the output is one line per
+matched package consisting of the full package nsvv name and, if
+.Ar quiet
+is not set, the text of the searched field (comment, description,
+namebase, or identifier triplet).
+.Pp
+If at least one query modifier is set, the output becomes multiple
+lines per matched package.
+The first line of output is the full package nsvv name.
+There will be one additional display line per query modifier.
+If
+.Ar quiet
+is set, the line consists solely of the value required by the modifier,
+otherwise the line is preceeded by the modifier as a key.
+.Pp
+The package repository catalog will be automatically updated whenever
+.Nm
+is run by the effective superuser unless disabled by the
+.Fl U
+flag or setting
+.Va REPO_AUTOUPDATE
+to
+.Dq Li NO
+in
+.Xr rvn.conf 5 .
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width xxxx
+.It Fl q , Cm --quiet
+Reduces output.
+For the primary line, this option drops the full text of the searched
+field which displays by default.
+For query modifier lines, this option drops the modifier key to limit
+the display to the modifier's retrieved data.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
+.It Fl U , Fl -no-repo-update
+Suppress the automatic update of the local copy of the repository catalog
+from remote.
+.El
+.Ss Mutually exclusive search fields
+The
+.Ar search-pattern
+is applied to one of four possible search fields:
+.Bl -tag -width xxxx
+.It Fl c , Cm --comment
+Search for packages whose one-line summary matches the search pattern.
+.It Fl d , Cm --description
+Search for packages whose description matches the search pattern.
+.It Fl n , Cm --namebase
+Search for packages whose namebase component of the full
+namebase-subpackage-variant triplet identifier matches the
+search pattern.
+This is the default if no search field is specified.
+.It Fl t , Cm --triplet
+Search for packages whose full identifier matches the search pattern.
+.El
+.Ss Text-matching algorithm
+By default, the
+.Ar search-pattern
+is considered to be a case-insensitive regular expression according
+to the "modern" or "extended" syntax of
+.Xr re_format 7 .
+Effectively this matches any substring of the search field unless the
+.Dq ^
+anchor symbol is used at the start of the pattern.
+The following mutually exclusive options modify this default behavior.
+.Bl -tag -width xxxx
+.It Fl C , Cm --case-sensitive
+This option still processes the search pattern as a regular expression,
+but changes the search to be case sensitive.
+.It Fl E , Cm --exact-match
+This option requires the searched data be equal to the search pattern.
+This is case sensitive and the entire string must match for success.
+.It Fl g , Cm --glob
+This option treats the search pattern as a case-sensitive glob pattern.
+.El
+.Ss Output Modifier Options
+Additional data from the repository catalog to print for each matched
+package.
+Multiple output modifiers can be combined.
+The use of this option requires multiple lines to be displayed per match.
+For brevity, any unambiguous prefix of the modifier may be used.
+Thus
+.Fl "Q m" ,
+.Fl "Q maint"
+and
+.Fl "Q maintainer"
+are all equivalent.
+.Bl -tag -width xxxx
+.It Sy an[notations]
+Arbitrary text in tag-value format that can be added to any package.
+.It Sy ab[i]
+The architecture string indicating what OS version and CPU architecture
+the package is suitable for.
+.It Sy ca[tegories]
+All categories to which the matched package belongs.
+.It Sy co[mment]
+The one line summary field describing the port variant.
+All subpackages of the variant will have identical comments.
+.It Sy dep[endencies]
+The list of packages the named package depends on.
+Dependency packages are listed in the nsvv format, one per line.
+.It Sy des[cription]
+The long multiline description of the matched package.
+.It Sy f[ull]
+Show a standard set of fields, equivalent to a combination of the
+.Sy namebase ,
+.Sy subpackage ,
+.Sy variant ,
+.Sy version ,
+.Sy comment ,
+.Sy categories ,
+.Sy abi ,
+.Sy licenses ,
+.Sy www ,
+.Sy maintainer ,
+.Sy prefix ,
+.Sy options ,
+.Sy slr-shlibs-required ,
+.Sy slp-shlibs-provided ,
+.Sy annotations ,
+.Sy size ,
+.Sy rvnsize
+and
+.Sy description
+fields, in that order.
+.It Sy l[icenses]
+Displays a list of all the licenses the package is released under on a
+single line.
+Where more than one license applies, precede with the word
+.Sy [dual]
+or
+.Sy [multi]
+depending on the port's license scheme.
+.It Sy m[aintainer]
+Display the maintainer's name and e-mail address.
+.It Sy n[amebase]
+Display the namebase component of the package identifier triplet.
+.It Sy o[ptions]
+Displays a potentially multiple-line list of the port options and their
+setting determining how the package was built.
+.It Sy p[refix]
+Display the installation prefix for the package, usually
+.Fa /raven .
+.It Sy re[quired-by]
+Displays all of the packages in the repository that require the matched
+package as a dependency.
+Dependency packages are listed in the nsvv format, one per line.
+.It Sy rv[nsize]
+Display the file size of the compressed archive file containing the
+package files and installation scripts.
+.It Sy slp[-shlibs-provided]
+Displays a list of shared libraries contained in the package.
+.It Sy slr[-shlibs-required]
+Displays a list of shared libraries required by the packages dynamically
+link ELF binaries.
+Libraries provided by the host system are excluded.
+.It Sy si[ze]
+Displays the total amount of filesystem space the package files will
+take up once unpacked and installed.
+.It Sy su[bpackage]
+Display the subpackage component of the package identifier triplet.
+.It Sy va[riant]
+Display the variant component of the package identifier triplet.
+.It Sy ve[rsion]
+Displays the version of the package, including revision numbers and epochs.
+.It Sy w[ww]
+Displays the official homepage of the software being distributed by the package.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev CASE_SENSITIVE_MATCH
+.El
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-catalog 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-genrepo 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
