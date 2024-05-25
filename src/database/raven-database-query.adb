@@ -372,8 +372,8 @@ package body Raven.Database.Query is
       sql  : constant String :=
         "SELECT COUNT(*) as num_packages, " &
         "COUNT(DISTINCT(name)) as num_ports, " &
-        "COUNT(DISTINCT CONCAT(name, variant) as num_variants, " &
-        "SUM(flatsize) as sum_flatsize " &
+        "COUNT(DISTINCT CONCAT(name, variant)) as num_variants, " &
+        "SUM(flatsize) as sum_flatsize, " &
         "SUM(rvnsize) as sum_pkgsize " &
         "FROM packages";
       new_stmt : SQLite.thick_stmt;
