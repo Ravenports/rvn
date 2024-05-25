@@ -53,6 +53,7 @@ package body Raven.Cmd.Stats is
    is
       mirrors : Repository.A_Repo_Config_Set;
       rdb     : Database.RDB_Connection;
+      LF      : constant Character := Character'Val (10);
    begin
       if Archive.Unix.user_is_root then
          Repository.load_repository_configurations (mirrors, single_repo);
@@ -80,7 +81,7 @@ package body Raven.Cmd.Stats is
          measurements : QRY.A_Measurement_Set;
       begin
          QRY.package_measurement (rdb, measurements);
-         Event.emit_message ("Repository catalog availability:");
+         Event.emit_message (LF & "Repository catalog availability:");
          Event.emit_message ("  Number of packages      : " & int2str (measurements.num_packages));
          Event.emit_message ("  Number of variants      : " & int2str (measurements.num_variants));
          Event.emit_message ("  Number of ports         : " & int2str (measurements.num_ports));
@@ -102,6 +103,7 @@ package body Raven.Cmd.Stats is
    function show_installation_stat return Boolean
    is
       ldb : Database.RDB_Connection;
+      LF  : constant Character := Character'Val (10);
    begin
       if not OPS.localdb_exists (Database.installed_packages) then
          Event.emit_error ("Local database is missing, should be here: " &
@@ -118,7 +120,7 @@ package body Raven.Cmd.Stats is
          measurements : QRY.A_Measurement_Set;
       begin
          QRY.package_measurement (ldb, measurements);
-         Event.emit_message ("Locally installed packages:");
+         Event.emit_message (LF & "Locally installed packages:");
          Event.emit_message ("  Installed packages  : " & int2str (measurements.num_packages));
          Event.emit_message ("  Variant subset      : " & int2str (measurements.num_variants));
          Event.emit_message ("  Port subset         : " & int2str (measurements.num_ports));
