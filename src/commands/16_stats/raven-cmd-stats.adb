@@ -121,11 +121,12 @@ package body Raven.Cmd.Stats is
       begin
          QRY.package_measurement (ldb, measurements);
          Event.emit_message (LF & "Locally installed packages:");
-         Event.emit_message ("  Installed packages  : " & int2str (measurements.num_packages));
-         Event.emit_message ("  Variant subset      : " & int2str (measurements.num_variants));
-         Event.emit_message ("  Port subset         : " & int2str (measurements.num_ports));
-         Event.emit_message ("  Disk space occupied :" & measurements.sum_flatsize'Img & " bytes");
-         Event.emit_message ("  Disk space occupied : " &
+         Event.emit_message ("  Installed packages      : " & int2str (measurements.num_packages));
+         Event.emit_message ("  Variant subset          : " & int2str (measurements.num_variants));
+         Event.emit_message ("  Port subset             : " & int2str (measurements.num_ports));
+         Event.emit_message ("  Disk space occupied     :" &
+                               measurements.sum_flatsize'Img & " bytes");
+         Event.emit_message ("  Disk space occupied     : " &
                                Metadata.human_readable_size (int64 (measurements.sum_flatsize)));
       end;
 
