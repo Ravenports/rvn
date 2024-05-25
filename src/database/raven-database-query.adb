@@ -38,7 +38,7 @@ package body Raven.Database.Query is
       case SQLite.step (new_stmt) is
          when SQLite.no_more_data => null;
          when SQLite.row_present =>
-            installed := Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 1));
+            installed := Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 0));
          when SQLite.something_else =>
             CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
                                          SQLite.get_expanded_sql (new_stmt));
@@ -360,5 +360,46 @@ package body Raven.Database.Query is
 
    end all_remote_packages;
 
+
+   ---------------------------
+   --  package_measurement  --
+   ---------------------------
+   procedure package_measurement
+     (db           : RDB_Connection;
+      measurements : in out A_Measurement_Set)
+   is
+      func : constant String := "package_measurement";
+      sql  : constant String :=
+        "SELECT COUNT(*) as num_packages, " &
+        "COUNT(DISTINCT(name)) as num_ports, " &
+        "COUNT(DISTINCT CONCAT(name, variant) as num_variants, " &
+        "SUM(flatsize) as sum_flatsize " &
+        "SUM(rvnsize) as sum_pkgsize " &
+        "FROM packages";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+
+      case SQLite.step (new_stmt) is
+         when SQLite.no_more_data => null;
+         when SQLite.row_present =>
+            measurements.num_packages := Natural (SQLite.retrieve_integer (new_stmt, 0));
+            measurements.num_ports    := Natural (SQLite.retrieve_integer (new_stmt, 1));
+            measurements.num_variants := Natural (SQLite.retrieve_integer (new_stmt, 2));
+            measurements.sum_flatsize := Pkgtypes.Package_Size (SQLite.retrieve_integer
+                                                                (new_stmt, 3));
+            measurements.sum_pkgsize  := Pkgtypes.Package_Size (SQLite.retrieve_integer
+                                                                (new_stmt, 4));
+         when SQLite.something_else =>
+            CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                         SQLite.get_expanded_sql (new_stmt));
+      end case;
+      SQLite.finalize_statement (new_stmt);
+
+   end package_measurement;
 
 end Raven.Database.Query;

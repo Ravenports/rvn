@@ -6,6 +6,15 @@ with Archive.Unpack;
 
 package Raven.Database.Query is
 
+   type A_Measurement_Set is
+      record
+         num_packages : Natural := 0;
+         num_variants : Natural := 0;
+         num_ports    : Natural := 0;
+         sum_flatsize : Pkgtypes.Package_Size := 0;
+         sum_pkgsize  : Pkgtypes.Package_Size := 0;
+      end record;
+
    --  Returns 0 if the package is not registered
    --  Returns package ID if the package is installed
    function package_installed
@@ -44,6 +53,11 @@ package Raven.Database.Query is
    procedure all_remote_packages
      (db         : RDB_Connection;
       file_map   : in out Pkgtypes.NV_Pairs.Map);
+
+   --  Heart of rvn stats(8) command
+   procedure package_measurement
+     (db           : RDB_Connection;
+      measurements : in out A_Measurement_Set);
 
 private
 

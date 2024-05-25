@@ -10,6 +10,7 @@ package Raven.Cmd.Stats is
 
 private
 
-   rdb : Database.RDB_Connection;
+   function show_catalog_stats (single_repo : String) return Boolean;
+   function show_installation_stat return Boolean;
 
 end Raven.Cmd.Stats;
