@@ -180,23 +180,13 @@ The
 is tuplet representing the operating system, the major OS release and
 the architecture to indicate what for which system the package is intended.
 .It Cm deps Ar dep-name dep-origin dep-version
-Associative array of package dependencies, keyed on
-.Ar dep-name
-and with values
-.Cm version Ar dep-version
-and
-.Cm origin Ar dep-origin .
+Associative array of package dependencies where the key is the
+namebase-subpackage-variant triplet and the value is the version.
 For example:
 .Bd -literal -offset indent
 deps: {
-   pstree: {
-      version: "2.36"
-      origin: "pstree:standard"
-   }
-   cdiff: {
-      version: "0.9.6.20140711,1"
-      origin: "cdiff:standard"
-   }
+   ncurses-primary-standard: "2.36",
+   cjson-primary-standard: "1.7.17"
 }
 .Ed
 .It Cm options Ar ucl-object
@@ -273,8 +263,12 @@ is an enumeration of pre-install, post-install, pre-deinstall, post-deinstall,
 pre-install-lua, post-install-lua, pre-deinstall-lua, post-deinstall-lua.
 The
 .Ar value
-is an array which contains strings of scripts to be executated at the
-indicated package phase.
+is an array which contains ucl-objects with two string fields:
+args and code.
+The space-delimited args are treated as arguments by both the shell and lua
+scripts defined by the code field. 
+The code is executed at the indicated package phase and there is no limit to
+phase limits on the number of script objects.
 .It Cm directories Ar Array
 This field is of type array.
 Each element of the array is a ucl-object to describe empty directories
