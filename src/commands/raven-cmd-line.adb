@@ -663,7 +663,7 @@ package body Raven.Cmd.Line is
                   elsif datum = "-t" or else datum = "--triplet" then
                      set_search_type (data, triplet);
                   elsif datum = "-Q" or else datum = "query-modifier" then
-                     set_query_modifier (data, datum);
+                     last_cmd := search_modifier;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   else
@@ -696,6 +696,7 @@ package body Raven.Cmd.Line is
                when genrepo_finger     => data.cmd_genrepo.fprint_file    := datumtxt;
                when query_evaluate     => data.cmd_query.evaluate         := datumtxt;
                when rquery_evaluate    => data.cmd_rquery.evaluate        := datumtxt;
+               when search_modifier    => set_query_modifier (data, datum);
                when help =>
                   data.help_command := get_command (datum);
                   if data.help_command = cv_unset then

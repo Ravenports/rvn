@@ -62,15 +62,10 @@ private
          genrepo_sign_cmd,
          genrepo_finger,
          query_evaluate,
-         rquery_evaluate
+         rquery_evaluate,
+         search_modifier
 
          --  fetch_destdir,
-         --  search_modifier,
-         --  search_field,
-         --  search_label,
-         --  set_automatic,
-         --  set_vital,
-         --  set_change_name,
         );
 
 end Raven.Cmd.Line;
