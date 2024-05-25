@@ -241,6 +241,12 @@ package body Raven.Cmd.Line is
          swl_repo   : constant String := "--repository";
          sws_help   : constant String := "-h";
          swl_help   : constant String := "--help";
+         sws_all    : constant String := "-a";
+         swl_all    : constant String := "--all";
+         sws_case   : constant String := "-C";
+         swl_case   : constant String := "--case-sensitive";
+         sws_exact  : constant String := "-E";
+         swl_exact  : constant String := "--exact-match";
          AME        : constant String := " switches are mutually exclusive.";
          error_exp  : constant String := "Unexpected argument: ";
          error_chk  : constant String := "Attempt to redefine check action: ";
@@ -323,10 +329,13 @@ package body Raven.Cmd.Line is
                when cv_info =>
                   if datum = sws_quiet or else datum = swl_quiet then
                      data.common_options.quiet := True;
-                  elsif aCgix (data, datum) then
-                     if data.common_options.case_sensitive then
-                        override_configuration ("CASE_SENSITIVE_MATCH=true");
-                     end if;
+                  elsif datum = sws_all or else datum = swl_all then
+                        data.common_options.all_installed_pkgs := True;
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     override_configuration ("CASE_SENSITIVE_MATCH=true");
                   elsif datum = "-A" or else datum = "--annotations" then
                      data.cmd_info.annotations := True;
                   elsif datum = "-B" or else datum = "--required-shlibs" then
@@ -389,10 +398,11 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
                      override_configuration ("REPO_AUTOUPDATE=false");
-                  elsif aCgix (data, datum, False) then
-                     if data.common_options.case_sensitive then
-                        override_configuration ("CASE_SENSITIVE_MATCH=true");
-                     end if;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
                   elsif datum = "-A" or else datum = "--automatic" then
                      data.cmd_install.automatic := True;
                   elsif datum = "-F" or else datum = "--fetch-only" then
@@ -465,10 +475,11 @@ package body Raven.Cmd.Line is
                         set_error (data, "The -r switch is not compatible with " &
                                      "-S, -I, -t, or -T switches.");
                      end if;
-                  elsif aCgix (data, datum) then
-                     if data.common_options.case_sensitive then
-                        override_configuration ("CASE_SENSITIVE_MATCH=true");
-                     end if;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
                   elsif datum = "-e" or else datum = "--exact" then
                      data.cmd_version.exact_match := True;
                   elsif datum = "-l" or else datum = "--like" then
@@ -571,7 +582,7 @@ package body Raven.Cmd.Line is
                      override_configuration ("ASSUME_ALWAYS_YES=true");
                   elsif datum = sws_dryrun or else datum = swl_dryrun then
                      data.common_options.dry_run := True;
-                  elsif datum = "-a" or else datum = "--all" then
+                  elsif datum = sws_all or else datum = swl_all then
                      data.cmd_clean.delete_all := True;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
@@ -579,10 +590,13 @@ package body Raven.Cmd.Line is
                when cv_query =>
                   if datum = "-e" or else datum = "--evaluate" then
                      last_cmd := query_evaluate;
-                  elsif aCgix (data, datum) then
-                     if data.common_options.case_sensitive then
-                        override_configuration ("CASE_SENSITIVE_MATCH=true");
-                     end if;
+                  elsif datum = sws_all or else datum = swl_all then
+                     data.common_options.all_installed_pkgs := True;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   elsif isBlank (data.cmd_query.query_format) then
@@ -593,10 +607,13 @@ package body Raven.Cmd.Line is
                when cv_rquery =>
                   if datum = "-e" or else datum = "--evaluate" then
                      last_cmd := rquery_evaluate;
-                  elsif aCgix (data, datum) then
-                     if data.common_options.case_sensitive then
-                        override_configuration ("CASE_SENSITIVE_MATCH=true");
-                     end if;
+                  elsif datum = sws_all or else datum = swl_all then
+                     data.common_options.all_installed_pkgs := True;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
                      override_configuration ("REPO_AUTOUPDATE=false");
@@ -621,6 +638,41 @@ package body Raven.Cmd.Line is
                      last_cmd := generic_repo_name;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
+                  end if;
+               when cv_search =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                     override_configuration ("REPO_AUTOUPDATE=false");
+                  elsif datum = "-g" or else datum = "--glob" then
+                     data.cmd_search.glob_input := True;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                  elsif datum = "-c" or else datum = "--comment" then
+                     set_search_type (data, comment);
+                  elsif datum = "-d" or else datum = "--description" then
+                     set_search_type (data, description);
+                  elsif datum = "-n" or else datum = "--namebase" then
+                     set_search_type (data, namebase);
+                  elsif datum = "-t" or else datum = "--triplet" then
+                     set_search_type (data, triplet);
+                  elsif datum = "-Q" or else datum = "query-modifier" then
+                     set_query_modifier (data, datum);
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     if IsBlank (data.cmd_search.spattern) then
+                        data.cmd_search.spattern := datumtxt;
+                     else
+                        set_error (data, "Attempt to redefine search pattern from "
+                                   & SQ (USS (data.cmd_search.spattern)) & " to " & DQ (datum));
+                     end if;
                   end if;
             end case;
          else
@@ -685,6 +737,7 @@ package body Raven.Cmd.Line is
       --  check_annotate_stdin;
 
       check_version_stdin;
+      check_search_default (data);
       check_implied_info_all (data);
       check_assume_yes (data);
 
@@ -773,24 +826,18 @@ package body Raven.Cmd.Line is
          ("install   ", cv_install),
          ("query     ", cv_query),
          ("rquery    ", cv_rquery),
+         ("search    ", cv_search),
          ("shell     ", cv_shell),
          ("shlib     ", cv_shlib),
          ("stats     ", cv_stats),
          ("version   ", cv_version),
          ("which     ", cv_which)
 
-         --  ("add       ", cv_add),
          --  ("annotate  ", cv_annotate),
          --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
          --  ("fetch     ", cv_fetch),
-         --  ("lock      ", cv_lock),
-         --  ("register  ", cv_register),
          --  ("remove    ", cv_remove),
-         --  ("search    ", cv_search),
-         --  ("set       ", cv_set),
-         --  ("ssh       ", cv_ssh),
-         --  ("unlock    ", cv_unlock),
          --  ("upgrade   ", cv_upgrade),
         );
 
@@ -870,33 +917,22 @@ package body Raven.Cmd.Line is
    end handle_pkg_patterns;
 
 
-   -------------
-   --  aCgix  --
-   -------------
-   function aCgix (self : in out Cldata; datum : String; use_all : Boolean := True) return Boolean
+   -----------------------
+   --  set_search_type  --
+   -----------------------
+   procedure set_search_type (self : in out Cldata; new_type : search_type)
    is
-      sws_all    : constant String := "-a";
-      swl_all    : constant String := "--all";
-      sws_case   : constant String := "-C";
-      swl_case   : constant String := "--case-sensitive";
-      sws_exact  : constant String := "-E";
-      swl_exact  : constant String := "--exact-match";
    begin
-      --  -C/-E do not conflict.
-      --  --exact implies case sensitivity
-      --  --case-sensitive does not imply exact match (e.g. case-sensitive glob)
-
-      if use_all and then (datum = sws_all or else datum = swl_all) then
-         self.common_options.all_installed_pkgs := True;
-      elsif datum = sws_case or else datum = swl_case then
-         self.common_options.case_sensitive := True;
-      elsif datum = sws_exact or else datum = swl_exact then
-         self.common_options.exact_match := True;
-      else
-         return False;
-      end if;
-      return True;
-   end aCgix;
+      case self.cmd_search.search is
+         when search_unset => null;
+         when others =>
+            set_error (self, "Set only one search type (-c,-d,-n,-t are mutually exclusive)");
+      end case;
+      case new_type is
+         when search_unset => null;  --  impossible
+         when others => self.cmd_search.search := new_type;
+      end case;
+   end set_search_type;
 
 
    ------------------------------
@@ -931,6 +967,132 @@ package body Raven.Cmd.Line is
          end if;
       end if;
    end check_implied_info_all;
+
+
+   ----------------------------
+   --  check_search_default  --
+   ----------------------------
+   procedure check_search_default (self : in out Cldata) is
+   begin
+      case self.command is
+         when cv_search =>
+            case self.cmd_search.search is
+               when search_unset => self.cmd_search.search := namebase;
+               when others => null;
+            end case;
+         when others => null;
+      end case;
+   end check_search_default;
+
+
+   --------------------------
+   --  set_query_modifier  --
+   --------------------------
+   procedure set_query_modifier (self : in out Cldata; modifier : String)
+   is
+      standard : constant String := lowercase (modifier);
+
+      function illegally_short return Boolean
+      is
+         mlen : constant Natural := standard'Length;
+      begin
+         if mlen = 1 then
+            if standard = "a" or else
+              standard = "c" or else
+              standard = "d" or else
+              standard = "r" or else
+              standard = "s" or else
+              standard = "v"
+            then
+               return True;
+            end if;
+         elsif mlen = 2 then
+            if standard(standard'First) = 'd' or else
+              standard(standard'First) = 's'
+            then
+               return True;
+            end if;
+         end if;
+         return False;
+      end illegally_short;
+
+      procedure set_modifier (modtype : Modifier_Data) is
+      begin
+         if not self.cmd_search.modifiers (modtype) then
+            self.cmd_search.modifiers (modtype) := True;
+            self.cmd_search.num_modifiers := self.cmd_search.num_modifiers + 1;
+         end if;
+      end set_modifier;
+
+   begin
+      if illegally_short then
+         set_error (self, "Modifier '" & modifier & "'is ambiguous");
+         return;
+      end if;
+      if leads ("annotations", standard) then
+         set_modifier (annotations);
+      elsif leads ("abi", standard) then
+         set_modifier (abi);
+      elsif leads ("categories", standard) then
+         set_modifier (categories);
+      elsif leads ("comment", standard) then
+         set_modifier (comment);
+      elsif leads ("dependencies", standard) then
+         set_modifier (dependencies);
+      elsif leads ("description", standard) then
+         set_modifier (description);
+      elsif leads ("full", standard) then
+         set_modifier (namebase);
+         set_modifier (subpackage);
+         set_modifier (variant);
+         set_modifier (pkgversion);
+         set_modifier (comment);
+         set_modifier (categories);
+         set_modifier (abi);
+         set_modifier (licenses);
+         set_modifier (www);
+         set_modifier (maintainer);
+         set_modifier (prefix);
+         set_modifier (options);
+         set_modifier (shlibs_prov);
+         set_modifier (shlibs_req);
+         set_modifier (annotations);
+         set_modifier (size);
+         set_modifier (rvnsize);
+         set_modifier (description);
+      elsif leads ("licenses", standard) then
+         set_modifier (licenses);
+      elsif leads ("maintainer", standard) then
+         set_modifier (maintainer);
+      elsif leads ("namebase", standard) then
+         set_modifier (namebase);
+      elsif leads ("options", standard) then
+         set_modifier (options);
+      elsif leads ("prefix", standard) then
+         set_modifier (prefix);
+      elsif leads ("required-by", standard) then
+         set_modifier (required_by);
+      elsif leads ("rvnsize", standard) then
+         set_modifier (rvnsize);
+      elsif leads ("slp-shlibs-provided", standard) then
+         set_modifier (shlibs_prov);
+      elsif leads ("slr-shlibs-required", standard) then
+         set_modifier (shlibs_req);
+      elsif leads ("size", standard) then
+         set_modifier (size);
+      elsif leads ("subpackage", standard) then
+         set_modifier (subpackage);
+      elsif leads ("variant", standard) then
+         set_modifier (variant);
+      elsif leads ("version", standard) then
+         set_modifier (pkgversion);
+      elsif leads ("www", standard) then
+         set_modifier (www);
+      else
+         set_error (self, "Modifier '" & modifier & "'is unrecognized");
+      end if;
+      return;
+   end set_query_modifier;
 
 
    ------------------------

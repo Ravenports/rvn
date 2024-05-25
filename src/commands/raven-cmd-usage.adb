@@ -111,6 +111,7 @@ package body Raven.Cmd.Usage is
          when cv_install => return verb_install (comline);
          when cv_query   => return verb_query (comline);
          when cv_rquery  => return verb_rquery (comline);
+         when cv_search  => return verb_search (comline);
          when cv_shell   => return verb_shell (comline);
          when cv_shlib   => return verb_shlib (comline);
          when cv_stats   => return verb_stats (comline);
@@ -381,6 +382,12 @@ package body Raven.Cmd.Usage is
       if comline.parse_error then
          return alert (USS (comline.error_message));
       else
+         if comline.common_options.exact_match and then
+           comline.common_options.case_sensitive
+         then
+            return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+         end if;
+
          if not IsBlank (comline.common_options.name_pattern) then
             if comline.common_options.all_installed_pkgs or else
               not IsBlank (comline.cmd_info.path_archive_file)
@@ -465,6 +472,11 @@ package body Raven.Cmd.Usage is
            comline.common_options.case_sensitive
          then
             return alert ("-CE" & not_with_file);
+         end if;
+         if comline.common_options.exact_match and then
+           comline.common_options.case_sensitive
+         then
+            return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
          end if;
          if comline.common_options.multiple_patterns.Is_Empty then
             return alert ("Missing path to rvn archive");
@@ -623,6 +635,12 @@ package body Raven.Cmd.Usage is
          then
             return alert ("--test-pattern requires 2 arguments");
          end if;
+      end if;
+
+      if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
       end if;
 
       return True;
@@ -852,5 +870,49 @@ package body Raven.Cmd.Usage is
 
       return True;
    end verb_stats;
+
+
+   -------------------
+   --  verb_search  --
+   -------------------
+   function verb_search (comline : CLdata) return Boolean
+   is
+      mod_count : Natural := 0;
+
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "search [-U] [-r reponame] [-CEg] [-cdnt] [-Q query-modifier]*";
+         msg2 : constant String := "       <search pattern>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage_multiline (msg2);
+         display_help_suggestion (cv_search);
+         return False;
+      end alert;
+   begin
+      if comline.common_options.exact_match then
+         mod_count := mod_count + 1;
+      end if;
+
+      if comline.common_options.case_sensitive then
+         mod_count := mod_count + 1;
+      end if;
+
+      if comline.cmd_search.glob_input then
+         mod_count := mod_count + 1;
+      end if;
+
+      if mod_count > 1 then
+         return alert ("--exact-match, --case-sensitive, and --glob are incompatible switches");
+      end if;
+
+      if isBlank (comline.cmd_search.spattern) then
+         return alert ("The required <search-pattern> argument is missing.");
+      end if;
+
+      return True;
+
+   end verb_search;
 
 end Raven.Cmd.Usage;

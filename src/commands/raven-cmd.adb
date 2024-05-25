@@ -24,14 +24,12 @@ package body Raven.Cmd is
          when cv_install    => return "install";
          when cv_query      => return "query";
          when cv_rquery     => return "rquery";
+         when cv_search     => return "search";
          when cv_shell      => return "shell";
          when cv_shlib      => return "shlib";
          when cv_stats      => return "stats";
          when cv_version    => return "version";
          when cv_which      => return "which";
-         --  when cv_annotate   => return "annotate";
-         --  when cv_autoremove => return "autoremove";
-         --  when cv_check      => return "check";
       end case;
    end convert_command_enum_to_label;
 

@@ -18,6 +18,7 @@ with Raven.Cmd.Clean;
 with Raven.Cmd.Query;
 with Raven.Cmd.RQuery;
 with Raven.Cmd.Stats;
+with Raven.Cmd.Search;
 
 package body Raven.Cmd.Bahnhof is
 
@@ -38,6 +39,7 @@ package body Raven.Cmd.Bahnhof is
    package C14 renames Raven.Cmd.Query;
    package C15 renames Raven.Cmd.RQuery;
    package C16 renames Raven.Cmd.Stats;
+   package C17 renames Raven.Cmd.Search;
 
 
    --------------------------------------------------------------------
@@ -63,6 +65,7 @@ package body Raven.Cmd.Bahnhof is
          when cv_query    => return (C14.execute_query_command (comline));
          when cv_rquery   => return (C15.execute_rquery_command (comline));
          when cv_stats    => return (C16.execute_stats_command (comline));
+         when cv_search   => return (C17.execute_search_command (comline));
       end case;
    end execute_command;
 

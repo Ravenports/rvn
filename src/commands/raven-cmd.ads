@@ -32,6 +32,7 @@ private
       cv_install,
       cv_query,
       cv_rquery,
+      cv_search,
       cv_shell,
       cv_shlib,
       cv_stats,
@@ -41,12 +42,8 @@ private
 
      --   cv_annotate,
      --   cv_autoremove,
-     --   cv_clean,
      --   cv_fetch,
      --   cv_remove,
-     --   cv_search,
-     --   cv_set,
-     --   cv_ssh,
      --   cv_upgrade,
 
 
@@ -72,6 +69,7 @@ private
      );
 
    type version_depth is (not_shown, just_version, dump_configuration);
+   type search_type is (search_unset, namebase, triplet, comment, description);
    subtype ST_Version is Natural range 0 .. 2;
 
    type switches_common is
@@ -215,6 +213,22 @@ private
          query_format : Text;
       end record;
 
+   type Modifier_Data is
+     (annotations, abi, categories, comment, dependencies, description, full, licenses,
+      maintainer, namebase, options, prefix, required_by, rvnsize, shlibs_prov, shlibs_req,
+      size, subpackage, variant, pkgversion, www);
+
+   type Modifier_Set is array (Modifier_Data'Range) of Boolean;
+
+   type switches_search_cmd is
+      record
+         search        : search_type := search_unset;
+         glob_input    : Boolean := False;
+         num_modifiers : Natural := 0;
+         modifiers     : Modifier_Set := (others => False);
+         spattern      : Text;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -252,6 +266,7 @@ private
          cmd_install            : switches_install_cmd;
          cmd_query              : switches_query_cmd;
          cmd_rquery             : switches_rquery_cmd;
+         cmd_search             : switches_search_cmd;
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
          cmd_stats              : switches_stats_cmd;
