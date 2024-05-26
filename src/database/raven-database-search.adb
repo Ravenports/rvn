@@ -344,7 +344,7 @@ package body Raven.Database.Search is
       sql : constant String :=
         "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant ||'-'|| p.version as nsvv " &
         "FROM packages as p " &
-        "JOIN pkg_dependencies x on x.package_id = p.id " &
+        "JOIN pkg_dependencies x on x.dependency_id = p.id " &
         "WHERE x.dependency_id = ? " &
         "ORDER by nsvv";
    begin
