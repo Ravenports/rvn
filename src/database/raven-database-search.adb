@@ -286,7 +286,8 @@ package body Raven.Database.Search is
       sql : constant String :=
         "SELECT c.name FROM pkg_libs_required x " &
         "JOIN libraries c ON c.library_id = x.library_id " &
-        "WHERE x.package_id = ?";
+        "WHERE x.package_id = ? " &
+        "ORDER BY c.name";
    begin
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_libraries_required;
@@ -304,7 +305,8 @@ package body Raven.Database.Search is
       sql : constant String :=
         "SELECT c.name FROM pkg_libs_provided x " &
         "JOIN libraries c ON c.library_id = x.library_id " &
-        "WHERE x.package_id = ?";
+        "WHERE x.package_id = ? " &
+        "ORDER BY c.name";
    begin
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_libraries_provided;
@@ -322,7 +324,8 @@ package body Raven.Database.Search is
       sql : constant String :=
         "SELECT d.nsv, d.version FROM pkg_dependencies x " &
         "JOIN dependencies d on x.dependency_id = d.dependency_id " &
-        "WHERE x.package_id = ?";
+        "WHERE x.package_id = ? " &
+        "ORDER BY d.nsv";
    begin
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_dependencies;
@@ -340,7 +343,8 @@ package body Raven.Database.Search is
       sql : constant String :=
         "SELECT d.nsv, d.version FROM pkg_dependencies x " &
         "JOIN dependencies d on x.dependency_id = d.dependency_id " &
-        "WHERE x.dependency_id = ?";
+        "WHERE x.dependency_id = ? " &
+        "ORDER BY d.nsv";
    begin
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_reverse_dependencies;
