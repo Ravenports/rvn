@@ -47,6 +47,18 @@ package Raven.Database.Search is
       prefix : String;
       pkgid  : Pkgtypes.Package_ID);
 
+   --  Emits notice of dependencies, one line per library
+   procedure print_dependencies
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
+   --  Emits notice of reverse dependencies, one line per library
+   procedure print_reverse_dependencies
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
 private
 
    internal_srcfile : constant String := "raven-database-search.adb";

@@ -309,4 +309,40 @@ package body Raven.Database.Search is
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_libraries_provided;
 
+
+   --------------------------
+   --  print_dependencies  --
+   --------------------------
+   procedure print_dependencies
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+      func : constant String := "print_dependencies";
+      sql : constant String :=
+        "SELECT d.nsv, d.version FROM pkg_dependencies x " &
+        "JOIN dependencies d on x.dependency_id = d.dependency_id " &
+        "WHERE x.package_id = ?";
+   begin
+      generic_multiline (db, pkgid, func, prefix, sql);
+   end print_dependencies;
+
+
+   ----------------------------------
+   --  print_reverse_dependencies  --
+   ----------------------------------
+   procedure print_reverse_dependencies
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+      func : constant String := "print_reverse_dependencies";
+      sql : constant String :=
+        "SELECT d.nsv, d.version FROM pkg_dependencies x " &
+        "JOIN dependencies d on x.dependency_id = d.dependency_id " &
+        "WHERE x.dependency_id = ?";
+   begin
+      generic_multiline (db, pkgid, func, prefix, sql);
+   end print_reverse_dependencies;
+
 end Raven.Database.Search;

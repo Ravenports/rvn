@@ -87,8 +87,8 @@ package body Raven.Cmd.Search is
          main_attribute (size, trim (pkg.flatsize'Img), quiet);
          main_attribute (rvnsize, trim (pkg.rvnsize'Img), quiet);
          main_attribute (description, Character'Val (10) & USS (pkg.desc), quiet);
-         --  required-by
-         --  depends-on
+         SEA.print_reverse_dependencies (rdb, get_extra (required_by, quiet), pkg.id);
+         SEA.print_dependencies (rdb, get_extra (dependencies, quiet), pkg.id);
 
       end display_package;
 
