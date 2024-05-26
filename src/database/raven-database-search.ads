@@ -26,6 +26,15 @@ package Raven.Database.Search is
       prefix : String;
       pkgid  : Pkgtypes.Package_ID);
 
+   --  Emits notice of prefix followed by licenses separated by a space *
+   --  If there are no licenses, nothing is printed.
+   --  if logic is "dual" or "multi", that will be printed after the prefix.
+   procedure print_licenses
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID;
+      logic  : Pkgtypes.License_Logic);
+
 private
 
    internal_srcfile : constant String := "raven-database-search.adb";

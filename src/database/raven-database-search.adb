@@ -66,7 +66,7 @@ package body Raven.Database.Search is
 
       sql : constant String := "SELECT " & processed_search_field & ", id" &
         ", namebase, subpackage, variant, version, abi, comment, desc, maintainer, prefix" &
-        ", www, rvnsize, flatsize FROM packages" & where_clause;
+        ", www, rvnsize, flatsize, licenselogic FROM packages" & where_clause;
    begin
       packages.clear;
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
@@ -102,6 +102,8 @@ package body Raven.Database.Search is
                   myrec.www        := SUS (SQLite.retrieve_string (new_stmt, 11));
                   myrec.rvnsize  := Pkgtypes.Package_Size (SQLite.retrieve_integer (new_stmt, 12));
                   myrec.flatsize := Pkgtypes.Package_Size (SQLite.retrieve_integer (new_stmt, 13));
+                  myrec.licenselogic := Pkgtypes.License_Logic'Val (SQLite.retrieve_integer
+                                                                    (new_stmt, 14));
                   packages.Append (myrec);
                end;
             when SQLite.something_else =>
@@ -164,6 +166,65 @@ package body Raven.Database.Search is
       Event.emit_notice (prefix & USS (nextline));
 
    end print_categories;
+
+
+   ----------------------
+   --  print_licenses  --
+   ----------------------
+   procedure print_licenses
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID;
+      logic  : Pkgtypes.License_Logic)
+   is
+
+      func : constant String := "get_categories";
+      new_stmt : SQLite.thick_stmt;
+
+      sql : constant String :=
+        "SELECT c.name FROM pkg_licenses x " &
+        "JOIN licenses c ON c.license_id = x.license_id " &
+        "WHERE x.package_id = ?";
+
+      nextline : Text := SU.Null_Unbounded_String;
+      counter  : Natural := 0;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (pkgid));
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               if counter = 0 then
+                  SU.Append (nextline, SQLite.retrieve_string (new_stmt, 0));
+               else
+                  SU.Append (nextline, " " & SQLite.retrieve_string (new_stmt, 0));
+               end if;
+               counter := counter + 1;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+      if counter = 0 then
+         return;
+      end if;
+      case logic is
+         when Pkgtypes.LICENSE_UNLISTED |
+              Pkgtypes.LICENSE_SINGLE =>
+            Event.emit_notice (prefix & USS (nextline));
+         when Pkgtypes.LICENSE_DUAL =>
+            Event.emit_notice (prefix & "[dual] " & USS (nextline));
+         when Pkgtypes.LICENSE_MULTI =>
+            Event.emit_notice (prefix & "[multi] " & USS (nextline));
+      end case;
+   end print_licenses;
 
 
 end Raven.Database.Search;

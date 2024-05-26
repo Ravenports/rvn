@@ -76,7 +76,7 @@ package body Raven.Cmd.Search is
          main_attribute (comment, USS (pkg.comment), quiet);
          SEA.print_categories (rdb, get_extra (categories, quiet), pkg.id);
          main_attribute (abi, USS (pkg.abi), quiet);
-         --  licenses
+         SEA.print_licenses (rdb, get_extra (licenses, quiet), pkg.id, pkg.licenselogic);
          main_attribute (www, USS (pkg.www), quiet);
          main_attribute (maintainer, USS (pkg.maintainer), quiet);
          main_attribute (prefix, USS (pkg.prefix), quiet);
