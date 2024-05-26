@@ -145,9 +145,9 @@ package body Raven.Database.Search is
          case SQLite.step (new_stmt) is
             when SQLite.row_present =>
                if counter = 0 then
-                  SU.Append (nextline, SQLite.retrieve_string (new_stmt, 1));
+                  SU.Append (nextline, SQLite.retrieve_string (new_stmt, 0));
                else
-                  SU.Append (nextline, " " & SQLite.retrieve_string (new_stmt, 1));
+                  SU.Append (nextline, " " & SQLite.retrieve_string (new_stmt, 0));
                end if;
                counter := counter + 1;
             when SQLite.something_else =>
