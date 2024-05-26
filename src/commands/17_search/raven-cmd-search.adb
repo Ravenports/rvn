@@ -74,21 +74,37 @@ package body Raven.Cmd.Search is
          main_attribute (variant, USS (pkg.variant), quiet);
          main_attribute (pkgversion, USS (pkg.version), quiet);
          main_attribute (comment, USS (pkg.comment), quiet);
-         SEA.print_categories (rdb, get_extra (categories, quiet), pkg.id);
+         if comline.cmd_search.modifiers (categories) then
+            SEA.print_categories (rdb, get_extra (categories, quiet), pkg.id);
+         end if;
          main_attribute (abi, USS (pkg.abi), quiet);
-         SEA.print_licenses (rdb, get_extra (licenses, quiet), pkg.id, pkg.licenselogic);
+         if comline.cmd_search.modifiers (licenses) then
+            SEA.print_licenses (rdb, get_extra (licenses, quiet), pkg.id, pkg.licenselogic);
+         end if;
          main_attribute (www, USS (pkg.www), quiet);
          main_attribute (maintainer, USS (pkg.maintainer), quiet);
          main_attribute (prefix, USS (pkg.prefix), quiet);
-         SEA.print_options (rdb, get_extra (options, quiet), pkg.id);
-         SEA.print_libraries_required (rdb, get_extra (shlibs_req, quiet), pkg.id);
-         SEA.print_libraries_provided (rdb, get_extra (shlibs_prov, quiet), pkg.id);
-         SEA.print_annotations (rdb, get_extra (annotations, quiet), pkg.id);
+         if comline.cmd_search.modifiers (options) then
+            SEA.print_options (rdb, get_extra (options, quiet), pkg.id);
+         end if;
+         if comline.cmd_search.modifiers (shlibs_req) then
+            SEA.print_libraries_required (rdb, get_extra (shlibs_req, quiet), pkg.id);
+         end if;
+         if comline.cmd_search.modifiers (shlibs_prov) then
+            SEA.print_libraries_provided (rdb, get_extra (shlibs_prov, quiet), pkg.id);
+         end if;
+         if comline.cmd_search.modifiers (annotations) then
+            SEA.print_annotations (rdb, get_extra (annotations, quiet), pkg.id);
+         end if;
          main_attribute (size, trim (pkg.flatsize'Img), quiet);
          main_attribute (rvnsize, trim (pkg.rvnsize'Img), quiet);
          main_attribute (description, Character'Val (10) & USS (pkg.desc), quiet);
-         SEA.print_reverse_dependencies (rdb, get_extra (required_by, quiet), pkg.id);
-         SEA.print_dependencies (rdb, get_extra (dependencies, quiet), pkg.id);
+         if comline.cmd_search.modifiers (required_by) then
+            SEA.print_reverse_dependencies (rdb, get_extra (required_by, quiet), pkg.id);
+         end if;
+         if comline.cmd_search.modifiers (dependencies) then
+            SEA.print_dependencies (rdb, get_extra (dependencies, quiet), pkg.id);
+         end if;
 
       end display_package;
 
