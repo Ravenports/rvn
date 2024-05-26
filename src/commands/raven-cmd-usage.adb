@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Raven.Context;
 with Raven.Strings; use Raven.Strings;
 with Archive.Unix;
 
@@ -905,6 +906,19 @@ package body Raven.Cmd.Usage is
 
       if mod_count > 1 then
          return alert ("--exact-match, --case-sensitive, and --glob are incompatible switches");
+      end if;
+
+      if Context.reveal_case_sensitive then
+         if mod_count = 1 then
+            if not comline.common_options.case_sensitive then
+               if comline.common_options.exact_match then
+                  return alert ("--exact-match is incompatible with CASE_SENSITIVE_MATCH=true");
+               end if;
+               if comline.cmd_search.glob_input then
+                  return alert ("--glob is incompatible with CASE_SENSITIVE_MATCH=true");
+               end if;
+            end if;
+         end if;
       end if;
 
       if isBlank (comline.cmd_search.spattern) then

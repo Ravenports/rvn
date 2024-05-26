@@ -1,0 +1,117 @@
+--  SPDX-License-Identifier: ISC
+--  Reference: /License.txt
+
+with Raven.Database.CommonSQL;
+with Raven.Strings; use Raven.Strings;
+
+package body Raven.Database.Search is
+
+   -----------------------
+   --  rvn_core_search  --
+   -----------------------
+   procedure rvn_core_search
+     (db           : RDB_Connection;
+      srch_pattern : String;
+      behave_glob  : Boolean;
+      behave_exact : Boolean;
+      behave_cs    : Boolean;
+      s_comment    : Boolean;
+      s_desc       : Boolean;
+      s_nsv        : Boolean;
+      packages     : in out Pkgtypes.Package_Set.Vector)
+   is
+      function raw_search_field return String;
+      function processed_search_field return String;
+      function where_clause return String;
+
+      func : constant String := "rvn_core_search";
+      new_stmt : SQLite.thick_stmt;
+
+      function raw_search_field return String is
+      begin
+         if s_comment then
+            return "comment";
+         elsif s_desc then
+            return "desc";
+         elsif s_nsv then
+            return "nsv";
+         else
+            return "namebase";
+         end if;
+      end raw_search_field;
+
+      function processed_search_field return String is
+      begin
+         if behave_glob or else behave_exact or else behave_cs then
+            return raw_search_field & " as search_field";
+         end if;
+         --  default case-insensitive regex
+         return "lower(" & raw_search_field & ") as search_field";
+      end processed_search_field;
+
+      function where_clause return String
+      is
+         sfield : constant String := " WHERE search_field ";
+      begin
+         if behave_glob then
+            return sfield & "GLOB ?1";
+         elsif behave_exact then
+            return sfield & "LIKE ?1";
+         end if;
+         --  covers regex (default), and --case-sensitive
+         --  the former is handled by lower casing both the target field and the search pattern
+         return sfield & "REGEXP ?1";
+      end where_clause;
+
+      sql : constant String := "SELECT " & processed_search_field & ", id" &
+        ", namebase, subpackage, variant, version, abi, comment, desc, maintainer, prefix" &
+        ", www, rvnsize, size FROM packages" & where_clause;
+   begin
+      packages.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      if behave_glob or else behave_exact or else behave_cs then
+         SQLite.bind_string (new_stmt, 1, srch_pattern);
+      else
+         SQLite.bind_string (new_stmt, 1, lowercase (srch_pattern));
+      end if;
+      debug_running_stmt (new_stmt);
+
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  pkgid : constant Pkgtypes.Package_ID :=
+                                   Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 1));
+                  myrec : Pkgtypes.A_Package;
+               begin
+                  myrec.id         := pkgid;
+                  myrec.namebase   := SUS (SQLite.retrieve_string (new_stmt, 2));
+                  myrec.subpackage := SUS (SQLite.retrieve_string (new_stmt, 3));
+                  myrec.variant    := SUS (SQLite.retrieve_string (new_stmt, 4));
+                  myrec.version    := SUS (SQLite.retrieve_string (new_stmt, 5));
+                  myrec.abi        := SUS (SQLite.retrieve_string (new_stmt, 6));
+                  myrec.comment    := SUS (SQLite.retrieve_string (new_stmt, 7));
+                  myrec.desc       := SUS (SQLite.retrieve_string (new_stmt, 8));
+                  myrec.maintainer := SUS (SQLite.retrieve_string (new_stmt, 9));
+                  myrec.prefix     := SUS (SQLite.retrieve_string (new_stmt, 10));
+                  myrec.www        := SUS (SQLite.retrieve_string (new_stmt, 11));
+                  myrec.rvnsize  := Pkgtypes.Package_Size (SQLite.retrieve_integer (new_stmt, 12));
+                  myrec.flatsize := Pkgtypes.Package_Size (SQLite.retrieve_integer (new_stmt, 13));
+                  packages.Append (myrec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end rvn_core_search;
+
+
+end Raven.Database.Search;
