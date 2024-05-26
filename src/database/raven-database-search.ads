@@ -35,8 +35,27 @@ package Raven.Database.Search is
       pkgid  : Pkgtypes.Package_ID;
       logic  : Pkgtypes.License_Logic);
 
+   --  Emits notice of libraries required, one line per library
+   procedure print_libraries_required
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
+   --  Emits notice of libraries provided, one line per library
+   procedure print_libraries_provided
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
 private
 
    internal_srcfile : constant String := "raven-database-search.adb";
+
+   procedure generic_multiline
+     (db     : RDB_Connection;
+      pkgid  : Pkgtypes.Package_ID;
+      func   : String;
+      prefix : String;
+      sql    : String);
 
 end Raven.Database.Search;

@@ -227,4 +227,86 @@ package body Raven.Database.Search is
    end print_licenses;
 
 
+   -------------------------
+   --  generic_multiline  --
+   -------------------------
+   procedure generic_multiline
+     (db     : RDB_Connection;
+      pkgid  : Pkgtypes.Package_ID;
+      func   : String;
+      prefix : String;
+      sql    : String)
+   is
+      function make_blank_prefix return String
+      is
+         canvas : String (1 .. prefix'Length) := (others => ' ');
+      begin
+         canvas (canvas'Last - 1) := ':';
+         return canvas;
+      end make_blank_prefix;
+
+      blank_prefix : constant String := make_blank_prefix;
+      new_stmt : SQLite.thick_stmt;
+      counter  : Natural := 0;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (pkgid));
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               if counter = 0 then
+                  Event.emit_notice (prefix & SQLite.retrieve_string (new_stmt, 0));
+               else
+                  Event.emit_notice (blank_prefix & SQLite.retrieve_string (new_stmt, 0));
+               end if;
+               counter := counter + 1;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end generic_multiline;
+
+
+   --------------------------------
+   --  print_libraries_required  --
+   --------------------------------
+   procedure print_libraries_required
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+      func : constant String := "print_libraries_required";
+      sql : constant String :=
+        "SELECT c.name FROM pkg_libs_required x " &
+        "JOIN libraries c ON c.library_id = x.library_id " &
+        "WHERE x.package_id = ?";
+   begin
+      generic_multiline (db, pkgid, func, prefix, sql);
+   end print_libraries_required;
+
+
+   --------------------------------
+   --  print_libraries_provided  --
+   --------------------------------
+   procedure print_libraries_provided
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+      func : constant String := "print_libraries_provided";
+      sql : constant String :=
+        "SELECT c.name FROM pkg_libs_provided x " &
+        "JOIN libraries c ON c.library_id = x.library_id " &
+        "WHERE x.package_id = ?";
+   begin
+      generic_multiline (db, pkgid, func, prefix, sql);
+   end print_libraries_provided;
+
 end Raven.Database.Search;

@@ -81,12 +81,12 @@ package body Raven.Cmd.Search is
          main_attribute (maintainer, USS (pkg.maintainer), quiet);
          main_attribute (prefix, USS (pkg.prefix), quiet);
          --  options
-         --  lib-required
-         --  lib-provided
+         SEA.print_libraries_required (rdb, get_extra (shlibs_req, quiet), pkg.id);
+         SEA.print_libraries_provided (rdb, get_extra (shlibs_prov, quiet), pkg.id);
          --  annotations
          main_attribute (size, trim (pkg.flatsize'Img), quiet);
          main_attribute (rvnsize, trim (pkg.rvnsize'Img), quiet);
-         main_attribute (description, USS (pkg.desc), quiet);
+         main_attribute (description, Character'Val (10) & USS (pkg.desc), quiet);
          --  required-by
          --  depends-on
 
