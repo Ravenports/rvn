@@ -341,10 +341,10 @@ package body Raven.Database.Search is
    is
       func : constant String := "print_reverse_dependencies";
       sql : constant String :=
-        "SELECT d.nsv, d.version FROM pkg_dependencies x " &
-        "JOIN dependencies d on x.dependency_id = d.dependency_id " &
+        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant ||'-'|| p.version as nsvv" &
+        "JOIN pkg_dependencies x on x.package_id = p.id " &
         "WHERE x.dependency_id = ? " &
-        "ORDER BY d.nsv";
+        "ORDER by nsvv";
    begin
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_reverse_dependencies;
