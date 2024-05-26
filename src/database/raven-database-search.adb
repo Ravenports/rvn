@@ -277,6 +277,59 @@ package body Raven.Database.Search is
    end generic_multiline;
 
 
+   -----------------------------
+   --  generic_multiline_map  --
+   -----------------------------
+   procedure generic_multiline_map
+     (db     : RDB_Connection;
+      pkgid  : Pkgtypes.Package_ID;
+      func   : String;
+      prefix : String;
+      sql    : String)
+   is
+      function make_blank_prefix return String
+      is
+         canvas : String (1 .. prefix'Length) := (others => ' ');
+      begin
+         canvas (canvas'Last - 1) := ':';
+         return canvas;
+      end make_blank_prefix;
+
+      blank_prefix : constant String := make_blank_prefix;
+      new_stmt : SQLite.thick_stmt;
+      counter  : Natural := 0;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (pkgid));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  payload : constant String := SQLite.retrieve_string (new_stmt, 0) &
+                    " => " & SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  if counter = 0 then
+                     Event.emit_notice (prefix & payload);
+                  else
+                     Event.emit_notice (blank_prefix & payload);
+                  end if;
+                  counter := counter + 1;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end generic_multiline_map;
+
+
    --------------------------------
    --  print_libraries_required  --
    --------------------------------
@@ -355,5 +408,47 @@ package body Raven.Database.Search is
    begin
       generic_multiline (db, pkgid, func, prefix, sql);
    end print_reverse_dependencies;
+
+
+   -------------------------
+   --  print_annotations  --
+   -------------------------
+   procedure print_annotations
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+      func : constant String := "print_annotations";
+      sql : constant String :=
+        "SELECT ml.note_key, x.annotation " &
+        "FROM packages p " &
+        "JOIN pkg_annotations x on x.package_id = p.id " &
+        "JOIN annotations ml on x.annotation_id = ml.annotation_id " &
+        "WHERE p.id = ? " &
+        "ORDER BY ml.note_key";
+   begin
+       generic_multiline_map (db, pkgid, func, prefix, sql);
+   end print_annotations;
+
+
+   ---------------------
+   --  print_options  --
+   ---------------------
+   procedure print_options
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+      func : constant String := "print_annotations";
+      sql : constant String :=
+        "SELECT ml.option_name, x.option_setting " &
+        "FROM packages p " &
+        "JOIN pkg_options x on x.package_id = p.id " &
+        "JOIN options ml on x.option_id = ml.option_id " &
+        "WHERE p.id = ? " &
+        "ORDER BY ml.option_name";
+   begin
+       generic_multiline_map (db, pkgid, func, prefix, sql);
+   end print_options;
 
 end Raven.Database.Search;

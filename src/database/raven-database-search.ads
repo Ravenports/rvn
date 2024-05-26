@@ -59,11 +59,30 @@ package Raven.Database.Search is
       prefix : String;
       pkgid  : Pkgtypes.Package_ID);
 
+   --  Emits notice of package annotations, one line per note
+   procedure print_annotations
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
+   --  Emits notice of package options, one line per option
+   procedure print_options
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
 private
 
    internal_srcfile : constant String := "raven-database-search.adb";
 
    procedure generic_multiline
+     (db     : RDB_Connection;
+      pkgid  : Pkgtypes.Package_ID;
+      func   : String;
+      prefix : String;
+      sql    : String);
+
+   procedure generic_multiline_map
      (db     : RDB_Connection;
       pkgid  : Pkgtypes.Package_ID;
       func   : String;
