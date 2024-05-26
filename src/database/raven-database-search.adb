@@ -342,9 +342,9 @@ package body Raven.Database.Search is
    is
       func : constant String := "print_reverse_dependencies";
       sql : constant String :=
-        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant ||'-'|| p.version as nsvv " &
-        "FROM packages as p " &
-        "JOIN pkg_dependencies x on x.dependency_id = p.id " &
+        "SELECT d.nsv ||'-'|| d.version as nsvv " &
+        "FROM pkg_dependencies x " &
+        "JOIN dependencies d ON x.dependency_id = d.dependency_id " &
         "WHERE x.dependency_id = ? " &
         "ORDER by nsvv";
    begin
