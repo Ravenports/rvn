@@ -10,5 +10,6 @@ private
 
    function refresh_catalog (single_repo : String) return Boolean;
    function format_extra (thismod : Modifier_Data) return String;
+   function get_extra (thismod : Modifier_Data; quiet : Boolean) return String;
 
 end Raven.Cmd.Search;

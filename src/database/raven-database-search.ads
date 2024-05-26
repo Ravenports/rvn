@@ -19,6 +19,13 @@ package Raven.Database.Search is
       s_nsv        : Boolean;
       packages     : in out Pkgtypes.Package_Set.Vector);
 
+   --  Emits notice of prefix followed by categories separated by a space.
+   --  If there are no categories, nothing is printed.
+   procedure print_categories
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID);
+
 private
 
    internal_srcfile : constant String := "raven-database-search.adb";

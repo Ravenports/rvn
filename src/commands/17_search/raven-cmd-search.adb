@@ -74,7 +74,7 @@ package body Raven.Cmd.Search is
          main_attribute (variant, USS (pkg.variant), quiet);
          main_attribute (pkgversion, USS (pkg.version), quiet);
          main_attribute (comment, USS (pkg.comment), quiet);
-         --  categories
+         SEA.print_categories (rdb, get_extra (categories, quiet), pkg.id);
          main_attribute (abi, USS (pkg.abi), quiet);
          --  licenses
          main_attribute (www, USS (pkg.www), quiet);
@@ -182,8 +182,19 @@ package body Raven.Cmd.Search is
          when description  => return "description  : ";
          when full         => return "!dev error!! : ";
       end case;
-
    end format_extra;
+
+
+   -----------------
+   --  get_extra  --
+   -----------------
+   function get_extra (thismod : Modifier_Data; quiet : Boolean) return String is
+   begin
+      if quiet then
+         return "";
+      end if;
+      return format_extra (thismod);
+   end get_extra;
 
 
 end Raven.Cmd.Search;

@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Raven.Event;
 with Raven.Database.CommonSQL;
 with Raven.Strings; use Raven.Strings;
 
@@ -112,6 +113,57 @@ package body Raven.Database.Search is
       SQLite.finalize_statement (new_stmt);
 
    end rvn_core_search;
+
+
+   ----------------------
+   --  get_categories  --
+   ----------------------
+   procedure print_categories
+     (db     : RDB_Connection;
+      prefix : String;
+      pkgid  : Pkgtypes.Package_ID)
+   is
+
+      func : constant String := "get_categories";
+      new_stmt : SQLite.thick_stmt;
+
+      sql : constant String :=
+        "SELECT c.name FROM pkg_categories x " &
+        "JOIN categories c ON c.category_id = x.category_id " &
+        "WHERE x.package_id = ?";
+
+      nextline : Text := SU.Null_Unbounded_String;
+      counter  : Natural := 0;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (pkgid));
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               if counter = 0 then
+                  SU.Append (nextline, SQLite.retrieve_string (new_stmt, 1));
+               else
+                  SU.Append (nextline, " " & SQLite.retrieve_string (new_stmt, 1));
+               end if;
+               counter := counter + 1;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+      if counter = 0 then
+         return;
+      end if;
+      Event.emit_notice (prefix & USS (nextline));
+
+   end print_categories;
 
 
 end Raven.Database.Search;
