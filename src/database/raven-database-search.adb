@@ -107,8 +107,14 @@ package body Raven.Database.Search is
                   packages.Append (myrec);
                end;
             when SQLite.something_else =>
-               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                            SQLite.get_expanded_sql (new_stmt));
+               if not behave_glob and not behave_exact then
+                  Event.emit_error
+                    ("Query failed.  It's possible pattern is an illegal regular expression");
+               else
+                  CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                               SQLite.get_expanded_sql (new_stmt));
+               end if;
+               exit;
             when SQLite.no_more_data => exit;
          end case;
       end loop;

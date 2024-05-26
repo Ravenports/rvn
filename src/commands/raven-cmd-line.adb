@@ -261,6 +261,11 @@ package body Raven.Cmd.Line is
             return;
          end if;
 
+         if datum = "" then
+            set_error (data, "Empty argument detected.");
+            return;
+         end if;
+
          if last_cmd = nothing_pending then
             case data.command is
                when cv_unset =>
