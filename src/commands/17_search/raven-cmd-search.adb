@@ -32,7 +32,9 @@ package body Raven.Cmd.Search is
       is
          nextline : Text;
       begin
-         if comline.cmd_search.modifiers (thismod) then
+         if comline.cmd_search.modifiers (thismod) or else
+           thismod = comment
+         then
             if not quiet then
                SU.Append (nextline, format_extra (thismod));
             end if;
@@ -48,7 +50,9 @@ package body Raven.Cmd.Search is
          ident : constant String := Pkgtypes.nsvv_identifier (pkg);
          topline : Text;
       begin
-         if quiet then
+         if quiet or else
+           comline.cmd_search.num_modifiers > 0
+         then
             Event.emit_notice (ident);
          else
             if ident'Length >= magic_col then
@@ -68,6 +72,10 @@ package body Raven.Cmd.Search is
          if comline.cmd_search.num_modifiers = 0 then
             return;
          end if;
+
+         --  At least one modifier set, so automatically include the comment too
+         --  (implemented in main attribute)
+
          --  Query modifier lines
          main_attribute (namebase, USS (pkg.namebase), quiet);
          main_attribute (subpackage, USS (pkg.subpackage), quiet);
