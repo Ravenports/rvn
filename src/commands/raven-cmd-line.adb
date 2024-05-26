@@ -1029,7 +1029,7 @@ package body Raven.Cmd.Line is
 
    begin
       if illegally_short then
-         set_error (self, "Modifier '" & modifier & "'is ambiguous");
+         set_error (self, "Modifier '" & modifier & "' is ambiguous");
          return;
       end if;
       if leads ("annotations", standard) then
@@ -1092,7 +1092,7 @@ package body Raven.Cmd.Line is
       elsif leads ("www", standard) then
          set_modifier (www);
       else
-         set_error (self, "Modifier '" & modifier & "'is unrecognized");
+         set_error (self, "Modifier '" & modifier & "' is unrecognized");
       end if;
       return;
    end set_query_modifier;
