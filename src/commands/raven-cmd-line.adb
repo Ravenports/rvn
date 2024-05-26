@@ -4,6 +4,7 @@
 with Ada.Command_Line;
 with Ada.Characters.Latin_1;
 with Raven.Event;
+with Raven.Context;
 with Raven.Cmd.Unset;
 with Raven.Strings; use Raven.Strings;
 
@@ -336,6 +337,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     context.register_case_sensitivity (True);
                   elsif datum = "-A" or else datum = "--annotations" then
                      data.cmd_info.annotations := True;
                   elsif datum = "-B" or else datum = "--required-shlibs" then
@@ -401,6 +403,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
                   elsif datum = "-A" or else datum = "--automatic" then
@@ -478,6 +481,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
                   elsif datum = "-e" or else datum = "--exact" then
@@ -595,6 +599,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
                   elsif datum (datum'First) = '-' then
@@ -612,6 +617,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
@@ -645,6 +651,7 @@ package body Raven.Cmd.Line is
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
