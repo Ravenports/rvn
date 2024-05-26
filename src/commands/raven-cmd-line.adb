@@ -394,12 +394,12 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
                      data.common_options.assume_yes := True;
-                     override_configuration ("ASSUME_ALWAYS_YES=true");
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
                   elsif datum = sws_dryrun or else datum = swl_dryrun then
                      data.common_options.dry_run := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
-                     override_configuration ("REPO_AUTOUPDATE=false");
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      Unset.override_setting (Unset.CFG.case_match, True);
@@ -583,7 +583,7 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
                      data.common_options.assume_yes := True;
-                     override_configuration ("ASSUME_ALWAYS_YES=true");
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
                   elsif datum = sws_dryrun or else datum = swl_dryrun then
                      data.common_options.dry_run := True;
                   elsif datum = sws_all or else datum = swl_all then
@@ -622,7 +622,7 @@ package body Raven.Cmd.Line is
                      data.common_options.exact_match := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
-                     override_configuration ("REPO_AUTOUPDATE=false");
+                      Unset.override_setting (Unset.CFG.autoupdate, False);
                   elsif datum = sws_repo or else datum = swl_repo then
                      last_cmd := generic_repo_name;
                   elsif datum (datum'First) = '-' then
@@ -639,7 +639,7 @@ package body Raven.Cmd.Line is
                      data.cmd_stats.catalog_only := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
-                     override_configuration ("REPO_AUTOUPDATE=false");
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
                   elsif datum = sws_repo or else datum = swl_repo then
                      last_cmd := generic_repo_name;
                   elsif datum (datum'First) = '-' then
@@ -656,7 +656,7 @@ package body Raven.Cmd.Line is
                      data.common_options.exact_match := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
-                     override_configuration ("REPO_AUTOUPDATE=false");
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
                   elsif datum = "-g" or else datum = "--glob" then
                      data.cmd_search.glob_input := True;
                   elsif datum = sws_repo or else datum = swl_repo then
