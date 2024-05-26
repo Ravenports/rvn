@@ -90,6 +90,13 @@ package Raven.Configuration is
    --  Retrieve configuration item key given enum
    function get_ci_key (ci : Configuration_Item) return String;
    
+   --  If Boolean configuration value differs from the desired value, drop the setting
+   --  and insert a new version.
+   procedure override_setting 
+     (session_configuration : in out ThickUCL.UclTree;
+      ci : Configuration_Item; 
+      new_value : Boolean);
+   
 private
    
    config_type_mismatch : exception;

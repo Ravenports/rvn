@@ -48,6 +48,9 @@ package Raven.Cmd.Unset is
    --  This indicates that the command set the exit code already
    procedure override_exit_status;
 
+   --  Rewrite boolean configuration setting
+   procedure override_setting (setting : CFG.Configuration_Item; new_value : Boolean);
+
 private
 
    program_configuration : ThickUCL.UclTree;

@@ -511,4 +511,13 @@ package body Raven.Cmd.Unset is
       sys_exit_overridden := True;
    end override_exit_status;
 
+
+   ------------------------
+   --  override_setting  --
+   ------------------------
+   procedure override_setting (setting : CFG.Configuration_Item; new_value : Boolean) is
+   begin
+      Configuration.override_setting (program_configuration, setting, new_value);
+   end override_setting;
+
 end Raven.Cmd.Unset;

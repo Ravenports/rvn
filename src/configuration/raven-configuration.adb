@@ -750,4 +750,42 @@ package body Raven.Configuration is
    end establish_configuration;
 
 
+   ------------------------
+   --  override_setting  --
+   ------------------------
+   procedure override_setting (session_configuration : in out ThickUCL.UclTree;
+                               ci : Configuration_Item; new_value : Boolean)
+   is
+      current_value : Boolean;
+   begin
+      case get_ci_type (ci) is
+         when ThickUCL.data_boolean => null;
+         when others => return;
+      end case;
+
+      declare
+         key : constant String := get_ci_key (ci);
+      begin
+         case session_configuration.get_data_type (key) is
+            when ThickUCL.data_boolean => null;
+            when others => return;
+         end case;
+
+         current_value := session_configuration.get_base_value (key);
+         if new_value = current_value then
+            Event.emit_debug (low_level, "configuration " & key & " already at desired value of " &
+                                new_value'Img & ", no change made");
+            return;
+         end if;
+
+         session_configuration.drop_base_keypair (key);
+         session_configuration.insert (key, new_value);
+
+         Event.emit_debug (low_level, "configuration " & key & " old value: " & current_value'Img);
+         current_value := session_configuration.get_base_value (key);
+         Event.emit_debug (low_level, "configuration " & key & " new value: " & current_value'Img);
+      end;
+   end override_setting;
+
+
 end Raven.Configuration;

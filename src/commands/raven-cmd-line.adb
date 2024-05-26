@@ -336,7 +336,7 @@ package body Raven.Cmd.Line is
                      data.common_options.exact_match := True;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
-                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
                   elsif datum = "-A" or else datum = "--annotations" then
                      data.cmd_info.annotations := True;
@@ -402,7 +402,7 @@ package body Raven.Cmd.Line is
                      override_configuration ("REPO_AUTOUPDATE=false");
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
-                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
@@ -480,7 +480,7 @@ package body Raven.Cmd.Line is
                      end if;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
-                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
@@ -598,7 +598,7 @@ package body Raven.Cmd.Line is
                      data.common_options.all_installed_pkgs := True;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
-                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
@@ -616,7 +616,7 @@ package body Raven.Cmd.Line is
                      data.common_options.all_installed_pkgs := True;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
-                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
@@ -650,7 +650,7 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
-                     override_configuration ("CASE_SENSITIVE_MATCH=true");
+                     Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
