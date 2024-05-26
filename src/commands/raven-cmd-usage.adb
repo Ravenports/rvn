@@ -892,6 +892,10 @@ package body Raven.Cmd.Usage is
          return False;
       end alert;
    begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+
       if comline.common_options.exact_match then
          mod_count := mod_count + 1;
       end if;

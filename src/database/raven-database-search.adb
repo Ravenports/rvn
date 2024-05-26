@@ -65,7 +65,7 @@ package body Raven.Database.Search is
 
       sql : constant String := "SELECT " & processed_search_field & ", id" &
         ", namebase, subpackage, variant, version, abi, comment, desc, maintainer, prefix" &
-        ", www, rvnsize, size FROM packages" & where_clause;
+        ", www, rvnsize, flatsize FROM packages" & where_clause;
    begin
       packages.clear;
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
