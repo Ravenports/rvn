@@ -153,7 +153,4 @@ private
    --  Send out JOIN TABLE lines of the query
    function multicolumn_join_lines (columns : Column_Selection) return String;
 
-   --  If one of the ml reverse depends columns set, use ml.nsv instead of nsv
-   function get_selection_column (columns : Column_Selection) return String;
-
 end Raven.Database.UserQuery;

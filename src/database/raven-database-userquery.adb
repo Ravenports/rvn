@@ -181,10 +181,10 @@ package body Raven.Database.UserQuery is
          when token_ml_notes_value   => return "x.annotation";
          when token_ml_opt_key       => return "ml.option_name";
          when token_ml_opt_value     => return "x.option_setting";
-         when token_ml_rdep_namebase |  --  post-process
-              token_ml_rdep_spkg     |  --  post-process
-              token_ml_rdep_variant  |  --  post-process
-              token_ml_rdep_nsv      => return "ml.nsv";
+         when token_ml_rdep_namebase => return "p.namebase";
+         when token_ml_rdep_spkg     => return "p.subpackage";
+         when token_ml_rdep_variant  => return "p.variant";
+         when token_ml_rdep_nsv      => return nsv_formula;
          when token_ml_rdep_version  => return "ml.version";
          when token_ml_shlibs_adj    => return "ml.name";
          when token_ml_shlibs_pro    => return "ml.name";
@@ -677,22 +677,6 @@ package body Raven.Database.UserQuery is
    end number_multiline_columns;
 
 
-   ----------------------------
-   --  get_selection_column  --
-   ----------------------------
-   function get_selection_column (columns : Column_Selection) return String is
-   begin
-      if columns (token_ml_rdep_namebase) or else
-        columns (token_ml_rdep_nsv) or else
-        columns (token_ml_rdep_spkg) or else
-        columns (token_ml_rdep_variant) or else
-        columns (token_ml_rdep_version)
-      then
-         return "ml.nsv";
-      end if;
-      return "nsv000";
-   end get_selection_column;
-
 
    ------------------------------
    --  multicolumn_join_lines  --
@@ -720,15 +704,16 @@ package body Raven.Database.UserQuery is
               token_ml_deps_spkg     |
               token_ml_deps_variant  |
               token_ml_deps_nsv      |
-              token_ml_deps_version  |
-              token_ml_rdep_namebase |
+              token_ml_deps_version  =>
+            return
+              " JOIN pkg_dependencies x on x.package_id = p.id" &
+              " JOIN dependencies ml on ml.dependency_id = x.dependency_id";
+         when token_ml_rdep_namebase |
               token_ml_rdep_spkg     |
               token_ml_rdep_variant  |
               token_ml_rdep_nsv      |
               token_ml_rdep_version  =>
-            return
-              " JOIN pkg_dependencies x on x.package_id = p.id" &
-              " JOIN dependencies ml on ml.dependency_id = x.dependency_id";
+            return "";  --  handled with second query
          when token_ml_directories =>
             return
               " JOIN pkg_directories x on x.package_id = p.id" &
@@ -793,10 +778,17 @@ package body Raven.Database.UserQuery is
       columns          : Column_Selection;
       num_columns      : Natural;
       error_hit        : Boolean;
+      reverse_deps     : Boolean;
       num_multi        : Natural;
       sql : Text := SUS ("select " & nsv_formula & " as nsv000");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
+      reverse_deps :=
+        columns (token_ml_rdep_namebase) or else
+        columns (token_ml_rdep_nsv) or else
+        columns (token_ml_rdep_spkg) or else
+        columns (token_ml_rdep_variant) or else
+        columns (token_ml_rdep_version);
       num_multi := number_multiline_columns (columns);
       if num_multi > 1 then
          Event.emit_error ("Limit of 1 multiline pattern exceeded");
@@ -829,29 +821,39 @@ package body Raven.Database.UserQuery is
       end if;
 
       if not all_packages then
-         declare
-            crit : constant String := get_selection_column (columns);
-         begin
-            if override_exact then
-               if RCU.config_setting (RCU.CFG.case_match) then
-                  SU.Append (sql, " AND " & crit & " = ?");
-               else
-                  SU.Append (sql, " AND " & crit & " LIKE ?");
-               end if;
+         if override_exact then
+            if RCU.config_setting (RCU.CFG.case_match) then
+               SU.Append (sql, " AND nsv000 = ?");
             else
-               --  GLOB is case-sensitive, period.  Catch clash at commandline validation
-               SU.Append (sql, " AND " & crit & " GLOB ?");
+               SU.Append (sql, " AND nsv000 LIKE ?");
             end if;
-         end;
+         else
+            --  GLOB is case-sensitive, period.  Catch clash at commandline validation
+            SU.Append (sql, " AND nsv000 GLOB ?");
+         end if;
       end if;
 
       declare
          func     : constant String := "query_package_database";
+         rev_sql  : constant String :=
+           "SELECT p.namebase, p.subpackage, p.variant, p.version, " &
+           "       p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as nsv " &
+           "FROM packages as p JOIN pkg_dependencies x on x.package_id = p.id " &
+           "WHERE x.dependency_id = (SELECT d.dependency_id FROM dependencies d WHERE nsv = ?) " &
+           "ORDER by nsv";
          new_stmt : SQLite.thick_stmt;
+         rev_stmt : SQLite.thick_stmt;
       begin
          if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
             Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
             return False;
+         end if;
+         if reverse_deps then
+            if not SQLite.prepare_sql (db.handle, rev_sql, rev_stmt) then
+               Database.CommonSQL.ERROR_STMT_SQLITE
+                 (db.handle, internal_srcfile, func, rev_sql);
+               return False;
+            end if;
          end if;
          if not all_packages then
             SQLite.bind_string (new_stmt, 1, pattern);
@@ -875,14 +877,11 @@ package body Raven.Database.UserQuery is
                         case token is
                            when token_unrecognized =>
                               SU.Append (outline, component);
-                           when token_ml_deps_namebase |
-                                token_ml_rdep_namebase =>
+                           when token_ml_deps_namebase =>
                               SU.Append (outline, specific_field (USS (result (token)), 1, "-"));
-                           when token_ml_deps_spkg |
-                                token_ml_rdep_spkg =>
+                           when token_ml_deps_spkg =>
                               SU.Append (outline, specific_field (USS (result (token)), 2, "-"));
-                           when token_ml_deps_variant |
-                                token_ml_rdep_variant =>
+                           when token_ml_deps_variant =>
                               SU.Append (outline, specific_field (USS (result (token)), 3, "-"));
                            when token_size_iec_units =>
                               SU.Append (outline, Metadata.human_readable_size
@@ -905,16 +904,54 @@ package body Raven.Database.UserQuery is
                         if columns (x) then
                            col_index := col_index + 1;
                            result (x) := SUS (SQLite.retrieve_string (new_stmt, col_index));
-                     end if;
+                        end if;
                      end loop;
-                     selection_tokens.Iterate (assemble'Access);
-                     Event.emit_message (USS (outline));
+                     if reverse_deps then
+                        --  Run inner query with indefinite result set obtain the reverse
+                        --  dependency information.
+                        if not SQLite.reset_statement (rev_stmt) then
+                           Event.emit_error ("Failed to reset reverse deps prepared stmt");
+                           exit;
+                        end if;
+                        SQLite.bind_string (rev_stmt, 1, SQLite.retrieve_string (new_stmt, 0));
+                        debug_running_stmt (rev_stmt);
+                        loop
+                           case SQLite.step (rev_stmt) is
+                              when SQLite.row_present =>
+                                 result (token_ml_rdep_namebase) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 0));
+                                 result (token_ml_rdep_spkg) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 1));
+                                 result (token_ml_rdep_variant) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 2));
+                                 result (token_ml_rdep_version) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 3));
+                                 result (token_ml_rdep_nsv) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 4));
+                                 selection_tokens.Iterate (assemble'Access);
+                                 Event.emit_message (USS (outline));
+                                 outline := blank;
+
+                              when SQLite.something_else =>
+                                 CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                                              SQLite.get_expanded_sql (rev_stmt));
+                              when SQLite.no_more_data =>
+                                 exit;
+                           end case;
+                        end loop;
+                     else
+                        selection_tokens.Iterate (assemble'Access);
+                        Event.emit_message (USS (outline));
+                     end if;
                   end;
                when SQLite.something_else =>
                   CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
                                                SQLite.get_expanded_sql (new_stmt));
             end case;
          end loop;
+         if reverse_deps then
+            SQLite.finalize_statement (rev_stmt);
+         end if;
          SQLite.finalize_statement (new_stmt);
          return True;
       end;
