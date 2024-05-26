@@ -245,12 +245,17 @@ package body Raven.Database.Search is
       prefix : String;
       sql    : String)
    is
-      function make_blank_prefix return String
-      is
-         canvas : String (1 .. prefix'Length) := (others => ' ');
+      function make_blank_prefix return String is
       begin
-         canvas (canvas'Last - 1) := ':';
-         return canvas;
+         if prefix'length = 0 then
+            return "";
+         end if;
+         declare
+            canvas : String (1 .. prefix'Length) := (others => ' ');
+         begin
+            canvas (canvas'Last - 1) := ':';
+            return canvas;
+         end;
       end make_blank_prefix;
 
       blank_prefix : constant String := make_blank_prefix;
@@ -293,12 +298,17 @@ package body Raven.Database.Search is
       prefix : String;
       sql    : String)
    is
-      function make_blank_prefix return String
-      is
-         canvas : String (1 .. prefix'Length) := (others => ' ');
+      function make_blank_prefix return String is
       begin
-         canvas (canvas'Last - 1) := ':';
-         return canvas;
+         if prefix'length = 0 then
+            return "";
+         end if;
+         declare
+            canvas : String (1 .. prefix'Length) := (others => ' ');
+         begin
+            canvas (canvas'Last - 1) := ':';
+            return canvas;
+         end;
       end make_blank_prefix;
 
       blank_prefix : constant String := make_blank_prefix;
