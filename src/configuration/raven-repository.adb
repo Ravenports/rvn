@@ -621,12 +621,14 @@ package body Raven.Repository is
    --------------------------------
    function obtain_reference_catalog (mirrors : A_Repo_Config_Set;
                                       forced  : Boolean;
-                                      quiet   : Boolean) return Boolean
+                                      quiet   : Boolean;
+                                      cached  : out Boolean) return Boolean
    is
       catalog_digest : Blake_3.blake3_hash_hex;
-      cached_copy    : String := downloaded_file_path (catalog_archive);
+      cached_copy    : constant String := downloaded_file_path (catalog_archive);
       site_index     : Natural;
    begin
+      cached := False;
       if not fetch_master_checksum (mirrors, forced, quiet) then
          return False;
       end if;
@@ -645,6 +647,7 @@ package body Raven.Repository is
             if not quiet then
                Event.emit_message ("Cached catalog is still valid.");
             end if;
+            cached := True;
             return True;
          end if;
       end if;
@@ -762,6 +765,7 @@ package body Raven.Repository is
    is
       num_records : Natural;
       success     : Boolean;
+      up_to_date  : Boolean;
    begin
       if not from_catalog_command then
          if not RCU.config_setting (RCU.CFG.autoupdate) then
@@ -769,7 +773,12 @@ package body Raven.Repository is
          end if;
       end if;
 
-      if obtain_reference_catalog (remote_repositories, forced, quiet) then
+      if obtain_reference_catalog (remote_repositories, forced, quiet, up_to_date) then
+         if up_to_date then
+            Event.emit_debug (high_level, "Valid catalog cached, database assumed to current");
+            return True;
+         end if;
+
          success := Catalog.generate_database (num_records);
          if success then
             if not quiet then
@@ -777,6 +786,15 @@ package body Raven.Repository is
                                      Strings.int2str (num_records) & " packages processed.");
             end if;
             return True;
+         else
+            --  Delete the cached version to force a download
+            declare
+               cached_copy : constant String := downloaded_file_path (catalog_archive);
+            begin
+               if not Archive.Unix.unlink_file (cached_copy) then
+                  Event.emit_debug (high_level, "Post cat gen: failed to delete " & cached_copy);
+               end if;
+            end;
          end if;
       end if;
       return False;

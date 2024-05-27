@@ -124,7 +124,8 @@ private
    function obtain_reference_catalog
      (mirrors : A_Repo_Config_Set;
       forced  : Boolean;
-      quiet   : Boolean) return Boolean;
+      quiet   : Boolean;
+      cached  : out Boolean) return Boolean;
 
    --  Returns true if file with the path relative to the mirror's URL was successfully
    --  fetched.  Etags are not used.  If there are multiple sites, all of them are
