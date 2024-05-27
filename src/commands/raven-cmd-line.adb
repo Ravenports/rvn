@@ -489,8 +489,6 @@ package body Raven.Cmd.Line is
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
-                  elsif datum = "-e" or else datum = "--exact" then
-                     data.cmd_version.exact_match := True;
                   elsif datum = "-l" or else datum = "--like" then
                      if data.cmd_version.not_char /= Character'First then
                         set_error (data, error_like);

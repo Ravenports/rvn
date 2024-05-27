@@ -173,7 +173,6 @@ private
    type switches_version_cmd is
       record
          behavior     : Versioning_Behavior := no_defined_behavior;
-         exact_match  : Boolean := False;
          match_char   : Character := Character'First;
          not_char     : Character := Character'First;
          test1        : Text;

@@ -9,7 +9,7 @@
 .Op Fl SIR
 .Op Fl hqvU
 .Op Fl l Ar limchar | Fl L Ar limchar
-.Op Fl CE Ar pattern
+.Op Fl CE
 .Op Fl r Ar reponame
 .Op Fl n Ar pkgname
 .Nm
@@ -21,7 +21,7 @@
 .Op Fl -{snapshot,index,remote}
 .Op Fl -{quiet,verbose,no-repo-update}
 .Op Fl -like Ar limchar | -not-like Ar limchar
-.Op Fl -{case-sensitive,exact-match} Ar pattern
+.Op Fl -{case-sensitive,exact-match}
 .Op Fl -repository Ar reponame
 .Op Fl -match-name Ar pkgname
 .Nm
@@ -67,6 +67,11 @@ to
 .Sy NO
 in
 .Xr rvn.conf 5 .
+.Pp
+By default, a case-insensitive match against the leading side
+of the namebase-subpackage-variant triplet name is performed for the
+.F1 n
+option.
 .Pp
 When comparing package versions the package name and a comparison character
 are printed:
