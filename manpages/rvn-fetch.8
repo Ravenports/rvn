@@ -1,0 +1,135 @@
+.Dd May 27, 2024
+.Dt RVN-FETCH 8
+.Os
+.Sh NAME
+.Nm "rvn fetch"
+.Nd fetch remote packages
+.Sh SYNOPSIS
+.Nm
+.Op Fl r Ar reponame
+.Op Fl qUy
+.Op Fl o Ar destdir
+.Fl a
+.Nm
+.Op Fl r Ar reponame
+.Op Fl qUy
+.Op Fl o Ar destdir
+.Fl u
+.Nm
+.Op Fl r Ar reponame
+.Op Fl qUy
+.Op Fl o Ar destdir
+.Op Fl d
+.Op Fl CE
+.Ar pattern
+.Op ...
+.Pp
+.Nm
+.Op Cm --repository Ar reponame
+.Op Cm --{quiet,no-repo-update,yes}
+.Op Cm --output Ar destdir
+.Cm --all
+.Nm
+.Op Cm --repository Ar reponame
+.Op Cm --{quiet,no-repo-update,yes}
+.Op Cm --output Ar destdir
+.Cm --available-updates
+.Nm
+.Op Cm --repository Ar reponame
+.Op Cm --{quiet,no-repo-update,yes}
+.Op Cm --output Ar destdir
+.Op Cm --dependencies
+.Op Cm --{case-sensitive,exact-match}
+.Ar pattern
+.Op ...
+.Sh DESCRIPTION
+.Nm
+is used to download binary packages from a remote repository.
+.Pp
+Any number of package names and patterns can be specified within
+a batch.
+.Pp
+The package repository catalog will be automatically updated whenever
+.Nm
+is run by the effective superuser unless disabled by the
+.Fl U
+flag or setting
+.Va REPO_AUTOUPDATE
+to
+.Dq Li NO
+in
+.Xr rvn.conf 5 .
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width xxxx
+.It Fl a , Cm --all
+Fetch all new packages in the remote repository.
+.It Fl C , Cm --case-sensitive
+Switch to glob matching of the
+.Ar pattern .
+which is inherently case-sensitive .
+.It Fl E , Cm --exact-match
+Disables explicit and implied wildcards so when the
+.Ar pattern .
+exactly matches the namebase-subpackage-variant
+package name is successful.
+.It Fl d , Cm --dependencies
+Fetch all dependencies of every matched package.
+Imcompatible with
+.Cm --all
+and
+.Cm --available-updates
+switches.
+.It Fl q , Cm --quiet
+Performs the fetch operation silently.
+This option behaves as if
+.Cm --yes
+was set, so there is no user interaction.
+.It Fl o Ar destdir , Cm --output Ar destdir
+Place downloaded archives in a subdirectory of
+.Ar destdir
+named
+.Dq files .
+In this mode, packages are fetched for distribution instead of
+placing them into the internal cache.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
+.It Fl U , Fl -no-repo-update
+Suppress the automatic update of the local copy of the repository catalog
+from remote.
+.It Fl u , Cm --available-updates
+Fetch all available updates for the currently installed packages.
+.It Fl y , Cm --yes
+Assume yes when asked for confirmation before fetching packages.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev CASE_SENSITIVE_MATCH
+.El
+.Sh SEE ALSO
+.Xr rvn-keywords 5 ,
+.Xr rvn-lua-scripts 5 ,
+.Xr rvn-scripts 5 ,
+.Xr rvn.conf 5 ,
+.Xr rvn 8 ,
+.Xr rvn-alias 8 ,
+.Xr rvn-catalog 8 ,
+.Xr rvn-config 8 ,
+.Xr rvn-create 8 ,
+.Xr rvn-genrepo 8 ,
+.Xr rvn-info 8 ,
+.Xr rvn-shell 8 ,
+.Xr rvn-shlib 8 ,
+.Xr rvn-version 8 ,
+.Xr rvn-which 8
