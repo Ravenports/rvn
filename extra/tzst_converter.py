@@ -141,7 +141,7 @@ def write_dependencies(handle, json_object):
         dep_nsv = json_object[key].keys()
         handle.write(key + ": ")
         for nsv in dep_nsv:
-            lines.append(nsv + ":'" + json_object[key][nsv]["version"] + "'")
+            lines.append('"' + nsv + '":"' + json_object[key][nsv]["version"] + '"')
             valuelist = "{" + ",".join(lines) + "}\n";
         handle.write(valuelist);
 
@@ -156,10 +156,13 @@ def metadata_converter(dir_path):
         data = json.load(fin)
 
     nsv = data["name"].split("-")
+    variant = nsv.pop()
+    subpackage = nsv.pop()
+    namebase = "-".join(nsv)
     with open(dir_path + "/metafile", "w") as fout:
-        write_string(fout, "namebase", nsv[0])
-        write_string(fout, "subpackage", nsv[1])
-        write_string(fout, "variant", nsv[2])
+        write_string(fout, "namebase", namebase)
+        write_string(fout, "subpackage", subpackage)
+        write_string(fout, "variant", variant)
         write_string(fout, "version", data["version"])
         write_string(fout, "comment", data["comment"])
         write_multiline(fout, "desc", data["desc"])
@@ -205,7 +208,7 @@ def extract_zstd_package(work_dir, tzst_archive):
     os.remove(stagedir + "/+COMPACT_MANIFEST")
 
 
-def repackage(work_dir, output_dir):
+def repackage(work_dir, output_dir, old_archive):
     """
     Run rvn-create to repackage this
     """
@@ -218,7 +221,7 @@ def repackage(work_dir, output_dir):
         "-r", stagedir
     ]
     subprocess.run(cmd)
-    print("done")
+    print("done with " + old_archive)
 
 
 def main():
@@ -248,7 +251,7 @@ def main():
 
     extract_zstd_package(work_dir, tzst_archive)
     metadata_converter(work_dir)
-    repackage(work_dir, output_dir)
+    repackage(work_dir, output_dir, tzst_archive)
     if output_dir != work_dir:
         shutil.rmtree(work_dir)
 
