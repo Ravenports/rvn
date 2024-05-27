@@ -964,10 +964,20 @@ package body Raven.Cmd.Usage is
 
       if comline.common_options.all_installed_pkgs then
          dua_count := dua_count + 1;
+         if comline.common_options.exact_match or else
+           comline.common_options.case_sensitive
+         then
+            return alert ("--all not compatible with -C or -E switches");
+         end if;
       end if;
 
       if comline.cmd_fetch.avail_updates then
          dua_count := dua_count + 1;
+         if comline.common_options.exact_match or else
+           comline.common_options.case_sensitive
+         then
+            return alert ("--available-updates not compatible with -C or -E switches");
+         end if;
       end if;
 
       if comline.cmd_fetch.depends_also then
@@ -991,6 +1001,14 @@ package body Raven.Cmd.Usage is
                   return alert ("--output target exists, but is not a directory.");
             end case;
          end;
+      end if;
+
+      if comline.cmd_fetch.name_patterns.Is_Empty then
+         if not comline.common_options.all_installed_pkgs and
+           not comline.cmd_fetch.avail_updates
+         then
+            return alert ("One or more file name patterns is required with these switches.");
+         end if;
       end if;
 
       return True;

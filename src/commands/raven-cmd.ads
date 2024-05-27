@@ -3,6 +3,7 @@
 
 with Ada.Text_IO;
 with Ada.Containers.Vectors;
+with Raven.Pkgtypes;
 
 package Raven.Cmd is
 
@@ -233,7 +234,7 @@ private
          depends_also  : Boolean := False;
          avail_updates : Boolean := False;
          destination   : Text;
-         name_patterns : string_crate.Vector;
+         name_patterns : Pkgtypes.Text_List.Vector;
       end record;
 
    type pre_command_switches is
