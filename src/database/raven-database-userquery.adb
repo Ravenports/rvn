@@ -4,6 +4,7 @@
 with Ada.Characters.Latin_1;
 with SQLite;
 with Raven.Event;
+with Raven.Context;
 with Raven.Pkgtypes;
 with Raven.Metadata;
 with Raven.Cmd.Unset;
@@ -822,14 +823,11 @@ package body Raven.Database.UserQuery is
 
       if not all_packages then
          if override_exact then
-            if RCU.config_setting (RCU.CFG.case_match) then
-               SU.Append (sql, " AND nsv000 = ?");
-            else
-               SU.Append (sql, " AND nsv000 LIKE ?");
-            end if;
-         else
-            --  GLOB is case-sensitive, period.  Catch clash at commandline validation
+            SU.Append (sql, " AND nsv000 = ?");
+         elsif Context.reveal_case_sensitive then
             SU.Append (sql, " AND nsv000 GLOB ?");
+         else
+            SU.Append (sql, " AND nsv000 LIKE% ?");
          end if;
       end if;
 
