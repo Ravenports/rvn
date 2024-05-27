@@ -14,6 +14,7 @@ package Raven.Miscellaneous is
 
    --  Used for mapped containers
    function map_hash (key : Text) return Ada.Containers.Hash_Type;
+   function map_hash (key : String) return Ada.Containers.Hash_Type;
 
 private
 

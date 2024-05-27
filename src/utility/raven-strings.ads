@@ -74,6 +74,7 @@ package Raven.Strings is
       --  True if strings are identical
    function equivalent (A, B : Text) return Boolean;
    function equivalent (A : Text; B : String) return Boolean;
+   function equivalent (A, B : String) return Boolean;
 
    --  Create a string with {places} length and put S at the first index.
    --  Truncate from back if S is longer than places.

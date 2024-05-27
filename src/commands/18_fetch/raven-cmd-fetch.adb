@@ -43,17 +43,20 @@ package body Raven.Cmd.Fetch is
          behave_yes := True;
       end if;
 
-      success := FET.rvn_core_retrieval
-        (db           => rdb,
-         patterns     => comline.cmd_fetch.name_patterns,
-         behave_exact => comline.common_options.exact_match,
-         behave_cs    => behave_cs,
-         behave_quiet => comline.common_options.quiet,
-         behave_yes   => behave_yes,
-         select_all   => comline.common_options.all_installed_pkgs,
-         select_deps  => comline.cmd_fetch.depends_also,
-         select_renew => comline.cmd_fetch.avail_updates,
-         destination  => USS (comline.cmd_fetch.destination));
+      if comline.cmd_fetch.avail_updates then
+         success := False;
+      else
+         success := FET.rvn_core_retrieval
+           (db           => rdb,
+            patterns     => comline.cmd_fetch.name_patterns,
+            behave_exact => comline.common_options.exact_match,
+            behave_cs    => behave_cs,
+            behave_quiet => comline.common_options.quiet,
+            behave_yes   => behave_yes,
+            select_all   => comline.common_options.all_installed_pkgs,
+            select_deps  => comline.cmd_fetch.depends_also,
+            destination  => USS (comline.cmd_fetch.destination));
+      end if;
 
       OPS.rdb_close (rdb);
       return (success);

@@ -413,6 +413,15 @@ package body Raven.Strings is
    end equivalent;
 
 
+   ---------------------
+   --  equivalent #3  --
+   ---------------------
+   function equivalent (A, B : String) return Boolean is
+   begin
+      return A = B;
+   end equivalent;
+
+
    -----------------
    --  pad_right  --
    -----------------

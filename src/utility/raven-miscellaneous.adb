@@ -80,13 +80,21 @@ package body Raven.Miscellaneous is
    end tmp;
 
 
-   ----------------
-   --  map_hash  --
-   ----------------
+   -------------------
+   --  map_hash #1  --
+   -------------------
    function map_hash (key : Text) return Ada.Containers.Hash_Type is
    begin
       return Ada.Strings.Hash (USS (key));
    end map_hash;
 
+
+   -------------------
+   --  map_hash #2  --
+   -------------------
+   function map_hash (key : String) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Strings.Hash (key);
+   end map_hash;
 
 end Raven.Miscellaneous;
