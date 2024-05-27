@@ -781,6 +781,7 @@ package body Raven.Database.UserQuery is
       error_hit        : Boolean;
       reverse_deps     : Boolean;
       num_multi        : Natural;
+      leading_match    : Boolean := False;
       sql : Text := SUS ("select " & nsv_formula & " as nsv000");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
@@ -827,7 +828,8 @@ package body Raven.Database.UserQuery is
          elsif Context.reveal_case_sensitive then
             SU.Append (sql, " AND nsv000 GLOB ?");
          else
-            SU.Append (sql, " AND nsv000 LIKE% ?");
+            SU.Append (sql, " AND nsv000 LIKE ?");
+            leading_match := True;
          end if;
       end if;
 
@@ -854,7 +856,11 @@ package body Raven.Database.UserQuery is
             end if;
          end if;
          if not all_packages then
-            SQLite.bind_string (new_stmt, 1, pattern);
+            if leading_match then
+               SQLite.bind_string (new_stmt, 1, pattern & '%');
+            else
+               SQLite.bind_string (new_stmt, 1, pattern);
+            end if;
          end if;
          debug_running_stmt (new_stmt);
 
