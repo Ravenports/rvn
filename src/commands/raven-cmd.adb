@@ -18,6 +18,7 @@ package body Raven.Cmd is
          when cv_clean      => return "clean";
          when cv_config     => return "config";
          when cv_create     => return "create";
+         when cv_fetch      => return "fetch";
          when cv_info       => return "info";
          when cv_genrepo    => return "genrepo";
          when cv_help       => return "help";

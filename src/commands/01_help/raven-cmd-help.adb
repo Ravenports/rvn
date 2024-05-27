@@ -101,6 +101,7 @@ package body Raven.Cmd.Help is
                when cv_clean   => PL (C, "clean the local cache of downloaded packages");
                when cv_config  => PL (C, "Display the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
+               when cv_fetch   => PL (C, "Fetches packages from a remote repository");
                when cv_genrepo => PL (C, "Creates a package repository catalog");
                when cv_help    => PL (C, "Displays help information");
                when cv_info    => PL (C, "Displays information about installed packages");
@@ -114,7 +115,6 @@ package body Raven.Cmd.Help is
                when cv_version => PL (C, "Displays the currency of installed packages");
                when cv_which   => PL (C, "Displays which package installed a specific file");
                --  when cv_remove  => PL (C, "Deletes packages from the database and the system");
-               --  when cv_fetch   => PL (C, "Fetches packages from a remote repository");
                --  when cv_upgrade => PL (C, "Performs upgrades of packaged software distributions");
                --  when cv_autoremove => PL (C, "Removes orphan packages");
                --  when cv_check =>

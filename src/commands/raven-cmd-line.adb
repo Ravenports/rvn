@@ -684,6 +684,36 @@ package body Raven.Cmd.Line is
                                    & SQ (USS (data.cmd_search.spattern)) & " to " & DQ (datum));
                      end if;
                   end if;
+               when cv_fetch =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                  elsif datum = sws_all or else datum = swl_all then
+                     data.common_options.all_installed_pkgs := True;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     Unset.override_setting (Unset.CFG.case_match, True);
+                     context.register_case_sensitivity (True);
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
+                  elsif datum = "-d" or else datum = "--dependencies" then
+                     data.cmd_fetch.depends_also := True;
+                  elsif datum = "-u" or else datum = "--available-updates" then
+                     data.cmd_fetch.avail_updates := True;
+                  elsif datum = "-o" or else datum = "--output" then
+                     last_cmd := fetch_destdir;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     data.cmd_fetch.name_patterns.append (datumtxt);
+                  end if;
+
             end case;
          else
             --  insert second part of last seen command
@@ -706,6 +736,7 @@ package body Raven.Cmd.Line is
                when genrepo_finger     => data.cmd_genrepo.fprint_file    := datumtxt;
                when query_evaluate     => data.cmd_query.evaluate         := datumtxt;
                when rquery_evaluate    => data.cmd_rquery.evaluate        := datumtxt;
+               when fetch_destdir      => data.cmd_fetch.destination      := datumtxt;
                when search_modifier    => set_query_modifier (data, datum);
                when help =>
                   data.help_command := get_command (datum);
@@ -831,6 +862,7 @@ package body Raven.Cmd.Line is
          ("clean     ", cv_clean),
          ("config    ", cv_config),
          ("create    ", cv_create),
+         ("fetch     ", cv_fetch),
          ("genrepo   ", cv_genrepo),
          ("help      ", cv_help),
          ("info      ", cv_info),
@@ -847,7 +879,6 @@ package body Raven.Cmd.Line is
          --  ("annotate  ", cv_annotate),
          --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
-         --  ("fetch     ", cv_fetch),
          --  ("remove    ", cv_remove),
          --  ("upgrade   ", cv_upgrade),
         );

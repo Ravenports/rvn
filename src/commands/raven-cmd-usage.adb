@@ -106,6 +106,7 @@ package body Raven.Cmd.Usage is
          when cv_clean   => return verb_clean (comline);
          when cv_config  => return verb_config (comline);
          when cv_create  => return verb_create (comline);
+         when cv_fetch   => return verb_fetch (comline);
          when cv_genrepo => return verb_genrepo (comline);
          when cv_help    => return verb_help (comline);
          when cv_info    => return verb_info (comline);
@@ -932,5 +933,68 @@ package body Raven.Cmd.Usage is
       return True;
 
    end verb_search;
+
+
+   ------------------
+   --  verb_fetch  --
+   ------------------
+   function verb_fetch (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "fetch [-r reponame] [-qUy] [-o destdir] -a";
+         msg2 : constant String := "fetch [-r reponame] [-qUy] [-o destdir] -u";
+         msg3 : constant String := "fetch [-r reponame] [-qUy] [-o destdir] [-d] [-CE] " &
+                                   "pattern [...]";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_help_suggestion (cv_fetch);
+         return False;
+      end alert;
+
+      dua_count : Natural := 0;
+   begin
+      if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
+      if comline.common_options.all_installed_pkgs then
+         dua_count := dua_count + 1;
+      end if;
+
+      if comline.cmd_fetch.avail_updates then
+         dua_count := dua_count + 1;
+      end if;
+
+      if comline.cmd_fetch.depends_also then
+         dua_count := dua_count + 1;
+      end if;
+
+      if dua_count > 1 then
+         return alert ("Select only one of --all, --dependencies, and --available-updates");
+      end if;
+
+      if not IsBlank (comline.cmd_fetch.destination) then
+         declare
+            features : Archive.Unix.File_Characteristics;
+         begin
+            features := Archive.Unix.get_charactistics (USS (comline.cmd_fetch.destination));
+            case features.ftype is
+               when Archive.directory => null;
+               when Archive.unsupported =>
+                  return alert ("--output target does not exist (directory expected)");
+               when others =>
+                  return alert ("--output target exists, but is not a directory.");
+            end case;
+         end;
+      end if;
+
+      return True;
+
+   end verb_fetch;
 
 end Raven.Cmd.Usage;

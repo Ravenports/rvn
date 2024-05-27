@@ -51,7 +51,8 @@ private
    function verb_shell   (comline : Cldata) return Boolean;
    function verb_query   (comline : Cldata) return Boolean;
    function verb_rquery  (comline : Cldata) return Boolean;
-   function verb_stats   (comline : CLdata) return Boolean;
-   function verb_search  (comline : CLdata) return Boolean;
+   function verb_stats   (comline : Cldata) return Boolean;
+   function verb_search  (comline : Cldata) return Boolean;
+   function verb_fetch   (comline : Cldata) return Boolean;
 
 end Raven.Cmd.Usage;

@@ -26,6 +26,7 @@ private
       cv_clean,
       cv_config,
       cv_create,
+      cv_fetch,
       cv_genrepo,
       cv_help,
       cv_info,
@@ -42,7 +43,6 @@ private
 
      --   cv_annotate,
      --   cv_autoremove,
-     --   cv_fetch,
      --   cv_remove,
      --   cv_upgrade,
 
@@ -228,6 +228,14 @@ private
          spattern      : Text;
       end record;
 
+   type switches_fetch_cmd is
+      record
+         depends_also  : Boolean := False;
+         avail_updates : Boolean := False;
+         destination   : Text;
+         name_patterns : string_crate.Vector;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -261,6 +269,7 @@ private
          cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
          cmd_genrepo            : switches_genrepo_cmd;
+         cmd_fetch              : switches_fetch_cmd;
          cmd_info               : switches_info_cmd;
          cmd_install            : switches_install_cmd;
          cmd_query              : switches_query_cmd;

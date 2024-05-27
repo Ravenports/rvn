@@ -63,9 +63,8 @@ private
          genrepo_finger,
          query_evaluate,
          rquery_evaluate,
-         search_modifier
-
-         --  fetch_destdir,
+         search_modifier,
+         fetch_destdir
         );
 
 end Raven.Cmd.Line;
