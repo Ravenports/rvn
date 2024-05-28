@@ -198,9 +198,9 @@ package body Raven.Cmd.Version is
                      when 'I' => reference := release_index;
                      when 'R' => reference := repo_catalog;
                      when others =>
-                        Event.emit_notice
+                        Event.emit_message
                           ("Invalid VERSION_SOURCE in configuration: " & versionsrc);
-                        Event.emit_notice ("Using latest release index as the reference.");
+                        Event.emit_message ("Using latest release index as the reference.");
                   end case;
                end if;
                if reference = unset then

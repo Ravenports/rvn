@@ -21,7 +21,8 @@ package Raven.Database.Fetch is
       behave_yes   : Boolean;
       select_all   : Boolean;
       select_deps  : Boolean;
-      destination  : String) return Boolean;
+      destination  : String;
+      single_repo  : String) return Boolean;
 
    --  TODO: separate function for "available-updates" goes here
 
@@ -80,10 +81,28 @@ private
    --  always 5 characters long
    function format_download_order (counter : Natural) return String;
 
-
    --  Returns true if allowed to proceed with download.
    --  quiet mode implictly grants permission
    function granted_permission_to_proceed (quiet : Boolean) return Boolean;
+
+   --  Returns true if all files are successfully downloaded
+   function download_packages
+     (remote_files   : Remote_Files_Set.Map;
+      download_order : Pkgtypes.Text_List.Vector;
+      behave_quiet   : Boolean;
+      destination    : String;
+      single_repo    : String) return Boolean;
+
+   --  Individual package download
+   function download_package
+     (remote_url     : Text;
+      remote_proto   : IP_support;
+      remote_file    : A_Remote_File;
+      digest10       : short_digest;
+      destination    : String;
+      behave_quiet   : Boolean;
+      file_counter   : Natural;
+      total_files    : Natural) return Boolean;
 
 
 end Raven.Database.Fetch;

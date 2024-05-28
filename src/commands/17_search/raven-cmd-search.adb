@@ -39,7 +39,7 @@ package body Raven.Cmd.Search is
                SU.Append (nextline, format_extra (thismod));
             end if;
             SU.Append (nextline, attribute);
-            Event.emit_notice (USS (nextline));
+            Event.emit_message (USS (nextline));
          end if;
       end main_attribute;
 
@@ -53,7 +53,7 @@ package body Raven.Cmd.Search is
          if quiet or else
            comline.cmd_search.num_modifiers > 0
          then
-            Event.emit_notice (ident);
+            Event.emit_message (ident);
          else
             if ident'Length >= magic_col then
                SU.append (topline, ident);
@@ -67,7 +67,7 @@ package body Raven.Cmd.Search is
                when description => SU.Append (topline, pkg.desc);
                when triplet     => SU.Append (topline, head (ident, "-"));
             end case;
-            Event.emit_notice (USS (topline));
+            Event.emit_message (USS (topline));
          end if;
          if comline.cmd_search.num_modifiers = 0 then
             return;

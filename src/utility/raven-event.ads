@@ -6,6 +6,7 @@ package Raven.Event is
    procedure emit_error          (message : String);
    procedure emit_notice         (message : String);
    procedure emit_message        (message : String);
+   procedure emit_premessage     (message : String);
    procedure emit_no_local_db;
 
    procedure emit_debug
@@ -17,16 +18,18 @@ package Raven.Event is
       err_argument : String;
       err_number   : Integer);
 
-   procedure emit_install_begin (namebase   : String;
-                                 subpackage : String;
-                                 variant    : String;
-                                 version    : String);
+   procedure emit_install_begin
+     (namebase   : String;
+      subpackage : String;
+      variant    : String;
+      version    : String);
 
-   procedure emit_install_end (namebase   : String;
-                               subpackage : String;
-                               variant    : String;
-                               version    : String;
-                               message    : String);
+   procedure emit_install_end
+     (namebase   : String;
+      subpackage : String;
+      variant    : String;
+      version    : String;
+      message    : String);
 
 private
 

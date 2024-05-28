@@ -84,6 +84,16 @@ package body Raven.Event is
    end emit_message;
 
 
+   -----------------------
+   --  emit_premessage  --
+   -----------------------
+   procedure emit_premessage (message : String)
+   is
+   begin
+      TIO.Put (message);
+   end emit_premessage;
+
+
    ------------------
    --  emit_debug  --
    ------------------

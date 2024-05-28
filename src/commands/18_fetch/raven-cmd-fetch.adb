@@ -25,8 +25,9 @@ package body Raven.Cmd.Fetch is
       behave_cs  : Boolean := comline.common_options.case_sensitive;
       behave_yes : Boolean := comline.common_options.assume_yes;
       success    : Boolean;
+      repo_solo  : constant String := USS (comline.common_options.repo_name);
    begin
-      if not refresh_catalog (USS (comline.common_options.repo_name)) then
+      if not refresh_catalog (repo_solo) then
          return False;
       end if;
 
@@ -55,7 +56,8 @@ package body Raven.Cmd.Fetch is
             behave_yes   => behave_yes,
             select_all   => comline.common_options.all_installed_pkgs,
             select_deps  => comline.cmd_fetch.depends_also,
-            destination  => USS (comline.cmd_fetch.destination));
+            destination  => USS (comline.cmd_fetch.destination),
+            single_repo  => repo_solo);
       end if;
 
       OPS.rdb_close (rdb);

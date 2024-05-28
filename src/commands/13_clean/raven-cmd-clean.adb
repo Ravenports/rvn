@@ -59,9 +59,9 @@ package body Raven.Cmd.Clean is
             bytes_to_purge := bytes_to_purge + fileattr2.size;
             if not comline.common_options.quiet then
                if comline.common_options.dry_run then
-                  Event.emit_notice ("dry-run: delete " & filename);
+                  Event.emit_message ("dry-run: delete " & filename);
                else
-                  Event.emit_notice ("delete " & filename);
+                  Event.emit_message ("delete " & filename);
                end if;
             end if;
             return;
@@ -83,9 +83,9 @@ package body Raven.Cmd.Clean is
                      bytes_to_purge := bytes_to_purge + fileattr2.size;
                      if not comline.common_options.quiet then
                         if comline.common_options.dry_run then
-                           Event.emit_notice ("dry-run, obsolete: " & filename);
+                           Event.emit_message ("dry-run, obsolete: " & filename);
                         else
-                           Event.emit_notice ("obsolete: " & filename);
+                           Event.emit_message ("obsolete: " & filename);
                         end if;
                      end if;
                   end if;

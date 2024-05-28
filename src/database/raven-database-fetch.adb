@@ -3,8 +3,10 @@
 
 with Ada.Text_IO;
 with Raven.Event;
-with Raven.Cmd.Unset;
+with Raven.Fetch;
 with Raven.Metadata;
+with Raven.Cmd.Unset;
+with Raven.Repository;
 with Raven.Database.CommonSQL;
 with Raven.Strings;  use Raven.Strings;
 with Raven.Pkgtypes; use Raven.Pkgtypes;
@@ -13,6 +15,8 @@ with Archive.Unix;
 package body Raven.Database.Fetch is
 
    package RCU renames Raven.Cmd.Unset;
+   package DLF renames Raven.Fetch;
+
 
    -------------------------------------
    --  retrieve_remote_file_metadata  --
@@ -80,7 +84,8 @@ package body Raven.Database.Fetch is
       behave_yes   : Boolean;
       select_all   : Boolean;
       select_deps  : Boolean;
-      destination  : String) return Boolean
+      destination  : String;
+      single_repo  : String) return Boolean
    is
       basesql : constant String :=
         "SELECT namebase ||'-'|| subpackage ||'-'|| variant ||'-'|| version as nsvv, " &
@@ -143,7 +148,9 @@ package body Raven.Database.Fetch is
          return True;
       end if;
 
-      return False;
+      return download_packages
+        (download_list, download_order, behave_quiet, destination, single_repo);
+
    end rvn_core_retrieval;
 
 
@@ -284,11 +291,11 @@ package body Raven.Database.Fetch is
       end if;
       remote_files.Iterate (combine_sizes'Access);
 
-      Event.emit_notice ("The following packages will be downloaded:" & LF);
+      Event.emit_message ("The following packages will be downloaded:" & LF);
       download_order.Iterate (display_line'Access);
-      Event.emit_notice (LF & "Total data to download: " &
+      Event.emit_message (LF & "Total data to download: " &
                            Metadata.human_readable_size (int64 (total_rvn_size)));
-      Event.emit_notice ("Disk space required to install these packages: " &
+      Event.emit_message ("Disk space required to install these packages: " &
                            Metadata.human_readable_size (int64 (total_flatsize)));
 
    end show_proposed_queue;
@@ -342,12 +349,167 @@ package body Raven.Database.Fetch is
          return True;
       end if;
 
-      Event.emit_notice (LF & "Proceed with fetching packages? [y/n]: ");
+      Event.emit_message (LF & "Proceed with fetching packages? [y/n]: ");
       Ada.Text_IO.Get_Immediate (cont);
       case cont is
          when 'Y' | 'y' => return True;
          when others => return False;
       end case;
    end granted_permission_to_proceed;
+
+
+   -------------------------
+   --  download_packages  --
+   -------------------------
+   function download_packages
+     (remote_files   : Remote_Files_Set.Map;
+      download_order : Pkgtypes.Text_List.Vector;
+      behave_quiet   : Boolean;
+      destination    : String;
+      single_repo    : String) return Boolean
+   is
+      mirrors : Repository.A_Repo_Config_Set;
+      success : Boolean := True;
+   begin
+      Repository.load_repository_configurations (mirrors, single_repo);
+      if mirrors.search_order.Is_Empty then
+         Event.emit_error ("Fetch command: No repositories are configured.");
+         return False;
+      end if;
+
+      declare
+         repo : Repository.A_Repo_Config renames
+           mirrors.repositories.Element (mirrors.search_order.Element (0));
+
+         counter     : Natural := 0;
+         total_files : Natural := Natural (download_order.Length);
+
+         procedure retrieve_rvn_file (Position : Text_List.Cursor)
+         is
+            digkey : constant short_digest := USS (Text_List.Element (Position));
+            myrec  : A_Remote_File renames remote_files.Element (digkey);
+         begin
+            if success then
+               counter := counter + 1;
+               success := download_package (remote_url   => repo.url,
+                                            remote_proto => repo.protocol,
+                                            remote_file  => myrec,
+                                            digest10     => digkey,
+                                            destination  => destination,
+                                            behave_quiet => behave_quiet,
+                                            file_counter => counter,
+                                            total_files  => total_files);
+            end if;
+         end retrieve_rvn_file;
+      begin
+          download_order.Iterate (retrieve_rvn_file'Access);
+      end;
+
+      return Success;
+
+   end download_packages;
+
+
+   ------------------------
+   --  download_package  --
+   ------------------------
+   function download_package
+     (remote_url     : Text;
+      remote_proto   : IP_support;
+      remote_file    : A_Remote_File;
+      digest10       : short_digest;
+      destination    : String;
+      behave_quiet   : Boolean;
+      file_counter   : Natural;
+      total_files    : Natural) return Boolean
+   is
+      full_line : String (1 .. 75) := (others => ' ');
+      rf_url : constant String := USS (remote_url) & "/" & USS (remote_file.nsvv) & extension;
+      dnlink : constant String := destination & "/" & USS (remote_file.nsvv) & extension;
+      dnfile : constant String := destination & "/" & USS (remote_file.nsvv) & "~"& digest10 &
+                                  extension;
+      fetres : DLF.fetch_result;
+
+      function progress return String is
+      begin
+         case total_files is
+            when 0 .. 9 =>
+               return "[" & int2str (file_counter) & "/" & int2str (total_files) & "]";
+            when 10 .. 99 =>
+               return "[" & zeropad (file_counter, 2) & "/" & int2str (total_files) & "]";
+            when 100 .. 999 =>
+               return "[" & zeropad (file_counter, 3) & "/" & int2str (total_files) & "]";
+            when 1000 .. 9999 =>
+               return "[" & zeropad (file_counter, 4) & "/" & int2str (total_files) & "]";
+            when others =>
+               return "[" & zeropad (file_counter, 5) & "/" & int2str (total_files) & "]";
+         end case;
+      end progress;
+
+      procedure populate_filename (prefix_size : Natural)
+      is
+         max_size : constant Natural := 66 - prefix_size - 2;
+         filename : constant String := USS (remote_file.nsvv);
+         offset   : constant Natural := prefix_size + 1;
+         start    : constant Natural := full_line'First + offset;
+         max_fn   : constant Natural := filename'first + 63 - offset;
+      begin
+         if filename'Length < max_size then
+            full_line (start .. start + filename'Length - 1) := filename;
+         else
+            full_line (start .. 64) := filename (filename'First .. max_fn);
+            full_line (65) := '*';
+         end if;
+      end populate_filename;
+
+      procedure populate_filesize
+      is
+         IEC : constant String := Metadata.human_readable_size (int64 (remote_file.rvnsize));
+      begin
+         if remote_file.rvnsize < 5_121 then
+            declare
+               bytes : constant String := int2str (Natural (remote_file.rvnsize)) & " B  ";
+            begin
+               full_line (67 .. 74) := pad_left (bytes, 8);
+            end;
+         else
+            full_line (67 .. 74) := pad_left (IEC, 8);
+         end if;
+      end populate_filesize;
+
+   begin
+      declare
+         fragment : constant String := progress;
+         fragsize : constant Natural := fragment'Length;
+      begin
+         full_line (1 .. fragsize) := fragment;
+         populate_filename (fragsize);
+         populate_filesize;
+         Event.emit_premessage (full_line);
+
+         fetres := DLF.download_file (remote_file_url => rf_url,
+                                      etag_file       => "",
+                                      downloaded_file => dnfile,
+                                      remote_repo     => True,
+                                      remote_protocol => remote_proto);
+         case fetres is
+            when DLF.cache_valid | DLF.file_downloaded  =>
+               Event.emit_message ("[ok]");
+               if Archive.Unix.file_exists (dnlink) then
+                  if not Archive.Unix.unlink_file (dnlink) then
+                     Event.emit_debug (moderate, "Failed to unlink expected symlink " & dnlink);
+                  end if;
+               end if;
+               if not Archive.Unix.create_symlink (dnfile, dnlink) then
+                  Event.emit_debug (high_level, "Failed to create symlink " & dnlink &
+                                      " to " & dnfile);
+               end if;
+               return True;
+            when DLF.retrieval_failed =>
+               Event.emit_message ("FAIL");
+               return False;
+         end case;
+      end;
+   end download_package;
 
 end Raven.Database.Fetch;
