@@ -45,6 +45,12 @@ private
       Hash            => Raven.Miscellaneous.map_hash,
       Equivalent_Keys => Strings.equivalent);
 
+   package Tracked_Set is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => Boolean,
+      Hash            => Raven.Miscellaneous.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
    type download_result is (verified_download, failed_download, failed_verification);
 
    --  subroutine to run individual queries
@@ -54,7 +60,36 @@ private
       sql          : String;
       bind_one     : String;
       like_match   : Boolean;
-      remote_files : in out Remote_Files_Set.Map);
+      remote_files : in out Remote_Files_Set.Map;
+      package_seen : in out Tracked_Set.Map);
+
+   --  subroutine to run individual queries on the packages dependencies
+   --  It sets the retrieved packages as "seen" and makes the initial dependency queue to
+   --  recurse into.
+   procedure retrieve_dependencies_by_pattern
+     (db           : RDB_Connection;
+      sql          : String;
+      bind_one     : String;
+      like_match   : Boolean;
+      package_seen : Tracked_Set.Map;
+      depend_queue : in out Pkgtypes.Text_List.Vector);
+
+   --  subroutine to check the given package identified by nsv for additional dependencies
+   --  to recursively scan
+   procedure retrieve_dependency_by_nsv
+     (db           : RDB_Connection;
+      base_dep_sql : String;
+      nsv          : String;
+      package_seen : Tracked_Set.Map;
+      depend_queue : in out Pkgtypes.Text_List.Vector);
+
+   --  Given nsv, add new entry to the download list.
+   procedure insert_into_download_list
+     (db           : RDB_Connection;
+      base_sql     : String;
+      nsv          : String;
+      remote_files : in out Remote_Files_Set.Map;
+      package_seen : in out Tracked_Set.Map);
 
    --  Checks to see if the file or symlink link with filename <nsvv>.rvn exists
    --  in cache alternatively the output file.  If it does, remove it from the list.

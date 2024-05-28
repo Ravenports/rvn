@@ -29,7 +29,8 @@ package body Raven.Database.Fetch is
       sql          : String;
       bind_one     : String;
       like_match   : Boolean;
-      remote_files : in out Remote_Files_Set.Map)
+      remote_files : in out Remote_Files_Set.Map;
+      package_seen : in out Tracked_Set.Map)
    is
       func     : constant String := "retrieve_remote_file_metadata";
       new_stmt : SQLite.thick_stmt;
@@ -47,20 +48,23 @@ package body Raven.Database.Fetch is
       end if;
       debug_running_stmt (new_stmt);
 
-
       loop
          case SQLite.step (new_stmt) is
             when SQLite.row_present =>
                declare
                   myrec : A_Remote_File;
-                  b3dig : constant String := SQLite.retrieve_string (new_stmt, 3);
+                  b3dig : constant String := SQLite.retrieve_string (new_stmt, 4);
                   key   : constant short_digest := b3dig (b3dig'First .. b3dig'First + 9);
+                  skey  : constant String := SQLite.retrieve_string (new_stmt, 0);
                begin
                   if not remote_files.Contains (key) then
-                     myrec.nsvv := SUS (SQLite.retrieve_string (new_stmt, 0));
-                     myrec.flatsize := Package_Size (SQLite.retrieve_integer (new_stmt, 1));
-                     myrec.rvnsize  := Package_Size (SQLite.retrieve_integer (new_stmt, 2));
+                     myrec.nsvv := SUS (SQLite.retrieve_string (new_stmt, 1));
+                     myrec.flatsize := Package_Size (SQLite.retrieve_integer (new_stmt, 2));
+                     myrec.rvnsize  := Package_Size (SQLite.retrieve_integer (new_stmt, 3));
                      remote_files.Insert (key, myrec);
+                  end if;
+                  if not package_seen.Contains (SUS (skey)) then
+                     package_seen.Insert (SUS (skey), True);
                   end if;
                end;
             when SQLite.something_else =>
@@ -91,32 +95,46 @@ package body Raven.Database.Fetch is
       single_repo  : String) return Boolean
    is
       basesql : constant String :=
-        "SELECT namebase ||'-'|| subpackage ||'-'|| variant ||'-'|| version as nsvv, " &
+        "SELECT namebase ||'-'|| subpackage ||'-'|| variant as nsv, " &
+        "namebase ||'-'|| subpackage ||'-'|| variant ||'-'|| version as nsvv, " &
         "flatsize, rvnsize, rvndigest FROM packages";
+      base_dep_sql : constant String :=
+        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as nsv, d.nsv " &
+        "FROM packages AS p " &
+        "JOIN pkg_dependencies AS x ON x.package_id = p.id " &
+        "JOIN dependencies AS d ON d.dependency_id = x.dependency_id";
       download_list : Remote_Files_Set.Map;
+      package_seen  : Tracked_Set.Map;
       num_patterns  : constant Natural := Natural (patterns.Length);
       leading_match : constant Boolean := not behave_exact and then not behave_cs;
       send_to_cache : constant Boolean := destination = "";
       download_dir  : constant String := translate_destination (destination);
-      download_order : Text_List.Vector;
+      download_order   : Text_List.Vector;
+      dependency_queue : Text_List.Vector;
 
       function extended_sql return String is
       begin
          if behave_exact then
-            return basesql & " WHERE nsvv = ?";
+            return basesql & " WHERE nsv = ?";
          elsif behave_cs then
-            return basesql &" WHERE nsvv GLOB ?";
+            return basesql &" WHERE nsv GLOB ?";
          end if;
-         return basesql & " WHERE nsvv LIKE ?";
+         return basesql & " WHERE nsv LIKE ?";
       end extended_sql;
+
+      function extended_dependency_sql return String is
+      begin
+         if behave_exact then
+            return base_dep_sql & " WHERE nsv = ?";
+         elsif behave_cs then
+            return base_dep_sql &" WHERE nsv GLOB ?";
+         end if;
+         return base_dep_sql & " WHERE nsv LIKE ?";
+      end extended_dependency_sql;
    begin
-      if select_deps then
-         Event.emit_error ("--dependencies not yet supported");
-         return False;
-      end if;
 
       if select_all then
-        retrieve_remote_file_metadata (db, basesql, "", False, download_list);
+        retrieve_remote_file_metadata (db, basesql, "", False, download_list, package_seen);
       else
          for pattx in 0 .. num_patterns - 1 loop
             retrieve_remote_file_metadata
@@ -124,7 +142,50 @@ package body Raven.Database.Fetch is
                sql          => extended_sql,
                bind_one     => USS (patterns.Element (pattx)),
                like_match   => leading_match,
-               remote_files => download_list);
+               remote_files => download_list,
+               package_seen => package_seen);
+         end loop;
+         if select_deps then
+            for pattx in 0 .. num_patterns - 1 loop
+               retrieve_dependencies_by_pattern
+                 (db           => db,
+                  sql          => extended_dependency_sql,
+                  bind_one     => USS (patterns.Element (pattx)),
+                  like_match   => leading_match,
+                  package_seen => package_seen,
+                  depend_queue => dependency_queue);
+            end loop;
+         end if;
+      end if;
+
+      if select_deps then
+         loop
+            exit when dependency_queue.Is_Empty;
+            declare
+               duplicate_queue : Text_List.Vector;
+
+               procedure copy_me (Position : Text_List.Cursor) is
+               begin
+                  duplicate_queue.Append (Text_List.Element (Position));
+               end copy_me;
+
+               procedure scan (Position : Text_List.Cursor)
+               is
+                  nsv : constant String :=  USS (Text_List.Element (Position));
+               begin
+                  insert_into_download_list (db, basesql, nsv, download_list, package_seen);
+                  retrieve_dependency_by_nsv
+                    (db           => db,
+                     base_dep_sql => base_dep_sql,
+                     nsv          => nsv,
+                     package_seen => package_seen,
+                     depend_queue => dependency_queue);
+               end scan;
+            begin
+               dependency_queue.Iterate (copy_me'Access);
+               dependency_queue.Clear;
+               duplicate_queue.Iterate (scan'Access);
+            end;
          end loop;
       end if;
 
@@ -628,5 +689,151 @@ package body Raven.Database.Fetch is
       b3sum := Blake_3.hex (Blake_3.file_digest (file_url));
       return leads (b3sum, digest10);
    end verify_checksum;
+
+
+   ----------------------------------------
+   --  retrieve_dependencies_by_pattern  --
+   ----------------------------------------
+   procedure retrieve_dependencies_by_pattern
+     (db           : RDB_Connection;
+      sql          : String;
+      bind_one     : String;
+      like_match   : Boolean;
+      package_seen : Tracked_Set.Map;
+      depend_queue : in out Pkgtypes.Text_List.Vector)
+   is
+      func     : constant String := "retrieve_dependencies_by_pattern";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      if bind_one /= "" then
+         if like_match then
+            SQLite.bind_string (new_stmt, 1, bind_one & '%');
+         else
+            SQLite.bind_string (new_stmt, 1, bind_one);
+         end if;
+      end if;
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  dep_nsv : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  if not package_seen.Contains (SUS (dep_nsv)) then
+                     if not depend_queue.Contains (SUS (dep_nsv)) then
+                        depend_queue.Append (SUS (dep_nsv));
+                     end if;
+                  end if;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end retrieve_dependencies_by_pattern;
+
+
+   ----------------------------------
+   --  retrieve_dependency_by_nsv  --
+   ----------------------------------
+   procedure retrieve_dependency_by_nsv
+     (db           : RDB_Connection;
+      base_dep_sql : String;
+      nsv          : String;
+      package_seen : Tracked_Set.Map;
+      depend_queue : in out Pkgtypes.Text_List.Vector)
+   is
+      func     : constant String := "retrieve_dependency_by_nsv";
+      sql      : constant String := base_dep_sql & " WHERE nsv = ?";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_string (new_stmt, 1, nsv);
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  dep_nsv : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  if not package_seen.Contains (SUS (dep_nsv)) then
+                     if not depend_queue.Contains (SUS (dep_nsv)) then
+                        depend_queue.Append (SUS (dep_nsv));
+                     end if;
+                  end if;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end retrieve_dependency_by_nsv;
+
+
+   ---------------------------------
+   --  insert_into_download_list  --
+   ---------------------------------
+   procedure insert_into_download_list
+     (db           : RDB_Connection;
+      base_sql     : String;
+      nsv          : String;
+      remote_files : in out Remote_Files_Set.Map;
+      package_seen : in out Tracked_Set.Map)
+   is
+      func : constant String := "insert_into_download_list";
+      sql  : constant String := base_sql & " WHERE nsv = ?";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_string (new_stmt, 1, nsv);
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  myrec : A_Remote_File;
+                  b3dig : constant String := SQLite.retrieve_string (new_stmt, 4);
+                  key   : constant short_digest := b3dig (b3dig'First .. b3dig'First + 9);
+               begin
+                  if not remote_files.Contains (key) then
+                     myrec.nsvv := SUS (SQLite.retrieve_string (new_stmt, 1));
+                     myrec.flatsize := Package_Size (SQLite.retrieve_integer (new_stmt, 2));
+                     myrec.rvnsize  := Package_Size (SQLite.retrieve_integer (new_stmt, 3));
+                     remote_files.Insert (key, myrec);
+                  end if;
+                  if not package_seen.Contains (SUS (nsv)) then
+                     package_seen.Insert (SUS (nsv), True);
+                  end if;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end insert_into_download_list;
+
 
 end Raven.Database.Fetch;
