@@ -5,6 +5,7 @@ with Ada.Text_IO;
 with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Fetch;
+with Raven.Version;
 with Raven.Metadata;
 with Raven.Cmd.Unset;
 with Raven.Repository;
@@ -834,6 +835,84 @@ package body Raven.Database.Fetch is
       end loop;
       SQLite.finalize_statement (new_stmt);
    end insert_into_download_list;
+
+
+   --------------------------
+   --  map_nsv_to_version  --
+   --------------------------
+   procedure map_nsv_to_version
+     (db          : RDB_Connection;
+      version_map : in out NV_Pairs.Map)
+   is
+      func : constant String := "map_nsv_to_version";
+      sql  : constant String :=
+        "SELECT namebase ||'-'|| subpackage ||'-'|| variant as nsv, version from packages";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  nsv : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  ver : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  version_map.Insert (SUS (nsv), SUS (ver));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end map_nsv_to_version;
+
+
+   ------------------------------------
+   --  list_of_upgradeable_packages  --
+   ------------------------------------
+   procedure list_of_upgradeable_packages
+     (ldb          : RDB_Connection;
+      rdb          : RDB_Connection;
+      package_list : in out Pkgtypes.Text_List.Vector)
+   is
+      local_packages  : NV_Pairs.Map;
+      remote_packages : NV_Pairs.Map;
+
+      procedure compare_version (Position : NV_Pairs.Cursor)
+      is
+         nsv : Text renames NV_Pairs.Key (Position);
+         local_version : constant String := USS (local_packages (nsv));
+      begin
+         if remote_packages.Contains (nsv) then
+            declare
+               cat_version : constant String := USS (remote_packages (nsv));
+            begin
+               case Version.installed_pkg_recommendation (local_version, cat_version) is
+                  when Version.PKG_CURRENT   => null;
+                  when Version.PKG_DOWNGRADE => null;
+                  when Version.PKG_UPGRADE   =>
+                     if not package_list.Contains (nsv) then
+                        package_list.Append (nsv);
+                     end if;
+               end case;
+            end;
+         end if;
+      end compare_version;
+
+   begin
+      map_nsv_to_version (ldb, local_packages);
+      map_nsv_to_version (rdb, remote_packages);
+
+      package_list.clear;
+      local_packages.Iterate (compare_version'Access);
+   end list_of_upgradeable_packages;
 
 
 end Raven.Database.Fetch;

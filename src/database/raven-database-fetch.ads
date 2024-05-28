@@ -24,6 +24,14 @@ package Raven.Database.Fetch is
       destination  : String;
       single_repo  : String) return Boolean;
 
+   --  Given open connections to the local and catalog databases, this subroutine
+   --  populates "package_list", a vector of nsv strings that represent packages that
+   --  are out of data as compared to the catalog.-
+   procedure list_of_upgradeable_packages
+     (ldb          : RDB_Connection;
+      rdb          : RDB_Connection;
+      package_list : in out Pkgtypes.Text_List.Vector);
+
 private
 
    internal_srcfile : constant String := "raven-database-fetch.adb";
@@ -147,5 +155,10 @@ private
    --  Returns true if <file_url> exists and the first 10 characters of the digest matches
    --  the digest10 input.
    function verify_checksum (file_url : String; digest10 : short_digest) return Boolean;
+
+   --  Generic all packages nsv -> version associative array
+   procedure map_nsv_to_version
+     (db          : RDB_Connection;
+      version_map : in out Pkgtypes.NV_Pairs.Map);
 
 end Raven.Database.Fetch;

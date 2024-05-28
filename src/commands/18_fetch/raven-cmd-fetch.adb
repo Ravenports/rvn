@@ -50,7 +50,36 @@ package body Raven.Cmd.Fetch is
          --        Use FET.rvn_core_retrieval normally (select_deps hardcoded to False,
          --        select_all hardcoded to False, behave_exact hardcoded to ** TRUE **,
          --        behave_cs hardcoded to false.
-         success := False;
+         declare
+            upgrade_list : Pkgtypes.Text_List.Vector;
+         begin
+            declare
+               ldb : Database.RDB_Connection;
+            begin
+               case OPS.rdb_open_localdb (ldb, Database.installed_packages) is
+                  when RESULT_OK => null;
+                  when others => return False;
+               end case;
+               FET.list_of_upgradeable_packages (ldb, rdb, upgrade_list);
+               OPS.rdb_close (ldb);
+            end;
+            if upgrade_list.Is_Empty then
+               Event.emit_message ("All installed packages are at the latest version.");
+               return True;
+            end if;
+
+            success := FET.rvn_core_retrieval
+              (db           => rdb,
+               patterns     => upgrade_list,
+               behave_exact => True,
+               behave_cs    => False,
+               behave_quiet => comline.common_options.quiet,
+               behave_yes   => behave_yes,
+               select_all   => False,
+               select_deps  => False,
+               destination  => USS (comline.cmd_fetch.destination),
+               single_repo  => repo_solo);
+         end;
       else
          success := FET.rvn_core_retrieval
            (db           => rdb,
