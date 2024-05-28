@@ -75,4 +75,10 @@ private
    --  Returns string 0.0% .. 100.0%
    function percentage (numerator, denominator : Pkgtypes.Package_Size) return string;
 
+   --  if < 10,000, format as "<pad><number>."
+   --  10,000 and over, format as "<number>"
+   --  always 5 characters long
+   function format_download_order (counter : Natural) return String;
+
+
 end Raven.Database.Fetch;

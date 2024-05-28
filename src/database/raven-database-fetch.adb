@@ -32,9 +32,9 @@ package body Raven.Database.Fetch is
       end if;
       if bind_one /= "" then
          if like_match then
-            SQLite.bind_string (new_stmt, 1, bind_one);
-         else
             SQLite.bind_string (new_stmt, 1, bind_one & '%');
+         else
+            SQLite.bind_string (new_stmt, 1, bind_one);
          end if;
       end if;
       debug_running_stmt (new_stmt);
@@ -82,7 +82,7 @@ package body Raven.Database.Fetch is
       destination  : String) return Boolean
    is
       basesql : constant String :=
-        "SELECT namebase ||-|| subpackage ||-|| variant ||-|| version as nsvv, " &
+        "SELECT namebase ||'-'|| subpackage ||'-'|| variant ||'-'|| version as nsvv, " &
         "flatsize, rvnsize, rvndigest FROM packages";
       download_list : Remote_Files_Set.Map;
       num_patterns  : constant Natural := Natural (patterns.Length);
@@ -92,11 +92,11 @@ package body Raven.Database.Fetch is
       function extended_sql return String is
       begin
          if behave_exact then
-            return basesql & " AND nsvv = ?";
+            return basesql & " WHERE nsvv = ?";
          elsif behave_cs then
-            return basesql &" AND nsvv GLOB ?";
+            return basesql &" WHERE nsvv GLOB ?";
          end if;
-         return basesql & " AND nsvv LIKE ?";
+         return basesql & " WHERE nsvv LIKE ?";
       end extended_sql;
    begin
       if select_deps then
@@ -254,7 +254,7 @@ package body Raven.Database.Fetch is
          bname : constant String := USS (myrec.nsvv);
       begin
          counter := counter + 1;
-         full_line (1 .. 5) := pad_left (int2str (counter), 5);
+         full_line (1 .. 5) := format_download_order (counter);
          if bname'Length > 57 then
             full_line (7 .. 62) := bname (bname'First .. bname'First + 55);
             full_line (63) := '*';
@@ -300,7 +300,7 @@ package body Raven.Database.Fetch is
       float_den : constant Float := Float (denominator);
       answer_int : Integer;
    begin
-      answer := (10.0 * float_num / float_den) + 0.5;
+      answer := (1000.0 * float_num / float_den) + 0.5;
       answer_int := Integer (float'Floor (answer));
       declare
          s : constant String := int2str (answer_int);
@@ -312,5 +312,17 @@ package body Raven.Database.Fetch is
          end case;
       end;
    end percentage;
+
+
+   -----------------------------
+   --  format_download_order  --
+   -----------------------------
+   function format_download_order (counter : Natural) return String is
+   begin
+      if counter < 10_000 then
+         return pad_left (int2str (counter), 4) & '.';
+      end if;
+      return pad_left (int2str (counter), 5);  --  truncates from front at 100,000+
+   end format_download_order;
 
 end Raven.Database.Fetch;
