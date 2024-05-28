@@ -99,7 +99,7 @@ package body Raven.Database.Fetch is
         "namebase ||'-'|| subpackage ||'-'|| variant ||'-'|| version as nsvv, " &
         "flatsize, rvnsize, rvndigest FROM packages";
       base_dep_sql : constant String :=
-        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as nsv, d.nsv " &
+        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as pnsv, d.nsv " &
         "FROM packages AS p " &
         "JOIN pkg_dependencies AS x ON x.package_id = p.id " &
         "JOIN dependencies AS d ON d.dependency_id = x.dependency_id";
@@ -125,11 +125,11 @@ package body Raven.Database.Fetch is
       function extended_dependency_sql return String is
       begin
          if behave_exact then
-            return base_dep_sql & " WHERE nsv = ?";
+            return base_dep_sql & " WHERE pnsv = ?";
          elsif behave_cs then
-            return base_dep_sql &" WHERE nsv GLOB ?";
+            return base_dep_sql &" WHERE pnsv GLOB ?";
          end if;
-         return base_dep_sql & " WHERE nsv LIKE ?";
+         return base_dep_sql & " WHERE pnsv LIKE ?";
       end extended_dependency_sql;
    begin
 
@@ -753,7 +753,7 @@ package body Raven.Database.Fetch is
       depend_queue : in out Pkgtypes.Text_List.Vector)
    is
       func     : constant String := "retrieve_dependency_by_nsv";
-      sql      : constant String := base_dep_sql & " WHERE nsv = ?";
+      sql      : constant String := base_dep_sql & " WHERE pnsv = ?";
       new_stmt : SQLite.thick_stmt;
    begin
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
