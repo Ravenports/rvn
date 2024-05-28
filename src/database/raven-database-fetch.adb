@@ -517,8 +517,10 @@ package body Raven.Database.Fetch is
          full_line (1 .. fragsize) := fragment;
          populate_filename (fragsize);
          populate_filesize;
-         Event.emit_premessage (full_line);
-         Event.emit_premessage (status_download);
+         if not behave_quiet then
+            Event.emit_premessage (full_line);
+            Event.emit_premessage (status_download);
+         end if;
 
          if send_to_cache then
             fetres := DLF.download_file (remote_file_url => rf_url,
@@ -528,9 +530,13 @@ package body Raven.Database.Fetch is
                                          remote_protocol => remote_proto);
             case fetres is
                when DLF.cache_valid | DLF.file_downloaded  =>
-                  Event.emit_premessage (status_verify);
+                  if not behave_quiet then
+                     Event.emit_premessage (status_verify);
+                  end if;
                   if verify_checksum (dnfile, digest10) then
-                     Event.emit_message (status_okay);
+                     if not behave_quiet then
+                        Event.emit_message (status_okay);
+                     end if;
                      if Archive.Unix.file_exists (dnlink) then
                         if not Archive.Unix.unlink_file (dnlink) then
                            Event.emit_debug
@@ -543,14 +549,18 @@ package body Raven.Database.Fetch is
                      end if;
                      return verified_download;
                   end if;
-                  Event.emit_message (status_bad_sum);
+                  if not behave_quiet then
+                     Event.emit_message (status_bad_sum);
+                  end if;
                   if not Archive.Unix.unlink_file (dnfile) then
                      Event.emit_debug (moderate, "Failed to unlink corrupted download: " & dnfile);
                   end if;
                   return failed_verification;
                when DLF.retrieval_failed =>
                   Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnfile);
-                  Event.emit_message (status_bad_down);
+                  if not behave_quiet then
+                     Event.emit_message (status_bad_down);
+                  end if;
                   return failed_download;
             end case;
          else
@@ -561,19 +571,27 @@ package body Raven.Database.Fetch is
                                          remote_protocol => remote_proto);
             case fetres is
                when DLF.cache_valid | DLF.file_downloaded  =>
-                  Event.emit_premessage (status_verify);
+                  if not behave_quiet then
+                     Event.emit_premessage (status_verify);
+                  end if;
                   if verify_checksum (dnlink, digest10) then
-                     Event.emit_message (status_okay);
+                     if not behave_quiet then
+                        Event.emit_message (status_okay);
+                     end if;
                      return verified_download;
                   end if;
-                  Event.emit_message (status_bad_sum);
+                  if not behave_quiet then
+                     Event.emit_message (status_bad_sum);
+                  end if;
                   if not Archive.Unix.unlink_file (dnlink) then
                      Event.emit_debug (moderate, "Failed to unlink corrupted download: " & dnlink);
                   end if;
                   return failed_verification;
                when DLF.retrieval_failed =>
                   Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnlink);
-                  Event.emit_message (status_bad_down);
+                  if not behave_quiet then
+                     Event.emit_message (status_bad_down);
+                  end if;
                   return failed_download;
             end case;
          end if;
