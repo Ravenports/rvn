@@ -45,6 +45,8 @@ private
       Hash            => Raven.Miscellaneous.map_hash,
       Equivalent_Keys => Strings.equivalent);
 
+   type download_result is (verified_download, failed_download, failed_verification);
+
    --  subroutine to run individual queries
    --  The result set is added to the existing container
    procedure retrieve_remote_file_metadata
@@ -104,9 +106,13 @@ private
       send_to_cache  : Boolean;
       behave_quiet   : Boolean;
       file_counter   : Natural;
-      total_files    : Natural) return Boolean;
+      total_files    : Natural) return download_result;
 
    --  If destination is blank, set it to RVN_CACHEDIR, otherwise pass it through
    function translate_destination (destination : String) return String;
+
+   --  Returns true if <file_url> exists and the first 10 characters of the digest matches
+   --  the digest10 input.
+   function verify_checksum (file_url : String; digest10 : short_digest) return Boolean;
 
 end Raven.Database.Fetch;

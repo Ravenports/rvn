@@ -12,6 +12,7 @@ with Raven.Database.CommonSQL;
 with Raven.Strings;  use Raven.Strings;
 with Raven.Pkgtypes; use Raven.Pkgtypes;
 with Archive.Unix;
+with Blake_3;
 
 package body Raven.Database.Fetch is
 
@@ -380,6 +381,7 @@ package body Raven.Database.Fetch is
    is
       mirrors : Repository.A_Repo_Config_Set;
       success : Boolean := True;
+      postlog : Text := SU.Null_Unbounded_String;
    begin
       Repository.load_repository_configurations (mirrors, single_repo);
       if mirrors.search_order.Is_Empty then
@@ -401,20 +403,35 @@ package body Raven.Database.Fetch is
          begin
             if success then
                counter := counter + 1;
-               success := download_package (remote_url    => repo.url,
-                                            remote_proto  => repo.protocol,
-                                            remote_file   => myrec,
-                                            digest10      => digkey,
-                                            destination   => destination,
-                                            send_to_cache => send_to_cache,
-                                            behave_quiet  => behave_quiet,
-                                            file_counter  => counter,
-                                            total_files   => total_files);
+               case download_package (remote_url    => repo.url,
+                                      remote_proto  => repo.protocol,
+                                      remote_file   => myrec,
+                                      digest10      => digkey,
+                                      destination   => destination,
+                                      send_to_cache => send_to_cache,
+                                      behave_quiet  => behave_quiet,
+                                      file_counter  => counter,
+                                      total_files   => total_files)
+               is
+                  when verified_download => null;
+                  when failed_download =>
+                     success := False;
+                     SU.Append (postlog, "Failed download: " &
+                                  USS (myrec.nsvv) & extension & LAT.LF);
+                  when failed_verification =>
+                     success := False;
+                     SU.Append (postlog, "Checksum verification failed: " &
+                                  USS (myrec.nsvv) & extension & LAT.LF);
+               end case;
             end if;
          end retrieve_rvn_file;
       begin
           download_order.Iterate (retrieve_rvn_file'Access);
       end;
+
+      if not success and then not behave_quiet then
+         Event.emit_error (LAT.LF & USS (postlog));
+      end if;
 
       return Success;
 
@@ -433,13 +450,18 @@ package body Raven.Database.Fetch is
       send_to_cache  : Boolean;
       behave_quiet   : Boolean;
       file_counter   : Natural;
-      total_files    : Natural) return Boolean
+      total_files    : Natural) return download_result
    is
       full_line : String (1 .. 75) := (others => ' ');
       rf_url : constant String := USS (remote_url) & "/files/" & USS (remote_file.nsvv) & extension;
       dnlink : constant String := destination & "/" & USS (remote_file.nsvv) & extension;
       dnfile : constant String := destination & "/" & USS (remote_file.nsvv) & "~"& digest10 &
                                   extension;
+      status_download : constant String := "DOWN";
+      status_okay     : constant String := LAT.BS & LAT.BS & LAT.BS & LAT.BS & "[ok]";
+      status_verify   : constant String := LAT.BS & LAT.BS & LAT.BS & LAT.BS & "VSUM";
+      status_bad_down : constant String := LAT.BS & LAT.BS & LAT.BS & LAT.BS & "FAIL";
+      status_bad_sum  : constant String := LAT.BS & LAT.BS & LAT.BS & LAT.BS & "FSUM";
       fetres : DLF.fetch_result;
 
       function progress return String is
@@ -498,6 +520,7 @@ package body Raven.Database.Fetch is
          populate_filename (fragsize);
          populate_filesize;
          Event.emit_premessage (full_line);
+         Event.emit_premessage (status_download);
 
          if send_to_cache then
             fetres := DLF.download_file (remote_file_url => rf_url,
@@ -507,21 +530,30 @@ package body Raven.Database.Fetch is
                                          remote_protocol => remote_proto);
             case fetres is
                when DLF.cache_valid | DLF.file_downloaded  =>
-                  Event.emit_message ("[ok]");
-                  if Archive.Unix.file_exists (dnlink) then
-                     if not Archive.Unix.unlink_file (dnlink) then
-                        Event.emit_debug (moderate, "Failed to unlink expected symlink " & dnlink);
+                  Event.emit_premessage (status_verify);
+                  if verify_checksum (dnfile, digest10) then
+                     Event.emit_message (status_okay);
+                     if Archive.Unix.file_exists (dnlink) then
+                        if not Archive.Unix.unlink_file (dnlink) then
+                           Event.emit_debug
+                             (moderate, "Failed to unlink expected symlink " & dnlink);
+                        end if;
                      end if;
+                     if not Archive.Unix.create_symlink (dnfile, dnlink) then
+                        Event.emit_debug
+                          (high_level, "Failed to create symlink " & dnlink & " to " & dnfile);
+                     end if;
+                     return verified_download;
                   end if;
-                  if not Archive.Unix.create_symlink (dnfile, dnlink) then
-                     Event.emit_debug (high_level, "Failed to create symlink " & dnlink &
-                                         " to " & dnfile);
+                  Event.emit_message (status_bad_sum);
+                  if not Archive.Unix.unlink_file (dnfile) then
+                     Event.emit_debug (moderate, "Failed to unlink corrupted download: " & dnfile);
                   end if;
-                  return True;
+                  return failed_verification;
                when DLF.retrieval_failed =>
                   Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnfile);
-                  Event.emit_message ("FAIL");
-                  return False;
+                  Event.emit_message (status_bad_down);
+                  return failed_download;
             end case;
          else
             fetres := DLF.download_file (remote_file_url => rf_url,
@@ -531,12 +563,20 @@ package body Raven.Database.Fetch is
                                          remote_protocol => remote_proto);
             case fetres is
                when DLF.cache_valid | DLF.file_downloaded  =>
-                  Event.emit_message ("[ok]");
-                  return True;
+                  Event.emit_premessage (status_verify);
+                  if verify_checksum (dnlink, digest10) then
+                     Event.emit_message (status_okay);
+                     return verified_download;
+                  end if;
+                  Event.emit_message (status_bad_sum);
+                  if not Archive.Unix.unlink_file (dnlink) then
+                     Event.emit_debug (moderate, "Failed to unlink corrupted download: " & dnlink);
+                  end if;
+                  return failed_verification;
                when DLF.retrieval_failed =>
                   Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnlink);
-                  Event.emit_message ("FAIL");
-                  return False;
+                  Event.emit_message (status_bad_down);
+                  return failed_download;
             end case;
          end if;
       end;
@@ -552,5 +592,25 @@ package body Raven.Database.Fetch is
       end if;
       return RCU.config_setting (RCU.CFG.cachedir);
    end translate_destination;
+
+
+   -----------------------
+   --  verify_checksum  --
+   -----------------------
+   function verify_checksum (file_url : String; digest10 : short_digest) return Boolean
+   is
+      features : Archive.Unix.File_Characteristics;
+      b3sum    : Blake_3.blake3_hash_hex;
+   begin
+      features := Archive.Unix.get_charactistics (file_url);
+      case features.ftype is
+         when Archive.regular => null;
+         when others =>
+            Event.emit_debug (moderate, "verify_checksum: not a regular file: " & file_url);
+            return False;
+      end case;
+      b3sum := Blake_3.hex (Blake_3.file_digest (file_url));
+      return leads (b3sum, digest10);
+   end verify_checksum;
 
 end Raven.Database.Fetch;
