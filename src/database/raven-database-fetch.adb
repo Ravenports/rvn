@@ -93,6 +93,7 @@ package body Raven.Database.Fetch is
       download_list : Remote_Files_Set.Map;
       num_patterns  : constant Natural := Natural (patterns.Length);
       leading_match : constant Boolean := not behave_exact and then not behave_cs;
+      download_dir  : constant String := translate_destination (destination);
       download_order : Text_List.Vector;
 
       function extended_sql return String is
@@ -131,7 +132,7 @@ package body Raven.Database.Fetch is
          end if;
       end if;
 
-      prune_remote_files_list (download_list, destination);
+      prune_remote_files_list (download_list, download_dir);
 
       if download_list.Is_Empty then
          if not behave_quiet then
@@ -144,12 +145,19 @@ package body Raven.Database.Fetch is
       sort_queue (download_list, download_order);
       show_proposed_queue (download_list, download_order, behave_quiet);
 
+      if not Archive.Unix.file_is_writable (download_dir) then
+         Event.emit_message (Character'Val (10) & "The download directory, " & download_dir &
+                               ", is not writable by this user.");
+         Event.emit_message ("Switch to the superuser or choose a different output directory.");
+         return False;
+      end if;
+
       if not granted_permission_to_proceed (behave_quiet) then
          return True;
       end if;
 
       return download_packages
-        (download_list, download_order, behave_quiet, destination, single_repo);
+        (download_list, download_order, behave_quiet, download_dir, single_repo);
 
    end rvn_core_retrieval;
 
@@ -424,7 +432,7 @@ package body Raven.Database.Fetch is
       total_files    : Natural) return Boolean
    is
       full_line : String (1 .. 75) := (others => ' ');
-      rf_url : constant String := USS (remote_url) & "/" & USS (remote_file.nsvv) & extension;
+      rf_url : constant String := USS (remote_url) & "/files/" & USS (remote_file.nsvv) & extension;
       dnlink : constant String := destination & "/" & USS (remote_file.nsvv) & extension;
       dnfile : constant String := destination & "/" & USS (remote_file.nsvv) & "~"& digest10 &
                                   extension;
@@ -506,10 +514,22 @@ package body Raven.Database.Fetch is
                end if;
                return True;
             when DLF.retrieval_failed =>
+               Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnfile);
                Event.emit_message ("FAIL");
                return False;
          end case;
       end;
    end download_package;
+
+   -----------------------------
+   --  translate_destination  --
+   -----------------------------
+   function translate_destination (destination : String) return String is
+   begin
+      if destination /= "" then
+         return destination;
+      end if;
+      return RCU.config_setting (RCU.CFG.cachedir);
+   end translate_destination;
 
 end Raven.Database.Fetch;

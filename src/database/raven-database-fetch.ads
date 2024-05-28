@@ -104,5 +104,7 @@ private
       file_counter   : Natural;
       total_files    : Natural) return Boolean;
 
+   --  If destination is blank, set it to RVN_CACHEDIR, otherwise pass it through
+   function translate_destination (destination : String) return String;
 
 end Raven.Database.Fetch;
