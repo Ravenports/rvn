@@ -93,6 +93,7 @@ package body Raven.Database.Fetch is
       download_list : Remote_Files_Set.Map;
       num_patterns  : constant Natural := Natural (patterns.Length);
       leading_match : constant Boolean := not behave_exact and then not behave_cs;
+      send_to_cache : constant Boolean := destination = "";
       download_dir  : constant String := translate_destination (destination);
       download_order : Text_List.Vector;
 
@@ -157,7 +158,7 @@ package body Raven.Database.Fetch is
       end if;
 
       return download_packages
-        (download_list, download_order, behave_quiet, download_dir, single_repo);
+        (download_list, download_order, behave_quiet, send_to_cache, download_dir, single_repo);
 
    end rvn_core_retrieval;
 
@@ -373,6 +374,7 @@ package body Raven.Database.Fetch is
      (remote_files   : Remote_Files_Set.Map;
       download_order : Pkgtypes.Text_List.Vector;
       behave_quiet   : Boolean;
+      send_to_cache  : Boolean;
       destination    : String;
       single_repo    : String) return Boolean
    is
@@ -399,14 +401,15 @@ package body Raven.Database.Fetch is
          begin
             if success then
                counter := counter + 1;
-               success := download_package (remote_url   => repo.url,
-                                            remote_proto => repo.protocol,
-                                            remote_file  => myrec,
-                                            digest10     => digkey,
-                                            destination  => destination,
-                                            behave_quiet => behave_quiet,
-                                            file_counter => counter,
-                                            total_files  => total_files);
+               success := download_package (remote_url    => repo.url,
+                                            remote_proto  => repo.protocol,
+                                            remote_file   => myrec,
+                                            digest10      => digkey,
+                                            destination   => destination,
+                                            send_to_cache => send_to_cache,
+                                            behave_quiet  => behave_quiet,
+                                            file_counter  => counter,
+                                            total_files   => total_files);
             end if;
          end retrieve_rvn_file;
       begin
@@ -427,6 +430,7 @@ package body Raven.Database.Fetch is
       remote_file    : A_Remote_File;
       digest10       : short_digest;
       destination    : String;
+      send_to_cache  : Boolean;
       behave_quiet   : Boolean;
       file_counter   : Natural;
       total_files    : Natural) return Boolean
@@ -495,29 +499,46 @@ package body Raven.Database.Fetch is
          populate_filesize;
          Event.emit_premessage (full_line);
 
-         fetres := DLF.download_file (remote_file_url => rf_url,
-                                      etag_file       => "",
-                                      downloaded_file => dnfile,
-                                      remote_repo     => True,
-                                      remote_protocol => remote_proto);
-         case fetres is
-            when DLF.cache_valid | DLF.file_downloaded  =>
-               Event.emit_message ("[ok]");
-               if Archive.Unix.file_exists (dnlink) then
-                  if not Archive.Unix.unlink_file (dnlink) then
-                     Event.emit_debug (moderate, "Failed to unlink expected symlink " & dnlink);
+         if send_to_cache then
+            fetres := DLF.download_file (remote_file_url => rf_url,
+                                         etag_file       => "",
+                                         downloaded_file => dnfile,
+                                         remote_repo     => True,
+                                         remote_protocol => remote_proto);
+            case fetres is
+               when DLF.cache_valid | DLF.file_downloaded  =>
+                  Event.emit_message ("[ok]");
+                  if Archive.Unix.file_exists (dnlink) then
+                     if not Archive.Unix.unlink_file (dnlink) then
+                        Event.emit_debug (moderate, "Failed to unlink expected symlink " & dnlink);
+                     end if;
                   end if;
-               end if;
-               if not Archive.Unix.create_symlink (dnfile, dnlink) then
-                  Event.emit_debug (high_level, "Failed to create symlink " & dnlink &
-                                      " to " & dnfile);
-               end if;
-               return True;
-            when DLF.retrieval_failed =>
-               Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnfile);
-               Event.emit_message ("FAIL");
-               return False;
-         end case;
+                  if not Archive.Unix.create_symlink (dnfile, dnlink) then
+                     Event.emit_debug (high_level, "Failed to create symlink " & dnlink &
+                                         " to " & dnfile);
+                  end if;
+                  return True;
+               when DLF.retrieval_failed =>
+                  Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnfile);
+                  Event.emit_message ("FAIL");
+                  return False;
+            end case;
+         else
+            fetres := DLF.download_file (remote_file_url => rf_url,
+                                         etag_file       => "",
+                                         downloaded_file => dnlink,
+                                         remote_repo     => True,
+                                         remote_protocol => remote_proto);
+            case fetres is
+               when DLF.cache_valid | DLF.file_downloaded  =>
+                  Event.emit_message ("[ok]");
+                  return True;
+               when DLF.retrieval_failed =>
+                  Event.emit_debug (high_level, "Failed to download " & rf_url & " to " & dnlink);
+                  Event.emit_message ("FAIL");
+                  return False;
+            end case;
+         end if;
       end;
    end download_package;
 

@@ -90,6 +90,7 @@ private
      (remote_files   : Remote_Files_Set.Map;
       download_order : Pkgtypes.Text_List.Vector;
       behave_quiet   : Boolean;
+      send_to_cache  : Boolean;
       destination    : String;
       single_repo    : String) return Boolean;
 
@@ -100,6 +101,7 @@ private
       remote_file    : A_Remote_File;
       digest10       : short_digest;
       destination    : String;
+      send_to_cache  : Boolean;
       behave_quiet   : Boolean;
       file_counter   : Natural;
       total_files    : Natural) return Boolean;
