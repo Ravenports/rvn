@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ada.Text_IO;
+with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Fetch;
 with Raven.Metadata;
@@ -14,6 +15,7 @@ with Archive.Unix;
 
 package body Raven.Database.Fetch is
 
+   package LAT renames Ada.Characters.Latin_1;
    package RCU renames Raven.Cmd.Unset;
    package DLF renames Raven.Fetch;
 
@@ -147,7 +149,7 @@ package body Raven.Database.Fetch is
       show_proposed_queue (download_list, download_order, behave_quiet);
 
       if not Archive.Unix.file_is_writable (download_dir) then
-         Event.emit_message (Character'Val (10) & "The download directory, " & download_dir &
+         Event.emit_message (LAT.LF & "The download directory, " & download_dir &
                                ", is not writable by this user.");
          Event.emit_message ("Switch to the superuser or choose a different output directory.");
          return False;
@@ -211,7 +213,7 @@ package body Raven.Database.Fetch is
       download_order : in out Text_List.Vector)
    is
       temp_storage : Text_List.Vector;
-      delim : String (1 .. 1) := (others => Character'Val (9));
+      delim : String (1 .. 1) := (others => LAT.HT);
 
       procedure push_to_temp (Position : Remote_Files_Set.Cursor)
       is
@@ -257,7 +259,6 @@ package body Raven.Database.Fetch is
       total_flatsize : Package_Size := 0;
       total_rvn_size : Package_Size := 0;
       counter        : Natural := 0;
-      LF             : constant Character := Character'Val(10);
 
       procedure combine_sizes (Position : Remote_Files_Set.Cursor) is
       begin
@@ -300,9 +301,9 @@ package body Raven.Database.Fetch is
       end if;
       remote_files.Iterate (combine_sizes'Access);
 
-      Event.emit_message ("The following packages will be downloaded:" & LF);
+      Event.emit_message ("The following packages will be downloaded:" & LAT.LF);
       download_order.Iterate (display_line'Access);
-      Event.emit_message (LF & "Total data to download: " &
+      Event.emit_message (LAT.LF & "Total data to download: " &
                            Metadata.human_readable_size (int64 (total_rvn_size)));
       Event.emit_message ("Disk space required to install these packages: " &
                            Metadata.human_readable_size (int64 (total_flatsize)));
@@ -351,14 +352,13 @@ package body Raven.Database.Fetch is
    -------------------------------------
    function granted_permission_to_proceed (quiet : Boolean) return Boolean
    is
-      LF   : constant Character := Character'Val (10);
       cont : Character;
    begin
       if quiet or else RCU.config_setting (RCU.CFG.assume_yes) then
          return True;
       end if;
 
-      Event.emit_message (LF & "Proceed with fetching packages? [y/n]: ");
+      Event.emit_message (LAT.LF & "Proceed with fetching packages? [y/n]: ");
       Ada.Text_IO.Get_Immediate (cont);
       case cont is
          when 'Y' | 'y' => return True;
