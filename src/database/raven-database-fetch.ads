@@ -81,4 +81,9 @@ private
    function format_download_order (counter : Natural) return String;
 
 
+   --  Returns true if allowed to proceed with download.
+   --  quiet mode implictly grants permission
+   function granted_permission_to_proceed (quiet : Boolean) return Boolean;
+
+
 end Raven.Database.Fetch;

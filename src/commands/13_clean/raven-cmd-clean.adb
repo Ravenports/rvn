@@ -190,7 +190,7 @@ package body Raven.Cmd.Clean is
       end if;
 
       if not RCU.config_setting (RCU.CFG.assume_yes) then
-         Event.emit_message ("Continue? (Y/N)");
+         Event.emit_message ("Continue? [y/n]");
          Ada.Text_IO.Get_Immediate (cont);
          case cont is
             when 'Y' | 'y' => null;

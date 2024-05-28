@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Text_IO;
 with Raven.Event;
 with Raven.Cmd.Unset;
 with Raven.Metadata;
@@ -138,6 +139,9 @@ package body Raven.Database.Fetch is
       sort_queue (download_list, download_order);
       show_proposed_queue (download_list, download_order, behave_quiet);
 
+      if not granted_permission_to_proceed (behave_quiet) then
+         return True;
+      end if;
 
       return False;
    end rvn_core_retrieval;
@@ -324,5 +328,26 @@ package body Raven.Database.Fetch is
       end if;
       return pad_left (int2str (counter), 5);  --  truncates from front at 100,000+
    end format_download_order;
+
+
+   -------------------------------------
+   --  granted_permission_to_proceed  --
+   -------------------------------------
+   function granted_permission_to_proceed (quiet : Boolean) return Boolean
+   is
+      LF   : constant Character := Character'Val (10);
+      cont : Character;
+   begin
+      if quiet or else RCU.config_setting (RCU.CFG.assume_yes) then
+         return True;
+      end if;
+
+      Event.emit_notice (LF & "Proceed with fetching packages? [y/n]: ");
+      Ada.Text_IO.Get_Immediate (cont);
+      case cont is
+         when 'Y' | 'y' => return True;
+         when others => return False;
+      end case;
+   end granted_permission_to_proceed;
 
 end Raven.Database.Fetch;
