@@ -380,12 +380,12 @@ package body Raven.Version is
       old_version : String) return Change_Action is
    begin
       if IsBlank (old_version) then
-         return PKG_REINSTALL;
+         return PKG_CURRENT;
       end if;
 
       case pkg_version_cmp (old_version, USS (pkg.version)) is
          when -1 => return PKG_UPGRADE;
-         when  0 => return PKG_REINSTALL;
+         when  0 => return PKG_CURRENT;
          when  1 => return PKG_DOWNGRADE;
       end case;
    end pkg_version_change;
@@ -398,15 +398,39 @@ package body Raven.Version is
      (pkg1, pkg2 : access Pkgtypes.A_Package) return Change_Action is
    begin
       if pkg2 = null then
-         return PKG_REINSTALL;
+         return PKG_CURRENT;
       end if;
 
       case pkg_version_cmp (USS (pkg2.version), USS (pkg1.version)) is
          when -1 => return PKG_UPGRADE;
-         when  0 => return PKG_REINSTALL;
+         when  0 => return PKG_CURRENT;
          when  1 => return PKG_DOWNGRADE;
       end case;
    end pkg_version_change_between;
+
+
+   ------------------------------------
+   --  installed_pkg_recommendation  --
+   ------------------------------------
+   function installed_pkg_recommendation
+     (installed_version : String;
+      catalog_version   : String) return Change_Action
+   is
+   begin
+      if IsBlank (installed_version) then
+         raise version_missing with "installed package version";
+      end if;
+
+      if IsBlank (catalog_version) then
+         raise version_missing with "catalog version";
+      end if;
+
+      case pkg_version_cmp (installed_version, catalog_version) is
+         when -1 => return PKG_UPGRADE;
+         when  0 => return PKG_CURRENT;
+         when  1 => return PKG_DOWNGRADE;
+      end case;
+   end installed_pkg_recommendation;
 
 
 end Raven.Version;

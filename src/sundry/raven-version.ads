@@ -7,9 +7,11 @@ package Raven.Version is
 
    subtype Cmp_Result is Integer range -1 .. +1;
 
+   version_missing : exception;
+
    type Change_Action is
      (PKG_DOWNGRADE,
-      PKG_REINSTALL,
+      PKG_CURRENT,
       PKG_UPGRADE);
 
    type Version_Breakdown is
@@ -60,6 +62,10 @@ package Raven.Version is
 
    function pkg_version_change_between
      (pkg1, pkg2 : access Pkgtypes.A_Package) return Change_Action;
+
+   function installed_pkg_recommendation
+     (installed_version : String;
+      catalog_version   : String) return Change_Action;
 
 private
 
