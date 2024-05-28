@@ -401,32 +401,30 @@ package body Raven.Database.Fetch is
             digkey : constant short_digest := USS (Text_List.Element (Position));
             myrec  : A_Remote_File renames remote_files.Element (digkey);
          begin
-            if success then
-               counter := counter + 1;
-               case download_package (remote_url    => repo.url,
-                                      remote_proto  => repo.protocol,
-                                      remote_file   => myrec,
-                                      digest10      => digkey,
-                                      destination   => destination,
-                                      send_to_cache => send_to_cache,
-                                      behave_quiet  => behave_quiet,
-                                      file_counter  => counter,
-                                      total_files   => total_files)
-               is
-                  when verified_download => null;
-                  when failed_download =>
-                     success := False;
-                     SU.Append (postlog, "Failed download: " &
-                                  USS (myrec.nsvv) & extension & LAT.LF);
-                  when failed_verification =>
-                     success := False;
-                     SU.Append (postlog, "Checksum verification failed: " &
-                                  USS (myrec.nsvv) & extension & LAT.LF);
-               end case;
-            end if;
+            counter := counter + 1;
+            case download_package (remote_url    => repo.url,
+                                   remote_proto  => repo.protocol,
+                                   remote_file   => myrec,
+                                   digest10      => digkey,
+                                   destination   => destination,
+                                   send_to_cache => send_to_cache,
+                                   behave_quiet  => behave_quiet,
+                                   file_counter  => counter,
+                                   total_files   => total_files)
+            is
+               when verified_download => null;
+               when failed_download =>
+                  success := False;
+                  SU.Append (postlog, "Failed download: " &
+                               USS (myrec.nsvv) & extension & LAT.LF);
+               when failed_verification =>
+                  success := False;
+                  SU.Append (postlog, "Checksum verification failed: " &
+                               USS (myrec.nsvv) & extension & LAT.LF);
+            end case;
          end retrieve_rvn_file;
       begin
-          download_order.Iterate (retrieve_rvn_file'Access);
+         download_order.Iterate (retrieve_rvn_file'Access);
       end;
 
       if not success and then not behave_quiet then
