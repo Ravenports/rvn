@@ -24,8 +24,6 @@ package Raven.Database.Fetch is
       destination  : String;
       single_repo  : String) return Boolean;
 
-   --  TODO: separate function for "available-updates" goes here
-
 private
 
    internal_srcfile : constant String := "raven-database-fetch.adb";
