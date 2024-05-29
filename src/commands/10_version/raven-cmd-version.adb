@@ -255,6 +255,80 @@ package body Raven.Cmd.Version is
    end compare_against_rvnindex;
 
 
+   -------------------------------
+   --  compare_against_catalog  --
+   -------------------------------
+   function compare_against_catalog
+     (single_repo         : String;
+      option_match_status : Boolean;
+      option_avoid_status : Boolean;
+      option_verbose      : Boolean;
+      behave_cs           : Boolean;
+      behave_exact        : Boolean;
+      option_cmp_operator : Character;
+      pattern             : String) return Boolean
+   is
+      remote_versions     : Pkgtypes.NV_Pairs.Map;
+      local_installation  : Pkgtypes.NV_Pairs.Map;
+      localdb             : Database.RDB_Connection;
+      rdb                 : Database.RDB_Connection;
+
+      procedure print (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         nsv_key : Text renames Pkgtypes.NV_Pairs.Key (Position);
+         remote_version : Text := SU.Null_Unbounded_String;
+         line : Display_Line;
+      begin
+         if remote_versions.Contains (nsv_key) then
+            remote_version := remote_versions.Element (nsv_key);
+         end if;
+
+         line := print_version (installed_nsv       => USS (nsv_key),
+                                installed_version   => USS (Pkgtypes.NV_Pairs.Element (Position)),
+                                source              => R_remote_catalog,
+                                remote_version      => USS (remote_version),
+                                option_match_status => option_match_status,
+                                option_avoid_status => option_avoid_status,
+                                option_verbose      => option_verbose,
+                                option_cmp_operator => option_cmp_operator);
+         if not line.valid then
+            return;
+         end if;
+
+         if option_verbose then
+            Event.emit_message (line.comparison & ' ' & pad_right (USS (line.identifier), 48) &
+                                  USS (line.extra_info));
+         else
+            Event.emit_message (line.comparison & ' ' & USS (line.identifier));
+         end if;
+      end print;
+   begin
+      if not refresh_catalog (single_repo) then
+         return False;
+      end if;
+
+      case OPS.rdb_open_localdb (rdb, Database.catalog) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      DBC.map_nsv_to_local_version (rdb, False, False, "", remote_versions);
+      OPS.rdb_close (rdb);
+
+      case OPS.rdb_open_localdb (localdb, Database.installed_packages) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      DBC.map_nsv_to_local_version (localdb, behave_cs, behave_exact, pattern, local_installation);
+      OPS.rdb_close (localdb);
+
+      local_installation.Iterate (print'Access);
+      return True;
+
+   end compare_against_catalog;
+
+
    --------------------------------
    --  Executes version command  --
    --------------------------------
@@ -332,6 +406,7 @@ package body Raven.Cmd.Version is
             when unset =>
                return False;  --  Can't happen
             when release_index =>
+
                return compare_against_rvnindex
                     (source              => release,
                      option_match_status => option_match_status,
@@ -343,6 +418,7 @@ package body Raven.Cmd.Version is
                      pattern             => USS (comline.common_options.name_pattern));
 
             when snapshot_index =>
+
                return compare_against_rvnindex
                     (source              => snapshot,
                      option_match_status => option_match_status,
@@ -355,9 +431,16 @@ package body Raven.Cmd.Version is
 
             when repo_catalog =>
 
-               --   --------------------------------------------------
-               --  TODO
-               return False;
+               return compare_against_catalog
+                 (single_repo         => USS (comline.common_options.repo_name),
+                  option_match_status => option_match_status,
+                  option_avoid_status => option_avoid_status,
+                  option_verbose      => option_verbose,
+                  behave_cs           => behave_cs,
+                  behave_exact        => comline.common_options.exact_match,
+                  option_cmp_operator => option_cmp_operator,
+                  pattern             => USS (comline.common_options.name_pattern));
+
          end case;
       end;
 

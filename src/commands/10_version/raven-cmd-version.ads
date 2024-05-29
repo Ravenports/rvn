@@ -70,4 +70,16 @@ private
       option_cmp_operator : Character;
       pattern             : String) return Boolean;
 
+   function compare_against_catalog
+     (single_repo         : String;
+      option_match_status : Boolean;
+      option_avoid_status : Boolean;
+      option_verbose      : Boolean;
+      behave_cs           : Boolean;
+      behave_exact        : Boolean;
+      option_cmp_operator : Character;
+      pattern             : String) return Boolean;
+
+   function refresh_catalog (single_repo : String) return Boolean;
+
 end Raven.Cmd.Version;
