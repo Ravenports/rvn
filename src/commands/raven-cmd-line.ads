@@ -56,7 +56,6 @@ private
          info_archive_file,
          version_match_char,
          version_not_char,
-         version_pkgname,
          genrepo_key,
          genrepo_pubkey,
          genrepo_sign_cmd,

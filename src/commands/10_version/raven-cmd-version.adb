@@ -212,7 +212,6 @@ package body Raven.Cmd.Version is
 
       declare
          option_verbose      : Boolean := comline.common_options.verbose;
-         option_name         : Boolean := not IsBlank (comline.cmd_version.pkg_name);
          option_match_status : Boolean := (comline.cmd_version.match_char /= Character'First);
          option_avoid_status : Boolean;
          option_cmp_operator : Character;

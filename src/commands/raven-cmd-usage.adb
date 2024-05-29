@@ -584,24 +584,17 @@ package body Raven.Cmd.Usage is
    --------------------
    function verb_version (comline : Cldata) return Boolean
    is
-      procedure print_usage
+      function alert (error_msg : String) return Boolean
       is
-         cegx : constant String := "[-CE pattern]";
-         msg1 : constant String := "version [-SIR] [qvU] [-l limchar] [-L limchar] " & cegx;
-         msg2 : constant String := "        [-r reponame] [-n pkgname]";
-         msg3 : constant String := "version -t <version1> <version2>";
-         msg4 : constant String := "version -T <pkgname> <pattern>";
-      begin
-         display_usage (msg1, True);
-         display_usage_multiline (msg2);
-         display_usage (msg3, False);
-         display_usage (msg4, False);
-      end print_usage;
-
-      function alert (error_msg : String) return Boolean is
+         msg1 : constant String := "version [-SIR] [-vU] [-r reponame] [-l flag] [-L flag] "&
+                                           "[CE] pattern";
+         msg2 : constant String := "version -t <version1> <version2>";
+         msg3 : constant String := "version -T <pkgname> <pattern>";
       begin
          display_error (error_msg);
-         print_usage;
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage (msg3, False);
          display_help_suggestion (cv_version);
          return False;
       end alert;
@@ -622,6 +615,14 @@ package body Raven.Cmd.Usage is
          when '<' | '>' | '=' | '?' | '!' => null;
          when others => return alert ("Illegal character for -L switch");
       end case;
+
+      if not IsBlank (comline.common_options.repo_name) then
+         case comline.cmd_version.behavior is
+            when use_remote_catalog_state => null;
+            when others =>
+               return alert ("The -r switch can only be used with the --remote switch");
+         end case;
+      end if;
 
       if comline.cmd_version.behavior = test_versions then
          if IsBlank (comline.cmd_version.test1) or else

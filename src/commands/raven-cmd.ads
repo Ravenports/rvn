@@ -178,7 +178,6 @@ private
          not_char     : Character := Character'First;
          test1        : Text;
          test2        : Text;
-         pkg_name     : Text;
          hyphen1      : Boolean := False;
          hyphen2      : Boolean := False;
       end record;

@@ -469,26 +469,19 @@ package body Raven.Cmd.Line is
                   end if;
 
                when cv_version =>
-                  if datum = sws_quiet or else datum = swl_quiet then
-                     data.common_options.quiet := True;
-                  elsif datum = sws_verb or else datum = swl_verb then
+                  if datum = sws_verb or else datum = swl_verb then
                      data.common_options.verbose := True;
-                  elsif datum = sws_repo or else datum = swl_repo then
-                     last_cmd := generic_repo_name;
-                     if data.cmd_version.behavior = no_defined_behavior or else
-                       data.cmd_version.behavior = use_remote_catalog_state
-                     then
-                        data.cmd_version.behavior := use_remote_catalog_state;
-                     else
-                        set_error (data, "The -r switch is not compatible with " &
-                                     "-S, -I, -t, or -T switches.");
-                     end if;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
                   elsif datum = "-l" or else datum = "--like" then
                      if data.cmd_version.not_char /= Character'First then
                         set_error (data, error_like);
@@ -499,61 +492,66 @@ package body Raven.Cmd.Line is
                         set_error (data, error_like);
                      end if;
                      last_cmd := version_not_char;
-                  elsif datum = "-n" or else datum = "--match-name" then
-                     last_cmd := version_pkgname;
                   elsif datum = "-t" or else datum = "--test-version" then
-                     if data.cmd_version.behavior = no_defined_behavior then
-                        data.cmd_version.behavior := test_versions;
-                     else
-                        set_error (data, "The --test-version switch is not compatible with " &
-                                   "-S, -I, -R, -r, or -T switches.");
-                     end if;
+                     case data.cmd_version.behavior is
+                        when no_defined_behavior => data.cmd_version.behavior := test_versions;
+                        when test_versions => null;
+                        when others =>
+                           set_error (data, "The --test-version switch is incompatible with " &
+                                        "-[SIRT] switches.");
+                     end case;
                   elsif datum = "-T" or else datum = "--test-pattern" then
-                     if data.cmd_version.behavior = no_defined_behavior then
-                        data.cmd_version.behavior := compare_against_pattern;
-                     else
-                        set_error (data, "The --test-pattern switch is not compatible with " &
-                                   "-S, -I, -R, -r, or -t switches.");
-                     end if;
+                     case data.cmd_version.behavior is
+                        when no_defined_behavior =>
+                           data.cmd_version.behavior := compare_against_pattern;
+                        when compare_against_pattern => null;
+                        when others =>
+                           set_error (data, "The --test-pattern switch is incompatible with " &
+                                        "-[SIRt] switches.");
+                     end case;
                   elsif datum = "-S" or else datum = "--snapshot" then
-                     if data.cmd_version.behavior = no_defined_behavior then
-                        data.cmd_version.behavior := use_rvnindex_snapshot;
-                     else
-                        set_error (data, "The -I switch is not compatible with " &
-                                     "-I, -R, -r, -T, or -t switches.");
-                     end if;
+                     case data.cmd_version.behavior is
+                        when no_defined_behavior =>
+                           data.cmd_version.behavior := use_rvnindex_snapshot;
+                        when use_rvnindex_snapshot => null;
+                        when others =>
+                           set_error (data, "The --snapshot switch is incompatible with " &
+                                        "-[IRTt] switches.");
+                     end case;
                   elsif datum = "-I" or else datum = "--index" then
-                     if data.cmd_version.behavior = no_defined_behavior then
-                        data.cmd_version.behavior := use_rvnindex_release;
-                     else
-                        set_error (data, "The -I switch is not compatible with " &
-                                     "-S, -R, -r, -T, or -t switches.");
-                     end if;
+                     case data.cmd_version.behavior is
+                        when no_defined_behavior =>
+                           data.cmd_version.behavior := use_rvnindex_release;
+                        when use_rvnindex_release => null;
+                        when others =>
+                           set_error (data, "The --index switch is incompatible with " &
+                                        "-[SRTt] switches.");
+                     end case;
                   elsif datum = "-R" or else datum = "--remote" then
-                     if data.cmd_version.behavior = no_defined_behavior or else
-                       data.cmd_version.behavior = use_remote_catalog_state
-                     then
-                        data.cmd_version.behavior := use_remote_catalog_state;
-                     else
-                        set_error (data, "The -R switch is not compatible with " &
-                                     "-S, -I, -T, or -t switches.");
-                     end if;
+                     case data.cmd_version.behavior is
+                        when no_defined_behavior =>
+                           data.cmd_version.behavior := use_remote_catalog_state;
+                        when use_remote_catalog_state => null;
+                        when others =>
+                           set_error (data, "The --remote switch is incompatible with " &
+                                        "-[SITt] switches.");
+                     end case;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   else
-                     if data.cmd_version.behavior = compare_against_pattern or else
-                       data.cmd_version.behavior = test_versions
-                     then
-                        if IsBlank (data.cmd_version.test1) then
-                           data.cmd_version.test1 := datumtxt;
-                        elsif IsBlank (data.cmd_version.test2) then
-                           data.cmd_version.test2 := datumtxt;
-                        else
-                           set_error (data, "Too many arguments.");
-                        end if;
-                     else
-                        handle_trailing_pkgname (data, datum, datumtxt);
-                     end if;
+                     case data.cmd_version.behavior is
+                        when compare_against_pattern |
+                             test_versions =>
+                           if IsBlank (data.cmd_version.test1) then
+                              data.cmd_version.test1 := datumtxt;
+                           elsif IsBlank (data.cmd_version.test2) then
+                              data.cmd_version.test2 := datumtxt;
+                           else
+                              set_error (data, "Too many arguments.");
+                           end if;
+                        when others =>
+                           handle_trailing_pkgname (data, datum, datumtxt);
+                     end case;
                   end if;
                when cv_genrepo =>
                   if datum = sws_quiet or else datum = swl_quiet then
@@ -729,7 +727,6 @@ package body Raven.Cmd.Line is
                when generic_repo_name  => data.common_options.repo_name   := datumtxt;
                when version_match_char => data.cmd_version.match_char     := datum (datum'First);
                when version_not_char   => data.cmd_version.not_char       := datum (datum'First);
-               when version_pkgname    => data.cmd_version.pkg_name       := datumtxt;
                when genrepo_key        => data.cmd_genrepo.key_private    := datumtxt;
                when genrepo_pubkey     => data.cmd_genrepo.key_public     := datumtxt;
                when genrepo_sign_cmd   => data.cmd_genrepo.sign_command   := datumtxt;
