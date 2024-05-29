@@ -119,7 +119,7 @@ scripts: {
        args: ''
        code: <<EOS
 if [ -n "\${PKG_UPGRADE+x}" ]; then
-	echo "upgrade:\${PKG_UPGRADE}">> \${PKG_OUTFILE}
+   echo "upgrade:\${PKG_UPGRADE}">> \${PKG_OUTFILE}
 fi
 EOS
     }
@@ -141,7 +141,7 @@ EOF
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "2" "/"
 	cat << EOF >> test.ucl
 scripts: {
   post-install: [
@@ -149,7 +149,7 @@ scripts: {
        args: ''
        code: <<EOS
 if [ -n "\${PKG_UPGRADE+x}" ]; then
-	echo "upgrade:\${PKG_UPGRADE}">> \${PKG_OUTFILE}
+   echo "upgrade:\${PKG_UPGRADE}">> \${PKG_OUTFILE}
 fi
 EOS
     }
@@ -169,7 +169,7 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn info -R -F ./test-2.pkg
+		rvn info -R -F ./test-2.rvn
 	atf_check \
 		-o ignore \
 		-e empty \
