@@ -232,7 +232,7 @@ package body Raven.Cmd.Version is
 
       DBC.map_nsv_to_rvnindex_version
         (database_directory => database_directory,
-         database_file_path => index_database_path (release),
+         database_file_path => index_database_path (source),
          version_map        => remote_versions);
 
       case OPS.rdb_open_localdb (localdb, Database.installed_packages) is
