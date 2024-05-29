@@ -306,6 +306,11 @@ package body Raven.Cmd.Version is
             end if;
       end case;
 
+      if not Archive.Unix.user_is_root then
+         Event.emit_error ("This function of the version command is restricted to the superuser.");
+         return False;
+      end if;
+
       declare
          option_verbose      : Boolean := comline.common_options.verbose;
          option_match_status : Boolean := (comline.cmd_version.match_char /= Character'First);

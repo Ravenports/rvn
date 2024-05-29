@@ -121,7 +121,7 @@ package body Raven.Database.Cmdversion is
       version_map : in out NV_Pairs.Map)
    is
       func : constant String := "map_nsv_to_rvnindex_version";
-      sql  : constant String := "SELECT subpackage_name, version from rvnindex";
+      sql  : constant String := "SELECT subpackage_name, port_version from rvnindex";
       rvndb    : Database.RDB_Connection;
       new_stmt : SQLite.thick_stmt;
    begin
