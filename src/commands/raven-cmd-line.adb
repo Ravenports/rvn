@@ -711,6 +711,28 @@ package body Raven.Cmd.Line is
                   else
                      data.cmd_fetch.name_patterns.append (datumtxt);
                   end if;
+               when cv_remove =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                  elsif datum = sws_all or else datum = swl_all then
+                     data.common_options.all_installed_pkgs := True;
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     Unset.override_setting (Unset.CFG.case_match, True);
+                     context.register_case_sensitivity (True);
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
+                  elsif datum = "-f" or else datum = "--force" then
+                     data.cmd_remove.force_breakage := True;
+                  elsif datum = "-I" or else datum = "--no-scripts" then
+                     data.cmd_remove.inhibit_scripts := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     data.cmd_remove.name_patterns.append (datumtxt);
+                  end if;
 
             end case;
          else
@@ -865,6 +887,7 @@ package body Raven.Cmd.Line is
          ("info      ", cv_info),
          ("install   ", cv_install),
          ("query     ", cv_query),
+         ("remove    ", cv_remove),
          ("rquery    ", cv_rquery),
          ("search    ", cv_search),
          ("shell     ", cv_shell),
@@ -876,7 +899,6 @@ package body Raven.Cmd.Line is
          --  ("annotate  ", cv_annotate),
          --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
-         --  ("remove    ", cv_remove),
          --  ("upgrade   ", cv_upgrade),
         );
 

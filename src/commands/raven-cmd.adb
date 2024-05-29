@@ -25,6 +25,7 @@ package body Raven.Cmd is
          when cv_install    => return "install";
          when cv_query      => return "query";
          when cv_rquery     => return "rquery";
+         when cv_remove     => return "remove";
          when cv_search     => return "search";
          when cv_shell      => return "shell";
          when cv_shlib      => return "shlib";

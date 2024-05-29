@@ -113,6 +113,7 @@ package body Raven.Cmd.Usage is
          when cv_install => return verb_install (comline);
          when cv_query   => return verb_query (comline);
          when cv_rquery  => return verb_rquery (comline);
+         when cv_remove  => return verb_remove (comline);
          when cv_search  => return verb_search (comline);
          when cv_shell   => return verb_shell (comline);
          when cv_shlib   => return verb_shlib (comline);
@@ -959,6 +960,7 @@ package body Raven.Cmd.Usage is
          display_error (error_msg);
          display_usage (msg1, True);
          display_usage (msg2, False);
+         display_usage (msg3, False);
          display_help_suggestion (cv_fetch);
          return False;
       end alert;
@@ -1023,5 +1025,51 @@ package body Raven.Cmd.Usage is
       return True;
 
    end verb_fetch;
+
+
+   -------------------
+   --  verb_remove  --
+   -------------------
+   function verb_remove  (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "remove [-fInqy] [-CE] pattern [...]";
+         msg2 : constant String := "remove [-fInqy] -a";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_help_suggestion (cv_remove);
+         return False;
+      end alert;
+   begin
+       if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
+      if comline.common_options.all_installed_pkgs then
+         if comline.common_options.exact_match or else
+           comline.common_options.case_sensitive
+         then
+            return alert ("--all not compatible with -C or -E switches");
+         end if;
+      end if;
+
+      if comline.cmd_remove.name_patterns.Is_Empty and then
+        not comline.common_options.all_installed_pkgs
+      then
+         return alert ("One or more file name patterns unless --all specified");
+      end if;
+
+      if not Archive.Unix.user_is_root then
+         return alert ("The clean command is restricted to the superuser.");
+      end if;
+
+      return True;
+
+   end verb_remove;
 
 end Raven.Cmd.Usage;

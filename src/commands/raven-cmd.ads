@@ -33,6 +33,7 @@ private
       cv_info,
       cv_install,
       cv_query,
+      cv_remove,
       cv_rquery,
       cv_search,
       cv_shell,
@@ -44,7 +45,6 @@ private
 
      --   cv_annotate,
      --   cv_autoremove,
-     --   cv_remove,
      --   cv_upgrade,
 
 
@@ -236,6 +236,13 @@ private
          name_patterns : Pkgtypes.Text_List.Vector;
       end record;
 
+   type switches_remove_cmd is
+      record
+         force_breakage     : Boolean := False;
+         inhibit_scripts    : Boolean := False;
+         name_patterns      : Pkgtypes.Text_List.Vector;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -273,6 +280,7 @@ private
          cmd_info               : switches_info_cmd;
          cmd_install            : switches_install_cmd;
          cmd_query              : switches_query_cmd;
+         cmd_remove             : switches_remove_cmd;
          cmd_rquery             : switches_rquery_cmd;
          cmd_search             : switches_search_cmd;
          cmd_shell              : switches_shell_cmd;
