@@ -10,11 +10,10 @@ package Raven.Cmd.Version is
 
 private
 
-   rvndb : Database.RDB_Connection;
-
    DLOAD_FAILED : constant String := "__Download_Failed__";
 
    type download_type is (release, snapshot, reldate);
+   type A_Source is (S_snapshot_index, I_release_index, R_remote_catalog);
 
    function downloaded_etag_path (downfile : download_type) return String;
    function download_file_path (downfile : download_type) return String;
@@ -52,34 +51,23 @@ private
 
    --  output
    function print_version
-     (pkg_version         : String;
-      pkg_nsv             : String;
-      source              : String;
-      version             : String;
+     (installed_nsv       : String;
+      installed_version   : String;
+      source              : A_Source;
+      remote_version      : String;
       option_match_status : Boolean;
       option_avoid_status : Boolean;
       option_verbose      : Boolean;
       option_cmp_operator : Character) return Display_Line;
 
-   --  rvn -R [-l limchar | -L limchar] [-n pkgname] [-r reponame] [-e|-g|-x] pattern
-   --  function do_remote_index
-   --    (match_char  : Character;
-   --     not_char    : Character;
-   --     match       : Database.Match_Behavior;
-   --     pattern     : String;
-   --     matchname   : String;
-   --     auto_update : Boolean;
-   --     quiet       : Boolean;
-   --     reponame    : String) return Boolean;
-
-
-   --  rvn -I [-l limchar | -L limchar] [-n pkgname] [-e|-g|-x] pattern
-   --     function do_conspiracy_index
-   --       (match_char  : Character;
-   --        not_char    : Character;
-   --        match       : PkgDB.T_match;
-   --        pattern     : String;
-   --        matchorigin : String;
-   --        matchname   : String) return Boolean;
+   function compare_against_rvnindex
+     (source              : download_type;
+      option_match_status : Boolean;
+      option_avoid_status : Boolean;
+      option_verbose      : Boolean;
+      behave_cs           : Boolean;
+      behave_exact        : Boolean;
+      option_cmp_operator : Character;
+      pattern             : String) return Boolean;
 
 end Raven.Cmd.Version;

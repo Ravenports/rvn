@@ -606,13 +606,13 @@ package body Raven.Cmd.Usage is
 
       case comline.cmd_version.match_char is
          when Character'First => null;
-         when '<' | '>' | '=' | '?' | '!' => null;
+         when '<' | '>' | '=' | '?' => null;
          when others => return alert ("Illegal character for -l switch");
       end case;
 
       case comline.cmd_version.not_char is
          when Character'First => null;
-         when '<' | '>' | '=' | '?' | '!' => null;
+         when '<' | '>' | '=' | '?' => null;
          when others => return alert ("Illegal character for -L switch");
       end case;
 
@@ -644,6 +644,14 @@ package body Raven.Cmd.Usage is
         comline.common_options.case_sensitive
       then
          return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
+      if IsBlank (comline.common_options.name_pattern) then
+         if comline.common_options.exact_match then
+            return alert ("--exact-match requires a pattern, which is missing");
+         elsif comline.common_options.case_sensitive then
+            return alert ("--case-sensitive requires a pattern, which is missing");
+         end if;
       end if;
 
       return True;

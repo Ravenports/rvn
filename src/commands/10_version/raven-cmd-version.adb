@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Directories;
 with Raven.Version;
 with Raven.Unix;
 with Raven.Strings;
@@ -9,8 +10,10 @@ with Raven.Event;
 with Raven.Context;
 with Raven.Fetch;
 with Raven.Database.Cmdversion;
+with Raven.Database.Operations;
+with Raven.Repository;
 with curl_callbacks;
-with Ada.Directories;
+with Archive.Unix;
 
 Use Raven.Strings;
 
@@ -20,6 +23,7 @@ package body Raven.Cmd.Version is
    package VER renames Raven.Version;
    package RCU renames Raven.Cmd.Unset;
    package DBC renames Raven.Database.Cmdversion;
+   package OPS renames Raven.Database.Operations;
    package CAL renames curl_callbacks;
 
    ----------------------
@@ -100,32 +104,38 @@ package body Raven.Cmd.Version is
    --  print_version  --
    ---------------------
    function print_version
-     (pkg_version         : String;
-      pkg_nsv             : String;
-      source              : String;
-      version             : String;
+     (installed_nsv       : String;
+      installed_version   : String;
+      source              : A_Source;
+      remote_version      : String;
       option_match_status : Boolean;
       option_avoid_status : Boolean;
       option_verbose      : Boolean;
       option_cmp_operator : Character) return Display_Line
    is
-      key  : Character;
+      function remote_src return String is
+      begin
+         case source is
+            when S_snapshot_index => return "ports snapshot";
+            when I_release_index  => return "ports release";
+            when R_remote_catalog => return "packages catalog";
+         end case;
+      end remote_src;
+
+      key  : Character := '?';   --  Default: Orphaned (blank remote version)
       line : Display_Line;
    begin
       line.valid := False;
-      if IsBlank (version) then
-         if IsBlank (source) then
-            key := '!';
-         else
-            key := '?';
-         end if;
-      else
-         case VER.pkg_version_cmp (pkg_version, version) is
+      line.identifier := SUS (installed_nsv);
+      line.extra_info := SU.Null_Unbounded_String;
+      if not IsBlank (remote_version) then
+         case VER.pkg_version_cmp (installed_version, remote_version) is
             when -1 => key := '<';
             when  0 => key := '=';
             when  1 => key := '>';
          end case;
       end if;
+      line.comparison := key;
 
       if option_match_status and then option_cmp_operator /= key then
          --  skip records where the key does not match given character
@@ -137,31 +147,112 @@ package body Raven.Cmd.Version is
          return line;
       end if;
 
-      line.comparison := key;
-      --  This behavior differs from pkgng
-      --  Display name-version always.  Displaying origin when search was origin-based
-      --  no longer makes since with a many-to-1 subpackage relationship to origin.
-      line.identifier := SUS (pkg_nsv & "-" & pkg_version);
-
       if option_verbose then
          case key is
             when '<' =>
-               line.extra_info := SUS ("needs updating (" & source & " has " & version & ")");
+               line.extra_info := SUS ("behind " & remote_src & " (" & installed_version &
+                                         " < " & remote_version & ")");
             when '=' =>
-               line.extra_info := SUS ("up-to-date with " & source);
+               line.extra_info := SUS ("latest version (" & installed_version & ")");
             when '>' =>
-               line.extra_info := SUS ("newer (" & source & " has " & version & ")");
+               line.extra_info := SUS ("ahead of " & remote_src & " (" & installed_version &
+                                         " > " & remote_version & ")");
             when '?' =>
-               line.extra_info := SUS ("orphaned: " & pkg_nsv);
-            when '!' =>
-               line.extra_info := SUS ("Comparison failed");
+               line.extra_info := SUS ("orphaned, package not present in " & remote_src);
             when others =>
-               line.extra_info := SUS ("?????");
+               null;
          end case;
       end if;
       line.valid := True;
       return line;
    end print_version;
+
+
+   --------------------------------
+   --  compare_against_rvnindex  --
+   --------------------------------
+   function compare_against_rvnindex
+     (source              : download_type;
+      option_match_status : Boolean;
+      option_avoid_status : Boolean;
+      option_verbose      : Boolean;
+      behave_cs           : Boolean;
+      behave_exact        : Boolean;
+      option_cmp_operator : Character;
+      pattern             : String) return Boolean
+   is
+      remote_versions     : Pkgtypes.NV_Pairs.Map;
+      local_installation  : Pkgtypes.NV_Pairs.Map;
+      localdb             : Database.RDB_Connection;
+      source2             : A_Source;
+
+      procedure print (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         nsv_key : Text renames Pkgtypes.NV_Pairs.Key (Position);
+         remote_version : Text := SU.Null_Unbounded_String;
+         line : Display_Line;
+      begin
+         if remote_versions.Contains (nsv_key) then
+            remote_version := remote_versions.Element (nsv_key);
+         end if;
+
+         line := print_version (installed_nsv       => USS (nsv_key),
+                                installed_version   => USS (Pkgtypes.NV_Pairs.Element (Position)),
+                                source              => source2,
+                                remote_version      => USS (remote_version),
+                                option_match_status => option_match_status,
+                                option_avoid_status => option_avoid_status,
+                                option_verbose      => option_verbose,
+                                option_cmp_operator => option_cmp_operator);
+         if not line.valid then
+            return;
+         end if;
+
+         if option_verbose then
+            Event.emit_message (line.comparison & ' ' & pad_right (USS (line.identifier), 48) &
+                                  USS (line.extra_info));
+         else
+            Event.emit_message (line.comparison & ' ' & USS (line.identifier));
+         end if;
+      end print;
+   begin
+      case source is
+         when reldate =>
+            Event.emit_debug (high_level,
+                              "Developer error: Invalid compare_against_rvnindex index_type");
+            return False;
+         when snapshot =>
+            source2 := S_snapshot_index;
+         when release =>
+            source2 := I_release_index;
+      end case;
+      if not create_index_database (source) then
+         return False;
+      end if;
+
+      DBC.map_nsv_to_rvnindex_version
+        (database_directory => database_directory,
+         database_file_path => index_database_path (release),
+         version_map        => remote_versions);
+
+      case OPS.rdb_open_localdb (localdb, Database.installed_packages) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      DBC.map_nsv_to_local_version
+        (db           => localdb,
+         behave_cs    => behave_cs,
+         behave_exact => behave_exact,
+         pattern      => pattern,
+         version_map  => local_installation);
+
+      OPS.rdb_close (localdb);
+
+      local_installation.Iterate (print'Access);
+      return True;
+
+   end compare_against_rvnindex;
 
 
    --------------------------------
@@ -171,7 +262,12 @@ package body Raven.Cmd.Version is
    is
       type reference_source is (unset, release_index, snapshot_index, repo_catalog);
       reference : reference_source := unset;
+      behave_cs  : Boolean := comline.common_options.case_sensitive;
    begin
+      if Context.reveal_case_sensitive then
+         behave_cs := True;
+      end if;
+
       case comline.cmd_version.behavior is
          when test_versions =>
             return do_testversion (pkgname1 => USS (comline.cmd_version.test1),
@@ -188,26 +284,26 @@ package body Raven.Cmd.Version is
          when use_remote_catalog_state =>
             reference := repo_catalog;
          when no_defined_behavior =>
-            --  happens when no -t, -T, -S, -I, -R, or -r switch set
+            --  happens when no -t, -T, -S, -I, -R switch set
             declare
                versionsrc : constant String := RCU.config_setting (RCU.CFG.version_source);
             begin
                if versionsrc'Length > 0 then
                   case versionsrc (versionsrc'First) is
-                     when 'S' => reference := snapshot_index;
-                     when 'I' => reference := release_index;
-                     when 'R' => reference := repo_catalog;
+                     when 'S' | 's' => reference := snapshot_index;
+                     when 'I' | 'i' => reference := release_index;
+                     when 'R' | 'r' => reference := repo_catalog;
                      when others =>
                         Event.emit_message
                           ("Invalid VERSION_SOURCE in configuration: " & versionsrc);
                         Event.emit_message ("Using latest release index as the reference.");
                   end case;
                end if;
-               if reference = unset then
-                  --  Source unspecified, default to using the latest release index
-                  reference := release_index;
-               end if;
             end;
+            if reference = unset then
+               --  Source unspecified, default to using the latest release index
+               reference := release_index;
+            end if;
       end case;
 
       declare
@@ -215,8 +311,6 @@ package body Raven.Cmd.Version is
          option_match_status : Boolean := (comline.cmd_version.match_char /= Character'First);
          option_avoid_status : Boolean;
          option_cmp_operator : Character;
-
-         --  match          : Database.Match_Behavior := Database.MATCH_ALL;
       begin
          --  -l/-L are mutually exclusive and both can't be set.
          if option_match_status then
@@ -230,12 +324,33 @@ package body Raven.Cmd.Version is
          end if;
 
          case reference is
-            when unset => return False;  --  Can't happen
+            when unset =>
+               return False;  --  Can't happen
             when release_index =>
-               return create_index_database (release);
+               return compare_against_rvnindex
+                    (source              => release,
+                     option_match_status => option_match_status,
+                     option_avoid_status => option_avoid_status,
+                     option_verbose      => option_verbose,
+                     behave_cs           => behave_cs,
+                     behave_exact        => comline.common_options.exact_match,
+                     option_cmp_operator => option_cmp_operator,
+                     pattern             => USS (comline.common_options.name_pattern));
+
             when snapshot_index =>
-               return create_index_database (snapshot);
+               return compare_against_rvnindex
+                    (source              => snapshot,
+                     option_match_status => option_match_status,
+                     option_avoid_status => option_avoid_status,
+                     option_verbose      => option_verbose,
+                     behave_cs           => behave_cs,
+                     behave_exact        => comline.common_options.exact_match,
+                     option_cmp_operator => option_cmp_operator,
+                     pattern             => USS (comline.common_options.name_pattern));
+
             when repo_catalog =>
+
+               --   --------------------------------------------------
                --  TODO
                return False;
          end case;
@@ -386,21 +501,48 @@ package body Raven.Cmd.Version is
                         Event.emit_debug (moderate, "Cached rvnindex database still valid.");
                         return True;
                      end if;
-                     return DBC.create_rvnindex (rvndb => rvndb,
-                                                 database_directory => database_directory,
+                     return DBC.create_rvnindex (database_directory => database_directory,
                                                  database_file_path => database_file_path,
                                                  rvnindex_file_path => rvnindex_file_path);
                   when Fetch.file_downloaded =>
                      if DIR.Exists (index_database_path (index_type)) then
                         Event.emit_debug (moderate, "Cached rvnindex database is obsolete.");
                      end if;
-                     return DBC.create_rvnindex (rvndb => rvndb,
-                                                 database_directory => database_directory,
+                     return DBC.create_rvnindex (database_directory => database_directory,
                                                  database_file_path => database_file_path,
                                                  rvnindex_file_path => rvnindex_file_path);
                end case;
             end;
       end case;
    end create_index_database;
+
+
+   -----------------------
+   --  refresh_catalog  --
+   -----------------------
+   function refresh_catalog (single_repo : String) return Boolean
+   is
+      mirrors : Repository.A_Repo_Config_Set;
+   begin
+      if Archive.Unix.user_is_root then
+         Repository.load_repository_configurations (mirrors, single_repo);
+         if not Repository.create_local_catalog_database
+           (remote_repositories  => mirrors,
+            forced               => False,
+            quiet                => True)
+         then
+            Event.emit_error ("Failed to update the local catalog");
+         end if;
+      end if;
+
+      if not OPS.localdb_exists (Database.catalog) then
+         Event.emit_error
+           ("Catalog database is missing, should be here: " & OPS.localdb_path (Database.catalog));
+         return False;
+      end if;
+
+      return True;
+   end refresh_catalog;
+
 
 end Raven.Cmd.Version;

@@ -7,9 +7,10 @@ with Raven.Database.Operations;
 with Raven.Database.CommonSQL;
 with Raven.Event;
 with Raven.Strings;
+with Raven.Pkgtypes;
 
 use Raven.Strings;
-
+use Raven.Pkgtypes;
 
 package body Raven.Database.Cmdversion is
 
@@ -22,8 +23,7 @@ package body Raven.Database.Cmdversion is
    --  create_rvnindex  --
    -----------------------
    function create_rvnindex
-     (rvndb              : in out Database.RDB_Connection;
-      database_directory : String;
+     (database_directory : String;
       database_file_path : String;
       rvnindex_file_path : String) return Boolean
    is
@@ -31,6 +31,7 @@ package body Raven.Database.Cmdversion is
       srcfile   : constant String := "raven-cmd-version.adb";
       func      : constant String := "create_index_database";
       rb_msg    : constant String := "Failed to rollback transaction on " & database_file_path;
+      rvndb     : Database.RDB_Connection;
       handle    : TIO.File_Type;
       revert    : Boolean := False;
    begin
@@ -48,7 +49,7 @@ package body Raven.Database.Cmdversion is
 
       if not CSQ.transaction_begin (rvndb.handle, srcfile, func, savepoint) then
          Event.emit_error ("Failed to start transaction on " & database_file_path);
-         return False;
+         goto cleanup_mess;
       end if;
 
       begin
@@ -91,7 +92,7 @@ package body Raven.Database.Cmdversion is
          if CSQ.transaction_rollback (rvndb.handle, srcfile, func, savepoint) then
             Event.emit_error (rb_msg);
          end if;
-         return False;
+         goto cleanup_mess;
       end if;
 
       if not CSQ.transaction_commit (rvndb.handle, srcfile, func, savepoint) then
@@ -99,11 +100,125 @@ package body Raven.Database.Cmdversion is
          if CSQ.transaction_rollback (rvndb.handle, srcfile, func, savepoint) then
             Event.emit_error (rb_msg);
          end if;
-         return False;
+         goto cleanup_mess;
       end if;
       DOP.rindex_db_close (rvndb);
       return True;
 
+      <<cleanup_mess>>
+      DOP.rindex_db_close (rvndb);
+      return False;
+
    end create_rvnindex;
+
+
+   -----------------------------------
+   --  map_nsv_to_rvnindex_version  --
+   -----------------------------------
+   procedure map_nsv_to_rvnindex_version
+     (database_directory : String;
+      database_file_path : String;
+      version_map : in out NV_Pairs.Map)
+   is
+      func : constant String := "map_nsv_to_rvnindex_version";
+      sql  : constant String := "SELECT subpackage_name, version from rvnindex";
+      rvndb    : Database.RDB_Connection;
+      new_stmt : SQLite.thick_stmt;
+   begin
+      version_map.clear;
+      case Operations.rindex_db_open
+        (db           => rvndb,
+         truncate_db  => False,
+         index_dbdir  => database_directory,
+         index_dbname => tail (database_file_path, "/")) is
+         when RESULT_OK => null;
+         when others => return;
+      end case;
+
+      if not SQLite.prepare_sql (rvndb.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (rvndb.handle, internal_srcfile, func, sql);
+         DOP.rindex_db_close (rvndb);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  nsv : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  ver : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  version_map.Insert (SUS (nsv), SUS (ver));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (rvndb.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+      DOP.rindex_db_close (rvndb);
+   end map_nsv_to_rvnindex_version;
+
+
+   --------------------------------
+   --  map_nsv_to_local_version  --
+   --------------------------------
+   procedure map_nsv_to_local_version
+     (db           : RDB_Connection;
+      behave_cs    : Boolean;
+      behave_exact : Boolean;
+      pattern      : String;
+      version_map  : in out NV_Pairs.Map)
+   is
+      func : constant String := "map_nsv_to_local_version";
+      bsql : constant String :=
+        "SELECT namebase ||'-'|| subpackage ||'-'|| variant as nsv, version from packages";
+      new_stmt : SQLite.thick_stmt;
+
+      function sql return String is
+      begin
+         if IsBlank (pattern) then
+            return bsql;
+         end if;
+         if behave_exact then
+            return bsql & " WHERE nsv = ?";
+         elsif behave_cs then
+            return bsql &" WHERE nsv GLOB ?";
+         end if;
+         return bsql & " WHERE nsv LIKE ?";
+      end sql;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      if not IsBlank (pattern) then
+         if not behave_exact and then not behave_cs then
+            SQLite.bind_string (new_stmt, 1, pattern & '%');
+         else
+            SQLite.bind_string (new_stmt, 1, pattern);
+         end if;
+      end if;
+      debug_running_stmt (new_stmt);
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  nsv : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  ver : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  version_map.Insert (SUS (nsv), SUS (ver));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+            when SQLite.no_more_data => exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end map_nsv_to_local_version;
 
 end Raven.Database.Cmdversion;

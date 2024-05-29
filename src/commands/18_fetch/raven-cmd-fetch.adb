@@ -45,11 +45,6 @@ package body Raven.Cmd.Fetch is
       end if;
 
       if comline.cmd_fetch.avail_updates then
-         --  TODO: Use logic from "rvn version" command to determine what can be
-         --        updated.  The pass each NSV identifier through the "patterns" container.
-         --        Use FET.rvn_core_retrieval normally (select_deps hardcoded to False,
-         --        select_all hardcoded to False, behave_exact hardcoded to ** TRUE **,
-         --        behave_cs hardcoded to false.
          declare
             upgrade_list : Pkgtypes.Text_List.Vector;
          begin
