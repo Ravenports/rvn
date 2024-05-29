@@ -7,7 +7,7 @@ tests_init \
     test_pattern \
     test_pattern_names_stdin \
     test_patterns_stdin \
-#	compare
+
 
 version_body() {
 	atf_check -o inline:"<\n" -s exit:0 rvn version -t 1 2
@@ -57,32 +57,3 @@ EOF
     echo $(cat PATTERNS | rvn version -T "AdaSAT-dev-standard-24.0.0" -)
 }
 
-compare_body() {
-    # rvn info doesn't do this and likely will not ever do this (undocumented in man page)
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg test test 5.20_3
-
-	atf_check \
-		-o match:".*Installing.*" \
-		rvn register -M test.ucl
-	atf_check \
-		-o ignore \
-		rvn info "test>0"
-	atf_check \
-		-o ignore \
-		-e ignore \
-		-s exit:1 \
-		rvn info "test<5"
-	atf_check \
-		-o ignore \
-		rvn info "test>5<6"
-	atf_check \
-		-o ignore \
-		-e ignore \
-		-s exit:1 \
-		rvn info "test>5<5.20"
-	atf_check \
-		-o ignore \
-		-e ignore \
-		-s exit:1 \
-		rvn info "test>5.20_3<6"
-}

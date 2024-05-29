@@ -7,27 +7,27 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl SIR
-.Op Fl hqvU
-.Op Fl l Ar limchar | Fl L Ar limchar
-.Op Fl CE
+.Op Fl vU
 .Op Fl r Ar reponame
-.Op Fl n Ar pkgname
+.Op Fl l Ar flag | Fl L Ar flag
+.Op Fl CE
+.Ar pattern
 .Nm
 .Fl t Ar version1 Ar version2
 .Nm
 .Fl T Ar pkgname Ar pattern
 .Pp
 .Nm
-.Op Fl -{snapshot,index,remote}
-.Op Fl -{quiet,verbose,no-repo-update}
-.Op Fl -like Ar limchar | -not-like Ar limchar
-.Op Fl -{case-sensitive,exact-match}
-.Op Fl -repository Ar reponame
-.Op Fl -match-name Ar pkgname
+.Op Cm --{snapshot,index,remote}
+.Op Cm --{verbose,no-repo-update}
+.Op Cm --repository Ar reponame
+.Op Cm --like Ar flag Cm | --not-like Ar flag
+.Op Cm --{case-sensitive,exact-match}
+.Ar pattern
 .Nm
-.Fl -test-version Ar version1 Ar version2
+.Cm --test-version Ar version1 Ar version2
 .Nm
-.Fl -test-pattern Ar pkgname Ar pattern
+.Cm --test-pattern Ar pkgname Ar pattern
 .Sh DESCRIPTION
 .Nm
 is used for generating a report of packages installed by
@@ -56,22 +56,22 @@ version reference.
 When
 .Fl R
 is used,
-the package repository catalogs will be automatically updated whenever
+the package repository catalog will be automatically updated whenever
 .Nm
-is run by a user ID with write access to the package database,
-unless disabled by the
+is run by the effective superuser unless disabled by the
 .Fl U
 flag or setting
-.Cm REPO_AUTOUPDATE
+.Va REPO_AUTOUPDATE
 to
-.Sy NO
+.Dq Li NO
 in
 .Xr rvn.conf 5 .
 .Pp
-By default, a case-insensitive match against the leading side
-of the namebase-subpackage-variant triplet name is performed for the
-.F1 n
-option.
+When the optional
+.Ar pattern
+is given, a case-insensitive match against the leading side
+of the namebase-subpackage-variant triplet name is performed by default,
+otherwise all installed packages will be checked.
 .Pp
 When comparing package versions the package name and a comparison character
 are printed:
@@ -88,11 +88,6 @@ testing new ports.
 The installed package does not appear in the index.
 The most likely cause of this scenario is that the port that generated the
 package was removed from Ravenports after installation.
-.It Li \&!
-The installed package exists in the index but for some reason,
-.Nm
-was unable to compare the version number of the installed package
-with the corresponding entry in the index.
 .El
 .Sh OPTIONS
 The following options are supported by
@@ -126,38 +121,24 @@ from remote.
 This only has any effect in combination with the
 .Fl R
 option.
-Automatic repository catalog updates are only attempted when the
-effective UID of the process has write access to the package database.
-Otherwise they are silently ignored.
-.It Fl r Ar reponame , Fl -repository Ar reponame
-Compare installed package versions to packages available from the
-named repository only, irrespective of the configured
-.Dq active
-status from
-.Pa repo.conf .
-By default all repository catalogs marked
-.Dq active
-are used for version comparisons.
-Implies
-.Fl R .
-.It Fl q , Fl -quiet
-Be quiet.
-Less output will be produced.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
 .It Fl v , Fl -verbose
-Be verbose.
-.It Fl l Ar limchar , Fl -like Ar limchar
+Additionally show installed and remote versions and source.
+.It Fl l Ar flag , Fl -like Ar flag
 Display only the packages which status flag matches the one specified by
-.Ar limchar .
-.It Fl L Ar limchar , Fl -not-like Ar limchar
+.Ar flag .
+.It Fl L Ar flag , Fl -not-like Ar flag
 Does the opposite of
 .Fl l
 flag.
 Displays the packages which status flag does not match the one
 specified by
-.Ar limchar
-.It Fl n Ar pkgname , Fl -match-name Ar pkgname
-Display only the packages which name matches
-.Ar pkgname .
+.Ar flag
 .It Fl t Ar version1 Ar version2 , Fl -test-version Ar version1 Ar version2
 Test a pair of version number strings and exit.
 The output consists of one of the single characters
