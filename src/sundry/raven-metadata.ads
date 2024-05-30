@@ -39,8 +39,6 @@ package Raven.Metadata is
       messages
      );
 
-   type message_type is (always, install, deinstall, upgrade);
-
    --  convert field to key string
    function metadata_field_label (field : metadata_field) return String;
 
@@ -54,7 +52,7 @@ package Raven.Metadata is
    --  Returns the message as function of the phase (install, deinstall, upgrade)
    function get_message
      (metatree : ThickUCL.UclTree;
-      phase : message_type) return String;
+      phase : Pkgtypes.Message_Type) return String;
 
    --  The dependencies are stored in an object, and this procedure retrieves the sorted keys
    procedure obtain_dependencies_keys
@@ -98,7 +96,7 @@ private
    package WL renames Archive.Whitelist;
 
    --  convert message type to key string
-   function message_key (mtype : message_type) return String;
+   function message_key (mtype : Pkgtypes.Message_Type) return String;
 
    --  extract lists out of metadata.
    procedure set_list
@@ -113,8 +111,13 @@ private
 
    procedure set_scripts
      (metatree : ThickUCL.UclTree;
-      new_dict : in out Pkgtypes.Script_Set);
+      new_list : in out Pkgtypes.Script_Set);
 
-   function convert_to_phase (S : String; phase : in out WL.package_phase) return Boolean;
+   procedure set_messages
+     (metatree : ThickUCL.UclTree;
+      new_list : in out Pkgtypes.Message_Set);
+
+   function convert_to_phase (S : String; phase : out WL.package_phase) return Boolean;
+   function convert_to_mtype (S : String; mtype : out Pkgtypes.Message_Type) return boolean;
 
 end Raven.Metadata;

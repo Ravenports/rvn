@@ -2,10 +2,14 @@
 --  Reference: /License.txt
 
 with Ucl;
+with Ada.Characters.Latin_1;
 with Raven.Unix;
+with Raven.event;
 with Raven.Strings; Use Raven.Strings;
 
 package body Raven.Metadata is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    ----------------------------
    --  metadata_field_label  --
@@ -97,41 +101,84 @@ package body Raven.Metadata is
    -------------------
    --  get_message  --
    -------------------
-   function get_message (metatree : ThickUCL.UclTree; phase : message_type) return String
+   function get_message (metatree : ThickUCL.UclTree; phase : Pkgtypes.Message_Type) return String
    is
-      dtype : ThickUCL.Leaf_type;
-      mtype : ThickUCL.Leaf_type;
-      key   : constant String := metadata_field_label (messages);
-      mkey  : constant String := message_key (phase);
-      vndx  : ThickUCL.object_index;
+      key      : constant String := metadata_field_label (messages);
+      mkey     : constant String := message_key (phase);
+      arrndx   : ThickUCL.array_index;
+      num_msg  : Natural := 0;
+      response : Text := SU.Null_Unbounded_String;
+
+      --  stump-level messages key "messages" which is type array
+      --  Elements of array are objects.
+      --  Objects contain minimum of "type" field (string) (enum "install", "remove", "upgrade")
+      --          and "message" field string.
+      --  If of type "upgrade" there are optionally "max_version" and "min_version" string fields
+      --  There can be multiple of the same type.
+
+      procedure check_message (mndx : Natural)
+      is
+         type_key    : constant String := "type";
+         msg_key     : constant String := "message";
+         keys        : ThickUCL.jar_string.Vector;
+         vndx        : ThickUCL.object_index;
+         mtype       : Pkgtypes.Message_Type;
+      begin
+         case metatree.get_array_element_type (arrndx, mndx) is
+            when ThickUCL.data_object => null;
+            when others => return;
+         end case;
+
+         vndx := metatree.get_array_element_object (arrndx, mndx);
+         metatree.get_object_object_keys (vndx, keys);
+         if not ThickUCL.key_found (keys, type_key) or else
+           not ThickUCL.key_found (keys, msg_key)
+         then
+            return;
+         end if;
+         declare
+            mtype_str   : constant String := metatree.get_object_value (vndx, type_key);
+            message_str : constant String := metatree.get_object_value (vndx, msg_key);
+
+            use type Pkgtypes.Message_Type;
+         begin
+            if convert_to_mtype (mtype_str, mtype) then
+               if mtype = phase then
+                  if message_str (message_str'Last) = LAT.LF then
+                     SU.Append (response, message_str);
+                  else
+                     SU.Append (response, message_str & LAT.LF);
+                  end if;
+               end if;
+            end if;
+         end;
+      end check_message;
    begin
-      dtype := ThickUCL.get_data_type (metatree, key);
-      case dtype is
-         when ThickUCL.data_object =>
-            vndx := metatree.get_index_of_base_ucl_object (key);
-            mtype := metatree.get_object_data_type (vndx, mkey);
-            case mtype is
-               when ThickUCL.data_string =>
-                  return metatree.get_object_value (vndx, mkey);
-               when others =>
-                  return "";  --  no message of this type (common)
-            end case;
-         when others =>
-            return "Package construction error - message not stored in object";
+      case metatree.get_data_type (key) is
+         when ThickUCL.data_array => null;
+         when others => return "Package construction error - message not stored in an array";
       end case;
+
+      arrndx := metatree.get_index_of_base_array (key);
+      num_msg := metatree.get_number_of_array_elements (arrndx);
+      for mndx in 0 .. num_msg - 1 loop
+         check_message (mndx);
+      end loop;
+
+      return USS (response);
+
    end get_message;
 
 
    -------------------
    --  message_key  --
    -------------------
-   function message_key (mtype : message_type) return String is
+   function message_key (mtype : Pkgtypes.Message_Type) return String is
    begin
       case mtype is
-         when always    => return "always";
-         when install   => return "install";
-         when deinstall => return "deinstall";
-         when upgrade   => return "upgrade";
+         when Pkgtypes.install   => return "install";
+         when Pkgtypes.deinstall => return "remove";
+         when Pkgtypes.upgrade   => return "upgrade";
       end case;
    end message_key;
 
@@ -350,7 +397,7 @@ package body Raven.Metadata is
    ------------------------
    --  convert_to_phase  --
    ------------------------
-   function convert_to_phase (S : String; phase : in out WL.package_phase) return Boolean
+   function convert_to_phase (S : String; phase : out WL.package_phase) return Boolean
    is
    begin
       phase := WL.pre_install;
@@ -387,12 +434,34 @@ package body Raven.Metadata is
       return True;
    end convert_to_phase;
 
+
+   ------------------------
+   --  convert_to_mtype  --
+   ------------------------
+   function convert_to_mtype (S : String; mtype : out Pkgtypes.Message_Type) return boolean
+   is
+      lowstr : constant String := lowercase (S);
+   begin
+      mtype := Pkgtypes.install;
+      if lowstr = "install" then
+         null;
+      elsif lowstr = "remove" then
+         mtype := Pkgtypes.deinstall;
+      elsif lowstr = "upgrade" then
+         mtype := Pkgtypes.upgrade;
+      else
+         return False;
+      end if;
+      return True;
+   end convert_to_mtype;
+
+
    -------------------
    --  set_scripts  --
    -------------------
    procedure set_scripts
      (metatree : ThickUCL.UclTree;
-      new_dict : in out Pkgtypes.Script_Set)
+      new_list : in out Pkgtypes.Script_Set)
    is
       key   : constant String := metadata_field_label (scripts);
       vndx  : ThickUCL.object_index;
@@ -401,7 +470,7 @@ package body Raven.Metadata is
       procedure scan_phase (Position : ThickUCL.jar_string.Cursor)
       is
          phase_str   : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
-         phase       : WL.package_phase := WL.pre_install;
+         phase       : WL.package_phase;
          num_scripts : Natural;
          andx        : ThickUCL.array_index;
          vndx2       : ThickUCL.object_index;
@@ -429,7 +498,7 @@ package body Raven.Metadata is
                               begin
                                  sp.args := SUS (args);
                                  sp.code := SUS (code);
-                                 new_dict (phase).Append (sp);
+                                 new_list (phase).Append (sp);
                               end;
                            when others => null;
                         end case;
@@ -451,6 +520,82 @@ package body Raven.Metadata is
       metatree.get_object_object_keys (vndx, jar);
       jar.Iterate (scan_phase'Access);
    end set_scripts;
+
+
+   --------------------
+   --  set_messages  --
+   --------------------
+   procedure set_messages
+     (metatree : ThickUCL.UclTree;
+      new_list : in out Pkgtypes.Message_Set)
+   is
+      key     : constant String := metadata_field_label (messages);
+      arrndx  : ThickUCL.array_index;
+      num_msg : Natural := 0;
+
+      procedure analyze_message (mndx : Natural)
+      is
+         type_key    : constant String := "type";
+         msg_key     : constant String := "message";
+         min_key     : constant String := "min_version";
+         max_key     : constant String := "max_version";
+         keys        : ThickUCL.jar_string.Vector;
+         vndx        : ThickUCL.object_index;
+         mtype       : Pkgtypes.Message_Type;
+         myrec       : Pkgtypes.Message_Parameters;
+      begin
+         case metatree.get_array_element_type (arrndx, mndx) is
+            when ThickUCL.data_object => null;
+            when others =>
+               --  message element is not an object as expected
+               return;
+         end case;
+         vndx := metatree.get_array_element_object (arrndx, mndx);
+         metatree.get_object_object_keys (vndx, keys);
+         if not ThickUCL.key_found (keys, type_key) or else
+           not ThickUCL.key_found (keys, msg_key)
+         then
+            return;
+         end if;
+         declare
+            mtype_str   : constant String := metatree.get_object_value (vndx, type_key);
+            message_str : constant String := metatree.get_object_value (vndx, msg_key);
+         begin
+            if not convert_to_mtype (mtype_str, mtype) then
+               --  failed to convert message type to know value. ignore
+               Event.emit_debug (moderate, "set_messages(): Bad 'type key': " & mtype_str);
+            end if;
+            myrec.message := SUS (message_str);
+         end;
+         if ThickUCL.key_found (keys, min_key) then
+            declare
+               minver_str : constant String := metatree.get_object_value (vndx, min_key);
+            begin
+               myrec.minimum_version := SUS (minver_str);
+            end;
+         end if;
+         if ThickUCL.key_found (keys, max_key) then
+            declare
+               maxver_str : constant String := metatree.get_object_value (vndx, max_key);
+            begin
+               myrec.maximum_version := SUS (maxver_str);
+            end;
+         end if;
+      end analyze_message;
+   begin
+      case metatree.get_data_type (key) is
+         when ThickUCL.data_array => null;
+         when others =>
+            --  messages field is not an array; corrupt
+            return;
+      end case;
+
+      arrndx := metatree.get_index_of_base_array (key);
+      num_msg := metatree.get_number_of_array_elements (arrndx);
+      for mndx in 0 .. num_msg - 1 loop
+         analyze_message (mndx);
+      end loop;
+   end set_messages;
 
 
    --------------------------

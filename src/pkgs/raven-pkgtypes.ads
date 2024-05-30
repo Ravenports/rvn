@@ -17,6 +17,7 @@ package Raven.Pkgtypes is
    type Epoch_Timestamp    is mod 2**64;
 
    type License_Logic is (LICENSE_DUAL, LICENSE_MULTI, LICENSE_SINGLE, LICENSE_UNLISTED);
+   type Message_Type is (install, deinstall, upgrade);
 
    Package_Not_Installed : constant Package_ID := 0;
 
@@ -44,6 +45,19 @@ package Raven.Pkgtypes is
       Index_Type   => Natural);
 
    type Script_Set is array (Archive.Whitelist.package_phase) of Script_List.Vector;
+
+   type Message_Parameters is
+      record
+         message : Text;
+         minimum_version : Text;
+         maximum_version : Text;
+      end record;
+
+   package Message_List is new CON.Vectors
+     (Element_Type => Message_Parameters,
+      Index_Type   => Natural);
+
+   type Message_Set is array (Message_Type) of Message_List.Vector;
 
    type File_Item is
       record
@@ -85,6 +99,7 @@ package Raven.Pkgtypes is
          dependencies  : NV_Pairs.Map;
          annotations   : NV_Pairs.Map;
          options       : NV_Pairs.Map;
+         messages      : Message_Set;
          scripts       : Script_Set;
          files         : File_List.Vector;
       end record;
