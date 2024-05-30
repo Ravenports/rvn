@@ -43,6 +43,7 @@ package body Raven.Database.UserQuery is
          ("#files    ", token_num_files),
          ("#groups   ", token_num_groups),
          ("#lics     ", token_num_licenses),
+         ("#msgs     ", token_num_messages),
          ("#notes    ", token_num_annotations),
          ("#opts     ", token_num_options),
          ("#rdeps    ", token_num_reverse_deps),
@@ -77,6 +78,9 @@ package body Raven.Database.UserQuery is
          ("xfile:sum ", token_ml_files_digest),
          ("xgroup    ", token_ml_groups),
          ("xlic      ", token_ml_licenses),
+         ("xmsgi     ", token_ml_msg_install),
+         ("xmsgr     ", token_ml_msg_remove),
+         ("xmsgu     ", token_ml_msg_upgrade),
          ("xnote:key ", token_ml_notes_key),
          ("xnote:val ", token_ml_notes_value),
          ("xopt:key  ", token_ml_opt_key),
@@ -150,6 +154,7 @@ package body Raven.Database.UserQuery is
          when token_num_shlibs_pro   => return count_subquery ("pkg_libs_required", id);
          when token_num_shlibs_req   => return count_subquery ("pkg_libs_provided", id);
          when token_num_users        => return count_subquery ("pkg_users", id);
+         when token_num_messages     => return count_subquery ("pkg_messages", id);
          when token_abi              => return "p.abi";
          when token_automatic        => return "p.automatic";
          when token_comment          => return "p.comment";
@@ -191,6 +196,9 @@ package body Raven.Database.UserQuery is
          when token_ml_shlibs_pro    => return "ml.name";
          when token_ml_shlibs_req    => return "ml.name";
          when token_ml_users         => return "ml.name";
+         when token_ml_msg_install   |
+              token_ml_msg_remove    |
+              token_ml_msg_upgrade   => return "ml.message";
       end case;
    end get_column;
 
@@ -220,8 +228,8 @@ package body Raven.Database.UserQuery is
       case token is
          when token_unrecognized |
               token_size_iec_units |
-              token_ml_categories .. token_ml_users => return unsupported;
-         when token_num_categories .. token_num_users |
+              token_ml_categories .. token_ml_msg_upgrade => return unsupported;
+         when token_num_categories .. token_num_messages |
               token_size_bytes |
               token_automatic |
               token_install_time => return numeric;
@@ -643,7 +651,7 @@ package body Raven.Database.UserQuery is
       --  Some groups of ML data are considered "1" column since they all use the same join
       type mlc is
         (depends, revdeps, categories, files, directories, options, licenses, users, groups,
-         libsreq, libsprov, libsadj, notes);
+         libsreq, libsprov, libsadj, notes, msgs_install, msgs_remove, msgs_upgrade);
       seen : array (mlc'Range) of Boolean;
    begin
       seen := (others => False);
@@ -663,6 +671,9 @@ package body Raven.Database.UserQuery is
                when token_ml_shlibs_pro => seen (libsprov) := True;
                when token_ml_shlibs_req => seen (libsreq) := True;
                when token_ml_users => seen (users) := True;
+               when token_ml_msg_install => seen (msgs_install) := True;
+               when token_ml_msg_remove  => seen (msgs_remove)  := True;
+               when token_ml_msg_upgrade => seen (msgs_upgrade) := True;
                when others => null;
             end case;
          end if;
@@ -757,6 +768,11 @@ package body Raven.Database.UserQuery is
             return
               " JOIN pkg_users x on x.package_id = p.id" &
               " JOIN users ml on ml.user_id = x.user_id";
+         when token_ml_msg_install |
+              token_ml_msg_remove  |
+              token_ml_msg_upgrade =>
+            return
+              " JOIN pkg_messages ml on ml.package_id = p.id";
          when others => null;
       end case;
 
@@ -820,6 +836,14 @@ package body Raven.Database.UserQuery is
             end if;
             SU.Append (sql, " WHERE (" & populated & ")");
          end;
+      end if;
+
+      if columns (token_ml_msg_install) then
+         SU.Append (sql, " AND ml.message_type = 0");
+      elsif columns (token_ml_msg_remove) then
+         SU.Append (sql, " AND ml.message_type = 1");
+      elsif columns (token_ml_msg_upgrade) then
+         SU.Append (sql, " AND ml.message_type = 2");
       end if;
 
       if not all_packages then

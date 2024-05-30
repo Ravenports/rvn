@@ -39,6 +39,7 @@ private
       token_num_shlibs_pro,
       token_num_shlibs_req,
       token_num_users,
+      token_num_messages,
       token_abi,
       token_automatic,
       token_comment,
@@ -78,7 +79,10 @@ private
       token_ml_shlibs_adj,
       token_ml_shlibs_pro,
       token_ml_shlibs_req,
-      token_ml_users);
+      token_ml_users,
+      token_ml_msg_install,
+      token_ml_msg_remove,
+      token_ml_msg_upgrade);
 
    type Column_Selection is array (A_Token'Range) of Boolean;
    type Column_Result is array (A_Token'Range) of Text;

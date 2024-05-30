@@ -85,6 +85,9 @@ Number of shared libraries this package provides
 Number of shared libraries provided by sibling subpackages
 .It Cm {#notes}
 Number of annotations encoded into the package
+.It Cm {#msg}
+Number of total messages (installation + removal + upgrade)
+encoded into the package.
 .It Cm {#files}
 * Number of files this package installs
 .It Cm {#dirs}
@@ -149,6 +152,12 @@ May be used with the xopt:val pattern.
 .It Cm {xopt:val}
 Expands package result to include the built option settings.
 May be used with the xopt:key pattern.
+.It Cm {xmsgi}
+Expands package result to include any defined installation messages.
+.It Cm {xmsgr}
+Expands package result to include any defined removal messages.
+.It Cm {xmsgu}
+Expands package result to include any defined upgrade messages.
 .It Cm {xfile:path}
 * Expands package result to include the paths of all installed files.
 May be used with the xfile:sum pattern.
@@ -223,6 +232,8 @@ Combined size in bytes of all files contained in the package
 (integer) Number of shared libraries provided by subpackage siblings
 .It Cm {#notes}
 (integer) Number of annotations defined in the package
+.It Cm {#msg}
+(integer) Number of messages defined in the package.
 .It Cm {auto}
 * (integer) automatically installed flag (0 means explicitly installed)
 .It Cm {timestamp}
