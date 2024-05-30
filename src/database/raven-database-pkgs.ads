@@ -35,6 +35,7 @@ private
    function run_prstmt_option    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
    function run_prstmt_depend    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
    function run_prstmt_file      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_message   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
 
    function overwrite_main_pkg
      (db    : RDB_Connection;

@@ -59,6 +59,9 @@ package body Raven.Database.Pkgs is
                   onward := delete_satellite (db, pkgid, "pkg_scripts");
                end if;
                if onward then
+                  onward := delete_satellite (db, pkgid, "pkg_messages");
+               end if;
+               if onward then
                   onward := delete_satellite (db, pkgid, "pkg_licenses");
                end if;
                if onward then
@@ -121,6 +124,9 @@ package body Raven.Database.Pkgs is
       end if;
       if onward then
          onward := run_prstmt_script (db, pkg);
+      end if;
+      if onward then
+         onward := run_prstmt_message (db, pkg);
       end if;
       if onward then
          onward := run_prstmt_library (db, pkg);
@@ -682,6 +688,58 @@ package body Raven.Database.Pkgs is
 
       return keep_going;
    end run_prstmt_script;
+
+
+   --------------------------
+   --  run_prstmt_message  --
+   --------------------------
+   function run_prstmt_message (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   is
+      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_message);
+
+      func       : constant String := "run_prstmt_message";
+      keep_going : Boolean := True;
+      enum_mtype : Natural := 0;  --  install
+      msg_ndx    : Natural := 0;  --  message index 0, 1, 2 ...
+
+      procedure insert_into_package (Position : Pkgtypes.Message_List.Cursor)
+      is
+         myrec : Pkgtypes.Message_Parameters renames Pkgtypes.Message_List.Element (Position);
+         message : constant String := USS (myrec.message);
+         min_ver : constant String := USS (myrec.minimum_version);
+         max_ver : constant String := USS (myrec.maximum_version);
+      begin
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (pack_stmt) then
+            SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
+            SQLite.bind_integer (pack_stmt, 2, SQLite.sql_int64 (msg_ndx));
+            SQLite.bind_integer (pack_stmt, 3, SQLite.sql_int64 (enum_mtype));
+            SQLite.bind_string  (pack_stmt, 4, message);
+            SQLite.bind_string  (pack_stmt, 5, min_ver);
+            SQLite.bind_string  (pack_stmt, 6, max_ver);
+            debug_running_stmt (pack_stmt);
+            case SQLite.step (pack_stmt) is
+               when SQLite.no_more_data => null;
+               when SQLite.row_present | SQLite.something_else =>
+                  CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                               SQLite.get_expanded_sql (pack_stmt));
+                  keep_going := False;
+            end case;
+            msg_ndx := msg_ndx + 1;
+         else
+            squawk_reset_error (SCH.pkg_message);
+            keep_going := False;
+         end if;
+      end insert_into_package;
+   begin
+      for mtype in Pkgtypes.Message_Type'Range loop
+         pkg.messages (mtype).iterate (insert_into_package'Access);
+         enum_mtype := enum_mtype + 1;
+      end loop;
+      return keep_going;
+   end run_prstmt_message;
 
 
    --------------------------

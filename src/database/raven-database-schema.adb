@@ -406,15 +406,15 @@ package body Raven.Database.Schema is
       --  2 => upgrade
       def : Text := start_table ("pkg_messages");
       message_type : constant String := "message_type";
-      type_index  : constant String := "type_index";
+      message_index  : constant String := "message_index";
    begin
       cascade  (def, package_id, "packages", "id");
+      col_int  (def, message_index);
       col_int  (def, message_type);
-      col_int  (def, type_index);
       col_text (def, "message");
       col_text (def, "min_version");
       col_text (def, "max_version");
-      multi_primekey3 (def, package_id, message_type, type_index);
+      multi_primekey2 (def, package_id, message_index);
       return close_table (def);
    end table_pkg_messages;
 
@@ -675,7 +675,7 @@ package body Raven.Database.Schema is
          when pkg_script  => return IORB & "pkg_scripts(package_id,script_type,type_index," &
                                     "arguments,script_id) VALUES(?1,?2,?3,?4," &
                                      "(SELECT script_id FROM scripts WHERE code = ?5))"; --  IIITT
-         when pkg_message => return IORB & "pkg_messages(package_id,message_type,type_index," &
+         when pkg_message => return IORB & "pkg_messages(package_id,message_index,message_type," &
                                     "message,min_version,max_version) VALUES (?1,?2,?3,?4,?5,?6)";
                                     --  I,I,I,T,T,T
          when pkg_license => return IORB & "pkg_licenses(package_id, license_id) " &
