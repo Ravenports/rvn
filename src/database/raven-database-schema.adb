@@ -25,6 +25,7 @@ package body Raven.Database.Schema is
          when pkg_scripts        => return table_pkg_scripts;
          when pkg_options        => return table_pkg_options;
          when pkg_licences       => return table_pkg_licenses;
+         when pkg_messages       => return table_pkg_messages;
          when pkg_categories     => return table_pkg_categories;
          when pkg_directories    => return table_pkg_directories;
          when pkg_annotations    => return table_pkg_annotations;
@@ -394,6 +395,30 @@ package body Raven.Database.Schema is
    end table_pkg_files;
 
 
+   --------------------------
+   --  table_pkg_messages  --
+   --------------------------
+   function table_pkg_messages return String
+   is
+      --  message_type enumerations
+      --  0 => install
+      --  1 => remove
+      --  2 => upgrade
+      def : Text := start_table ("pkg_messages");
+      message_type : constant String := "message_type";
+      type_index  : constant String := "type_index";
+   begin
+      cascade  (def, package_id, "packages", "id");
+      col_int  (def, message_type);
+      col_int  (def, type_index);
+      col_text (def, "message");
+      col_text (def, "min_version");
+      col_text (def, "max_version");
+      multi_primekey3 (def, package_id, message_type, type_index);
+      return close_table (def);
+   end table_pkg_messages;
+
+
    -------------------
    --  index_files  --
    -------------------
@@ -650,6 +675,9 @@ package body Raven.Database.Schema is
          when pkg_script  => return IORB & "pkg_scripts(package_id,script_type,type_index," &
                                     "arguments,script_id) VALUES(?1,?2,?3,?4," &
                                      "(SELECT script_id FROM scripts WHERE code = ?5))"; --  IIITT
+         when pkg_message => return IORB & "pkg_messages(package_id,message_type,type_index," &
+                                    "message,min_version,max_version) VALUES (?1,?2,?3,?4,?5,?6)";
+                                    --  I,I,I,T,T,T
          when pkg_license => return IORB & "pkg_licenses(package_id, license_id) " &
               "VALUES (?1, (SELECT license_id FROM licenses WHERE name = ?2))";  -- IT
          when pkg_provided_lib => return IORB & "pkg_libs_provided(package_id,library_id) " &

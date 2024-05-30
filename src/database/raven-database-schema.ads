@@ -10,7 +10,7 @@ package Raven.Database.Schema is
       users, groups, scripts, options, licenses, categories,
       directories, annotations, dependencies, libraries,
       pkg_users, pkg_groups, pkg_scripts, pkg_options, pkg_licences, pkg_categories,
-      pkg_directories, pkg_annotations, pkg_dependencies, pkg_libs_provided,
+      pkg_directories, pkg_annotations, pkg_dependencies, pkg_messages, pkg_libs_provided,
       pkg_libs_required, pkg_libs_adacent, pkg_files, lock_state, lock_process,
       index_dep1, index_dep2, index_dep3, index_files, index_pkg_namebase, index_pkg_nsv
      );
@@ -19,7 +19,7 @@ package Raven.Database.Schema is
      (main_pkg, user, pkg_user, group, pkg_group, script, pkg_script, option, pkg_option,
       license, pkg_license, category, pkg_category, directory, pkg_directory, note, pkg_note,
       dependency, pkg_dependency, library, pkg_provided_lib, pkg_required_lib, pkg_adjacent_lib,
-      pkg_file);
+      pkg_file, pkg_message);
 
    function component_definition (component : schema_component) return String;
    function prstat_definition (component : prepared_statement) return String;
@@ -59,6 +59,7 @@ private
    function table_pkg_scripts       return String;
    function table_pkg_options       return String;
    function table_pkg_licenses      return String;
+   function table_pkg_messages      return String;
    function table_pkg_categories    return String;
    function table_pkg_directories   return String;
    function table_pkg_annotations   return String;
