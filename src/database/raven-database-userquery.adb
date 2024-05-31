@@ -131,6 +131,10 @@ package body Raven.Database.UserQuery is
    function get_column (token : A_Token) return String
    is
       id  : constant String := "package_id";
+      rdep_subquery : constant String :=
+        "(select count(xx.package_id) from pkg_dependencies xx " &
+        "join dependencies dd on xx.dependency_id = dd.dependency_id " &
+        "where dd.nsv = p.namebase ||'-'|| p.subpackage ||'-'|| p.variant)";
 
       function count_subquery (table_name, id_name : String) return String is
       begin
@@ -155,7 +159,7 @@ package body Raven.Database.UserQuery is
          when token_num_shlibs_req   => return count_subquery ("pkg_libs_provided", id);
          when token_num_users        => return count_subquery ("pkg_users", id);
          when token_num_messages     => return count_subquery ("pkg_messages", id);
-         when token_num_reverse_deps => return "0";   --  Overwritten by reverse dep code
+         when token_num_reverse_deps => return rdep_subquery;
          when token_abi              => return "p.abi";
          when token_automatic        => return "p.automatic";
          when token_comment          => return "p.comment";
@@ -797,19 +801,17 @@ package body Raven.Database.UserQuery is
       num_columns      : Natural;
       error_hit        : Boolean;
       reverse_deps     : Boolean;
-      ml_reverse_deps  : Boolean;
       num_multi        : Natural;
       leading_match    : Boolean := False;
       sql : Text := SUS ("select " & nsv_formula & " as nsv000");
    begin
       tokenize (selection, selection_tokens, columns, num_columns);
-      ml_reverse_deps :=
+      reverse_deps :=
         columns (token_ml_rdep_namebase) or else
         columns (token_ml_rdep_nsv) or else
         columns (token_ml_rdep_spkg) or else
         columns (token_ml_rdep_variant) or else
         columns (token_ml_rdep_version);
-      reverse_deps := columns (token_num_reverse_deps) or else ml_reverse_deps;
       num_multi := number_multiline_columns (columns);
       if num_multi > 1 then
          Event.emit_error ("Limit of 1 multiline pattern exceeded");
@@ -870,7 +872,6 @@ package body Raven.Database.UserQuery is
            "ORDER by nsv";
          new_stmt : SQLite.thick_stmt;
          rev_stmt : SQLite.thick_stmt;
-         num_rdeps : Natural;
       begin
          if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
             Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
@@ -945,28 +946,24 @@ package body Raven.Database.UserQuery is
                            Event.emit_error ("Failed to reset reverse deps prepared stmt");
                            exit;
                         end if;
-                        num_rdeps := 0;
                         SQLite.bind_string (rev_stmt, 1, SQLite.retrieve_string (new_stmt, 0));
                         debug_running_stmt (rev_stmt);
                         loop
                            case SQLite.step (rev_stmt) is
                               when SQLite.row_present =>
-                                 if ml_reverse_deps then
-                                    result (token_ml_rdep_namebase) :=
-                                      SUS (SQLite.retrieve_string (rev_stmt, 0));
-                                    result (token_ml_rdep_spkg) :=
-                                      SUS (SQLite.retrieve_string (rev_stmt, 1));
-                                    result (token_ml_rdep_variant) :=
-                                      SUS (SQLite.retrieve_string (rev_stmt, 2));
-                                    result (token_ml_rdep_version) :=
-                                      SUS (SQLite.retrieve_string (rev_stmt, 3));
-                                    result (token_ml_rdep_nsv) :=
-                                      SUS (SQLite.retrieve_string (rev_stmt, 4));
-                                    selection_tokens.Iterate (assemble'Access);
-                                    Event.emit_message (USS (outline));
-                                    outline := blank;
-                                 end if;
-                                 num_rdeps := num_rdeps + 1;
+                                 result (token_ml_rdep_namebase) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 0));
+                                 result (token_ml_rdep_spkg) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 1));
+                                 result (token_ml_rdep_variant) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 2));
+                                 result (token_ml_rdep_version) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 3));
+                                 result (token_ml_rdep_nsv) :=
+                                   SUS (SQLite.retrieve_string (rev_stmt, 4));
+                                 selection_tokens.Iterate (assemble'Access);
+                                 Event.emit_message (USS (outline));
+                                 outline := blank;
 
                               when SQLite.something_else =>
                                  CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
@@ -975,11 +972,6 @@ package body Raven.Database.UserQuery is
                                  exit;
                            end case;
                         end loop;
-                        result (token_num_reverse_deps) := SUS (int2str (num_rdeps));
-                        if not ml_reverse_deps then
-                           selection_tokens.Iterate (assemble'Access);
-                           Event.emit_message (USS (outline));
-                        end if;
                      else
                         selection_tokens.Iterate (assemble'Access);
                         Event.emit_message (USS (outline));
