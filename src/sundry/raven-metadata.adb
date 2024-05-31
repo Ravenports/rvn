@@ -589,6 +589,7 @@ package body Raven.Metadata is
                myrec.maximum_version := SUS (maxver_str);
             end;
          end if;
+         new_list (mtype).Append (myrec);
       end analyze_message;
    begin
       case metatree.get_data_type (key) is

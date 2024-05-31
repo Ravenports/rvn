@@ -700,7 +700,7 @@ package body Raven.Database.UserQuery is
    begin
       for x in A_Token'Range loop
          case x is
-            when token_ml_categories .. token_ml_users =>
+            when token_ml_categories .. token_ml_msg_upgrade =>
                if columns (x) then
                   ml_column := x;
                   exit;
@@ -870,7 +870,7 @@ package body Raven.Database.UserQuery is
            "ORDER by nsv";
          new_stmt : SQLite.thick_stmt;
          rev_stmt : SQLite.thick_stmt;
-         num_rdeps : Natural := 0;
+         num_rdeps : Natural;
       begin
          if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
             Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
@@ -945,6 +945,7 @@ package body Raven.Database.UserQuery is
                            Event.emit_error ("Failed to reset reverse deps prepared stmt");
                            exit;
                         end if;
+                        num_rdeps := 0;
                         SQLite.bind_string (rev_stmt, 1, SQLite.retrieve_string (new_stmt, 0));
                         debug_running_stmt (rev_stmt);
                         loop
@@ -975,6 +976,10 @@ package body Raven.Database.UserQuery is
                            end case;
                         end loop;
                         result (token_num_reverse_deps) := SUS (int2str (num_rdeps));
+                        if not ml_reverse_deps then
+                           selection_tokens.Iterate (assemble'Access);
+                           Event.emit_message (USS (outline));
+                        end if;
                      else
                         selection_tokens.Iterate (assemble'Access);
                         Event.emit_message (USS (outline));
