@@ -110,6 +110,23 @@ def write_scripts(handle, json_object):
         handle.write(valuelist);
 
 
+def write_messages(handle, json_object):
+    """
+    insert "type" into messages object
+    """
+    lines = []
+    key = "messages"
+    if not key in json_object:
+        return
+
+    handle.write(key + ": [\n")
+    for msgobj in json_object[key]:
+        msg = msgobj["message"]
+        handle.write("  {type: 'install',\n");
+        handle.write("   message: <<EOD\n" + msg + "\nEOD\n  }\n")
+    handle.write("]\n");
+
+
 def write_nested_objs(handle, key, json_object):
     """
     this was broken and it's not even the correct format
@@ -185,6 +202,7 @@ def metadata_converter(dir_path):
         write_nvpairs (fout, "options", data)
         write_dependencies (fout, data)
         write_scripts (fout, data)
+        write_messages (fout, data)
 
 
 
