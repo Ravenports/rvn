@@ -1068,6 +1068,12 @@ package body Raven.Cmd.Usage is
          return alert ("The clean command is restricted to the superuser.");
       end if;
 
+      if comline.common_options.dry_run and then
+        comline.common_options.quiet
+      then
+         return alert ("--dry-run and --quiet are incompatible switches");
+      end if;
+
       return True;
 
    end verb_remove;
