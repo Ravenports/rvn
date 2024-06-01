@@ -30,13 +30,14 @@ package body Raven.Cmd.Clean is
       procedure delete_file (Position : SCN.dscan_crate.Cursor);
       procedure find_dangling_symlink (Position : SCN.dscan_crate.Cursor);
 
-      cachedir : constant String := Context.reveal_cache_directory;
-      catalog_map : Pkgtypes.NV_Pairs.Map;
+      cachedir       : constant String := Context.reveal_cache_directory;
+      catalog_map    : Pkgtypes.NV_Pairs.Map;
       cache_contents : SCN.dscan_crate.Vector;
       purge_list     : SCN.dscan_crate.Vector;
-      fileattr : Archive.Unix.File_Characteristics;
+      fileattr       : Archive.Unix.File_Characteristics;
       bytes_to_purge : Archive.exabytes := 0;
-      cont  : Character;
+      cont           : Character;
+      rdb            : Database.RDB_Connection;
 
       procedure check_dirent (Position : SCN.dscan_crate.Cursor)
       is
