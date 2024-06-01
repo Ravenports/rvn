@@ -4,12 +4,15 @@
 with Raven.Context;
 with Raven.Strings;
 with Raven.Pkgtypes;
+with Raven.Database.Query;
 with Raven.Database.CommonSQL;
 
 use Raven.Strings;
 use Raven.Pkgtypes;
 
 package body Raven.Database.Remove is
+
+   package QRY renames Raven.Database.Query;
 
 
    -------------------------------
@@ -24,6 +27,7 @@ package body Raven.Database.Remove is
       force          : Boolean) return Boolean
    is
       leading_match : Boolean := False;
+      success : Boolean := True;
       func    : constant String := "top_level_deletion_list";
       sqlbase : constant String := "SELECT " & nsv_formula & " as nsv000, " &
         "namebase, subpackage, variant, version, comment, desc, www, maintainer, prefix, " &
@@ -85,14 +89,23 @@ package body Raven.Database.Remove is
                   myrec.flatsize   := Package_Size (SQLite.retrieve_integer (new_stmt, 13));
                   myrec.licenselogic := License_Logic'Val (SQLite.retrieve_integer (new_stmt, 14));
                   myrec.id         := Package_ID (SQLite.retrieve_integer (new_stmt, 15));
+
+                  QRY.finish_package (db, myrec);  --  temporary to test all
+                  --  QRY.finish_package_scripts (db, myrec);
+                  --  QRY.finish_package_messages (db, myrec);
+                  --  QRY.finish_package_directories (db, myrec);
+                  --  QRY.finish_package_files (db, myrec);
+                  packages.Append (myrec);
                end;
             when SQLite.something_else =>
                CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
                                             SQLite.get_expanded_sql (new_stmt));
+               success := False;
+               exit;
          end case;
       end loop;
       SQLite.finalize_statement (new_stmt);
-      return True;
+      return success;
 
    end top_level_deletion_list;
 
