@@ -1,14 +1,37 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Raven.Deinstall;
+with Raven.Database.Operations;
+
 package body Raven.Cmd.Remove is
+
+   package OPS renames Raven.Database.Operations;
+
 
    ------------------------------
    --  execute_remove_command  --
    ------------------------------
-   function execute_remove_command (comline : Cldata) return Boolean is
+   function execute_remove_command (comline : Cldata) return Boolean
+   is
+      success : Boolean;
+      rdb     : Database.RDB_Connection;
    begin
-      return False;
+      case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      --  success := DUC.query_package_database
+      --    (db             => rdb,
+      --     selection      => USS (comline.cmd_query.query_format),
+      --     conditions     => USS (comline.cmd_query.evaluate),
+      --     pattern        => USS (comline.common_options.name_pattern),
+      --     all_packages   => comline.common_options.all_installed_pkgs,
+      --     override_exact => comline.common_options.exact_match);
+
+      OPS.rdb_close (rdb);
+      return success;
    end execute_remove_command;
 
 end Raven.Cmd.Remove;

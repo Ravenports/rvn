@@ -402,4 +402,437 @@ package body Raven.Database.Query is
 
    end package_measurement;
 
+
+   ----------------------------
+   --  finish_package_users  --
+   ----------------------------
+   procedure finish_package_users (db         : RDB_Connection;
+                                   incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_users";
+      sql : constant String :=
+        "SELECT x.user_id, ml.name FROM pkg_users x " &
+        "JOIN users ml ON x.user_id = ml.user_id WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.users.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.users.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_users;
+
+
+   -----------------------------
+   --  finish_package_groups  --
+   -----------------------------
+   procedure finish_package_groups (db         : RDB_Connection;
+                                    incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_groups";
+      sql : constant String :=
+        "SELECT x.group_id, ml.name FROM pkg_groups x " &
+        "JOIN groups ml ON x.group_id = ml.group_id WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.groups.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.groups.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_groups;
+
+
+   -------------------------------
+   --  finish_package_licenses  --
+   -------------------------------
+   procedure finish_package_licenses (db         : RDB_Connection;
+                                      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_licenses";
+      sql : constant String :=
+        "SELECT x.license_id, ml.name FROM pkg_licenses x " &
+        "JOIN licenses ml ON x.license_id = ml.license_id WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.licenses.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.licenses.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_licenses;
+
+
+    --------------------------------
+   --  finish_package_categories  --
+   ---------------------------------
+   procedure finish_package_categories (db         : RDB_Connection;
+                                        incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_categories";
+      sql : constant String :=
+        "SELECT x.category_id, ml.name FROM pkg_categories x " &
+        "JOIN categories ml ON x.category_id = ml.category_id " &
+        "WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.categories.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.categories.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_categories;
+
+
+   ------------------------------------
+   --  finish_package_libs_required  --
+   ------------------------------------
+   procedure finish_package_libs_required (db         : RDB_Connection;
+                                           incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_libs_required";
+      sql : constant String :=
+        "SELECT x.library_id, ml.name FROM pkg_libs_required x " &
+        "JOIN libraries ml ON x.library_id = ml.library_id WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.libs_required.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.libs_required.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_libs_required;
+
+
+   ------------------------------------
+   --  finish_package_libs_provided  --
+   ------------------------------------
+   procedure finish_package_libs_provided (db         : RDB_Connection;
+                                           incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_libs_provided";
+      sql : constant String :=
+        "SELECT x.library_id, ml.name FROM pkg_libs_provided x " &
+        "JOIN libraries ml ON x.library_id = ml.library_id WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.libs_provided.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.libs_provided.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_libs_provided;
+
+
+   ------------------------------------
+   --  finish_package_libs_adjacent  --
+   ------------------------------------
+   procedure finish_package_libs_adjacent (db         : RDB_Connection;
+                                           incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_libs_adjacent";
+      sql : constant String :=
+        "SELECT x.library_id, ml.name FROM pkg_libs_adjacent x " &
+        "JOIN libraries ml ON x.library_id = ml.library_id WHERE x.package_id = ? ORDER BY ml.name";
+   begin
+      incomplete.libs_adjacent.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.libs_adjacent.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_libs_adjacent;
+
+
+   ----------------------------------
+   --  finish_package_directories  --
+   ----------------------------------
+   procedure finish_package_directories (db         : RDB_Connection;
+                                         incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_directories";
+      sql : constant String :=
+        "SELECT x.directory_id, ml.path FROM pkg_directories x " &
+        "JOIN directories ml ON x.directory_id = ml.directory_id " &
+        "WHERE x.package_id = ? ORDER BY ml.path";
+   begin
+      incomplete.directories.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               incomplete.directories.Append (SUS (SQLite.retrieve_string (new_stmt, 1)));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_directories;
+
+
+   -----------------------------------
+   --  finish_package_dependencies  --
+   -----------------------------------
+   procedure finish_package_dependencies
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_dependencies";
+      sql : constant String :=
+        "SELECT x.dependency_id, ml.nsv, ml.version FROM pkg_dependencies x " &
+        "JOIN dependencies ml ON x.dependency_id = ml.dependency_id " &
+        "WHERE x.package_id = ? ORDER BY ml.nsv";
+   begin
+      incomplete.dependencies.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+       loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  nsv : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  ver : constant String := SQLite.retrieve_string (new_stmt, 2);
+               begin
+                  incomplete.dependencies.Insert (SUS (nsv), SUS (ver));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end finish_package_dependencies;
+
+
+   -----------------------------------
+   --  finish_package_annotations  --
+   -----------------------------------
+   procedure finish_package_annotations
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_annotations";
+      sql : constant String :=
+        "SELECT x.annotation_id, ml.note_key, x.annotation FROM pkg_annotations x " &
+        "JOIN annotations ml ON x.annotation_id = ml.annotation_id " &
+        "WHERE x.package_id = ? ORDER BY ml.note_key";
+   begin
+      incomplete.annotations.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+       loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  key : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  val : constant String := SQLite.retrieve_string (new_stmt, 2);
+               begin
+                  incomplete.annotations.Insert (SUS (key), SUS (val));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end finish_package_annotations;
+
+
+   ------------------------------
+   --  finish_package_options  --
+   ------------------------------
+   procedure finish_package_options
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_options";
+      sql : constant String :=
+        "SELECT x.option_id, ml.option_name, x. option_setting FROM pkg_options x " &
+        "JOIN options ml ON x.option_id = ml.option_id " &
+        "WHERE x.package_id = ? ORDER BY ml.option_name";
+   begin
+      incomplete.options.clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+       loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  key : constant String := SQLite.retrieve_string (new_stmt, 1);
+                  val : constant String := SQLite.retrieve_string (new_stmt, 2);
+               begin
+                  incomplete.options.Insert (SUS (key), SUS (val));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end finish_package_options;
+
+
+   ----------------------
+   --  finish_package  --
+   ----------------------
+   procedure finish_package
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+   begin
+      finish_package_users         (db, incomplete);
+      finish_package_groups        (db, incomplete);
+      finish_package_licenses      (db, incomplete);
+      finish_package_categories    (db, incomplete);
+      finish_package_libs_required (db, incomplete);
+      finish_package_libs_provided (db, incomplete);
+      finish_package_libs_adjacent (db, incomplete);
+      finish_package_categories    (db, incomplete);
+      finish_package_dependencies  (db, incomplete);
+      finish_package_annotations   (db, incomplete);
+      finish_package_annotations   (db, incomplete);
+      finish_package_options       (db, incomplete);
+
+      --     messages      : Message_Set;
+      --     scripts       : Script_Set;
+      --     files         : File_List.Vector;
+
+   end finish_package;
+
 end Raven.Database.Query;

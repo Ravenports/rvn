@@ -59,6 +59,54 @@ package Raven.Database.Query is
      (db           : RDB_Connection;
       measurements : in out A_Measurement_Set);
 
+   procedure finish_package
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_users
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_groups
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_licenses
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_categories
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_libs_required
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_libs_provided
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_libs_adjacent
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_directories
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_dependencies
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_annotations
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_options
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
 private
 
    internal_srcfile : constant String := "raven-database-query.adb";
