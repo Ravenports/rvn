@@ -24,6 +24,7 @@ package body Raven.Cmd.RQuery is
       mirrors : Repository.A_Repo_Config_Set;
       single  : constant String := Strings.USS (comline.common_options.repo_name);
       success : Boolean;
+      rdb     : Database.RDB_Connection;
    begin
       if Archive.Unix.user_is_root then
          Repository.load_repository_configurations (mirrors, single);

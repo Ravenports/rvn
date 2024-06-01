@@ -17,6 +17,7 @@ package body Raven.Cmd.Query is
    function execute_query_command (comline : Cldata) return Boolean
    is
       success : Boolean;
+      rdb     : Database.RDB_Connection;
    begin
       case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
          when RESULT_OK => null;

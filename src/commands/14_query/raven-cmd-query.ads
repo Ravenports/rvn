@@ -8,8 +8,4 @@ package Raven.Cmd.Query is
    --  Executes query command
    function execute_query_command (comline : Cldata) return Boolean;
 
-private
-
-   rdb : Database.RDB_Connection;
-
 end Raven.Cmd.Query;
