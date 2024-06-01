@@ -867,7 +867,7 @@ package body Raven.Database.Query is
         "SELECT x.script_id, ml.code, x.script_type, x.arguments " &
         "FROM pkg_scripts x " &
         "JOIN scripts ml ON x.script_id = ml.script_id " &
-        "WHERE x.package_id = ? ORDER BY x.script_id, x.script_type, x_type_index";
+        "WHERE x.package_id = ? ORDER BY x.script_id, x.script_type, x.type_index";
    begin
       for ptype in Pkgtypes.ARW.package_phase loop
          incomplete.scripts (ptype).Clear;

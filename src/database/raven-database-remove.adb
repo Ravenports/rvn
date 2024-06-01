@@ -90,11 +90,10 @@ package body Raven.Database.Remove is
                   myrec.licenselogic := License_Logic'Val (SQLite.retrieve_integer (new_stmt, 14));
                   myrec.id         := Package_ID (SQLite.retrieve_integer (new_stmt, 15));
 
-                  QRY.finish_package (db, myrec);  --  temporary to test all
-                  --  QRY.finish_package_scripts (db, myrec);
-                  --  QRY.finish_package_messages (db, myrec);
-                  --  QRY.finish_package_directories (db, myrec);
-                  --  QRY.finish_package_files (db, myrec);
+                  QRY.finish_package_scripts (db, myrec);
+                  QRY.finish_package_messages (db, myrec);
+                  QRY.finish_package_directories (db, myrec);
+                  QRY.finish_package_files (db, myrec);
                   packages.Append (myrec);
                end;
             when SQLite.something_else =>
