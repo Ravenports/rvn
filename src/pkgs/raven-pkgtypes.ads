@@ -116,4 +116,7 @@ package Raven.Pkgtypes is
    --  returns name-subpackage-variant-version
    function nsvv_identifier (pkg : A_Package) return String;
 
+   --  returns name-subpackage-variant
+   function nsv_identifier (pkg : A_Package) return String;
+
 end Raven.Pkgtypes;

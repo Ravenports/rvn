@@ -67,6 +67,19 @@ package body Raven.Cmd.Remove is
 
       toplist.Iterate (print'Access);
 
+      if comline.common_options.dry_run then
+         return True;
+      end if;
+
+      if not RCU.config_setting (RCU.CFG.assume_yes) then
+         Event.emit_message ("Continue? [y/n]");
+         Ada.Text_IO.Get_Immediate (cont);
+         case cont is
+            when 'Y' | 'y' => null;
+            when others => return True;
+         end case;
+      end if;
+
 
       OPS.rdb_close (rdb);
       return success;

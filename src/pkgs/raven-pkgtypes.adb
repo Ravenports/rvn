@@ -20,4 +20,18 @@ package body Raven.Pkgtypes is
       return N & '-' & S & '-' & V & '-' & Z;
    end nsvv_identifier;
 
+
+   ----------------------
+   --  nsv_identifier  --
+   ----------------------
+   function nsv_identifier (pkg : A_Package) return String
+   is
+      N : constant String := USS (pkg.namebase);
+      S : constant String := USS (pkg.subpackage);
+      V : constant String := USS (pkg.variant);
+   begin
+      return N & '-' & S & '-' & V;
+   end nsv_identifier;
+
+
 end Raven.Pkgtypes;
