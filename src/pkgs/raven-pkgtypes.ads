@@ -11,6 +11,7 @@ with Blake_3;
 package Raven.Pkgtypes is
 
    package CON renames Ada.Containers;
+   package ARW renames Archive.Whitelist;
 
    type Package_ID         is mod 2**64;
    type Package_Size       is mod 2**64;
@@ -44,7 +45,7 @@ package Raven.Pkgtypes is
      (Element_Type => Script_Parameters,
       Index_Type   => Natural);
 
-   type Script_Set is array (Archive.Whitelist.package_phase) of Script_List.Vector;
+   type Script_Set is array (ARW.package_phase) of Script_List.Vector;
 
    type Message_Parameters is
       record

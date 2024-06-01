@@ -789,7 +789,7 @@ package body Raven.Database.Query is
       SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
       debug_running_stmt (new_stmt);
 
-       loop
+      loop
          case SQLite.step (new_stmt) is
             when SQLite.no_more_data => exit;
             when SQLite.row_present =>
@@ -806,6 +806,140 @@ package body Raven.Database.Query is
       end loop;
       SQLite.finalize_statement (new_stmt);
    end finish_package_options;
+
+
+   -------------------------------
+   --  finish_package_messages  --
+   -------------------------------
+   procedure finish_package_messages
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_messages";
+      sql : constant String :=
+        "SELECT message_index, message_type, message, min_version, max_version " &
+        "FROM pkg_messages where package_id = ? ORDER BY message_index";
+   begin
+      for mtype in Pkgtypes.Message_Type loop
+         incomplete.messages (mtype).Clear;
+      end loop;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  myrec : Pkgtypes.Message_Parameters;
+                  mtype : Pkgtypes.Message_Type;
+               begin
+                  myrec.message         := SUS (SQLite.retrieve_string (new_stmt, 2));
+                  myrec.minimum_version := SUS (SQLite.retrieve_string (new_stmt, 3));
+                  myrec.maximum_version := SUS (SQLite.retrieve_string (new_stmt, 4));
+                  mtype := Pkgtypes.Message_Type'Val (SQLite.retrieve_integer (new_stmt, 1));
+                  incomplete.messages (mtype).Append (myrec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end finish_package_messages;
+
+
+   ------------------------------
+   --  finish_package_scripts  --
+   ------------------------------
+   procedure finish_package_scripts
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_scripts";
+      sql : constant String :=
+        "SELECT x.script_id, ml.code, x.script_type, x.arguments " &
+        "FROM pkg_scripts x " &
+        "JOIN scripts ml ON x.script_id = ml.script_id " &
+        "WHERE x.package_id = ? ORDER BY x.script_id, x.script_type, x_type_index";
+   begin
+      for ptype in Pkgtypes.ARW.package_phase loop
+         incomplete.scripts (ptype).Clear;
+      end loop;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  myrec : Pkgtypes.Script_Parameters;
+                  ptype : Pkgtypes.ARW.package_phase;
+               begin
+                  myrec.args := SUS (SQLite.retrieve_string (new_stmt, 3));
+                  myrec.code := SUS (SQLite.retrieve_string (new_stmt, 1));
+                  ptype  := Pkgtypes.ARW.package_phase'Val (SQLite.retrieve_integer (new_stmt, 2));
+                  incomplete.scripts (ptype).Append (myrec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end finish_package_scripts;
+
+
+   ----------------------------
+   --  finish_package_files  --
+   ----------------------------
+   procedure finish_package_files
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_messages";
+      sql : constant String := "SELECT path, b3digest FROM pkg_files where package_id = ?";
+      --  do not sort.  There could be thousands of files and this table is not indexed
+   begin
+      incomplete.files.Clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  myrec : Pkgtypes.File_Item;
+               begin
+                  myrec.path   := SUS (SQLite.retrieve_string (new_stmt, 0));
+                  myrec.digest := Blake_3.blake3_hash_hex (SQLite.retrieve_string (new_stmt, 1));
+                  incomplete.files.Append (myrec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+   end finish_package_files;
 
 
    ----------------------
@@ -828,11 +962,9 @@ package body Raven.Database.Query is
       finish_package_annotations   (db, incomplete);
       finish_package_annotations   (db, incomplete);
       finish_package_options       (db, incomplete);
-
-      --     messages      : Message_Set;
-      --     scripts       : Script_Set;
-      --     files         : File_List.Vector;
-
+      finish_package_messages      (db, incomplete);
+      finish_package_scripts       (db, incomplete);
+      finish_package_files         (db, incomplete);
    end finish_package;
 
 end Raven.Database.Query;

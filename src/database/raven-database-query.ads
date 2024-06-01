@@ -107,6 +107,18 @@ package Raven.Database.Query is
      (db         : RDB_Connection;
       incomplete : in out Pkgtypes.A_Package);
 
+   procedure finish_package_messages
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_scripts
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
+   procedure finish_package_files
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package);
+
 private
 
    internal_srcfile : constant String := "raven-database-query.adb";
