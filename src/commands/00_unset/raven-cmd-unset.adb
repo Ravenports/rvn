@@ -92,7 +92,9 @@ package body Raven.Cmd.Unset is
                   matrix (col)(row) := cv;
                   if row = rows'Last then
                      row := rows'First;
-                     col := col + 1;
+                     if cv /= Command_verb'Last then
+                        col := col + 1;
+                     end if;
                   else
                      row := row + 1;
                   end if;
