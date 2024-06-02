@@ -27,6 +27,15 @@ package Raven.Database.Remove is
      (db : RDB_Connection;
       id : Pkgtypes.Package_ID);
 
+   function autoremoval_list
+     (db             : RDB_Connection;
+      packages       : in out Pkgtypes.Package_Set.Vector) return Boolean;
+
+   procedure prune_candidates_with_reverse_deps
+     (db             : RDB_Connection;
+      top_packages   : Pkgtypes.Package_Set.Vector;
+      purge_list     : in out Pkgtypes.Package_Set.Vector);
+
 private
 
    internal_srcfile : constant String := "raven-database-remove.adb";

@@ -275,4 +275,94 @@ package body Raven.Database.Remove is
       SQLite.finalize_statement (new_stmt);
    end drop_package_with_cascade;
 
+
+   ------------------------
+   --  autoremoval_list  --
+   ------------------------
+   function autoremoval_list (db       : RDB_Connection;
+                              packages : in out Pkgtypes.Package_Set.Vector) return Boolean
+   is
+      success : Boolean := True;
+      func    : constant String := "autoremoval_list";
+      sql     : constant String :=
+        "SELECT id, namebase, subpackage, variant, version, comment, desc, www, " &
+        "maintainer, prefix, abi, rvndigest, rvnsize, flatsize, licenselogic " &
+        "FROM packages " &
+        "WHERE auto=1";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return False;
+      end if;
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  myrec : Pkgtypes.A_Package;
+               begin
+                  myrec.id         := Package_ID (SQLite.retrieve_integer (new_stmt, 0));
+                  myrec.namebase   := SUS (SQLite.retrieve_string (new_stmt, 1));
+                  myrec.subpackage := SUS (SQLite.retrieve_string (new_stmt, 2));
+                  myrec.variant    := SUS (SQLite.retrieve_string (new_stmt, 3));
+                  myrec.version    := SUS (SQLite.retrieve_string (new_stmt, 4));
+                  myrec.comment    := SUS (SQLite.retrieve_string (new_stmt, 5));
+                  myrec.desc       := SUS (SQLite.retrieve_string (new_stmt, 6));
+                  myrec.www        := SUS (SQLite.retrieve_string (new_stmt, 7));
+                  myrec.maintainer := SUS (SQLite.retrieve_string (new_stmt, 8));
+                  myrec.prefix     := SUS (SQLite.retrieve_string (new_stmt, 9));
+                  myrec.abi        := SUS (SQLite.retrieve_string (new_stmt, 10));
+                  myrec.rvndigest  := SUS (SQLite.retrieve_string (new_stmt, 11));
+                  myrec.rvnsize    := Package_Size (SQLite.retrieve_integer (new_stmt, 12));
+                  myrec.flatsize   := Package_Size (SQLite.retrieve_integer (new_stmt, 13));
+                  myrec.licenselogic := License_Logic'Val (SQLite.retrieve_integer (new_stmt, 14));
+
+                  QRY.finish_package_scripts (db, myrec);
+                  QRY.finish_package_messages (db, myrec);
+                  QRY.finish_package_directories (db, myrec);
+                  QRY.finish_package_files (db, myrec);
+                  packages.Append (myrec);
+                  Event.emit_debug (high_level, "Added to autoremoval list: " &
+                                      Pkgtypes.nsv_identifier (myrec));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               success := False;
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+      return success;
+   end autoremoval_list;
+
+
+   ------------------------------------------
+   --  prune_candidates_with_reverse_deps  --
+   ------------------------------------------
+   procedure prune_candidates_with_reverse_deps
+     (db             : RDB_Connection;
+      top_packages   : Pkgtypes.Package_Set.Vector;
+      purge_list     : in out Pkgtypes.Package_Set.Vector)
+   is
+      procedure check (Position : Pkgtypes.Package_Set.Cursor)
+      is
+         nsv : constant String := Pkgtypes.nsv_identifier (Pkgtypes.Package_Set.Element (Position));
+         rdeps : ID_Set.Map;
+      begin
+         gather_reverse_dependencies (db, rdeps, SUS (nsv));
+         if rdeps.Is_Empty then
+            purge_list.Append (Pkgtypes.Package_Set.Element (Position));
+         else
+            Event.emit_message ("Skipping " & nsv & " because other packages depend on it.");
+         end if;
+      end check;
+   begin
+      top_packages.Iterate (check'Access);
+   end prune_candidates_with_reverse_deps;
+
+
 end Raven.Database.Remove;
