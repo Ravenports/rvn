@@ -6,10 +6,10 @@
 .Nd removes orphan packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl Dnqy
+.Op Fl Inqy
 .Pp
 .Nm
-.Op Cm --{dry-run,no-scripts,quiet,yes}
+.Op Cm --{no-scripts,dry-run,quiet,yes}
 .Sh DESCRIPTION
 .Nm
 is used for removing orphan packages which were installed
@@ -18,12 +18,12 @@ during dependency resolution, but are no longer needed.
 The following options are supported by
 .Nm :
 .Bl -tag -width dry-run
+.It Fl I , Cm --no-scripts
+If a deinstallation script exists for a given package, do not execute it.
 .It Fl n , Cm --dry-run
 Dry-run mode.
 The list of changes to packages is always printed, but
 no changes are actually made.
-.It Fl D , Cm --no-scripts
-If a deinstallation script exists for a given package, do not execute it.
 .It Fl q , Cm --quiet
 Force quiet output.
 .It Fl y , Cm --yes
