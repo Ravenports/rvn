@@ -95,6 +95,10 @@ package body Raven.Cmd.Remove is
 
       if not granted_permission_to_proceed (comline.common_options.quiet) then
          return True;
+      else
+         if not comline.common_options.quiet then
+            Event.emit_message ("");
+         end if;
       end if;
 
       remove_packages_in_order
@@ -257,15 +261,15 @@ package body Raven.Cmd.Remove is
       begin
          case total_pkgs is
             when 0 .. 9 =>
-               return "[" & int2str (pkg_counter) & "/" & int2str (pkg_counter) & "]";
+               return "[" & int2str (pkg_counter) & "/" & int2str (pkg_counter) & "] ";
             when 10 .. 99 =>
-               return "[" & zeropad (pkg_counter, 2) & "/" & int2str (pkg_counter) & "]";
+               return "[" & zeropad (pkg_counter, 2) & "/" & int2str (pkg_counter) & "] ";
             when 100 .. 999 =>
-               return "[" & zeropad (pkg_counter, 3) & "/" & int2str (pkg_counter) & "]";
+               return "[" & zeropad (pkg_counter, 3) & "/" & int2str (pkg_counter) & "] ";
             when 1000 .. 9999 =>
-               return "[" & zeropad (pkg_counter, 4) & "/" & int2str (pkg_counter) & "]";
+               return "[" & zeropad (pkg_counter, 4) & "/" & int2str (pkg_counter) & "] ";
             when others =>
-               return "[" & zeropad (pkg_counter, 5) & "/" & int2str (pkg_counter) & "]";
+               return "[" & zeropad (pkg_counter, 5) & "/" & int2str (pkg_counter) & "] ";
          end case;
       end progress;
 

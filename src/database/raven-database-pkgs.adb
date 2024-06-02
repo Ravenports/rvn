@@ -680,10 +680,10 @@ package body Raven.Database.Pkgs is
          pkg.scripts (phase).Iterate (insert_main'Access);
       end loop;
       for phase in Archive.Whitelist.package_phase'Range loop
-         phase_type := phase_type + 1;  --  type index starts at 1
          phase_ndx := 0;                --  script array starts at 0
 
          pkg.scripts (phase).Iterate (insert_into_package'Access);
+         phase_type := phase_type + 1;  --  type index starts at 0
       end loop;
 
       return keep_going;
