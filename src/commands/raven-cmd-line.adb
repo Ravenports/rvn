@@ -814,6 +814,7 @@ package body Raven.Cmd.Line is
 
       case last_cmd is
          when nothing_pending => null;
+         when help => null;
          when others =>
             set_error (data, "The last switch requires an argument");
       end case;
