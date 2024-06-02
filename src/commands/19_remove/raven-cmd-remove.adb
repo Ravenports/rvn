@@ -97,10 +97,11 @@ package body Raven.Cmd.Remove is
          return True;
       end if;
 
-   --   Deinstall.deinstall_extracted_package
-    --    (installed_package   => Pkgtypes.A_Package,
-    --     verify_digest_first => Boolean,
-    --     post_report         => TIO.File_Type);
+      remove_packages_in_order
+        (purge_list  => purge_list,
+         purge_order => purge_order,
+         skip_verify => comline.cmd_remove.skip_verify,
+         quiet       => comline.common_options.quiet);
 
       OPS.rdb_close (rdb);
       return success;

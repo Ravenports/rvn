@@ -687,6 +687,7 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
                      data.common_options.assume_yes := True;
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
                   elsif datum = sws_all or else datum = swl_all then
                      data.common_options.all_installed_pkgs := True;
                   elsif datum = sws_case or else datum = swl_case then
@@ -716,6 +717,7 @@ package body Raven.Cmd.Line is
                      data.common_options.quiet := True;
                   elsif datum = sws_yes or else datum = swl_yes then
                      data.common_options.assume_yes := True;
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
                   elsif datum = sws_all or else datum = swl_all then
                      data.common_options.all_installed_pkgs := True;
                   elsif datum = sws_case or else datum = swl_case then
@@ -804,7 +806,6 @@ package body Raven.Cmd.Line is
       check_version_stdin;
       check_search_default (data);
       check_implied_info_all (data);
-      check_assume_yes (data);
 
    end parse_secondary_command;
 
@@ -1160,17 +1161,6 @@ package body Raven.Cmd.Line is
       end if;
       return;
    end set_query_modifier;
-
-
-   ------------------------
-   --  check_assume_yes  --
-   ------------------------
-   procedure check_assume_yes (self : in out Cldata) is
-   begin
-      if not self.common_options.assume_yes then
-         self.common_options.assume_yes := Cmd.Unset.config_setting (Cmd.Unset.CFG.assume_yes);
-      end if;
-   end check_assume_yes;
 
 
    ----------------------------------

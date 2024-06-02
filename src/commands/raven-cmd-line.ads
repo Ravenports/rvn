@@ -21,7 +21,6 @@ private
    procedure handle_trailing_pkgname (self : in out Cldata; datum : String; datumtxt : Text);
    procedure handle_pkg_patterns (self : in out Cldata; datum : String; datumtxt : Text);
    procedure check_implied_info_all (self : in out Cldata);
-   procedure check_assume_yes (self : in out Cldata);
    procedure check_search_default (self : in out Cldata);
    procedure set_search_type (self : in out Cldata; new_type : search_type);
    procedure set_query_modifier (self : in out Cldata; modifier : String);
