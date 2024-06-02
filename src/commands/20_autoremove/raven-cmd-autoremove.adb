@@ -77,8 +77,11 @@ package body Raven.Cmd.Autoremove is
                if not toplist2.Is_Empty then
                   DEL.prune_candidates_with_reverse_deps (rdb, toplist2, purge_list2);
                   if not purge_list2.Is_Empty then
-                     Event.emit_message ("New orphan packages have been detected.");
-                     Event.emit_message ("You may wish to run '" & progname & "autoremove' again.");
+                     Event.emit_message ("----------------------------------------------");
+                     Event.emit_message ("  New orphan packages have been detected.");
+                     Event.emit_message ("You may wish to run '" & progname &
+                                           " autoremove' again.");
+                     Event.emit_message ("----------------------------------------------");
                   end if;
                end if;
             end if;
