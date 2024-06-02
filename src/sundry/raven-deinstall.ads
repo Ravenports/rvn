@@ -13,6 +13,7 @@ package Raven.Deinstall is
    procedure deinstall_extracted_package
      (installed_package   : Pkgtypes.A_Package;
       verify_digest_first : Boolean;
+      quiet               : Boolean;
       post_report         : TIO.File_Type);
 
 private

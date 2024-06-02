@@ -302,6 +302,7 @@ package body Raven.Cmd.Remove is
          Deinstall.deinstall_extracted_package
            (installed_package   => mypackage,
             verify_digest_first => not skip_verify,
+            quiet               => quiet,
             post_report         => deinstall_log);
          DEL.drop_package_with_cascade (rdb, mypackage.id);
       end remove_installed_package;

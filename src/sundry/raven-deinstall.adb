@@ -23,6 +23,7 @@ package body Raven.Deinstall is
    -----------------------------------
    procedure deinstall_extracted_package (installed_package   : Pkgtypes.A_Package;
                                           verify_digest_first : Boolean;
+                                          quiet               : Boolean;
                                           post_report         : TIO.File_Type)
    is
       --  Do not use for upgrades
@@ -54,27 +55,39 @@ package body Raven.Deinstall is
       procedure eradicate_file (Position : Pkgtypes.File_List.Cursor)
       is
          path : constant String := USS (Pkgtypes.File_List.Element (Position).path);
+         features : Archive.Unix.File_Characteristics;
       begin
-         if not Archive.Unix.file_exists (path) then
-            if not verify_digest_first then
-               Event.emit_error (nsv & ": absent file slated for deletion: " & path);
-            end if;
-            return;
-         end if;
-         if verify_digest_first then
-            declare
-               current_b3sum : Blake_3.blake3_hash_hex;
-            begin
-               current_b3sum := Blake_3.hex (Blake_3.file_digest (path));
-               if current_b3sum /= Pkgtypes.File_List.Element (Position).digest then
-                  Event.emit_message (nsv & ": deleting modified file " & path);
+         features := Archive.Unix.get_charactistics (path);
+         case features.ftype is
+            when Archive.unsupported =>
+               if not quiet then
+                  Event.emit_error (nsv & ": absent file slated for deletion: " & path);
                end if;
-            end;
+               return;
+            when Archive.directory =>
+               Event.emit_error (nsv & ": directory expected to be a file: " & path);
+            when Archive.regular | Archive.symlink | Archive.hardlink | Archive.fifo =>
+               null;
+         end case;
+         if verify_digest_first then
+            --  don't verify symlinks or FIFO (directories, unsupported impossible)
+            case features.ftype is
+               when Archive.regular | Archive.hardlink =>
+                  declare
+                     current_b3sum : Blake_3.blake3_hash_hex;
+                  begin
+                     current_b3sum := Blake_3.hex (Blake_3.file_digest (path));
+                     if current_b3sum /= Pkgtypes.File_List.Element (Position).digest then
+                        if quiet then
+                           Event.emit_message (nsv & ": deleting modified file " & path);
+                        end if;
+                     end if;
+                  end;
+               when others => null;
+            end case;
          end if;
          if not Archive.Unix.unlink_file (path) then
-            if not verify_digest_first then
-               Event.emit_message (nsv & ": failed to delete " & path);
-            end if;
+            Event.emit_message (nsv & ": failed to delete " & path);
          end if;
       end eradicate_file;
    begin
