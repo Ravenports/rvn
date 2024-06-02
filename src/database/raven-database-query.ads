@@ -29,6 +29,10 @@ package Raven.Database.Query is
       pkg_id     : Pkgtypes.Package_ID;
       files      : in out Archive.Unpack.file_records.Vector);
 
+   --  Returns number of installed packages.  Used for the rvn --status-check
+   function number_of_installed_packages
+     (db         : RDB_Connection) return Pkgtypes.Package_ID;
+
    --  Populates a container of truncates packages (only data from main table, no joins)
    procedure rvn_which
      (db         : RDB_Connection;

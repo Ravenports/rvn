@@ -6,14 +6,20 @@ with Raven.Repository;
 with Raven.Context;
 with Raven.Event;
 with Raven.Unix;
-with Raven.Strings; use Raven.Strings;
+with Raven.Strings;
+with Raven.Database.Query;
+with Raven.Database.Operations;
 with ThickUCL.Emitter;
 with Ucl;
+
+ use Raven.Strings;
 
 package body Raven.Cmd.Unset is
 
    package ENV renames Ada.Environment_Variables;
    package EV  renames Raven.Event;
+   package OPS renames Raven.Database.Operations;
+   package QRY renames Raven.Database.Query;
 
 
    --------------------------
@@ -56,10 +62,35 @@ package body Raven.Cmd.Unset is
    -----------------------
    --  do_status_check  --
    -----------------------
-   function do_status_check return Boolean is
+   function do_status_check return Boolean
+   is
+      numpkgs : Pkgtypes.Package_ID;
+      localdb : Database.RDB_Connection;
    begin
-      TIO.Put_Line ("status-check not yet implemented");
-      return False;
+      if not OPS.localdb_exists (Database.installed_packages) then
+         TIO.Put_Line ("Failed -- the local database does not exist.");
+         return False;
+      end if;
+
+      case OPS.rdb_open_localdb (localdb, Database.installed_packages) is
+         when RESULT_OK => null;
+         when others =>
+            TIO.Put_Line ("Failed -- could not open local database.");
+            return False;
+      end case;
+
+      numpkgs := QRY.number_of_installed_packages (localdb);
+
+      OPS.rindex_db_close (localdb);
+
+      case numpkgs is
+         when Pkgtypes.Package_Not_Installed =>
+            TIO.Put_Line ("Failed -- zero packages installed.");
+            return False;
+         when others =>
+            TIO.Put_Line (progname & ":" & numpkgs'Img & " packages installed.");
+      end case;
+      return True;
    end do_status_check;
 
 

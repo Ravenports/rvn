@@ -11,6 +11,34 @@ use Raven.Strings;
 
 package body Raven.Database.Query is
 
+   ------------------------------------
+   --  number_of_installed_packages  --
+   ------------------------------------
+   function number_of_installed_packages (db : RDB_Connection) return Pkgtypes.Package_ID
+   is
+      func : constant String := "number_of_installed_packages";
+      sql  : constant String := "SELECT count(id) FROM packages";
+      new_stmt : SQLite.thick_stmt;
+      numpkgs  : Pkgtypes.Package_ID := Pkgtypes.Package_Not_Installed;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return 0;
+      end if;
+      debug_running_stmt (new_stmt);
+      case SQLite.step (new_stmt) is
+         when SQLite.no_more_data => null;
+         when SQLite.row_present =>
+            numpkgs := Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 0));
+         when SQLite.something_else =>
+            CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                         SQLite.get_expanded_sql (new_stmt));
+      end case;
+      SQLite.finalize_statement (new_stmt);
+      return numpkgs;
+   end number_of_installed_packages;
+
+
    -------------------------
    --  package_installed  --
    -------------------------
