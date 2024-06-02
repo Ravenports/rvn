@@ -118,7 +118,9 @@ package body Raven.Cmd.Install is
             if not comline.cmd_install.force_install then
                case QRY.package_installed (rdb, N, S, V) is
                   when Pkgtypes.Package_Not_Installed => null;
-                  when others => EV.emit_error ("The " & P & " package is already installed.");
+                  when others =>
+                     EV.emit_error ("The " & P & " package is already installed.");
+                     return False;
                end case;
             end if;
          end if;

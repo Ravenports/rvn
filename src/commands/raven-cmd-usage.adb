@@ -1034,8 +1034,8 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "remove [-fInqy] [-CE] pattern [...]";
-         msg2 : constant String := "remove [-fInqy] -a";
+         msg1 : constant String := "remove [-fInqsy] [-CE] pattern [...]";
+         msg2 : constant String := "remove [-fInqsy] -a";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
