@@ -94,10 +94,20 @@ package body Raven.Cmd.Install is
       begin
          return USS (comline.common_options.multiple_patterns.Element (0));
       end archive_path;
+
+      function extract_location return String
+      is
+         rootdir : constant String := USS (comline.pre_command.install_rootdir);
+      begin
+         if rootdir = "" then
+            return "/";
+         end if;
+         return rootdir;
+      end extract_location;
    begin
 
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
-      if not operation.extract_manifest (file_list, USS (comline.pre_command.install_rootdir)) then
+      if not operation.extract_manifest (file_list, extract_location) then
          EV.emit_error ("Failed to extract manifest of packaged files.");
       end if;
       operation.populate_metadata_tree (metatree);
@@ -147,7 +157,7 @@ package body Raven.Cmd.Install is
 
             result := install_files_from_archive
               (archive_path    => archive_path,
-               root_directory  => USS (comline.pre_command.install_rootdir),
+               root_directory  => extract_location,
                inhibit_scripts => skip_scripts,
                be_silent       => comline.common_options.quiet,
                dry_run_only    => comline.common_options.dry_run,
