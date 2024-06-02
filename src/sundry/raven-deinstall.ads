@@ -14,6 +14,7 @@ package Raven.Deinstall is
      (installed_package   : Pkgtypes.A_Package;
       verify_digest_first : Boolean;
       quiet               : Boolean;
+      inhibit_scripts     : Boolean;
       post_report         : TIO.File_Type);
 
 private

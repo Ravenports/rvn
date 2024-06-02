@@ -37,6 +37,7 @@ private
       purge_list     : Pkgtypes.Package_Set.Vector;
       purge_order    : Purge_Order_Crate.Vector;
       skip_verify    : Boolean;
+      skip_scripts   : Boolean;
       quiet          : Boolean);
 
 end Raven.Cmd.Remove;

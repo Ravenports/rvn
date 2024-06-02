@@ -24,6 +24,7 @@ package body Raven.Deinstall is
    procedure deinstall_extracted_package (installed_package   : Pkgtypes.A_Package;
                                           verify_digest_first : Boolean;
                                           quiet               : Boolean;
+                                          inhibit_scripts     : Boolean;
                                           post_report         : TIO.File_Type)
    is
       --  Do not use for upgrades
@@ -99,14 +100,16 @@ package body Raven.Deinstall is
       installed_package.files.Iterate (eradicate_file'Access);
       prune_empty_directories (installed_package);
 
-      run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, tmp_message_shell);
-      run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, tmp_message_lua);
+      if not inhibit_scripts then
+         run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, tmp_message_shell);
+         run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, tmp_message_lua);
 
-      --  redirect
-      TIO.Set_Output (post_report);
-      Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant);
-      Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant);
-      TIO.Set_Output (TIO.Standard_Output);
+         --  redirect
+         TIO.Set_Output (post_report);
+         Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant);
+         Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant);
+         TIO.Set_Output (TIO.Standard_Output);
+      end if;
 
       --  clean up
       if not Archive.Unix.unlink_file (tmp_message_shell) then

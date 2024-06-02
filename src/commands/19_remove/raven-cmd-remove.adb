@@ -102,11 +102,12 @@ package body Raven.Cmd.Remove is
       end if;
 
       remove_packages_in_order
-        (rdb         => rdb,
-         purge_list  => purge_list,
-         purge_order => purge_order,
-         skip_verify => comline.cmd_remove.skip_verify,
-         quiet       => comline.common_options.quiet);
+        (rdb          => rdb,
+         purge_list   => purge_list,
+         purge_order  => purge_order,
+         skip_verify  => comline.cmd_remove.skip_verify,
+         skip_scripts => comline.cmd_remove.inhibit_scripts,
+         quiet        => comline.common_options.quiet);
 
       OPS.rdb_close (rdb);
       return success;
@@ -252,6 +253,7 @@ package body Raven.Cmd.Remove is
       purge_list     : Pkgtypes.Package_Set.Vector;
       purge_order    : Purge_Order_Crate.Vector;
       skip_verify    : Boolean;
+      skip_scripts   : Boolean;
       quiet          : Boolean)
    is
       tmp_filename  : constant String := Miscellaneous.get_temporary_filename ("remove");
@@ -303,6 +305,7 @@ package body Raven.Cmd.Remove is
            (installed_package   => mypackage,
             verify_digest_first => not skip_verify,
             quiet               => quiet,
+            inhibit_scripts     => skip_scripts,
             post_report         => deinstall_log);
          DEL.drop_package_with_cascade (rdb, mypackage.id);
       end remove_installed_package;
