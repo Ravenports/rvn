@@ -111,7 +111,7 @@ package body Raven.Cmd.Help is
                when cv_remove  => PL (C, "Removes packages from the database and the system");
                when cv_rquery  => PL (C, "Queries remote catalog");
                when cv_search  => PL (C, "Performs search of the package repository catalog");
-               when cv_shell   => PL (C, "Opens a debug shell for SQLite");
+               when cv_shell   => PL (C, "Opens a command shell for the local SQLite database");
                when cv_shlib   => PL (C, "Displays packages that link against a specific library");
                when cv_stats   => PL (C, "Displays package database statistics");
                when cv_version => PL (C, "Displays the currency of installed packages");

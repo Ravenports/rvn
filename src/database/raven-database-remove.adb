@@ -288,7 +288,7 @@ package body Raven.Database.Remove is
         "SELECT id, namebase, subpackage, variant, version, comment, desc, www, " &
         "maintainer, prefix, abi, rvndigest, rvnsize, flatsize, licenselogic " &
         "FROM packages " &
-        "WHERE auto=1";
+        "WHERE automatic=1";
       new_stmt : SQLite.thick_stmt;
    begin
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
