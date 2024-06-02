@@ -1,18 +1,22 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Text_IO;
 with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Cmd.Unset;
 with Raven.Deinstall;
 with Raven.Database.Remove;
 with Raven.Database.Operations;
+with Raven.Miscellaneous;
 with Raven.Strings;
+with Archive.Unix;
 
 use Raven.Strings;
 
 package body Raven.Cmd.Remove is
 
+   package TIO renames Ada.Text_IO;
    package LAT renames Ada.Characters.Latin_1;
    package OPS renames Raven.Database.Operations;
    package DEL renames Raven.Database.Remove;
@@ -92,6 +96,11 @@ package body Raven.Cmd.Remove is
       if not granted_permission_to_proceed (comline.common_options.quiet) then
          return True;
       end if;
+
+   --   Deinstall.deinstall_extracted_package
+    --    (installed_package   => Pkgtypes.A_Package,
+    --     verify_digest_first => Boolean,
+    --     post_report         => TIO.File_Type);
 
       OPS.rdb_close (rdb);
       return success;
@@ -227,5 +236,83 @@ package body Raven.Cmd.Remove is
          when others => return False;
       end case;
    end granted_permission_to_proceed;
+
+
+   --------------------------------
+   --  remove_packages_in_order  --
+   --------------------------------
+   procedure remove_packages_in_order
+     (purge_list     : Pkgtypes.Package_Set.Vector;
+      purge_order    : Purge_Order_Crate.Vector;
+      skip_verify    : Boolean;
+      quiet          : Boolean)
+   is
+      tmp_filename  : constant String := Miscellaneous.get_temporary_filename ("remove");
+      total_pkgs    : constant Natural := Natural (purge_order.Length);
+      deinstall_log : TIO.File_Type;
+      pkg_counter   : Natural := 0;
+
+      function progress return String is
+      begin
+         case total_pkgs is
+            when 0 .. 9 =>
+               return "[" & int2str (pkg_counter) & "/" & int2str (pkg_counter) & "]";
+            when 10 .. 99 =>
+               return "[" & zeropad (pkg_counter, 2) & "/" & int2str (pkg_counter) & "]";
+            when 100 .. 999 =>
+               return "[" & zeropad (pkg_counter, 3) & "/" & int2str (pkg_counter) & "]";
+            when 1000 .. 9999 =>
+               return "[" & zeropad (pkg_counter, 4) & "/" & int2str (pkg_counter) & "]";
+            when others =>
+               return "[" & zeropad (pkg_counter, 5) & "/" & int2str (pkg_counter) & "]";
+         end case;
+      end progress;
+
+      procedure print_removal_instruction (this_package : Pkgtypes.A_Package)
+      is
+         info     : constant String := "Removing " & Pkgtypes.nsvv_identifier (this_package);
+         fragment : constant String := progress;
+         fragsize : constant Natural := fragment'Length;
+         max_size : constant Natural := 79 - 1 - fragsize;
+      begin
+         Event.emit_premessage (fragment);
+         if info'Length > max_size then
+            Event.emit_message (info (info'First .. info'First + max_size - 2) & '*');
+         else
+            Event.emit_message (info);
+         end if;
+      end print_removal_instruction;
+
+      procedure remove_installed_package (Position : Purge_Order_Crate.Cursor)
+      is
+         purge_index : constant Natural := Purge_Order_Crate.Element (Position);
+         mypackage   : Pkgtypes.A_Package renames purge_list.Element (purge_index);
+      begin
+         pkg_counter := pkg_counter + 1;
+         if not quiet then
+            print_removal_instruction (mypackage);
+         end if;
+         Deinstall.deinstall_extracted_package
+           (installed_package   => mypackage,
+            verify_digest_first => not skip_verify,
+            post_report         => deinstall_log);
+      end remove_installed_package;
+   begin
+      TIO.Create (deinstall_log, TIO.Out_File, tmp_filename);
+      purge_order.Iterate (remove_installed_package'Access);
+      TIO.Close (deinstall_log);
+
+      TIO.Open (deinstall_log, TIO.In_File, tmp_filename);
+      while not  TIO.End_Of_File (deinstall_log) Loop
+         Event.emit_message (TIO.Get_Line (deinstall_log));
+      end loop;
+      TIO.Close (deinstall_log);
+
+      if Archive.Unix.file_exists (tmp_filename) then
+         if not Archive.Unix.unlink_file (tmp_filename) then
+            Event.emit_debug (moderate, "Failed to unlink temporary file " & tmp_filename);
+         end if;
+      end if;
+   end remove_packages_in_order;
 
 end Raven.Cmd.Remove;

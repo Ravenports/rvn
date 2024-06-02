@@ -730,6 +730,8 @@ package body Raven.Cmd.Line is
                      data.cmd_remove.force_breakage := True;
                   elsif datum = "-I" or else datum = "--no-scripts" then
                      data.cmd_remove.inhibit_scripts := True;
+                  elsif datum = "-s" or else datum = "--skip-verify" then
+                     data.cmd_remove.skip_verify := True;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   else

@@ -240,6 +240,7 @@ private
       record
          force_breakage     : Boolean := False;
          inhibit_scripts    : Boolean := False;
+         skip_verify        : Boolean := False;
          name_patterns      : Pkgtypes.Text_List.Vector;
       end record;
 

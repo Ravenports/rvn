@@ -31,4 +31,10 @@ private
    function granted_permission_to_proceed
      (quiet : Boolean) return Boolean;
 
+   procedure remove_packages_in_order
+     (purge_list     : Pkgtypes.Package_Set.Vector;
+      purge_order    : Purge_Order_Crate.Vector;
+      skip_verify    : Boolean;
+      quiet          : Boolean);
+
 end Raven.Cmd.Remove;

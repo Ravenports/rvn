@@ -10,11 +10,11 @@
 .Op Fl CE
 .Ar pattern ...
 .Nm
-.Op Fl fInqy
+.Op Fl fInqsy
 .Fl a
 .Pp
 .Nm
-.Op Cm --{force,no-scripts,dry-run,quiet,yes}
+.Op Cm --{force,no-scripts,dry-run,quiet,skip-verify,yes}
 .Op Cm --{case-sensitive,exact-match}
 .Ar pkg-name ...
 .Nm
@@ -88,6 +88,10 @@ Force quiet output, except where
 is also used, when
 .Nm
 will show the list of packages to be removed.
+.It Fl s , Cm --skip-verify
+Before each file is deleted, a checksum verification is performed to
+detect modifications after installation.
+This option disables the verification check and error notices during removal.
 .It Fl y , Cm --yes
 Assume yes when asked for confirmation before package removal.
 .El

@@ -56,7 +56,9 @@ package body Raven.Deinstall is
          path : constant String := USS (Pkgtypes.File_List.Element (Position).path);
       begin
          if not Archive.Unix.file_exists (path) then
-            Event.emit_error (nsv & ": absent file slated for deletion: " & path);
+            if not verify_digest_first then
+               Event.emit_error (nsv & ": absent file slated for deletion: " & path);
+            end if;
             return;
          end if;
          if verify_digest_first then
@@ -70,7 +72,9 @@ package body Raven.Deinstall is
             end;
          end if;
          if not Archive.Unix.unlink_file (path) then
-             Event.emit_message (nsv & ": failed to delete " & path);
+            if not verify_digest_first then
+               Event.emit_message (nsv & ": failed to delete " & path);
+            end if;
          end if;
       end eradicate_file;
    begin
