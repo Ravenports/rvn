@@ -96,7 +96,7 @@ package body Raven.Database.Remove is
                   QRY.finish_package_directories (db, myrec);
                   QRY.finish_package_files (db, myrec);
                   packages.Append (myrec);
-                  Event.emit_debug (moderate, "Added to top-level match for removal: " &
+                  Event.emit_debug (high_level, "Added to top-level match for removal: " &
                                       Pkgtypes.nsv_identifier (myrec));
                end;
             when SQLite.something_else =>
@@ -151,7 +151,7 @@ package body Raven.Database.Remove is
             patterns.Append (rdep_nsv);
             ondeck.Insert (rdep_nsv, ID_Set.Element (innerpos));
             already_seen.Insert (rdep_nsv, ID_Set.Element (innerpos));
-            Event.emit_debug (moderate, "remove reverse dependency: " & USS (rdep_nsv));
+            Event.emit_debug (high_level, "remove reverse dependency: " & USS (rdep_nsv));
          end check_rdep;
       begin
          gather_reverse_dependencies (db, rdeps, nsv);
@@ -167,7 +167,7 @@ package body Raven.Database.Remove is
       is
          pattern : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if top_level_deletion_list (db             => db,
+         if not top_level_deletion_list (db             => db,
                                      packages       => purge_list,
                                      pattern        => pattern,
                                      all_packages   => False,
