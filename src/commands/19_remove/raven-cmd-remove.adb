@@ -202,7 +202,7 @@ package body Raven.Cmd.Remove is
       end if;
 
       if dryrun then
-         Event.emit_premessage ("Dry-run: ");
+         Event.emit_premessage ("Dry run: ");
       end if;
       Event.emit_message ("The following packages will be removed:" & LAT.LF);
       purge_order.Iterate (display_line'Access);
