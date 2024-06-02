@@ -59,6 +59,10 @@ package body Raven.Cmd.Remove is
          end;
       end if;
 
+      if not success then
+         return False;
+      end if;
+
       if toplist.Is_Empty then
          if not comline.common_options.quiet then
             Event.emit_message ("No installed packages were selected for removal.");

@@ -16,7 +16,6 @@ package body Raven.Cmd.Autoremove is
    ----------------------------------
    function execute_autoremove_command (comline : Cldata) return Boolean
    is
-      success     : Boolean;
       rdb         : Database.RDB_Connection;
       toplist     : Pkgtypes.Package_Set.Vector;
       purge_list  : Pkgtypes.Package_Set.Vector;
@@ -27,7 +26,9 @@ package body Raven.Cmd.Autoremove is
          when others => return False;
       end case;
 
-      success := DEL.autoremoval_list (rdb, toplist);
+      if not DEL.autoremoval_list (rdb, toplist) then
+         return False;
+      end if;
 
       if toplist.Is_Empty then
          if not comline.common_options.quiet then
@@ -66,8 +67,26 @@ package body Raven.Cmd.Autoremove is
          skip_scripts => comline.cmd_remove.inhibit_scripts,
          quiet        => comline.common_options.quiet);
 
+      --  Run query again to see if any new packages were orphaned and let the user know.
+      if not comline.common_options.quiet then
+         declare
+            toplist2    : Pkgtypes.Package_Set.Vector;
+            purge_list2 : Pkgtypes.Package_Set.Vector;
+         begin
+            if DEL.autoremoval_list (rdb, toplist2) then
+               if not toplist2.Is_Empty then
+                  DEL.prune_candidates_with_reverse_deps (rdb, toplist2, purge_list2);
+                  if not purge_list2.Is_Empty then
+                     Event.emit_message ("New orphan packages have been detected.");
+                     Event.emit_message ("You may wish to run '" & progname & "autoremove' again.");
+                  end if;
+               end if;
+            end if;
+         end;
+      end if;
+
       OPS.rdb_close (rdb);
-      return success;
+      return True;
 
    end execute_autoremove_command;
 
