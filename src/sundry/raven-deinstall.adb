@@ -290,11 +290,21 @@ package body Raven.Deinstall is
       is
          dirpath  : constant String := USS (Pkgtypes.Text_List.Element (Position));
          contents : SCN.dscan_crate.Vector;
+         features : Archive.Unix.File_Characteristics;
       begin
-         SCN.scan_directory (dirpath, contents);
-         if contents.Is_Empty then
-            Ada.Directories.Delete_Directory (dirpath);
-         end if;
+         features := Archive.Unix.get_charactistics (dirpath);
+         case features.ftype is
+            when Archive.directory =>
+               SCN.scan_directory (dirpath, contents);
+               if contents.Is_Empty then
+                  Ada.Directories.Delete_Directory (dirpath);
+               end if;
+            when Archive.unsupported =>
+               Event.emit_debug (high_level, "Expected directory does not exist: " & dirpath);
+            when others =>
+               Event.emit_debug (high_level, "Expected directory at " & dirpath &
+                                   ", but is " & features.ftype'Img);
+         end case;
       end drop_if_empty;
 
    begin
