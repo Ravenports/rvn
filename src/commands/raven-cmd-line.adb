@@ -724,6 +724,8 @@ package body Raven.Cmd.Line is
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
+                  elsif datum = sws_dryrun or else datum = swl_dryrun then
+                     data.common_options.dry_run := True;
                   elsif datum = "-f" or else datum = "--force" then
                      data.cmd_remove.force_breakage := True;
                   elsif datum = "-I" or else datum = "--no-scripts" then
