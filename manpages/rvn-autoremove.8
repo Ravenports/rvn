@@ -6,10 +6,10 @@
 .Nd removes orphan packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl Inqy
+.Op Fl Inqsy
 .Pp
 .Nm
-.Op Cm --{no-scripts,dry-run,quiet,yes}
+.Op Cm --{no-scripts,dry-run,quiet,skip-verify,yes}
 .Sh DESCRIPTION
 .Nm
 is used for removing orphan packages which were installed
@@ -25,7 +25,14 @@ Dry-run mode.
 The list of changes to packages is always printed, but
 no changes are actually made.
 .It Fl q , Cm --quiet
-Force quiet output.
+Force silent operation.
+Incompatible with the
+.Fl n
+switch.
+.It Fl s , Cm --skip-verify
+Before each file is deleted, a checksum verification is performed to
+detect modifications after installation.
+This option disables the verification check and error notices during removal.
 .It Fl y , Cm --yes
 Assume yes when asked for confirmation before package autoremoval.
 .El

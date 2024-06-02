@@ -100,26 +100,27 @@ package body Raven.Cmd.Usage is
    function command_line_valid (comline : Cldata) return Boolean is
    begin
       case comline.command is
-         when cv_unset   => return True;  -- already verified
-         when cv_alias   => return verb_alias (comline);
-         when cv_catalog => return verb_catalog (comline);
-         when cv_clean   => return verb_clean (comline);
-         when cv_config  => return verb_config (comline);
-         when cv_create  => return verb_create (comline);
-         when cv_fetch   => return verb_fetch (comline);
-         when cv_genrepo => return verb_genrepo (comline);
-         when cv_help    => return verb_help (comline);
-         when cv_info    => return verb_info (comline);
-         when cv_install => return verb_install (comline);
-         when cv_query   => return verb_query (comline);
-         when cv_rquery  => return verb_rquery (comline);
-         when cv_remove  => return verb_remove (comline);
-         when cv_search  => return verb_search (comline);
-         when cv_shell   => return verb_shell (comline);
-         when cv_shlib   => return verb_shlib (comline);
-         when cv_stats   => return verb_stats (comline);
-         when cv_which   => return verb_which (comline);
-         when cv_version => return verb_version (comline);
+         when cv_unset      => return True;  -- already verified
+         when cv_alias      => return verb_alias (comline);
+         when cv_autoremove => return verb_autorem (comline);
+         when cv_catalog    => return verb_catalog (comline);
+         when cv_clean      => return verb_clean (comline);
+         when cv_config     => return verb_config (comline);
+         when cv_create     => return verb_create (comline);
+         when cv_fetch      => return verb_fetch (comline);
+         when cv_genrepo    => return verb_genrepo (comline);
+         when cv_help       => return verb_help (comline);
+         when cv_info       => return verb_info (comline);
+         when cv_install    => return verb_install (comline);
+         when cv_query      => return verb_query (comline);
+         when cv_rquery     => return verb_rquery (comline);
+         when cv_remove     => return verb_remove (comline);
+         when cv_search     => return verb_search (comline);
+         when cv_shell      => return verb_shell (comline);
+         when cv_shlib      => return verb_shlib (comline);
+         when cv_stats      => return verb_stats (comline);
+         when cv_which      => return verb_which (comline);
+         when cv_version    => return verb_version (comline);
       end case;
    end command_line_valid;
 
@@ -1065,7 +1066,7 @@ package body Raven.Cmd.Usage is
       end if;
 
       if not Archive.Unix.user_is_root then
-         return alert ("The clean command is restricted to the superuser.");
+         return alert ("The remove command is restricted to the superuser.");
       end if;
 
       if comline.common_options.dry_run and then
@@ -1077,5 +1078,34 @@ package body Raven.Cmd.Usage is
       return True;
 
    end verb_remove;
+
+
+   --------------------
+   --  verb_autorem  --
+   --------------------
+   function verb_autorem (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "autoremove [-Inqsy]";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_help_suggestion (cv_autoremove);
+         return False;
+      end alert;
+   begin
+      if not Archive.Unix.user_is_root then
+         return alert ("The autoremove command is restricted to the superuser.");
+      end if;
+
+      if comline.common_options.dry_run and then
+        comline.common_options.quiet
+      then
+         return alert ("--dry-run and --quiet are incompatible switches");
+      end if;
+
+      return True;
+   end verb_autorem;
 
 end Raven.Cmd.Usage;

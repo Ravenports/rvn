@@ -55,5 +55,6 @@ private
    function verb_search  (comline : Cldata) return Boolean;
    function verb_fetch   (comline : Cldata) return Boolean;
    function verb_remove  (comline : Cldata) return Boolean;
+   function verb_autorem (comline : Cldata) return Boolean;
 
 end Raven.Cmd.Usage;

@@ -23,6 +23,7 @@ private
    type Command_verb is
      (cv_unset,
       cv_alias,
+      cv_autoremove,
       cv_catalog,
       cv_clean,
       cv_config,
@@ -44,7 +45,6 @@ private
      );
 
      --   cv_annotate,
-     --   cv_autoremove,
      --   cv_upgrade,
 
 
@@ -88,7 +88,7 @@ private
          multiple_patterns  : string_crate.Vector;
       end record;
 
-   type switches_config_alias is
+   type switches_alias_cmd is
       record
          without_args : Boolean := False;
          alias        : text;
@@ -244,6 +244,12 @@ private
          name_patterns      : Pkgtypes.Text_List.Vector;
       end record;
 
+   type switches_autoremove_cmd is
+      record
+         inhibit_scripts    : Boolean := False;
+         skip_verify        : Boolean := False;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -271,7 +277,8 @@ private
          common_options         : switches_common;
 
          pre_command            : pre_command_switches;
-         cmd_alias              : switches_config_alias;
+         cmd_alias              : switches_alias_cmd;
+         cmd_autoremove         : switches_autoremove_cmd;
          cmd_catalog            : switches_catalog_cmd;
          cmd_clean              : switches_clean_cmd;
          cmd_config             : switches_config_cmd;

@@ -645,6 +645,8 @@ package body Raven.Cmd.Line is
                      last_cmd := generic_repo_name;
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
+                  else
+                     set_error (data, "Not a switch: " & datum);
                   end if;
                when cv_search =>
                   if datum = sws_quiet or else datum = swl_quiet then
@@ -739,7 +741,23 @@ package body Raven.Cmd.Line is
                   else
                      data.cmd_remove.name_patterns.append (datumtxt);
                   end if;
-
+               when cv_autoremove =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
+                  elsif datum = sws_dryrun or else datum = swl_dryrun then
+                     data.common_options.dry_run := True;
+                  elsif datum = "-I" or else datum = "--no-scripts" then
+                     data.cmd_autoremove.inhibit_scripts := True;
+                  elsif datum = "-s" or else datum = "--skip-verify" then
+                     data.cmd_autoremove.skip_verify := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     set_error (data, "Not a switch: " & datum);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -882,6 +900,7 @@ package body Raven.Cmd.Line is
         (
          ("NOTFOUND  ", cv_unset),
          ("alias     ", cv_alias),
+         ("autoremove", cv_autoremove),
          ("catalog   ", cv_catalog),
          ("clean     ", cv_clean),
          ("config    ", cv_config),
@@ -902,7 +921,6 @@ package body Raven.Cmd.Line is
          ("which     ", cv_which)
 
          --  ("annotate  ", cv_annotate),
-         --  ("autoremove", cv_autoremove),
          --  ("check     ", cv_check),
          --  ("upgrade   ", cv_upgrade),
         );

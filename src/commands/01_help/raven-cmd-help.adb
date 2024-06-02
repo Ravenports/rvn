@@ -96,10 +96,11 @@ package body Raven.Cmd.Help is
          begin
             case command is
                when cv_unset   => null;
-               when cv_alias   => PL (C, "List the command line aliases");
+               when cv_alias   => PL (C, "Lists the command line aliases");
+               when cv_autoremove => PL (C, "Removes orphan packages");
                when cv_catalog => PL (C, "Ensures local package catalog is up to date");
-               when cv_clean   => PL (C, "clean the local cache of downloaded packages");
-               when cv_config  => PL (C, "Display the value of a configuration option");
+               when cv_clean   => PL (C, "cleans the local cache of downloaded packages");
+               when cv_config  => PL (C, "Displays the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
                when cv_fetch   => PL (C, "Fetches packages from a remote repository");
                when cv_genrepo => PL (C, "Creates a package repository catalog");
@@ -115,12 +116,9 @@ package body Raven.Cmd.Help is
                when cv_stats   => PL (C, "Displays package database statistics");
                when cv_version => PL (C, "Displays the currency of installed packages");
                when cv_which   => PL (C, "Displays which package installed a specific file");
-               --  when cv_upgrade => PL (C, "Performs upgrades of packaged software distributions");
-               --  when cv_autoremove => PL (C, "Removes orphan packages");
-               --  when cv_check =>
-               --     PL (C, "Checks for missing dependencies and database consistency");
-               --  when cv_annotate =>
-               --     PL (C, "Add, modify or delete tag-value style annotations on packages");
+               --  when cv_upgrade  => PL (C, "Upgrades installed packge distributions");
+               --  when cv_check    => PL (C, "verifies integrity of installed packages");
+               --  when cv_annotate => PL (C, "Manipulate installed package annotations");
             end case;
          end;
       end loop;

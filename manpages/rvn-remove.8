@@ -6,7 +6,7 @@
 .Nd removes packages from the database and the system
 .Sh SYNOPSIS
 .Nm
-.Op Fl fInqy
+.Op Fl fInqsy
 .Op Fl CE
 .Ar pattern ...
 .Nm
@@ -83,11 +83,10 @@ Dry run mode.
 The list of packages to remove is always printed, but no packages are
 actually deleted.
 .It Fl q , Cm --quiet
-Force quiet output, except where
+Force silent operation.
+Incompatible with the
 .Fl n
-is also used, when
-.Nm
-will show the list of packages to be removed.
+switch.
 .It Fl s , Cm --skip-verify
 Before each file is deleted, a checksum verification is performed to
 detect modifications after installation.
