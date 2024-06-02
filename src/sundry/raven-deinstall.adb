@@ -78,7 +78,7 @@ package body Raven.Deinstall is
                   begin
                      current_b3sum := Blake_3.hex (Blake_3.file_digest (path));
                      if current_b3sum /= Pkgtypes.File_List.Element (Position).digest then
-                        if quiet then
+                        if not quiet then
                            Event.emit_message (nsv & ": deleting modified file " & path);
                         end if;
                      end if;
@@ -87,7 +87,9 @@ package body Raven.Deinstall is
             end case;
          end if;
          if not Archive.Unix.unlink_file (path) then
-            Event.emit_message (nsv & ": failed to delete " & path);
+            if not quiet then
+               Event.emit_message (nsv & ": failed to delete " & path);
+            end if;
          end if;
       end eradicate_file;
    begin
