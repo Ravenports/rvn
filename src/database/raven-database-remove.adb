@@ -245,4 +245,34 @@ package body Raven.Database.Remove is
    end gather_reverse_dependencies;
 
 
+   ---------------------------------
+   --  drop_package_with_cascade  --
+   ---------------------------------
+   procedure drop_package_with_cascade
+     (db         : RDB_Connection;
+      id         : Pkgtypes.Package_ID)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "drop_package_with_cascade";
+      sql : constant String := "DELETE FROM packages WHERE id = ?";
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (id));
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               Event.emit_error
+                 (func & ": This should not have data: " & SQLite.get_expanded_sql (new_stmt));
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end drop_package_with_cascade;
+
 end Raven.Database.Remove;

@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 private with Ada.Containers.Vectors;
+private with Raven.Database;
 
 
 package Raven.Cmd.Remove is
@@ -32,7 +33,8 @@ private
      (quiet : Boolean) return Boolean;
 
    procedure remove_packages_in_order
-     (purge_list     : Pkgtypes.Package_Set.Vector;
+     (rdb            : Database.RDB_Connection;
+      purge_list     : Pkgtypes.Package_Set.Vector;
       purge_order    : Purge_Order_Crate.Vector;
       skip_verify    : Boolean;
       quiet          : Boolean);

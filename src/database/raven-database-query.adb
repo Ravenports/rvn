@@ -15,7 +15,7 @@ package body Raven.Database.Query is
    --  package_installed  --
    -------------------------
    function package_installed
-     (db         : in out RDB_Connection;
+     (db         : RDB_Connection;
       namebase   : String;
       subpackage : String;
       variant    : String) return Pkgtypes.Package_ID
@@ -52,7 +52,7 @@ package body Raven.Database.Query is
    --  get_package_files  --
    -------------------------
    procedure get_package_files
-     (db         : in out RDB_Connection;
+     (db         : RDB_Connection;
       pkg_id     : Pkgtypes.Package_ID;
       files      : in out Archive.Unpack.file_records.Vector)
    is

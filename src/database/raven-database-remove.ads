@@ -23,6 +23,10 @@ package Raven.Database.Remove is
       purge_list     : in out Pkgtypes.Package_Set.Vector;
       force          : Boolean);
 
+   procedure drop_package_with_cascade
+     (db : RDB_Connection;
+      id : Pkgtypes.Package_ID);
+
 private
 
    internal_srcfile : constant String := "raven-database-remove.adb";
