@@ -114,7 +114,7 @@ package body Raven.Cmd.Info is
          end if;
 
          if cmd.full_information or else num_attr_selected = 0 then
-            display_full_information (metatree, resolved_path, comline.common_options.quiet);
+            display_full_information (metatree, resolved_path);
             return True;
          end if;
 
@@ -143,19 +143,19 @@ package body Raven.Cmd.Info is
       single : Boolean := num_attr = 1;
       Q      : Boolean := comline.common_options.quiet;
    begin
-      display_string (metatree, comline.cmd_info.namebase, single, MET.namebase);
-      display_string (metatree, comline.cmd_info.subpackage, single, MET.subpackage);
-      display_string (metatree, comline.cmd_info.variant, single, MET.variant);
-      display_string (metatree, comline.cmd_info.comment, single, MET.comment);
-      display_string (metatree, comline.cmd_info.install_prefix, single, MET.prefix);
-      display_string (metatree, comline.cmd_info.description, single, MET.description);
-      display_size   (metatree, comline.cmd_info.total_size, single);
+      display_string (metatree, comline.cmd_info.namebase, single, Q, MET.namebase);
+      display_string (metatree, comline.cmd_info.subpackage, single, Q, MET.subpackage);
+      display_string (metatree, comline.cmd_info.variant, single, Q, MET.variant);
+      display_string (metatree, comline.cmd_info.comment, single, Q, MET.comment);
+      display_string (metatree, comline.cmd_info.install_prefix, single, Q, MET.prefix);
+      display_string (metatree, comline.cmd_info.description, single, Q, MET.description);
+      display_size   (metatree, comline.cmd_info.total_size, single, Q);
       display_array  (metatree, comline.cmd_info.shlibs_used, single, Q, MET.shlibs_required);
       display_array  (metatree, comline.cmd_info.shlibs_provided, single, Q, MET.shlibs_provided);
       display_array  (metatree, comline.cmd_info.shlibs_adjacent, single, Q, MET.shlibs_adjacent);
       display_dependencies    (metatree, comline.cmd_info.dependencies, single, Q);
       display_annotations     (metatree, comline.cmd_info.annotations, single, Q);
-      display_install_message (metatree, comline.cmd_info.install_message, single);
+      display_install_message (metatree, comline.cmd_info.install_message, single, Q);
       list_files              (rvn_path, comline.cmd_info.list_files, single, Q, False, False);
       list_files              (rvn_path, comline.cmd_info.list_digests, single, Q, True, False);
       list_files              (rvn_path, comline.cmd_info.list_attributes, single, Q, False, True);
@@ -186,16 +186,18 @@ package body Raven.Cmd.Info is
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
       single   : Boolean;
+      quiet    : Boolean;
       mfield   : MET.metadata_field)
    is
       dtype      : ThickUCL.Leaf_type;
       key        : constant String := MET.metadata_field_label (mfield);
-      this_label : constant attr_label := format_label (key);
+      data_label : constant String := MET.metadata_field_formal_label (mfield);
+      this_label : constant attr_label := format_label (data_label);
    begin
       if not active then
          return;
       end if;
-      if not single then
+      if not (single and then quiet) then
          TIO.Put (this_label & ": ");
          case mfield is
             when MET.description => TIO.Put_Line ("");
@@ -223,15 +225,13 @@ package body Raven.Cmd.Info is
    is
       dtype      : ThickUCL.Leaf_type;
       key        : constant String := MET.metadata_field_label (mfield);
-      this_label : constant attr_label := format_label (key);
+      data_label : constant String := MET.metadata_field_formal_label (mfield);
+      this_label : constant attr_label := format_label (data_label);
       nelements  : Natural;
       vndx       : ThickUCL.array_index;
    begin
       if not active then
          return;
-      end if;
-      if not single then
-         TIO.Put_line (this_label & ":");  --  All arrays start on a fresh line
       end if;
       dtype := ThickUCL.get_data_type (metatree, key);
       case dtype is
@@ -244,10 +244,15 @@ package body Raven.Cmd.Info is
                      declare
                         val : constant String := metatree.get_array_element_value (vndx, index);
                      begin
-                        if single or else quiet then
+                        if single and then quiet
+                        then
                            TIO.Put_Line (val);
                         else
-                           TIO.Put_Line ("    " & val);
+                           if index = 0 then
+                              TIO.Put_Line (this_label & ": " & val);
+                           else
+                              TIO.Put_Line (no_label & ": " & val);
+                           end if;
                         end if;
                      end;
                   when others => null;
@@ -264,16 +269,21 @@ package body Raven.Cmd.Info is
    -----------------------------
    procedure display_array_oneline
      (metatree : ThickUCL.UclTree;
-      mfield   : MET.metadata_field)
+      mfield   : MET.metadata_field;
+      single   : Boolean;
+      quiet    : Boolean)
    is
       dtype      : ThickUCL.Leaf_type;
       key        : constant String := MET.metadata_field_label (mfield);
-      this_label : constant attr_label := format_label (key);
+      data_label : constant String := MET.metadata_field_formal_label (mfield);
+      this_label : constant attr_label := format_label (data_label);
       nelements  : Natural;
       vndx       : ThickUCL.array_index;
       values     : Text;
    begin
-      TIO.Put (this_label & ": ");
+      if not (single and then quiet) then
+         TIO.Put (this_label & ": ");
+      end if;
       dtype := ThickUCL.get_data_type (metatree, key);
       case dtype is
          when ThickUCL.data_array =>
@@ -306,18 +316,25 @@ package body Raven.Cmd.Info is
    procedure display_size
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean)
+      single   : Boolean;
+      quiet    : Boolean)
    is
-      key        : constant String := MET.metadata_field_label (MET.flatsize);
-      this_label : constant attr_label := format_label (key);
+      data_label : constant String := MET.metadata_field_formal_label (MET.flatsize);
+      this_label : constant attr_label := format_label (data_label);
    begin
       if not active then
          return;
       end if;
-      if not single then
-         TIO.Put (this_label & ": ");
-      end if;
-      TIO.Put_Line (MET.human_readable_size (MET.get_size (metatree, MET.flatsize)));
+      declare
+         size_value : constant String :=
+           MET.human_readable_size (MET.get_size (metatree, MET.flatsize));
+      begin
+         if single and then quiet then
+            TIO.Put_Line (size_value);
+         else
+            TIO.Put_Line (this_label & ": " & size_value);
+         end if;
+      end;
    end display_size;
 
 
@@ -327,7 +344,8 @@ package body Raven.Cmd.Info is
    procedure display_install_message
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean)
+      single   : Boolean;
+      quiet    : Boolean)
    is
       key        : constant String := MET.metadata_field_label (MET.messages);
       this_label : constant attr_label := format_label (key);
@@ -335,14 +353,13 @@ package body Raven.Cmd.Info is
       if not active then
          return;
       end if;
-      if not single then
-         TIO.Put_Line (this_label & ":");
-      end if;
       declare
-         val : constant String := MET.get_message (metatree, Pkgtypes.install);
+         msg : constant String := MET.get_message (metatree, Pkgtypes.install);
       begin
-         if not IsBlank (val) then
-            TIO.Put_Line (val);
+         if single and then quiet then
+            TIO.Put_Line (msg);
+         else
+            TIO.Put_Line (this_label & ":" & msg);
          end if;
       end;
    end display_install_message;
@@ -358,26 +375,29 @@ package body Raven.Cmd.Info is
       quiet    : Boolean)
    is
       procedure print (Position : ThickUCL.jar_string.Cursor);
-
-      key        : constant String := MET.metadata_field_label (MET.dependencies);
-      this_label : constant attr_label := format_label (key);
+      data_label : constant String := MET.metadata_field_formal_label (MET.dependencies);
+      this_label : constant attr_label := format_label (data_label);
       dep_keys   : ThickUCL.jar_string.Vector;
+      counter    : Natural := 0;
 
       procedure print (Position : ThickUCL.jar_string.Cursor)
       is
          dependency : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
       begin
-         if single or else quiet then
+         if single and then quiet then
             TIO.Put_Line (dependency);
+         else
+            if counter = 0 then
+               TIO.Put_Line (this_label & ": " & dependency);
+            else
+               TIO.Put_Line (no_label & ": " & dependency);
+            end if;
          end if;
-         TIO.Put_Line ("    " & dependency);
+         counter := counter + 1;
       end print;
    begin
       if not active then
          return;
-      end if;
-      if not single then
-         TIO.Put_Line (this_label & ":");
       end if;
       MET.obtain_dependencies_keys (metatree, dep_keys);
       dep_keys.Iterate (print'Access);
@@ -396,10 +416,12 @@ package body Raven.Cmd.Info is
       procedure print (Position : ThickUCL.jar_string.Cursor);
 
       key        : constant String := MET.metadata_field_label (MET.annotations);
-      this_label : constant attr_label := format_label (key);
+      data_label : constant String := MET.metadata_field_formal_label (MET.annotations);
+      this_label : constant attr_label := format_label (data_label);
       note_keys  : ThickUCL.jar_string.Vector;
       dtype      : ThickUCL.Leaf_type;
       vndx       : ThickUCL.object_index;
+      counter    : Natural := 0;
 
       procedure print (Position : ThickUCL.jar_string.Cursor)
       is
@@ -412,11 +434,17 @@ package body Raven.Cmd.Info is
                declare
                   note : constant String := metatree.get_object_value (vndx, note_id);
                begin
-                  if single or else quiet then
+                  if single and then quiet then
                      TIO.Put_Line (note_id & " = " & note);
+                  else
+                     if counter = 0 then
+                        TIO.Put_Line (this_label & ": " & note_id & " => " & note);
+                     else
+                        TIO.Put_Line (no_label & ": " & note_id & " => " & note);
+                     end if;
                   end if;
-                  TIO.Put_Line ("    " & note_id & " = " & note);
                end;
+               counter := counter + 1;
             when others =>
                null;
          end case;
@@ -424,9 +452,6 @@ package body Raven.Cmd.Info is
    begin
       if not active then
          return;
-      end if;
-      if not single then
-         TIO.Put_Line (this_label & ":");
       end if;
       dtype := metatree.get_data_type (key);
       case dtype is
@@ -477,33 +502,36 @@ package body Raven.Cmd.Info is
    --------------------------------
    procedure display_full_information
      (metatree : ThickUCL.UclTree;
-      pkg_path : String;
-      quiet    : Boolean)
+      pkg_path : String)
    is
+      quiet    : constant Boolean := False;
       basename : constant String := head (tail (pkg_path, "/"), ".");
    begin
       TIO.Put_Line (basename);
-      display_string (metatree, True, False, MET.namebase);
-      display_string (metatree, True, False, MET.subpackage);
-      display_string (metatree, True, False, MET.variant);
-      display_string (metatree, True, False, MET.version);
-      display_string (metatree, True, False, MET.abi);
-      display_string (metatree, True, False, MET.comment);
-      display_string (metatree, True, False, MET.website);
+      display_string (metatree, True, False, quiet, MET.namebase);
+      display_string (metatree, True, False, quiet, MET.subpackage);
+      display_string (metatree, True, False, quiet, MET.variant);
+      display_string (metatree, True, False, quiet, MET.version);
+      display_string (metatree, True, False, quiet, MET.abi);
+      display_string (metatree, True, False, quiet, MET.comment);
+      display_string (metatree, True, False, quiet, MET.website);
 
-      display_array_oneline (metatree, MET.categories);
-      display_array_oneline (metatree, MET.licenses);
+      display_array_oneline (metatree, MET.categories, False, quiet);
+      display_array_oneline (metatree, MET.licenses, False, quiet);
 
-      display_string (metatree, True, False, MET.maintainer);
-      display_string (metatree, True, False, MET.prefix);
+      display_string (metatree, True, False, quiet, MET.license_logic);
+      display_string (metatree, True, False, quiet, MET.maintainer);
+      display_string (metatree, True, False, quiet, MET.prefix);
+
+      display_dependencies (metatree, True, False, quiet);
 
       display_array (metatree, True, False, quiet, MET.shlibs_required);
       display_array (metatree, True, False, quiet, MET.shlibs_provided);
       display_array (metatree, True, False, quiet, MET.shlibs_adjacent);
 
       display_annotations (metatree, True, False, quiet);
-      display_size        (metatree, True, False);
-      display_string      (metatree, True, False, MET.description);
+      display_size        (metatree, True, False, quiet);
+      display_string      (metatree, True, False, quiet, MET.description);
    end display_full_information;
 
 end Raven.Cmd.Info;

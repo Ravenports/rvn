@@ -13,17 +13,17 @@ private
 
    package MET renames Raven.Metadata;
 
+   subtype attr_label is String (1 .. 16);
+
    not_present_in_metadata : constant String := "package is missing this information";
    wrong_type              : constant String := "error - wrong data type";
-
-   subtype attr_label is String (1 .. 16);
+   no_label                : constant attr_label := (others => ' ');
 
    function format_label (label_text : String) return attr_label;
 
    procedure display_full_information
      (metatree : ThickUCL.UclTree;
-      pkg_path : String;
-      quiet    : Boolean);
+      pkg_path : String);
 
    procedure display_individual_attributes
      (metatree  : ThickUCL.UclTree;
@@ -35,17 +35,20 @@ private
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
       single   : Boolean;
+      quiet    : Boolean;
       mfield   : MET.metadata_field);
 
    procedure display_size
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean);
+      single   : Boolean;
+      quiet    : Boolean);
 
    procedure display_install_message
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
-      single   : Boolean);
+      single   : Boolean;
+      quiet    : Boolean);
 
    procedure display_array
      (metatree : ThickUCL.UclTree;
@@ -56,7 +59,9 @@ private
 
    procedure display_array_oneline
      (metatree : ThickUCL.UclTree;
-      mfield   : MET.metadata_field);
+      mfield   : MET.metadata_field;
+      single   : Boolean;
+      quiet    : Boolean);
 
    procedure display_dependencies
      (metatree : ThickUCL.UclTree;

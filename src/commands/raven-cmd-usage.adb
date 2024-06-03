@@ -402,6 +402,9 @@ package body Raven.Cmd.Usage is
             if comline.cmd_info.raw_manifest then
                return alert ("--raw manifest only available from pkg-file (-F)");
             end if;
+            if comline.cmd_info.list_attributes then
+               return alert ("--list-extended only available from pkg-file (-F)");
+            end if;
          end if;
 
          if IsBlank (comline.cmd_info.path_archive_file) then
@@ -416,6 +419,11 @@ package body Raven.Cmd.Usage is
             end if;
             if comline.cmd_info.rev_deps then
                return alert ("--required-by switch invalid when used with pkg-file (-F)");
+            end if;
+            if comline.common_options.exact_match or else
+              comline.common_options.case_sensitive
+            then
+               return alert ("-CE switches are invalid with pkg-file (-F)");
             end if;
          end if;
 

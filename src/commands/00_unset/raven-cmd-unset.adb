@@ -159,6 +159,7 @@ package body Raven.Cmd.Unset is
       --          * set context early
       --          * passes to establish_configuration
       --          * reset context
+      --  TODO: Implement chroot
 
       function config_file_path return String
       is
@@ -213,7 +214,7 @@ package body Raven.Cmd.Unset is
          Context.register_db_directory (db_dir);
          Context.register_cache_directory (cache_dir);
          Context.register_dev_mode (dev_mode);
-         Context.register_case_sensitivity (sensitive);  --  (command -C/-i will override)
+         Context.register_case_sensitivity (sensitive);  --  (command -C will override true)
          if not isBlank (event_pipe) then
             mechanism := Unix.IPC_mechanism (event_pipe);
             case mechanism is

@@ -920,14 +920,9 @@ package body Raven.Database.UserQuery is
                               SU.Append (outline, Metadata.human_readable_size
                                          (int64'Value (USS (result (token)))));
                            when token_license_logic =>
-                              case Pkgtypes.License_Logic'Val (Natural'Value
-                                                               (USS (result (token))))
-                              is
-                                 when Pkgtypes.LICENSE_DUAL     => SU.Append (outline, "dual");
-                                 when Pkgtypes.LICENSE_MULTI    => SU.Append (outline, "multi");
-                                 when Pkgtypes.LICENSE_SINGLE   => SU.Append (outline, "single");
-                                 when Pkgtypes.LICENSE_UNLISTED => SU.Append (outline, "unlisted");
-                              end case;
+                              SU.Append (outline, Metadata.get_license_scheme
+                                           (Pkgtypes.License_Logic'Val (Natural'Value
+                                            (USS (result (token))))));
                            when others =>
                               SU.Append (outline, result (token));
                         end case;

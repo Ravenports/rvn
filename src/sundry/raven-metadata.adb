@@ -48,6 +48,25 @@ package body Raven.Metadata is
       end case;
    end metadata_field_label;
 
+
+   -----------------------------------
+   --  metadata_field_formal_label  --
+   -----------------------------------
+   function metadata_field_formal_label (field : metadata_field) return String is
+   begin
+      case field is
+
+         when dependencies    => return "dependencies";
+         when license_logic   => return "license scheme";
+         when description     => return "description";
+         when shlibs_provided => return "shlibs provided";
+         when shlibs_required => return "shlibs required";
+         when shlibs_adjacent => return "shlibs adjacent";
+         when others          => return metadata_field_label (field);
+      end case;
+   end metadata_field_formal_label;
+
+
    ---------------------------
    --  human_readable_size  --
    ---------------------------
@@ -676,5 +695,19 @@ package body Raven.Metadata is
       end;
 
    end convert_to_package;
+
+
+   --------------------------
+   --  get_license_scheme  --
+   --------------------------
+   function get_license_scheme (logic : Pkgtypes.License_Logic) return String is
+   begin
+      case logic is
+         when Pkgtypes.LICENSE_DUAL     => return "dual";
+         when Pkgtypes.LICENSE_MULTI    => return "multi";
+         when Pkgtypes.LICENSE_SINGLE   => return "single";
+         when Pkgtypes.LICENSE_UNLISTED => return "unlisted";
+      end case;
+   end get_license_scheme;
 
 end Raven.Metadata;

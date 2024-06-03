@@ -838,7 +838,6 @@ package body Raven.Cmd.Line is
 
       check_version_stdin;
       check_search_default (data);
-      check_implied_info_all (data);
 
    end parse_secondary_command;
 
@@ -1032,40 +1031,6 @@ package body Raven.Cmd.Line is
          when others => self.cmd_search.search := new_type;
       end case;
    end set_search_type;
-
-
-   ------------------------------
-   --  check_implied_info_all  --
-   ------------------------------
-   procedure check_implied_info_all (self : in out Cldata) is
-   begin
-      --  These command imply -a
-      --  rvn info
-      --  any rvn info missing the pkg-name / pattern argument
-      --  -a with pkg-name is an error
-      if self.command = cv_info then
-         if self.common_options.all_installed_pkgs then
-            if not IsBlank (self.cmd_info.path_archive_file) then
-               set_error (self, "--all is mutually exclusive with pkg-name");
-            end if;
-         else
-            if IsBlank (self.cmd_info.path_archive_file) then
-               if isBlank (self.common_options.name_pattern) then
-                  self.common_options.all_installed_pkgs := True;
-               end if;
-               if self.cmd_info.list_attributes then
-                  set_error (self, "--list-extended is not available for installed packages");
-               end if;
-            else
-               if self.common_options.exact_match or else
-                 self.common_options.case_sensitive
-               then
-                  set_error (self, "-CE switch settings are invalid with pkg-file");
-               end if;
-            end if;
-         end if;
-      end if;
-   end check_implied_info_all;
 
 
    ----------------------------

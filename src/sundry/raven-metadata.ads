@@ -42,12 +42,18 @@ package Raven.Metadata is
    --  convert field to key string
    function metadata_field_label (field : metadata_field) return String;
 
+   --  convert field to string < 16 long appropriate for display
+   function metadata_field_formal_label (field : metadata_field) return String;
+
    --  Returns binary power of 2 units.
    --  Integers only, round to nearest (xB, xKiB, xMiB, xGiB)
    function human_readable_size (size : int64) return String;
 
    --  Return flatsize and rvnsize metadata
    function get_size (metatree : ThickUCL.UclTree; field : metadata_field) return Int64;
+
+   --  Returns enumeration string of the license logic
+   function get_license_scheme (logic : Pkgtypes.License_Logic) return String;
 
    --  Returns the message as function of the phase (install, deinstall, upgrade)
    function get_message

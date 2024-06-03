@@ -103,7 +103,6 @@ package body Raven.Database.Pkgs is
          end if;
          if onward then
             pkg.id := Pkgtypes.Package_ID (SQLite.get_last_insert_rowid (db.handle));
-            -- TODO Update dep information on packages that depend on the inserted package
          end if;
       end if;
 

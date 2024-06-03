@@ -264,7 +264,7 @@ private
          list_commands      : Boolean := False;
          status_check       : Boolean := False;
          chroot_first       : Text;   -- mutually exclusive to install_rootdir
-         install_rootdir    : Text;   -- mutulaly exclusive to chroot_first
+         install_rootdir    : Text;   -- mutually exclusive to chroot_first
          custom_configfile  : Text;
          custom_repos_dir   : Text;
          option_nvpairs     : Text;

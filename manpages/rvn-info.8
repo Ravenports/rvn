@@ -108,9 +108,9 @@ Display the namebase (the first part of the package name triplet).
 Display the installation prefix for each package matching
 .Ar pkg-name .
 .It Fl q , Cm --quiet
-Be
-.Dq quiet .
-Prints only the requested information without displaying many hints.
+When a single attribute is selected, this option will print the value(s) of
+that attribute without a label.
+This option is ignored when multiple attributes are selected.
 .It Fl R , Cm --raw
 Display the full UCL-formatted manifest for the packages matching
 .Ar pkg-name .
