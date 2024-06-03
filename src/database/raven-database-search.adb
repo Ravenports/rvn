@@ -35,7 +35,7 @@ package body Raven.Database.Search is
          elsif s_desc then
             return "desc";
          elsif s_nsv then
-            return "nsv";
+            return "namebase ||'-'|| subpackage ||'-'|| variant as nsv";
          else
             return "namebase";
          end if;
