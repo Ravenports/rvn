@@ -20,7 +20,7 @@ package body Raven.Cmd.Remove is
    ------------------------------
    function execute_remove_command (comline : Cldata) return Boolean
    is
-      success     : Boolean;
+      success     : Boolean := True;
       rdb         : Database.RDB_Connection;
       toplist     : Pkgtypes.Package_Set.Vector;
       purge_list  : Pkgtypes.Package_Set.Vector;
