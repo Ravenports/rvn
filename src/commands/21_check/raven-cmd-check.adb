@@ -34,7 +34,13 @@ package body Raven.Cmd.Check is
       end if;
 
       if not comline.cmd_check.only_depends then
-         check_files (rdb, comline.common_options.quiet, comline.common_options.verbose);
+         if Archive.Unix.user_is_root then
+            check_files (rdb, comline.common_options.quiet, comline.common_options.verbose);
+         else
+            if not comline.common_options.quiet then
+               Event.emit_message ("File integrity checking is restricted to the superuser.");
+            end if;
+         end if;
       end if;
 
       OPS.rdb_close (rdb);
