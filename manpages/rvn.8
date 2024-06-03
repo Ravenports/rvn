@@ -1,4 +1,4 @@
-.Dd May 13, 2024
+.Dd June 2, 2024
 .Dt RVN 8
 .Os
 .\" ---------------------------------------------------------------------------
@@ -34,9 +34,6 @@
 .Nm rvn
 provides an interface for manipulating packages from Ravenports: installing,
 adding, inspecting, removing and upgrading packages.
-See
-.Xr rvn.conf 5
-for details.
 .\" ---------------------------------------------------------------------------
 .Sh OPTIONS
 The following options are supported by
@@ -117,64 +114,53 @@ will be restricted to IPv6 for fetching repository and packages.
 .Sh COMMANDS
 The following commands (or their unambiguous abbreviations) are supported by
 .Nm :
-.Bl -tag -width xxxxxxxxxxxx
+.Bl -tag -width autoremove
 .It Ic help Ar command
 Display usage information of the specified command.
-.\".It Ic add
-.\"Install a package from either a local source or a remote one.
-.\".Pp
-.\"When installing from remote source you need to specify the
-.\"protocol to use when fetching the package.
-.\".Pp
-.\"Currently supported protocols are FTP, HTTP and HTTPS.
-.\".It Ic annotate
-.\"Add, modify or delete tag-value style annotations on packages.
-.\".It Ic alias
-.\"List the command line aliases.
-.\".It Ic autoremove
-.\"Delete packages which were automatically installed as dependencies and are not required any more.
-.\".It Ic check
-.\"Sanity checks installed packages.
-.\".It Ic clean
-.\"Clean the local cache of fetched remote packages.
+.It Ic alias
+Lists the command line aliases
+.It Ic annotate
+Manipulate installed package annotations
+.It Ic audit
+lists active cybersecurity vulnerabilities
+.It Ic autoremove
+Removes orphan packages
+.It Ic catalog
+Ensures local package catalog is up to date
+.It Ic check
+Verifies integrity of installed packages
+.It Ic clean
+Cleans the local cache of downloaded packages
+.It Ic config
+Displays the value of a configuration option
 .It Ic create
-Create a compressed package archive (rvn-format).
-.\".It Ic delete
-.\"Delete a package from the database and the system.
-.\".It Ic fetch
-.\"Fetch packages from a remote repository.
+Creates software packages for distribution
+.It Ic fetch
+Fetches packages from a remote repository
+.It Ic genrepo
+Creates a package repository catalog
 .It Ic info
-Display information about installed packages or package files.
+Displays information about installed packages
 .It Ic install
-Install a package from a local or remote package repository.
-.\".It Ic query
-.\"Query information about installed packages.
-.\".It Ic repo
-.\"Create a local package repository for remote usage.
-.\".It Ic rquery
-.\"Query information for remote repositories.
-.\".It Ic search
-.\"Search for the given pattern in the remote package
-.\"repositories.
-.\".It Ic set
-.\"Modify information in the installed database.
-.\".It Ic shell
-.\"Open a SQLite shell to the local or remote database.
-.\"Extreme care should be taken when using this command.
-.\".It Ic shlib
-.\"Displays which packages link to a specific shared library.
-.\".It Ic stats
-.\"Display package database statistics.
-.\".It Ic update
-.\"Update the available remote repositories as listed in
-.\".Xr rvn.conf 5 .
-.\".It Ic upgrade
-.\"Upgrade a package to a newer version.
-.\".It Ic version
-.\"Summarize installed versions of packages.
-.\".It Ic which
-.\"Query the database for package(s) that installed a specific
-.\"file.
+Installs packages from remote and local repositories
+.It Ic query
+Queries installed packages database
+.It Ic remove
+Removes packages from the database and the system
+.It Ic rquery
+Queries remote catalog
+.It Ic search
+Performs search of the package repository catalog
+.It Ic shell
+Opens a command shell for the local SQLite database
+.It Ic shlib
+Displays packages that link against a specific library
+.It Ic stats
+Displays package database statistics
+.It Ic version
+Displays the currency of installed packages
+.It Ic which
+Displays which package installed a specific file
 .El
 .\" ---------------------------------------------------------------------------
 .Sh ENVIRONMENT
@@ -187,50 +173,43 @@ See
 .Xr rvn.conf 5 .
 .\" ---------------------------------------------------------------------------
 .Sh EXAMPLES
-.\"Search for a package:
-.\".Dl $ rvn search joe
-.\".Pp
-.\"Install a package:
-.\".Dl Installing must specify a unique origin or version otherwise it will try installing all matches.
-.\".Pp
-.\".Dl % rvn install joe-single-standard
-.\".Pp
-.\"List installed packages:
-.Dl $ rvn info
-.\"Upgrade from remote repository:
-.\".Dl % rvn upgrade
-.\".Pp
-.\"List non-automatic packages:
-.\".Dl $ rvn query -e '%a = 0' %o
-.\".Pp
-.\"List automatic packages:
-.\".Dl $ rvn query -e '%a = 1' %o
-.\".Pp
-.\"Delete an installed package:
-.\".Dl % rvn delete "joe*"
-.\".Pp
-.\"Remove unneeded dependencies:
-.\".Dl % rvn autoremove
-.\".Pp
-.\"Change a package from automatic to non-automatic, which will prevent
-.\".Ic autoremove
-.\"from removing it:
-.\".Dl % rvn set -A 0 joe-single-standard
-.\".Pp
-.\"Change a package from non-automatic to automatic, which will make
-.\".Ic autoremove
-.\"allow it be removed once nothing depends on it:
-.\".Dl % rvn set -A 1 joe-single-standard
-.\".Pp
-.\"Determine which package installed a file:
-.\".Dl $ rvn which /raven/bin/joe
-.\".Pp
-.\"Check installed packages for checksum mismatches:
-.\".Dl # rvn check -s -a
-.\".Pp
-.\"Check for missing dependencies:
-.\".Dl # rvn check -d -a
-.\" ---------------------------------------------------------------------------
+Search for a package:
+.Dl % rvn search joe
+.Pp
+Install a package:
+.Dl Installing must specify the unique namebase-variant-subpackage
+.D1 triple identifier otherwise it will try installing all matches.
+.Pp
+.Dl % rvn install joe
+.Dl % rvn install joe-single-standard
+.Pp
+List installed packages:
+.Dl % rvn info
+.Pp
+Upgrade from remote repository:
+.Dl % rvn upgrade
+.Pp
+List non-automatic packages:
+.Dl % rvn query -a -e '{auto} eq 0' '{nsv}'
+.Pp
+List automatic packages:
+.Dl % rvn query -a -e '{auto} eq 1' '{nsv}'
+.Pp
+Delete an installed package:
+.Dl % rvn remove -f joe
+.Pp
+Remove unneeded depencies:
+.Dl % rvn autoremove
+.Pp
+Determine which pack installed a file:
+.Dl $ rvn which /raven/bin/joe
+.Pp
+Check installed packages for checksum mismatches:
+.Dl rvn check -a -s
+.Pp
+Check for missing dependencies:
+.Dl rvn check -a -d
+.\" ------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
@@ -267,8 +246,9 @@ The pkg command first appeared in
 .Fx 9.1 .
 The
 .Nm
-program was implemented in Ada from scratch to closely mimic pkg while
-adapting it for Ravenports features such as variants and subpackages.
+program was implemented in Ada from scratch to work similarly to pkg(8) while
+also natively supporting specific Ravenports features such as subpackages
+and variants.
 .\" ---------------------------------------------------------------------------
 .Sh AUTHORS AND CONTRIBUTORS
 .An John Marino Aq draco@marino.st
