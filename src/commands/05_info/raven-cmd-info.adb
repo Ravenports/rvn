@@ -290,7 +290,7 @@ package body Raven.Cmd.Info is
                TIO.Put_Line (line);
                TIO.Put_Line ("[END OF DESCRIPTION]");
             when others =>
-               TIO.Put (this_label & ": " & line);
+               TIO.Put_Line (this_label & ": " & line);
          end case;
       end if;
    end display_string;
@@ -459,6 +459,7 @@ package body Raven.Cmd.Info is
       if not active then
          return;
       end if;
+      tarray.Iterate (print'Access);
       if single and then quiet then
          TIO.Put_Line (USS (line));
       else
