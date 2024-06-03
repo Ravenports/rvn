@@ -44,11 +44,12 @@ private
       single   : Boolean;
       quiet    : Boolean);
 
-   procedure display_install_message
+   procedure display_message
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
       single   : Boolean;
-      quiet    : Boolean);
+      quiet    : Boolean;
+      mtype    : Pkgtypes.Message_Type);
 
    procedure display_array
      (metatree : ThickUCL.UclTree;
@@ -60,6 +61,7 @@ private
    procedure display_array_oneline
      (metatree : ThickUCL.UclTree;
       mfield   : MET.metadata_field;
+      active   : Boolean;
       single   : Boolean;
       quiet    : Boolean);
 
@@ -82,5 +84,71 @@ private
       quiet     : Boolean;
       digest    : Boolean;
       extended  : Boolean);
+
+   procedure display_string
+     (line     : String;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean;
+      mfield   : MET.metadata_field);
+
+   procedure display_size
+     (value    : Pkgtypes.Package_Size;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean);
+
+   procedure display_array
+     (tarray   : Pkgtypes.Text_List.Vector;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean;
+      mfield   : MET.metadata_field);
+
+   procedure display_array_oneline
+     (tarray   : Pkgtypes.Text_List.Vector;
+      mfield   : MET.metadata_field;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean);
+
+   procedure display_annotations
+     (dmap     : Pkgtypes.NV_Pairs.Map;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean);
+
+   procedure display_dependencies
+     (dmap     : Pkgtypes.NV_Pairs.Map;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean);
+
+   procedure display_individual_attributes
+     (mpkg     : Pkgtypes.A_Package;
+      comline  : Cldata;
+      num_attr : Natural);
+
+   procedure display_message
+     (mpkg     : Pkgtypes.A_Package;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean;
+      mtype    : Pkgtypes.Message_Type);
+
+   procedure list_files
+     (mpkg     : Pkgtypes.A_Package;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean;
+      digests  : Boolean);
+
+   procedure display_full_information
+     (mpkg     : Pkgtypes.A_Package);
+
+   --  Handle query when --file is not used (the normal mode)
+   function execute_installed_info_command
+     (comline : Cldata;
+      num_attr_selected : Natural) return Boolean;
 
 end Raven.Cmd.Info;

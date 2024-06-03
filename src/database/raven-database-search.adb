@@ -16,6 +16,7 @@ package body Raven.Database.Search is
       behave_glob  : Boolean;
       behave_exact : Boolean;
       behave_cs    : Boolean;
+      behave_lead  : Boolean;
       s_comment    : Boolean;
       s_desc       : Boolean;
       s_nsv        : Boolean;
@@ -43,7 +44,7 @@ package body Raven.Database.Search is
 
       function processed_search_field return String is
       begin
-         if behave_glob or else behave_exact or else behave_cs then
+         if behave_glob or else behave_exact or else behave_cs or else behave_lead then
             return raw_search_field & " as search_field";
          end if;
          --  default case-insensitive regex
@@ -56,7 +57,7 @@ package body Raven.Database.Search is
       begin
          if behave_glob then
             return sfield & "GLOB ?1";
-         elsif behave_exact then
+         elsif behave_exact or else behave_lead then
             return sfield & "LIKE ?1";
          end if;
          --  covers regex (default), and --case-sensitive
@@ -75,6 +76,8 @@ package body Raven.Database.Search is
       end if;
       if behave_glob or else behave_exact or else behave_cs then
          SQLite.bind_string (new_stmt, 1, srch_pattern);
+      elsif behave_lead then
+         SQLite.bind_string (new_stmt, 1, srch_pattern & "%");
       else
          SQLite.bind_string (new_stmt, 1, lowercase (srch_pattern));
       end if;
@@ -107,7 +110,7 @@ package body Raven.Database.Search is
                   packages.Append (myrec);
                end;
             when SQLite.something_else =>
-               if not behave_glob and not behave_exact then
+               if not behave_glob and not behave_exact and not behave_lead then
                   Event.emit_error
                     ("Query failed.  It's possible pattern is an illegal regular expression");
                else

@@ -351,8 +351,10 @@ package body Raven.Cmd.Line is
                      data.cmd_info.shlibs_provided := True;
                   elsif datum = "-j" or else datum = "--adjacent-shlibs" then
                      data.cmd_info.shlibs_adjacent := True;
-                  elsif datum = "-M" or else datum = "--pkg-message" then
+                  elsif datum = "-M" or else datum = "--install-message" then
                      data.cmd_info.install_message := True;
+                  elsif datum = "-Z" or else datum = "--remove-message" then
+                     data.cmd_info.remove_message := True;
                   elsif datum = "-D" or else datum = "--description" then
                      data.cmd_info.description := True;
                   elsif datum = "-d" or else datum = "--dependencies" then

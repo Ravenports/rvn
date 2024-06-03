@@ -14,6 +14,7 @@ package Raven.Database.Search is
       behave_glob  : Boolean;
       behave_exact : Boolean;
       behave_cs    : Boolean;
+      behave_lead  : Boolean;
       s_comment    : Boolean;
       s_desc       : Boolean;
       s_nsv        : Boolean;

@@ -136,6 +136,7 @@ package body Raven.Cmd.Search is
          behave_glob  => comline.cmd_search.glob_input,
          behave_exact => comline.common_options.exact_match,
          behave_cs    => behave_cs,
+         behave_lead  => False,
          s_comment    => comline.cmd_search.search = comment,
          s_desc       => comline.cmd_search.search = description,
          s_nsv        => comline.cmd_search.search = triplet,
