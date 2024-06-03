@@ -11,14 +11,14 @@ package Raven.Cmd.Check is
 
 private
 
-   procedure check_dependencies
+   function check_dependencies
      (db      : Database.RDB_Connection;
       quiet   : Boolean;
-      verbose : Boolean);
+      verbose : Boolean) return Boolean;
 
-   procedure check_files
+   function check_files
      (db      : Database.RDB_Connection;
       quiet   : Boolean;
-      verbose : Boolean);
+      verbose : Boolean) return Boolean;
 
 end Raven.Cmd.Check;

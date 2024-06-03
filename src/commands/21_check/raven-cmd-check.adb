@@ -22,7 +22,10 @@ package body Raven.Cmd.Check is
    -----------------------------
    function execute_check_command (comline : Cldata) return Boolean
    is
-      rdb : Database.RDB_Connection;
+      rdb     : Database.RDB_Connection;
+      quiet   : constant Boolean := comline.common_options.quiet;
+      verbose : constant Boolean := comline.common_options.verbose;
+      issue_found : Boolean := False;
    begin
       case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
          when RESULT_OK => null;
@@ -30,12 +33,16 @@ package body Raven.Cmd.Check is
       end case;
 
       if not comline.cmd_check.only_files then
-         check_dependencies (rdb, comline.common_options.quiet, comline.common_options.verbose);
+         if not check_dependencies (rdb, quiet, verbose) then
+            issue_found := True;
+         end if;
       end if;
 
       if not comline.cmd_check.only_depends then
          if Archive.Unix.user_is_root then
-            check_files (rdb, comline.common_options.quiet, comline.common_options.verbose);
+            if not check_files (rdb, quiet, verbose) then
+               issue_found := True;
+            end if;
          else
             if not comline.common_options.quiet then
                Event.emit_message ("File integrity checking is restricted to the superuser.");
@@ -44,7 +51,7 @@ package body Raven.Cmd.Check is
       end if;
 
       OPS.rdb_close (rdb);
-      return True;
+      return not issue_found;
 
    end execute_check_command;
 
@@ -52,7 +59,9 @@ package body Raven.Cmd.Check is
    --------------------------
    --  check_dependencies  --
    --------------------------
-   procedure check_dependencies (db : Database.RDB_Connection; quiet : Boolean; verbose : Boolean)
+   function check_dependencies (db : Database.RDB_Connection;
+                                quiet : Boolean;
+                                verbose : Boolean) return Boolean
    is
       pkgmap  : Pkgtypes.NV_Pairs.Map;
       missing_deps : Pkgtypes.NV_Pairs.Map;
@@ -117,6 +126,7 @@ package body Raven.Cmd.Check is
             Event.emit_message ("");
          end if;
       end if;
+      return missing_deps.Is_Empty;
    end check_dependencies;
 
 
@@ -124,13 +134,14 @@ package body Raven.Cmd.Check is
    -------------------
    --  check_files  --
    -------------------
-   procedure check_files (db : Database.RDB_Connection; quiet : Boolean; verbose : Boolean)
+   function check_files (db : Database.RDB_Connection;
+                         quiet : Boolean;
+                         verbose : Boolean) return Boolean
    is
       pkgmap       : Pkgtypes.NV_Pairs.Map;
       damaged_pkgs : Pkgtypes.NV_Pairs.Map;
       delim        : constant String := "|";
       null_digest  : Blake_3.blake3_hash_hex := (others => '0');
-
 
       procedure check_single_package (Position : Pkgtypes.NV_Pairs.Cursor)
       is
@@ -211,6 +222,7 @@ package body Raven.Cmd.Check is
          end if;
          damaged_pkgs.Iterate (print'Access);
       end if;
+      return damaged_pkgs.Is_Empty;
    end check_files;
 
 
