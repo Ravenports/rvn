@@ -5,8 +5,47 @@
 .Nm "rvn check"
 .Nd Verifies integrity of installed packages
 .Sh SYNOPSIS
-Not yet implemented.
-Checks file digests and all dependencies present.
+.Nm
+.Op Fl d | Fl f
+.Op Fl q | Fl v
+.Pp
+.Nm
+.Op Cm --depends-only | --files-only
+.Op Cm --quiet | --verbose
+.Sh DESCRIPTION
+.Nm
+Performs an integrity check on the installed package database.
+The first check determines if any listed package dependencies
+are not installed.
+Each missing dependency is listed as output.
+.Pp
+The next check determines the integrity of every file of every
+installed package.
+Any calculated checksum that does not match the recorded digest
+is listed as output.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width repository
+.It Fl d , Cm --depends-only
+Only the first integrity check is performed.
+.It Fl f , Cm --files-only
+Only the second integrity check is performed.
+.It Fl q , Cm --quiet
+The headers and empty lines are omitted from the output.
+.It Fl v , Cm --verbose
+By default, the file integrity check only outputs the package triplet.
+If verbosity is turned on, each damaged file is listed as additional lines.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.El
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,

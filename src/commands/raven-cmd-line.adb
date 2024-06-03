@@ -758,6 +758,20 @@ package body Raven.Cmd.Line is
                   else
                      set_error (data, "Not a switch: " & datum);
                   end if;
+               when cv_check =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_verb or else datum = swl_verb then
+                     data.common_options.verbose := True;
+                  elsif datum = "-d" or else datum = "--depends-only" then
+                     data.cmd_check.only_depends := True;
+                  elsif datum = "-f" or else datum = "--files-only" then
+                     data.cmd_check.only_files := True;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     set_error (data, "Not a switch: " & datum);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -903,6 +917,7 @@ package body Raven.Cmd.Line is
          ("alias     ", cv_alias),
          ("autoremove", cv_autoremove),
          ("catalog   ", cv_catalog),
+         ("check     ", cv_check),
          ("clean     ", cv_clean),
          ("config    ", cv_config),
          ("create    ", cv_create),
@@ -922,7 +937,6 @@ package body Raven.Cmd.Line is
          ("which     ", cv_which)
 
          --  ("annotate  ", cv_annotate),
-         --  ("check     ", cv_check),
          --  ("upgrade   ", cv_upgrade),
         );
 

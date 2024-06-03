@@ -104,6 +104,7 @@ package body Raven.Cmd.Usage is
          when cv_alias      => return verb_alias (comline);
          when cv_autoremove => return verb_autorem (comline);
          when cv_catalog    => return verb_catalog (comline);
+         when cv_check      => return verb_check (comline);
          when cv_clean      => return verb_clean (comline);
          when cv_config     => return verb_config (comline);
          when cv_create     => return verb_create (comline);
@@ -1107,5 +1108,37 @@ package body Raven.Cmd.Usage is
 
       return True;
    end verb_autorem;
+
+
+   ------------------
+   --  verb_check  --
+   ------------------
+   function verb_check (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "check [-d|-f] [-q|-v]";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_help_suggestion (cv_check);
+         return False;
+      end alert;
+   begin
+      if comline.cmd_check.only_depends and then
+        comline.cmd_check.only_files
+      then
+         return alert ("--depends-only and --files-only are incompatible switches");
+      end if;
+
+      if comline.common_options.verbose and then
+        comline.common_options.quiet
+      then
+         return alert ("--quiet and --verbose are incompatible switches");
+      end if;
+
+      return True;
+   end verb_check;
+
 
 end Raven.Cmd.Usage;

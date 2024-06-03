@@ -99,6 +99,7 @@ package body Raven.Cmd.Help is
                when cv_alias   => PL (C, "Lists the command line aliases");
                when cv_autoremove => PL (C, "Removes orphan packages");
                when cv_catalog => PL (C, "Ensures local package catalog is up to date");
+               when cv_check   => PL (C, "verifies integrity of installed packages");
                when cv_clean   => PL (C, "cleans the local cache of downloaded packages");
                when cv_config  => PL (C, "Displays the value of a configuration option");
                when cv_create  => PL (C, "Creates software packages for distribution");
@@ -117,7 +118,6 @@ package body Raven.Cmd.Help is
                when cv_version => PL (C, "Displays the currency of installed packages");
                when cv_which   => PL (C, "Displays which package installed a specific file");
                --  when cv_upgrade  => PL (C, "Upgrades installed packge distributions");
-               --  when cv_check    => PL (C, "verifies integrity of installed packages");
                --  when cv_annotate => PL (C, "Manipulate installed package annotations");
             end case;
          end;

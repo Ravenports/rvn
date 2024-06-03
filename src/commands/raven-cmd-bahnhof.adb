@@ -22,6 +22,7 @@ with Raven.Cmd.Search;
 with Raven.Cmd.Fetch;
 with Raven.Cmd.Remove;
 with Raven.Cmd.Autoremove;
+with Raven.Cmd.Check;
 
 package body Raven.Cmd.Bahnhof is
 
@@ -46,6 +47,7 @@ package body Raven.Cmd.Bahnhof is
    package C18 renames Raven.Cmd.Fetch;
    package C19 renames Raven.Cmd.Remove;
    package C20 renames Raven.Cmd.Autoremove;
+   package C21 renames Raven.Cmd.Check;
 
 
    --------------------------------------------------------------------
@@ -75,6 +77,7 @@ package body Raven.Cmd.Bahnhof is
          when cv_fetch      => return (C18.execute_fetch_command (comline));
          when cv_remove     => return (C19.execute_remove_command (comline));
          when cv_autoremove => return (C20.execute_autoremove_command (comline));
+         when cv_check      => return (C21.execute_check_command (comline));
       end case;
    end execute_command;
 

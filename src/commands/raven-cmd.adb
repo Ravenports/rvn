@@ -16,6 +16,7 @@ package body Raven.Cmd is
          when cv_alias      => return "alias";
          when cv_autoremove => return "autoremove";
          when cv_catalog    => return "catalog";
+         when cv_check      => return "check";
          when cv_clean      => return "clean";
          when cv_config     => return "config";
          when cv_create     => return "create";

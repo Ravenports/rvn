@@ -25,6 +25,7 @@ private
       cv_alias,
       cv_autoremove,
       cv_catalog,
+      cv_check,
       cv_clean,
       cv_config,
       cv_create,
@@ -250,6 +251,12 @@ private
          skip_verify        : Boolean := False;
       end record;
 
+   type switches_check_cmd is
+      record
+         only_depends       : Boolean := False;
+         only_files         : Boolean := False;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -280,6 +287,7 @@ private
          cmd_alias              : switches_alias_cmd;
          cmd_autoremove         : switches_autoremove_cmd;
          cmd_catalog            : switches_catalog_cmd;
+         cmd_check              : switches_check_cmd;
          cmd_clean              : switches_clean_cmd;
          cmd_config             : switches_config_cmd;
          cmd_create             : switches_create_cmd;
