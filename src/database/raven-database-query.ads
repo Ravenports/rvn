@@ -63,6 +63,17 @@ package Raven.Database.Query is
      (db           : RDB_Connection;
       measurements : in out A_Measurement_Set);
 
+   --  Maps nsv => str(package id)
+   procedure all_installed_packages
+     (db          : RDB_Connection;
+      package_map : in out Pkgtypes.NV_Pairs.Map);
+
+   --  alphabetized list of dependencies (nsv)
+   procedure get_package_dependencies
+     (db       : RDB_Connection;
+      pkg_id   : Pkgtypes.Package_ID;
+      dep_list : in out Pkgtypes.Text_List.Vector);
+
    procedure finish_package
      (db         : RDB_Connection;
       incomplete : in out Pkgtypes.A_Package);

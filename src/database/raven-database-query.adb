@@ -389,6 +389,90 @@ package body Raven.Database.Query is
    end all_remote_packages;
 
 
+   ------------------------------
+   --  all_installed_packages  --
+   ------------------------------
+   procedure all_installed_packages
+     (db          : RDB_Connection;
+      package_map : in out Pkgtypes.NV_Pairs.Map)
+   is
+      func : constant String := "all_installed_packages";
+      sql  : constant String :=
+        "SELECT id, namebase ||'-'|| subpackage ||'-'|| variant as nsv FROM packages";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      package_map.Clear;
+       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  id_str : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  nsv    : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  if package_map.Contains (SUS (nsv)) then
+                     Event.emit_debug (high_level, func & ": hit collison, skipped " & nsv);
+                  else
+                     package_map.Insert (SUS (nsv), SUS (id_str));
+                  end if;
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data =>
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end all_installed_packages;
+
+
+   --------------------------------
+   --  get_package_dependencies  --
+   --------------------------------
+   procedure get_package_dependencies
+     (db       : RDB_Connection;
+      pkg_id   : Pkgtypes.Package_ID;
+      dep_list : in out Pkgtypes.Text_List.Vector)
+   is
+      func : constant String := "get_package_dependencies";
+      sql  : constant String :=
+        "SELECT ml.nsv FROM pkg_dependencies " &
+        "JOIN dependencies ml ON x.dependency_id = ml.dependency_id " &
+        "WHERE x.package_id = ? " &
+        "ORDER BY nsv";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      dep_list.Clear;
+       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.row_present =>
+               declare
+                  nsv : constant String := SQLite.retrieve_string (new_stmt, 0);
+               begin
+                  dep_list.Append (SUS (nsv));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+            when SQLite.no_more_data =>
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end get_package_dependencies;
+
+
    ---------------------------
    --  package_measurement  --
    ---------------------------
