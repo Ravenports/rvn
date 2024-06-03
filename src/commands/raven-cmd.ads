@@ -153,6 +153,7 @@ private
          subpackage         : Boolean := False;  --  -S, --subpackage
          variant            : Boolean := False;  --  -V, --variant
          path_archive_file  : Text;
+         glob_input         : Boolean := False;  --  -g, --glob
       end record;
 
    type switches_install_cmd is

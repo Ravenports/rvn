@@ -12,7 +12,7 @@
 .Nm
 .Op Fl ABbMDZdefIjpqrsNSV
 .Op Fl L | Fl l
-.Op Fl CE
+.Op Fl CEg
 .Ar pkg-name
 .Nm
 .Op Fl ABbMDZdfIjLlpqRsNSV
@@ -29,7 +29,7 @@
 .Op Cm --{exists,full,comment,adjacent-shlibs,prefix}
 .Op Cm --{quiet,required-by,size,namebase,subpackage,variant}
 .Op Cm --list-digests | --list-files
-.Op Cm --{case-sensitive,exact-match}
+.Op Cm --{case-sensitive,exact-match,glob}
 .Ar pkg-name
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
@@ -59,9 +59,8 @@ Display all shared libraries used by
 Display all shared libraries provided by
 .Ar pkg-name .
 .It Fl C , Cm --case-sensitive
-Switch to glob matching of the
-.Ar pkg-name
-which is inherently case-sensitive .
+This option still processes the name pattern as a regular expression,
+but changes the matching to be case sensitive.
 .It Fl D , Cm --description
 Show the long description for matching packages.
 .It Fl d , Cm --dependencies
@@ -69,10 +68,9 @@ Display the list of packages on which
 .Ar pkg-name
 depends.
 .It Fl E , Cm --exact-match
-Disables explicit and implied wildcards so when the
-.Ar pkg-name
-exactly matches the namebase-subpackage-variant
-package name is successful.
+This option requires the namebase-subpackage-variant name to be
+equal to the name pattern.
+This is case sensitive and the entire string must match for success.
 .It Fl e , Cm --exists
 If
 .Ar pkg-name
@@ -85,6 +83,8 @@ Displays information from the package archive
 Display full information about the packages matching
 .Ar pkg-name .
 This is the default.
+.It Fl g , Cm --glob
+This option treats the search pattern as a case-sensitive glob pattern.
 .It Fl I , Cm --comment
 Display the specified packages and their comments.
 .It Fl j , Cm --adjacent-shlibs

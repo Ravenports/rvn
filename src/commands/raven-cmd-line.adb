@@ -343,6 +343,8 @@ package body Raven.Cmd.Line is
                      data.common_options.case_sensitive := True;
                      Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
+                  elsif datum = "-g" or else datum = "--glob" then
+                     data.cmd_search.glob_input := True;
                   elsif datum = "-A" or else datum = "--annotations" then
                      data.cmd_info.annotations := True;
                   elsif datum = "-B" or else datum = "--required-shlibs" then

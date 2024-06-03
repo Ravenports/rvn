@@ -9,6 +9,7 @@ with ThickUCL.Files;
 with ThickUCL.Emitter;
 with Raven.Cmd.Unset;
 with Raven.Event;
+with Raven.Context;
 with Raven.Strings;
 with Raven.Database.Query;
 with Raven.Database.Search;
@@ -936,8 +937,7 @@ package body Raven.Cmd.Info is
       rdb : Database.RDB_Connection;
       unfinished_packages : Pkgtypes.Package_Set.Vector;
       finished_packages : Pkgtypes.Package_Set.Vector;
-      lead_match : constant Boolean :=
-        not comline.common_options.case_sensitive and then not comline.common_options.exact_match;
+      behave_cs : Boolean := comline.common_options.case_sensitive;
 
       procedure finish (Position : Pkgtypes.Package_Set.Cursor)
       is
@@ -960,6 +960,10 @@ package body Raven.Cmd.Info is
       end show_package_info;
 
    begin
+      if Context.reveal_case_sensitive then
+         behave_cs := True;
+      end if;
+
       case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
          when RESULT_OK => null;
          when others => return False;
@@ -968,10 +972,9 @@ package body Raven.Cmd.Info is
       Database.Search.rvn_core_search
         (db           => rdb,
          srch_pattern => USS (comline.common_options.name_pattern),
-         behave_glob  => comline.common_options.case_sensitive,
+         behave_glob  => comline.cmd_info.glob_input,
          behave_exact => comline.common_options.exact_match,
-         behave_cs    => False,
-         behave_lead  => lead_match,
+         behave_cs    => behave_cs,
          s_comment    => False,
          s_desc       => False,
          s_nsv        => True,
