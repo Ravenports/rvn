@@ -77,7 +77,7 @@ package body Raven.Cmd.Check is
          begin
             if not pkgmap.Contains (nsv_dep) then
                if missing_deps.Contains (nsv_dep) then
-                  missing_deps.Update_Element (pkgmap.Find (nsv_dep), augment'Access);
+                  missing_deps.Update_Element (missing_deps.Find (nsv_dep), augment'Access);
                else
                   missing_deps.Insert (nsv_dep, nsv);
                end if;
@@ -166,7 +166,7 @@ package body Raven.Cmd.Check is
                begin
                   if sum /= myrec.digest then
                      if damaged_pkgs.Contains (nsv) then
-                        damaged_pkgs.Update_Element (pkgmap.Find (nsv), augment'Access);
+                        damaged_pkgs.Update_Element (damaged_pkgs.Find (nsv), augment'Access);
                      else
                         damaged_pkgs.Insert (nsv, myrec.path);
                      end if;
@@ -174,7 +174,7 @@ package body Raven.Cmd.Check is
                end;
             else
                if damaged_pkgs.Contains (nsv) then
-                  damaged_pkgs.Update_Element (pkgmap.Find (nsv), augment_missing'Access);
+                  damaged_pkgs.Update_Element (damaged_pkgs.Find (nsv), augment_missing'Access);
                else
                   damaged_pkgs.Insert (nsv, SUS (USS (myrec.path) & " [missing]"));
                end if;

@@ -441,7 +441,7 @@ package body Raven.Database.Query is
    is
       func : constant String := "get_package_dependencies";
       sql  : constant String :=
-        "SELECT ml.nsv FROM pkg_dependencies " &
+        "SELECT ml.nsv FROM pkg_dependencies x " &
         "JOIN dependencies ml ON x.dependency_id = ml.dependency_id " &
         "WHERE x.package_id = ? " &
         "ORDER BY nsv";
@@ -452,6 +452,7 @@ package body Raven.Database.Query is
          CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
          return;
       end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (pkg_id));
       debug_running_stmt (new_stmt);
 
       loop
