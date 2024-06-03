@@ -54,6 +54,9 @@ package body Raven.Database.Search is
       is
          sfield : constant String := " WHERE search_field ";
       begin
+         if IsBlank (srch_pattern) then
+            return "";
+         end if;
          if behave_glob then
             return sfield & "GLOB ?1";
          elsif behave_exact then
