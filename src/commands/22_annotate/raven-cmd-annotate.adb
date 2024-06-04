@@ -132,7 +132,7 @@ package body Raven.Cmd.Annotate is
                      leftname : constant String := pad_right (name, 39);
                   begin
                      Event.emit_message
-                       (format_removal_order (counter) & leftname & " note: " & note);
+                       (format_removal_order (counter) & " " & leftname & " note: " & note);
                   end;
                end if;
             end if;
@@ -233,7 +233,7 @@ package body Raven.Cmd.Annotate is
             name : constant String := Pkgtypes.nsv_identifier (myrec);
             leftname : constant String := pad_right (name, 39);
          begin
-            Event.emit_premessage (format_removal_order (counter) & leftname);
+            Event.emit_premessage (format_removal_order (counter) & " " & leftname);
             if tag_found then
                Event.emit_message (" note: " & USS (note_found));
             else
