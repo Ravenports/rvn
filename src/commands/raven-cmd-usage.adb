@@ -102,6 +102,7 @@ package body Raven.Cmd.Usage is
       case comline.command is
          when cv_unset      => return True;  -- already verified
          when cv_alias      => return verb_alias (comline);
+         when cv_annotate   => return verb_note (comline);
          when cv_autoremove => return verb_autorem (comline);
          when cv_catalog    => return verb_catalog (comline);
          when cv_check      => return verb_check (comline);
@@ -1154,5 +1155,80 @@ package body Raven.Cmd.Usage is
       return True;
    end verb_check;
 
+
+   -----------------
+   --  verb_note  --
+   -----------------
+   function verb_note (comline : Cldata) return Boolean
+   is
+      mod_count : Natural := 0;
+      op_count  : Natural := 0;
+
+      function alert (error_msg : String) return Boolean
+      is
+         patt : constant String := "[-CEg] pattern";
+         msg1 : constant String := "annotate -s -t <tag> -n <note> [-qy] " & patt;
+         msg2 : constant String := "annotate -d -t <tag> [-qy] " & patt;
+         msg3 : constant String := "annotate -f -t <tag> " & patt;
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_usage (msg2, False);
+         display_usage (msg3, False);
+         display_help_suggestion (cv_annotate);
+         return False;
+      end alert;
+   begin
+      if comline.common_options.exact_match then
+         mod_count := mod_count + 1;
+      end if;
+
+      if comline.common_options.case_sensitive then
+         mod_count := mod_count + 1;
+      end if;
+
+      if comline.cmd_annotate.glob_input then
+         mod_count := mod_count + 1;
+      end if;
+
+      if mod_count > 1 then
+         return alert ("--exact-match, --case-sensitive, and --glob are incompatible switches");
+      end if;
+
+      if comline.cmd_annotate.operation_delete then
+         op_count := op_count + 1;
+      end if;
+
+      if comline.cmd_annotate.operation_find then
+         op_count := op_count + 1;
+      end if;
+
+      if comline.cmd_annotate.operation_set then
+         op_count := op_count + 1;
+      end if;
+
+      if op_count > 1 then
+         return alert ("--set, --delete, and --find are incompatible switches");
+      end if;
+
+      if op_count = 0 then
+         return alert ("--set, --delete, or --find must be specified");
+      end if;
+
+      if IsBlank (comline.cmd_annotate.tag) then
+         return alert ("The --tag is required.");
+      end if;
+
+      if comline.cmd_annotate.operation_set then
+         if IsBlank (comline.cmd_annotate.note) then
+            return alert ("The --note is required for the --set operation.");
+         end if;
+         if IsBlank (comline.common_options.name_pattern) then
+            return alert ("<pattern> is required for the set operation");
+         end if;
+      end if;
+
+      return True;
+   end verb_note;
 
 end Raven.Cmd.Usage;

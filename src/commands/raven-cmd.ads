@@ -23,6 +23,7 @@ private
    type Command_verb is
      (cv_unset,
       cv_alias,
+      cv_annotate,
       cv_autoremove,
       cv_catalog,
       cv_check,
@@ -45,7 +46,6 @@ private
       cv_which
      );
 
-     --   cv_annotate,
      --   cv_upgrade,
 
 
@@ -259,6 +259,16 @@ private
          only_files         : Boolean := False;
       end record;
 
+   type switches_annotate_cmd is
+      record
+         tag                : Text;
+         note               : Text;
+         operation_set      : Boolean := False;
+         operation_delete   : Boolean := False;
+         operation_find     : Boolean := False;
+         glob_input         : Boolean := False;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -287,6 +297,7 @@ private
 
          pre_command            : pre_command_switches;
          cmd_alias              : switches_alias_cmd;
+         cmd_annotate           : switches_annotate_cmd;
          cmd_autoremove         : switches_autoremove_cmd;
          cmd_catalog            : switches_catalog_cmd;
          cmd_check              : switches_check_cmd;

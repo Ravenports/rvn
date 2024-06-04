@@ -776,6 +776,35 @@ package body Raven.Cmd.Line is
                   else
                      set_error (data, "Not a switch: " & datum);
                   end if;
+               when cv_annotate =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     Unset.override_setting (Unset.CFG.case_match, True);
+                     context.register_case_sensitivity (True);
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
+                  elsif datum = "-s" or else datum = "--set" then
+                     data.cmd_annotate.operation_set := True;
+                  elsif datum = "-d" or else datum = "--delete" then
+                     data.cmd_annotate.operation_delete := True;
+                  elsif datum = "-f" or else datum = "--find" then
+                     data.cmd_annotate.operation_find := True;
+                  elsif datum = "-g" or else datum = "--glob" then
+                     data.cmd_annotate.glob_input := True;
+                  elsif datum = "-t" or else datum = "--tag" then
+                     last_cmd := annotate_tag;
+                  elsif datum = "-n" or else datum = "--note" then
+                     last_cmd := annotate_note;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     handle_trailing_pkgname (data, datum, datumtxt);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -798,6 +827,8 @@ package body Raven.Cmd.Line is
                when query_evaluate     => data.cmd_query.evaluate         := datumtxt;
                when rquery_evaluate    => data.cmd_rquery.evaluate        := datumtxt;
                when fetch_destdir      => data.cmd_fetch.destination      := datumtxt;
+               when annotate_note      => data.cmd_annotate.note          := datumtxt;
+               when annotate_tag       => data.cmd_annotate.tag           := datumtxt;
                when search_modifier    => set_query_modifier (data, datum);
                when help =>
                   data.help_command := get_command (datum);
@@ -836,9 +867,6 @@ package body Raven.Cmd.Line is
          when others =>
             set_error (data, "The last switch requires an argument");
       end case;
-
-      --  TODO: when annotated implemented:
-      --  check_annotate_stdin;
 
       check_version_stdin;
       check_search_default (data);
@@ -918,6 +946,7 @@ package body Raven.Cmd.Line is
         (
          ("NOTFOUND  ", cv_unset),
          ("alias     ", cv_alias),
+         ("annotate  ", cv_annotate),
          ("autoremove", cv_autoremove),
          ("catalog   ", cv_catalog),
          ("check     ", cv_check),
@@ -939,7 +968,6 @@ package body Raven.Cmd.Line is
          ("version   ", cv_version),
          ("which     ", cv_which)
 
-         --  ("annotate  ", cv_annotate),
          --  ("upgrade   ", cv_upgrade),
         );
 

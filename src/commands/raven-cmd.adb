@@ -14,6 +14,7 @@ package body Raven.Cmd is
       case command is
          when cv_unset      => return "";
          when cv_alias      => return "alias";
+         when cv_annotate   => return "annotate";
          when cv_autoremove => return "autoremove";
          when cv_catalog    => return "catalog";
          when cv_check      => return "check";
