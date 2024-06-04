@@ -1215,6 +1215,14 @@ package body Raven.Cmd.Usage is
          return alert ("--set, --delete, or --find must be specified");
       end if;
 
+      if not Archive.Unix.user_is_root then
+         if comline.cmd_annotate.operation_set or else
+           comline.cmd_annotate.operation_delete
+         then
+            return alert ("This operation is restricted to the superuser.");
+         end if;
+      end if;
+
       if IsBlank (comline.cmd_annotate.tag) then
          return alert ("The --tag is required.");
       end if;
