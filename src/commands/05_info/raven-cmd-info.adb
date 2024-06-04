@@ -233,7 +233,7 @@ package body Raven.Cmd.Info is
             when MET.description =>
                TIO.Put_Line (this_label & ":");
                print_string;
-               TIO.Put_Line ("[END OF DESCRIPTION]");
+               TIO.Put_Line ("");  --  intentionally insert linefeed if not single
             when others =>
                TIO.Put (this_label & ": ");
                print_string;
@@ -264,8 +264,7 @@ package body Raven.Cmd.Info is
          case mfield is
             when MET.description =>
                TIO.Put_Line (this_label & ":");
-               TIO.Put_Line (line);
-               TIO.Put_Line ("[END OF DESCRIPTION]");
+               TIO.Put_Line (line & LAT.LF);  --  intentionally insert line feed if not single
             when others =>
                TIO.Put_Line (this_label & ": " & line);
          end case;
