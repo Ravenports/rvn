@@ -51,7 +51,7 @@ package body Raven.Cmd.Autoremove is
          return True;
       end if;
 
-      if not Deinstall.granted_permission_to_proceed (comline.common_options.quiet) then
+      if not Deinstall.granted_permission_to_proceed then
          return True;
       else
          if not comline.common_options.quiet then

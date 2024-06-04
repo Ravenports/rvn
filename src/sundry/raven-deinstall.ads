@@ -36,8 +36,7 @@ package Raven.Deinstall is
       behave_quiet   : Boolean;
       dryrun         : Boolean);
 
-   function granted_permission_to_proceed
-     (quiet : Boolean) return Boolean;
+   function granted_permission_to_proceed return Boolean;
 
    procedure remove_packages_in_order
      (rdb            : Database.RDB_Connection;

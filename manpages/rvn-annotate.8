@@ -60,6 +60,10 @@ arbitrary text.
 are unique per package, but there is no restriction on what text
 .Ar values
 may be attached to them.
+.Pp
+Custom annotations are persistent through upgrades.
+However, if the package is removed and then installed again, any
+manually added annotations will have been lost.
 .Sh OPTIONS
 The following options are supported by
 .Nm :

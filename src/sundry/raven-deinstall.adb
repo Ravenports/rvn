@@ -459,7 +459,7 @@ package body Raven.Deinstall is
    -------------------------------------
    --  granted_permission_to_proceed  --
    -------------------------------------
-   function granted_permission_to_proceed (quiet : Boolean) return Boolean
+   function granted_permission_to_proceed return Boolean
    is
       cont : Character;
    begin
