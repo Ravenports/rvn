@@ -715,7 +715,7 @@ package body Raven.Database.Schema is
    begin
       case component is
          when 1 => return "INSERT INTO lock_state VALUES(0,0,0);";
-         when 2 => return "ALTER TABLE pkg_annotations ADD custom INTEGER NOT NULL);";
+         when 2 => return "ALTER TABLE pkg_annotations ADD custom INTEGER NOT NULL;";
       end case;
    end upgrade_definition;
 

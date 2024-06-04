@@ -454,6 +454,9 @@ package body Raven.Database.Operations is
 
       if SQLite.database_was_opened_readonly (db.handle, SQLite.primary_db_identity) then
          Event.emit_error ("The database is outdated and opened readonly");
+         if not Archive.Unix.user_is_root then
+            Event.emit_error ("Switching to superuser privileges might resolve this.");
+         end if;
          return False;
       end if;
 
