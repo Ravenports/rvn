@@ -1,11 +1,126 @@
-.Dd June 2, 2024
+.Dd June 3, 2024
 .Dt RVN-ANNOTATE 8
 .Os
 .Sh NAME
 .Nm "rvn annotate"
 .Nd Manipulate installed package annotations
 .Sh SYNOPSIS
-Not yet implemented.
+.Nm
+.Fl s
+.Fl t
+.Ar tag
+.Fl n
+.Ar note
+.Op Fl qy
+.Op Fl CEg
+.Ar pattern
+.Nm
+.Fl d
+.Fl t
+.Ar tag
+.Op Fl qy
+.Op Fl CEg
+.Ar pattern
+.Nm
+.Fl f
+.Fl t
+.Ar tag
+.Op Fl CEg
+.Ar pattern
+.Pp
+.Nm
+.Cm --set
+.Cm --tag
+.Ar tag
+.Cm --note
+.Ar note
+.Op Cm --{quiet,yes}
+.Op Cm --{case-sensitive,exact-match,glob}
+.Ar pattern
+.Nm
+.Cm --delete
+.Cm --tag
+.Ar tag
+.Op Cm --{quiet,yes}
+.Op Cm --{case-sensitive,exact-match,glob}
+.Ar pattern
+.Nm
+.Cm --find
+.Cm --tag
+.Ar tag
+.Op Cm --{case-sensitive,exact-match,glob}
+.Ar pattern
+.Sh DESCRIPTION
+.Nm
+is used to define, modify and delete annotations associated with the
+installed package.
+Annotations are freeform tag-value pairs which may contain any
+arbitrary text.
+.Ar Tags
+are unique per package, but there is no restriction on what text
+.Ar values
+may be attached to them.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width modify
+.It Fl s , Cm --set
+This operation defines a tag-value pair on all the matched packages.
+If the tag has already been defined, the value will be updated.
+.It Fl d , Cm --delete
+This operation removes any annotation mapped to the tag for all
+the matched packages.
+.It Fl f , Cm --find
+This operation lists all packages with annotations identified by the
+.Ar tag
+and the values mapped to it.
+.It Fl t Ar tag , Cm --tag Ar tag
+This switch defines the tag used for all three operations.
+.It Fl n Ar note , Cm --note Ar note
+This switch defines the tag value used for the set operation.
+.It Fl q , Cm --quiet
+Limits output to the confirmation questions.
+.It Fl y , Cm --yes
+Assume "yes" as the answer to all questions.
+.It Fl C , Cm --case-sensitive
+This option still processes the search pattern as a regular expression,
+but changes the search to be case sensitive.
+.It Fl E , Cm --exact-match
+This option requires the searched data be equal to the search pattern.
+This is case sensitive and the entire string must match for success.
+.It Fl g , Cm --glob
+This option treats the search pattern as a case-sensitive glob pattern.
+.El
+.Pp
+There is no specific
+.Dq all
+switch, but should it be desired to apply an operation to all installed
+packages, use the pattern
+.Dq ^.
+to select them all with the default regular expression search.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.It Ev ASSUME_ALWAYS_YES
+.It Ev CASE_SENSITIVE_MATCH
+.El
+.Sh EXAMPLES
+Annotate the nginx package with the tag foo and a value of bar:
+.Dl # rvn annotate -s -t foo -v bar nginx
+.Pp
+View all annotations on a package:
+.Dl $ rvn info -A nginx
+.Pp
+Remove the annotation:
+.Dl # rvn annotate -d -t foo nginx
+.Pp
+Show all packages with the foo annotation:
+.Dl # rvn annotate --find -t foo
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
