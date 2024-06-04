@@ -50,9 +50,6 @@ package body Raven.Database.Annotate is
    is
       del_stmt  : SQLite.thick_stmt;
       func      : constant String := "annotate_packages";
-      delsql    : constant String :=
-        "DELETE FROM pkg_annotations " &
-        "WHERE package_id = ? and annotation = ?";
    begin
       if not SQLite.prepare_sql (db.handle, delsql, del_stmt) then
          CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, delsql);
@@ -106,7 +103,7 @@ package body Raven.Database.Annotate is
          for pkg_index in 0 .. num_pkgs - 1 loop
             if SQLite.reset_statement (del_stmt) then
                SQLite.bind_integer (del_stmt, 1, SQLite.sql_int64 (packages (pkg_index).id));
-               SQLite.bind_string  (del_stmt, 2, note);
+               SQLite.bind_string  (del_stmt, 2, tag);
                debug_running_stmt (del_stmt);
                case SQLite.step (del_stmt) is
                   when SQLite.no_more_data => null;
@@ -163,10 +160,6 @@ package body Raven.Database.Annotate is
    is
       del_stmt  : SQLite.thick_stmt;
       func   : constant String := "remove_annotations";
-      delsql : constant String :=
-        "DELETE FROM pkg_annotations " &
-        "WHERE package_id = ? and annotation_id = " &
-        "(SELECT annotation_id FROM annotations WHERE note_key = ?)";
    begin
       if not SQLite.prepare_sql (db.handle, delsql, del_stmt) then
          CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, delsql);

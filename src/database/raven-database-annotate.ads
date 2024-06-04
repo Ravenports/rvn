@@ -20,6 +20,11 @@ private
 
    internal_srcfile : constant String := "raven-database-annotate.adb";
 
+   delsql : constant String :=
+     "DELETE FROM pkg_annotations " &
+     "WHERE package_id = ? and annotation_id = " &
+     "(SELECT annotation_id FROM annotations WHERE note_key = ?)";
+
    procedure commit_or_rollback
      (db        : RDB_Connection;
       revert    : Boolean;
