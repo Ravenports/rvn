@@ -22,6 +22,13 @@ private
       match_tag        : String;
       quiet            : Boolean);
 
+   procedure define_tags
+     (db               : Database.RDB_Connection;
+      shallow_packages : Pkgtypes.Package_Set.Vector;
+      new_tag          : String;
+      new_note         : String;
+      quiet            : Boolean);
+
    function format_removal_order (counter : Natural) return String;
 
    function granted_permission_to_proceed (this_task : String) return Boolean;

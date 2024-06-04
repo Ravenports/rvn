@@ -57,8 +57,9 @@ package body Raven.Cmd.Annotate is
       elsif comline.cmd_annotate.operation_delete then
          delete_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag),
                       comline.common_options.quiet);
-      else
-         null;
+      elsif comline.cmd_annotate.operation_find then
+         define_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag),
+                      USS (comline.cmd_annotate.note), comline.common_options.quiet);
       end if;
 
       OPS.rdb_close (rdb);
@@ -87,7 +88,7 @@ package body Raven.Cmd.Annotate is
                   note : constant String := USS (Pkgtypes.NV_Pairs.Element (innerpos));
                   leftname : constant String := pad_right (name, 39);
                begin
-                  Event.emit_premessage (leftname & " " & tag & " => " & note);
+                  Event.emit_message (leftname & " " & tag & " => " & note);
                end;
             end if;
          end check_tag;
@@ -125,10 +126,14 @@ package body Raven.Cmd.Annotate is
                counter := counter + 1;
                tag_found := True;
                if not quiet then
-                  Event.emit_message
-                    (format_removal_order (counter) & Pkgtypes.nsv_identifier (myrec) &
-                       "    note: " & USS (Pkgtypes.NV_Pairs.Element (innerpos)));
-
+                  declare
+                     name : constant String := Pkgtypes.nsv_identifier (myrec);
+                     note : constant String := USS (Pkgtypes.NV_Pairs.Element (innerpos));
+                     leftname : constant String := pad_right (name, 39);
+                  begin
+                     Event.emit_message
+                       (format_removal_order (counter) & leftname & " note: " & note);
+                  end;
                end if;
             end if;
          end check_tag;
@@ -191,5 +196,71 @@ package body Raven.Cmd.Annotate is
          when others => return False;
       end case;
    end granted_permission_to_proceed;
+
+
+   -------------------
+   --  define_tags  --
+   -------------------
+   procedure define_tags
+     (db               : Database.RDB_Connection;
+      shallow_packages : Pkgtypes.Package_Set.Vector;
+      new_tag          : String;
+      new_note         : String;
+      quiet            : Boolean)
+   is
+      counter         : Natural := 0;
+
+      procedure display_changes (Position : Pkgtypes.Package_Set.Cursor)
+      is
+         myrec : Pkgtypes.A_Package := Pkgtypes.Package_Set.Element (Position);
+         tag_found : Boolean := False;
+         note_found : Text;
+
+         procedure check_tag (innerpos : Pkgtypes.NV_Pairs.Cursor)
+         is
+            tag : constant String := USS (Pkgtypes.NV_Pairs.Key (innerpos));
+         begin
+            if tag = new_tag then
+               tag_found := True;
+               note_found := Pkgtypes.NV_Pairs.Element (innerpos);
+            end if;
+         end check_tag;
+      begin
+         counter := counter + 1;
+         QRY.finish_package_annotations (db, myrec);
+         myrec.annotations.Iterate (check_tag'Access);
+         declare
+            name : constant String := Pkgtypes.nsv_identifier (myrec);
+            leftname : constant String := pad_right (name, 39);
+         begin
+            Event.emit_premessage (format_removal_order (counter) & leftname);
+            if tag_found then
+               Event.emit_message (" note: " & USS (note_found));
+            else
+               Event.emit_message (" no existing note found");
+            end if;
+         end;
+      end display_changes;
+   begin
+      if shallow_packages.Is_Empty then
+         if not quiet then
+            Event.emit_error ("Nothing done since no package installation was matched.");
+         end if;
+         return;
+      end if;
+
+      if not quiet then
+         shallow_packages.Iterate (display_changes'Access);
+      end if;
+
+      if not granted_permission_to_proceed ("setting annotations on this package set") then
+         return;
+      end if;
+
+      ANN.annotate_packages (db, new_tag, new_note, shallow_packages);
+      if not quiet then
+         Event.emit_message ("Annotation definition complete.");
+      end if;
+   end define_tags;
 
 end Raven.Cmd.Annotate;
