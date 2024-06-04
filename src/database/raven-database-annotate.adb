@@ -52,7 +52,7 @@ package body Raven.Database.Annotate is
       func      : constant String := "annotate_packages";
       delsql    : constant String :=
         "DELETE FROM pkg_annotations " &
-        "WHERE package_id = ? and annotation ?";
+        "WHERE package_id = ? and annotation = ?";
    begin
       if not SQLite.prepare_sql (db.handle, delsql, del_stmt) then
          CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, delsql);
