@@ -907,6 +907,7 @@ package body Raven.Database.Pkgs is
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_string  (pack_stmt, 2, note_key);
             SQLite.bind_string  (pack_stmt, 3, note_text);
+            SQLite.bind_integer (pack_stmt, 4, 0);  --  custom=false
             debug_running_stmt (pack_stmt);
             case SQLite.step (pack_stmt) is
                when SQLite.no_more_data => null;

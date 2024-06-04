@@ -691,8 +691,9 @@ package body Raven.Database.Schema is
          when pkg_directory    => return IORB & "pkg_directories(package_id,directory_id) " &
               "VALUES(?1, (SELECT directory_id FROM directories WHERE path = ?2))";  -- IT
          when pkg_note         => return IORB &
-              "pkg_annotations(package_id,annotation_id,annotation) " &
-              "VALUES(?1,(SELECT annotation_id FROM annotations WHERE note_key = ?2),?3)";  --ITT
+              "pkg_annotations(package_id,annotation_id,annotation,custom) " &
+              "VALUES(?1,(SELECT annotation_id FROM annotations WHERE note_key = ?2),?3,?4)";
+            --ITTI
          when pkg_option       => return IORB &
               "pkg_options(package_id,option_id,option_setting) " &
               "VALUES(?1,(SELECT option_id FROM options WHERE option_name = ?2),?3)";  --IIT
@@ -714,6 +715,7 @@ package body Raven.Database.Schema is
    begin
       case component is
          when 1 => return "INSERT INTO lock_state VALUES(0,0,0);";
+         when 2 => return "ALTER TABLE pkg_annotations ADD custom INTEGER NOT NULL);";
       end case;
    end upgrade_definition;
 
