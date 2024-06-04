@@ -372,8 +372,8 @@ package body Raven.Cmd.Usage is
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
-         msg3 : constant String := "info [-ABbMDdefIpqrsNSV] [-L|-l] [-CE] <pkg-name>";
-         msg4 : constant String := "info [-ABbMDdfIpqRsNSV] [-L|-l|-X] -F <pkg-file>";
+         msg3 : constant String := "info [-ABbMDZdefIpqrsNSV] [-L|-l] [-CE] <pkg-name>";
+         msg4 : constant String := "info [-ABbMDZdfIpqRsNSV] [-L|-l|-X] -F <pkg-file>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -391,6 +391,12 @@ package body Raven.Cmd.Usage is
            comline.common_options.case_sensitive
          then
             return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+         end if;
+
+         if comline.cmd_info.installed then
+            if not comline.common_options.exact_match then
+               return alert ("--exist requires --exact-match to also be set");
+            end if;
          end if;
 
          if not IsBlank (comline.common_options.name_pattern) then

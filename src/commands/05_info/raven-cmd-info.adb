@@ -30,11 +30,8 @@ package body Raven.Cmd.Info is
    function execute_info_command (comline : Cldata) return Boolean
    is
       procedure increment (attribute : Boolean);
-      procedure check_installed;
 
       num_attr_selected : Natural := 0;
-      single_pkg_installed : Boolean := False;
-      multiple_packages_found : Boolean := False;
       cmd : switches_info_cmd renames comline.cmd_info;
 
       procedure increment (attribute : Boolean) is
@@ -44,26 +41,6 @@ package body Raven.Cmd.Info is
          end if;
       end increment;
 
-      procedure check_installed
-      is
-         --  Pre-requisites
-         --  1) not used with -F pkg-file option (makes no sense)
-         --  2) Not used if multiple packages are returned in the query
-      begin
-         if cmd.installed then
-            RCU.override_exit_status;
-            if multiple_packages_found then
-               Ada.Command_Line.Set_Exit_Status (2);
-               Raven.Event.emit_error ("Multiple packages found; --exists can't be determined.");
-            else
-               if single_pkg_installed then
-                  Ada.Command_Line.Set_Exit_Status (1);
-               else
-                  Ada.Command_Line.Set_Exit_Status (0);
-               end if;
-            end if;
-         end if;
-      end check_installed;
    begin
       --  skip exists, raw, path-archive-file  (raw with attribute is an error)
       increment (cmd.annotations);
@@ -984,6 +961,15 @@ package body Raven.Cmd.Info is
       unfinished_packages.Iterate (finish'Access);
 
       OPS.rdb_close (rdb);
+
+      if comline.cmd_info.installed then
+         RCU.override_exit_status;
+         if finished_packages.Is_Empty then
+            Ada.Command_Line.Set_Exit_Status (1);
+         else
+            Ada.Command_Line.Set_Exit_Status (0);
+         end if;
+      end if;
 
       finished_packages.Iterate (show_package_info'Access);
       return True;
