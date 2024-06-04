@@ -20,4 +20,23 @@ private
 
    internal_srcfile : constant String := "raven-database-annotate.adb";
 
+   procedure commit_or_rollback
+     (db        : RDB_Connection;
+      revert    : Boolean;
+      func      : String;
+      savepoint : String);
+
+   procedure remove_annotations_core
+     (db       : RDB_Connection;
+      tag      : String;
+      packages : Pkgtypes.Package_Set.Vector;
+      del_stmt : in out SQLite.thick_stmt);
+
+   procedure annotate_packages_core
+     (db       : RDB_Connection;
+      tag      : String;
+      note     : String;
+      packages : Pkgtypes.Package_Set.Vector;
+      del_stmt : in out SQLite.thick_stmt);
+
 end Raven.Database.Annotate;

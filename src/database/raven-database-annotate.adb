@@ -13,6 +13,32 @@ package body Raven.Database.Annotate is
    package OPS renames Raven.Database.Operations;
    package SCH renames Raven.Database.Schema;
 
+
+   --------------------------
+   --  commit_or_rollback  --
+   --------------------------
+   procedure commit_or_rollback
+     (db        : RDB_Connection;
+      revert    : Boolean;
+      func      : String;
+      savepoint : String)
+   is
+   begin
+      if revert then
+         if CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, savepoint) then
+            Event.emit_error ("Rolled back " & func & " transaction");
+         end if;
+      else
+         if not CommonSQL.transaction_commit (db.handle, internal_srcfile, func, savepoint) then
+            Event.emit_error ("Failed to commit " & func & " transaction");
+            if CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, savepoint) then
+               Event.emit_error ("Rolled back " & func & " transaction");
+            end if;
+         end if;
+      end if;
+   end commit_or_rollback;
+
+
    -------------------------
    --  annotate_packages  --
    -------------------------
@@ -24,29 +50,45 @@ package body Raven.Database.Annotate is
    is
       del_stmt  : SQLite.thick_stmt;
       func      : constant String := "annotate_packages";
+      delsql    : constant String :=
+        "DELETE FROM pkg_annotations " &
+        "WHERE package_id = ? and annotation ?";
+   begin
+      if not SQLite.prepare_sql (db.handle, delsql, del_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, delsql);
+         return;
+      end if;
+
+      annotate_packages_core (db, tag, note, packages, del_stmt);
+      SQLite.finalize_statement (del_stmt);
+
+   end annotate_packages;
+
+
+   ------------------------------
+   --  annotate_packages_core  --
+   ------------------------------
+   procedure annotate_packages_core
+     (db       : RDB_Connection;
+      tag      : String;
+      note     : String;
+      packages : Pkgtypes.Package_Set.Vector;
+      del_stmt : in out SQLite.thick_stmt)
+   is
+      func      : constant String := "annotate_packages_core";
       savepoint : constant String := "ANNOTATE";
       num_pkgs  : constant Natural := Natural (packages.Length);
       revert    : Boolean := False;
 
       main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.note);
       pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_note);
-
-      delsql : constant String :=
-        "DELETE FROM pkg_annotations " &
-        "WHERE package_id = ? and annotation ?";
    begin
-
-      if not SQLite.prepare_sql (db.handle, delsql, del_stmt) then
-         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, delsql);
-         return;
-      end if;
-
       if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, savepoint) then
          Event.emit_error ("Failed to start transaction at " & func);
-         SQLite.finalize_statement (del_stmt);
          return;
       end if;
 
+      --  define tag if it doesn't already exist
       if SQLite.reset_statement (main_stmt) then
          SQLite.bind_string (main_stmt, 1, tag);
          debug_running_stmt (main_stmt);
@@ -59,6 +101,7 @@ package body Raven.Database.Annotate is
          end case;
       end if;
 
+      --  Remove any current definitions of tag
       if not revert then
          for pkg_index in 0 .. num_pkgs - 1 loop
             if SQLite.reset_statement (del_stmt) then
@@ -76,16 +119,19 @@ package body Raven.Database.Annotate is
             else
                Event.emit_error ("Failed to reset pkg_annotation delete stmt");
                revert := True;
+               exit;
             end if;
          end loop;
       end if;
 
+      --  Insert custom tags
       if not revert then
          for pkg_index in 0 .. num_pkgs - 1 loop
             if SQLite.reset_statement (pack_stmt) then
                SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (packages (pkg_index).id));
                SQLite.bind_string  (pack_stmt, 2, tag);
                SQLite.bind_string  (pack_stmt, 3, note);
+               SQLite.bind_integer (pack_stmt, 4, 1);  --  custom tags
                debug_running_stmt (pack_stmt);
                case SQLite.step (pack_stmt) is
                   when SQLite.no_more_data => null;
@@ -97,26 +143,14 @@ package body Raven.Database.Annotate is
             else
                Event.emit_error ("Failed to reset pkg_annotation insert stmt");
                revert := True;
+               exit;
             end if;
          end loop;
       end if;
 
-      if revert then
-         if CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, savepoint) then
-            Event.emit_error ("Rolled back " & func & " transaction");
-         end if;
-      else
-         if not CommonSQL.transaction_commit (db.handle, internal_srcfile, func, savepoint) then
-            Event.emit_error ("Failed to commit " & func & " transaction");
-            if CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, savepoint) then
-               Event.emit_error ("Rolled back " & func & " transaction");
-            end if;
-         end if;
-      end if;
+      commit_or_rollback (db, revert, func, savepoint);
 
-      SQLite.finalize_statement (del_stmt);
-
-   end annotate_packages;
+   end annotate_packages_core;
 
 
    --------------------------
@@ -128,11 +162,7 @@ package body Raven.Database.Annotate is
       packages : Pkgtypes.Package_Set.Vector)
    is
       del_stmt  : SQLite.thick_stmt;
-      func      : constant String := "remove_annotations";
-      savepoint : constant String := "DEANNOTATE";
-      num_pkgs  : constant Natural := Natural (packages.Length);
-      revert    : Boolean := False;
-
+      func   : constant String := "remove_annotations";
       delsql : constant String :=
         "DELETE FROM pkg_annotations " &
         "WHERE package_id = ? and annotation_id = " &
@@ -143,9 +173,27 @@ package body Raven.Database.Annotate is
          return;
       end if;
 
+      remove_annotations_core (db, tag, packages, del_stmt);
+      SQLite.finalize_statement (del_stmt);
+   end remove_annotations;
+
+
+   -------------------------------
+   --  remove_annotations_core  --
+   -------------------------------
+   procedure remove_annotations_core
+     (db       : RDB_Connection;
+      tag      : String;
+      packages : Pkgtypes.Package_Set.Vector;
+      del_stmt : in out SQLite.thick_stmt)
+   is
+      func      : constant String := "remove_annotations_core";
+      savepoint : constant String := "DEANNOTATE";
+      num_pkgs  : constant Natural := Natural (packages.Length);
+      revert    : Boolean := False;
+   begin
       if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, savepoint) then
          Event.emit_error ("Failed to start transaction at " & func);
-         SQLite.finalize_statement (del_stmt);
          return;
       end if;
 
@@ -168,20 +216,9 @@ package body Raven.Database.Annotate is
          end if;
       end loop;
 
-      if revert then
-         if CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, savepoint) then
-            Event.emit_error ("Rolled back " & func & " transaction");
-         end if;
-      else
-         if not CommonSQL.transaction_commit (db.handle, internal_srcfile, func, savepoint) then
-            Event.emit_error ("Failed to commit " & func & " transaction");
-            if CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, savepoint) then
-               Event.emit_error ("Rolled back " & func & " transaction");
-            end if;
-         end if;
-      end if;
+      commit_or_rollback (db, revert, func, savepoint);
+   end remove_annotations_core;
 
-   end remove_annotations;
 
 
 end Raven.Database.Annotate;
