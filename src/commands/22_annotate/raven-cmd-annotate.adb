@@ -57,7 +57,7 @@ package body Raven.Cmd.Annotate is
       elsif comline.cmd_annotate.operation_delete then
          delete_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag),
                       comline.common_options.quiet);
-      elsif comline.cmd_annotate.operation_find then
+      elsif comline.cmd_annotate.operation_set then
          define_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag),
                       USS (comline.cmd_annotate.note), comline.common_options.quiet);
       end if;
