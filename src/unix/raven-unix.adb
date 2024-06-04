@@ -304,4 +304,17 @@ package body Raven.Unix is
    end filename_match;
 
 
+   -------------------
+   --  change_root  --
+   -------------------
+   function change_root (dirname : String) return Boolean
+   is
+      c_dirname : IC.Strings.chars_ptr;
+      result    : IC.int;
+   begin
+      c_dirname := IC.Strings.New_String (dirname);
+      result := C_chroot (c_dirname);
+      return success (result);
+   end change_root;
+
 end Raven.Unix;

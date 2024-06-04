@@ -173,6 +173,15 @@ package body Raven.Cmd.Unset is
    begin
       Context.register_debug_level (comline.pre_command.debug_setting);
       Context.register_protocol_restriction (comline.pre_command.internet_protocol);
+
+      if not IsBlank (comline.pre_command.chroot_first) then
+         if not Unix.change_root (USS (comline.pre_command.chroot_first)) then
+            EV.emit_error ("Failed to change root directory to " &
+                             USS (comline.pre_command.chroot_first));
+         end if;
+         EV.emit_debug (high_level, "Change root to " & USS (comline.pre_command.chroot_first));
+      end if;
+
       CFG.establish_configuration
         (configuration_file    => config_file_path,
          command_line_options  => USS (comline.pre_command.option_nvpairs),

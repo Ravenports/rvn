@@ -150,6 +150,9 @@ package Raven.Unix is
    function unix_time (tloc : access int64) return int64;
    pragma Import (C, unix_time, "time");
 
+   --  wrap chroot(2) from libc
+   function change_root (dirname : String) return Boolean;
+
 private
 
    last_errno : Integer;
@@ -219,5 +222,8 @@ private
       teststring : IC.Strings.chars_ptr;
       flags      : IC.int) return IC.int;
    pragma Import (C, C_fnmatch, "fnmatch");
+
+   function C_chroot (dirname : IC.Strings.chars_ptr) return IC.int;
+   pragma Import (C, C_chroot, "chroot");
 
 end Raven.Unix;

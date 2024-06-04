@@ -76,6 +76,10 @@ package body Raven.Cmd.Usage is
                   return error_found;
             end case;
          end;
+         if not Archive.Unix.user_is_root then
+            alert ("The chroot option is restricted to the superuser.");
+            return error_found;
+         end if;
       end if;
 
       if comline.pre_command.status_check or else
