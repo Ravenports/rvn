@@ -159,7 +159,6 @@ package body Raven.Cmd.Unset is
       --          * set context early
       --          * passes to establish_configuration
       --          * reset context
-      --  TODO: Implement chroot
 
       function config_file_path return String
       is
