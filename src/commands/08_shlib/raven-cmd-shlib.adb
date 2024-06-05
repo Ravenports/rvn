@@ -32,7 +32,7 @@ package body Raven.Cmd.Shlib is
       end case;
       if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
          OPS.rdb_close (rdb);
-         Event.emit_error ("Cannot get a read lock on a database, it is locked by another process");
+         Event.emit_error (LOK.no_read_lock);
          return False;
       end if;
 

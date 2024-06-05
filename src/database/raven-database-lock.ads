@@ -17,6 +17,14 @@ package Raven.Database.Lock is
      (db       : in out RDB_Connection;
       lock     : lock_type) return Boolean;
 
+   no_read_lock : constant String := "Cannot get a read lock on a database (already locked)";
+   no_adv_lock : constant String := "Cannot get a advisory lock on a database (already locked)";
+   no_exc_lock : constant String := "Cannot get a exclusive lock on a database (already locked)";
+
+   no_read_unlock      : constant String := "Failed to release database read lock";
+   no_advisory_unlock  : constant String := "Failed to release database advisory lock";
+   no_exclusive_unlock : constant String := "Failed to release database exclusive lock";
+
 private
 
    internal_srcfile : constant String := "raven-database-locks.adb";
