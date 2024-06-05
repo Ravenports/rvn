@@ -8,6 +8,7 @@ with Raven.Strings;
 with Raven.Context;
 with Raven.Metadata;
 with Raven.Pkgtypes;
+with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Cmd.Unset;
@@ -16,6 +17,7 @@ with Archive.Unix;
 
 package body Raven.Cmd.Clean is
 
+   package LOK renames Raven.Database.Lock;
    package QRY renames Raven.Database.Query;
    package OPS renames Raven.Database.Operations;
    package RCU renames Raven.Cmd.Unset;
@@ -161,7 +163,21 @@ package body Raven.Cmd.Clean is
          when RESULT_OK => null;
          when others => return False;
       end case;
+
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       QRY.all_remote_packages (rdb, catalog_map);
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       OPS.rdb_close (rdb);
       SCN.scan_directory (cachedir, cache_contents);
       cache_contents.Iterate (check_dirent'Access);
