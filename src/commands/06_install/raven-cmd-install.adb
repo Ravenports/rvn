@@ -7,6 +7,7 @@ with Raven.Pkgtypes;
 with Raven.Cmd.Unset;
 with Raven.Miscellaneous;
 with Raven.Database.Pkgs;
+with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
@@ -19,6 +20,7 @@ package body Raven.Cmd.Install is
    package RCU  renames Raven.Cmd.Unset;
    package MISC renames Raven.Miscellaneous;
    package PKGS renames Raven.Database.Pkgs;
+   package LOK  renames Raven.Database.Lock;
    package QRY  renames Raven.Database.Query;
    package OPS  renames Raven.Database.Operations;
 
@@ -28,6 +30,7 @@ package body Raven.Cmd.Install is
    function execute_install_command (comline : Cldata) return Boolean
    is
       install_success : Boolean;
+      rdb : Database.RDB_Connection;
    begin
       if comline.common_options.case_sensitive then
          return currently_unsupported ("--case-sensitive");
@@ -58,8 +61,31 @@ package body Raven.Cmd.Install is
       end if;
 
       if comline.cmd_install.local_file then
-         install_success := install_single_local_package (comline);
-         OPS.rdb_close (rdb);
+         if not comline.cmd_install.no_register then
+            case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
+               when RESULT_OK => null;
+               when others => return False;
+            end case;
+
+            if not LOK.obtain_lock (rdb, LOK.lock_exclusive) then
+               Event.emit_error (LOK.no_exc_lock);
+               OPS.rdb_close (rdb);
+               return False;
+            end if;
+
+            install_success := install_single_local_package (rdb, comline);
+
+            if not LOK.release_lock (rdb, LOK.lock_exclusive) then
+               Event.emit_error (LOK.no_exc_lock);
+               OPS.rdb_close (rdb);
+               return False;
+            end if;
+
+            OPS.rdb_close (rdb);
+         else
+            install_success := install_single_local_package (rdb, comline);
+         end if;
+
          return install_success;
       else
          Raven.Event.emit_error ("Installation from repository not yet supported");
@@ -82,7 +108,8 @@ package body Raven.Cmd.Install is
    -----------------------------------
    --  install_single_local_package  --
    ------------------------------------
-   function install_single_local_package (comline : Cldata) return Boolean
+   function install_single_local_package (rdb : in out Database.RDB_Connection;
+                                          comline : Cldata) return Boolean
    is
       file_list    : EXT.file_records.Vector;
       metatree     : ThickUCL.UclTree;
@@ -120,11 +147,6 @@ package body Raven.Cmd.Install is
          P : constant String := N & "-" & S & "-" & V;
       begin
          if not comline.cmd_install.no_register then
-            case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
-               when RESULT_OK => null;
-               when others => return False;
-            end case;
-
             if not comline.cmd_install.force_install then
                case QRY.package_installed (rdb, N, S, V) is
                   when Pkgtypes.Package_Not_Installed => null;
@@ -136,13 +158,15 @@ package body Raven.Cmd.Install is
          end if;
 
          if comline.cmd_install.only_register then
-            return register_single_package (metatree, file_list, comline.cmd_install.automatic,
-                                            comline.cmd_install.force_install);
+            return register_single_package
+              (rdb, metatree, file_list, comline.cmd_install.automatic,
+               comline.cmd_install.force_install);
          end if;
 
          if not comline.cmd_install.no_register then
-            result := register_single_package (metatree, file_list, comline.cmd_install.automatic,
-                                               comline.cmd_install.force_install);
+            result := register_single_package
+              (rdb, metatree, file_list, comline.cmd_install.automatic,
+               comline.cmd_install.force_install);
          end if;
 
          if comline.cmd_install.inhibit_scripts then
@@ -240,7 +264,8 @@ package body Raven.Cmd.Install is
    --  register_single_package  --
    -------------------------------
    function register_single_package
-     (metatree       : ThickUCL.UclTree;
+     (rdb            : in out Database.RDB_Connection;
+      metatree       : ThickUCL.UclTree;
       file_list      : EXT.file_records.Vector;
       mark_automatic : Boolean;
       force_install  : Boolean) return Boolean

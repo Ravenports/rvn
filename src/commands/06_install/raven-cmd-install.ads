@@ -16,18 +16,19 @@ private
    package MET renames Raven.Metadata;
    package EXT renames Archive.Unpack;
 
-   rdb : Database.RDB_Connection;
-
    --  temporary function; remove when no longer needed
    function currently_unsupported (switch : String) return Boolean;
 
    --  Handle local archive installation (repository bypass) separately
-   function install_single_local_package (comline : Cldata) return Boolean;
+   function install_single_local_package
+     (rdb     : in out Database.RDB_Connection;
+      comline : Cldata) return Boolean;
 
 
    --  Inserts key data from a single package's metadata as a package locally installed
    function register_single_package
-     (metatree       : ThickUCL.UclTree;
+     (rdb            : in out Database.RDB_Connection;
+      metatree       : ThickUCL.UclTree;
       file_list      : EXT.file_records.Vector;
       mark_automatic : Boolean;
       force_install  : Boolean) return Boolean;
