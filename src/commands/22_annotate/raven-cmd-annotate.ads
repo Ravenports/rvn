@@ -17,13 +17,13 @@ private
       match_tag        : String);
 
    procedure delete_tags
-     (db               : Database.RDB_Connection;
+     (db               : in out Database.RDB_Connection;
       shallow_packages : Pkgtypes.Package_Set.Vector;
       match_tag        : String;
       quiet            : Boolean);
 
    procedure define_tags
-     (db               : Database.RDB_Connection;
+     (db               : in out Database.RDB_Connection;
       shallow_packages : Pkgtypes.Package_Set.Vector;
       new_tag          : String;
       new_note         : String;

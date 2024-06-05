@@ -32,38 +32,8 @@ package body Raven.Cmd.Annotate is
       rdb : Database.RDB_Connection;
       unfinished_packages : Pkgtypes.Package_Set.Vector;
       behave_cs : Boolean := comline.common_options.case_sensitive;
-      active_lock : LOK.lock_type := LOK.lock_readonly;
+      active_lock : LOK.lock_type := LOK.lock_advisory;
 
-      procedure release_active_lock is
-      begin
-         if not LOK.release_lock (rdb, active_lock) then
-            case active_lock is
-               when LOK.lock_advisory  => Event.emit_error (LOK.no_advisory_unlock);
-               when LOK.lock_exclusive => Event.emit_error (LOK.no_exclusive_unlock);
-               when LOK.lock_readonly  => Event.emit_error (LOK.no_read_unlock);
-            end case;
-         end if;
-      end release_active_lock;
-
-      procedure exit_lock is
-      begin
-         release_active_lock;
-         OPS.rdb_close (rdb);
-      end exit_lock;
-
-      function activate_lock return Boolean is
-      begin
-         if not LOK.obtain_lock (rdb, active_lock) then
-            case active_lock is
-               when LOK.lock_advisory  => Event.emit_error (LOK.no_adv_lock);
-               when LOK.lock_exclusive => Event.emit_error (LOK.no_exc_lock);
-               when LOK.lock_readonly  => Event.emit_error (LOK.no_read_lock);
-            end case;
-            OPS.rdb_close (rdb);
-            return False;
-         end if;
-         return True;
-      end activate_lock;
    begin
       if Context.reveal_case_sensitive then
          behave_cs := True;
@@ -74,7 +44,17 @@ package body Raven.Cmd.Annotate is
          when others => return False;
       end case;
 
-      if not activate_lock then
+      if comline.cmd_annotate.operation_find then
+         active_lock := LOK.lock_readonly;
+      end if;
+
+      if not LOK.obtain_lock (rdb, active_lock) then
+         case active_lock is
+            when LOK.lock_advisory  => Event.emit_error (LOK.no_adv_lock);
+            when LOK.lock_exclusive => Event.emit_error (LOK.no_exc_lock);
+            when LOK.lock_readonly  => Event.emit_error (LOK.no_read_lock);
+         end case;
+         OPS.rdb_close (rdb);
          return False;
       end if;
 
@@ -90,35 +70,32 @@ package body Raven.Cmd.Annotate is
          packages     => unfinished_packages);
 
       if comline.cmd_annotate.operation_find then
+
          display_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag));
-         exit_lock;
 
       elsif comline.cmd_annotate.operation_delete then
 
-         exit_lock;
-         active_lock := LOK.lock_advisory;
-         if not activate_lock then
-            return False;
-         end if;
-
          delete_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag),
                       comline.common_options.quiet);
-         exit_lock;
 
       elsif comline.cmd_annotate.operation_set then
 
-         exit_lock;
-         active_lock := LOK.lock_advisory;
-         if not activate_lock then
-            return False;
-         end if;
-
          define_tags (rdb, unfinished_packages, USS (comline.cmd_annotate.tag),
                       USS (comline.cmd_annotate.note), comline.common_options.quiet);
-         exit_lock;
 
       end if;
 
+      if not LOK.release_lock (rdb, active_lock) then
+         case active_lock is
+            when LOK.lock_advisory  => Event.emit_error (LOK.no_advisory_unlock);
+            when LOK.lock_exclusive => Event.emit_error (LOK.no_exclusive_unlock);
+            when LOK.lock_readonly  => Event.emit_error (LOK.no_read_unlock);
+         end case;
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
+      OPS.rdb_close (rdb);
       return True;
    end execute_annotate_command;
 
@@ -161,7 +138,7 @@ package body Raven.Cmd.Annotate is
    --  delete_tags  --
    -------------------
    procedure delete_tags
-     (db               : Database.RDB_Connection;
+     (db               : in out Database.RDB_Connection;
       shallow_packages : Pkgtypes.Package_Set.Vector;
       match_tag        : String;
       quiet            : Boolean)
@@ -214,7 +191,18 @@ package body Raven.Cmd.Annotate is
          return;
       end if;
 
+      if not LOK.upgrade_lock (db, LOK.lock_advisory, LOK.lock_exclusive) then
+         Event.emit_error ("Failed upgrade to exclusive lock");
+         return;
+      end if;
+
       ANN.remove_annotations (db, match_tag, deeper_packages);
+
+      if not LOK.downgrade_lock (db, LOK.lock_exclusive, LOK.lock_advisory) then
+         Event.emit_error ("Failed downgrade to advisory lock");
+         return;
+      end if;
+
       if not quiet then
          Event.emit_message ("Annotation removal complete.");
       end if;
@@ -258,7 +246,7 @@ package body Raven.Cmd.Annotate is
    --  define_tags  --
    -------------------
    procedure define_tags
-     (db               : Database.RDB_Connection;
+     (db               : in out Database.RDB_Connection;
       shallow_packages : Pkgtypes.Package_Set.Vector;
       new_tag          : String;
       new_note         : String;
@@ -313,7 +301,18 @@ package body Raven.Cmd.Annotate is
          return;
       end if;
 
+      if not LOK.upgrade_lock (db, LOK.lock_advisory, LOK.lock_exclusive) then
+         Event.emit_error ("Failed upgrade to exclusive lock");
+         return;
+      end if;
+
       ANN.annotate_packages (db, new_tag, new_note, shallow_packages);
+
+      if not LOK.downgrade_lock (db, LOK.lock_exclusive, LOK.lock_advisory) then
+         Event.emit_error ("Failed downgrade to advisory lock");
+         return;
+      end if;
+
       if not quiet then
          Event.emit_message ("Annotation definition complete.");
       end if;
