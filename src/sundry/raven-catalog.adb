@@ -8,6 +8,7 @@ with Raven.Context;
 with Raven.Pkgtypes;
 with Raven.Metadata;
 with Raven.Database.Pkgs;
+with Raven.Database.Lock;
 with Raven.Database.Operations;
 with ThickUCL.Files;
 with Archive.Unpack;
@@ -17,6 +18,7 @@ package body Raven.Catalog is
 
    package TIO renames Ada.Text_IO;
    package DIR renames Ada.Directories;
+   package LOK renames Raven.Database.Lock;
    package PAC renames Raven.Database.Pkgs;
    package OPS renames Raven.Database.Operations;
 
@@ -61,6 +63,12 @@ package body Raven.Catalog is
             goto cleanup_failure;
       end case;
 
+      if not LOK.obtain_lock (rvndb, LOK.lock_exclusive) then
+         Event.emit_error (LOK.no_exc_lock);
+         OPS.rdb_close (rvndb);
+         return False;
+      end if;
+
       declare
          cat_handle : TIO.File_Type;
       begin
@@ -89,8 +97,18 @@ package body Raven.Catalog is
                TIO.Close (cat_handle);
             end if;
             Event.emit_error (func & "Failed during read of catalog database");
+            if not LOK.release_lock (rvndb, LOK.lock_exclusive) then
+               Event.emit_error (LOK.no_exclusive_unlock);
+            end if;
+            OPS.rdb_close (rvndb);
             goto cleanup_failure;
       end;
+      if not LOK.release_lock (rvndb, LOK.lock_exclusive) then
+         Event.emit_error (LOK.no_exclusive_unlock);
+         OPS.rdb_close (rvndb);
+         goto cleanup_failure;
+      end if;
+      OPS.rdb_close (rvndb);
 
       if backed_up then
          begin
