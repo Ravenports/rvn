@@ -5,15 +5,18 @@ with Ada.Text_IO;
 with Raven.Event;
 with Raven.Metadata;
 with Raven.Deinstall;
+with Raven.Database.Pkgs;
 with Archive.Unpack;
 with Archive.Unix;
 with ThickUCL;
 
 package body Raven.Install is
 
-   package TIO renames Ada.Text_IO;
+   package TIO  renames Ada.Text_IO;
+   package PKGS renames Raven.Database.Pkgs;
 
    function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
+                                  action      : refresh_action;
                                   current_pkg : Pkgtypes.A_Package;
                                   updated_pkg : String;
                                   rootdir     : String;
@@ -25,6 +28,7 @@ package body Raven.Install is
       operation : Archive.Unpack.Darc;
       metatree  : ThickUCL.UclTree;
       shiny_pkg : Pkgtypes.A_Package;
+      success   : Boolean;
 
       function extract_location return String is
       begin
@@ -64,14 +68,40 @@ package body Raven.Install is
       Metadata.convert_to_package (metatree, file_list, shiny_pkg, current_pkg.automatic);
       current_pkg.annotations.Iterate (transfer_custom_notes'Access);
 
-      Deinstall.deinstall_extracted_package (installed_package   => current_pkg,
-                                             verify_digest_first => False,
-                                             quiet               => True,
-                                             inhibit_scripts     => no_scripts,
-                                             post_report         => TIO.File_Type);
+      case action is
+         when upgrade =>
+            Deinstall.deinstall_extracted_package (installed_package   => current_pkg,
+                                                   verify_digest_first => False,
+                                                   quiet               => True,
+                                                   inhibit_scripts     => no_scripts,
+                                                   post_report         => TIO.File_Type);
 
+            success := PKGS.rdb_register_package (db     => rdb,
+                                                  pkg    => shiny_pkg,
+                                                  forced => False);
+            if success then
+               success := install_files_from_archive (archive_path    => updated_pkg,
+                                                      root_directory  => extract_location,
+                                                      inhibit_scripts => no_scripts,
+                                                      be_silent       => True,
+                                                      dry_run_only    => False,
+                                                      upgrading       => True);
+            end if;
+         when reinstall =>
+            success := PKGS.rdb_register_package (db     => rdb,
+                                                  pkg    => shiny_pkg,
+                                                  forced => True);
+            if success then
+               success := install_files_from_archive (archive_path    => updated_pkg,
+                                                      root_directory  => extract_location,
+                                                      inhibit_scripts => no_scripts,
+                                                      be_silent       => True,
+                                                      dry_run_only    => False,
+                                                      upgrading       => False);
+               end if;
+            end case;
 
-      return False;
+      return success;
 
    end reinstall_or_upgrade;
 

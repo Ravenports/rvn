@@ -18,8 +18,11 @@ package Raven.Install is
    --  Step 5. Extract rvn package
    --  Step 6. Register package
 
+   type refresh_action is (reinstall, upgrade);
+
    function reinstall_or_upgrade
      (rdb         : in out Database.RDB_Connection;
+      action      : refresh_action;
       current_pkg : Pkgtypes.A_Package;
       updated_pkg : String;
       rootdir     : String;
