@@ -119,6 +119,7 @@ package body Raven.Cmd.Autoremove is
       DEL.prune_candidates_with_reverse_deps (rdb, toplist, purge_list);
       if not release_active_lock then
          OPS.rdb_close (rdb);
+         return False;
       end if;
 
       Deinstall.determine_purge_order (purge_list, purge_order);
