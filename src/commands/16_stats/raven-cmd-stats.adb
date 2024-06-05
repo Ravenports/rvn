@@ -4,6 +4,7 @@
 with Raven.Event;
 with Raven.Metadata;
 with Raven.Repository;
+with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
@@ -11,6 +12,7 @@ with Archive.Unix;
 
 package body Raven.Cmd.Stats is
 
+   package LOK renames Raven.Database.Lock;
    package QRY renames Raven.Database.Query;
    package OPS renames Raven.Database.Operations;
 
@@ -77,6 +79,12 @@ package body Raven.Cmd.Stats is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       declare
          measurements : QRY.A_Measurement_Set;
       begin
@@ -90,6 +98,12 @@ package body Raven.Cmd.Stats is
          Event.emit_message ("  Combined extracted size : " &
                                Metadata.human_readable_size (int64 (measurements.sum_flatsize)));
       end;
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
 
       OPS.rdb_close (rdb);
       return True;
@@ -116,6 +130,12 @@ package body Raven.Cmd.Stats is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (ldb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (ldb);
+         return False;
+      end if;
+
       declare
          measurements : QRY.A_Measurement_Set;
       begin
@@ -129,6 +149,12 @@ package body Raven.Cmd.Stats is
          Event.emit_message ("  Disk space occupied     : " &
                                Metadata.human_readable_size (int64 (measurements.sum_flatsize)));
       end;
+
+      if not LOK.release_lock (ldb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (ldb);
+         return False;
+      end if;
 
       OPS.rdb_close (ldb);
       return True;
