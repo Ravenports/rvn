@@ -6,84 +6,81 @@
 .Nd install packages from package repositories, local or remote
 .Sh SYNOPSIS
 .Nm
-.Op Fl AfIMnFqRUy
+.Op Fl AMdfInFqUy
 .Op Fl r Ar reponame
-.Op Fl CE
+.Op Fl CEg
 .Ar pkg-name ...
 .Pp
 .Nm
-.Op Cm --{automatic,force,no-scripts,ignore-missing}
-.Op Cm --{dry-run,fetch-only,quiet,recursive,no-repo-update,yes}
+.Op Cm --{automatic,manual,drop-depends,force,no-scripts}
+.Op Cm --{dry-run,fetch-only,quiet,no-repo-update,yes}
 .Op Cm --repository Ar reponame
-.Op Cm --{case-sensitive,exact-match}
+.Op Cm --{case-sensitive,exact-match,glob}
 .Ar pkg-name ...
 .Sh DESCRIPTION
 .Nm
-is used for installation of packages from package repositories or
-local archives.
+is used for the installation of packages acquired from package repositories.
 Multiple package names can be specified on the command line, either
-explicitly or by matching against package names in the
-repository catalogs.  By default, a case-insensitive match against the
-leading side of the namebase-subpackage-variant triplet name is performed
-on every provided
+explicitly or by pattern matching.
+By default, a case-insensitive regular expression match against the
+namebase-subpackage-variant triplet name is performed on every provided
 .Ar pkg-name .
 .Pp
 .Nm
-first updates any out of date repository catalogs, unless
+first acquires the latest repository category if neccessary unless
 .Cm REPO_AUTOUPDATE
 has been set to
 .Sy NO
 in
 .Pa rvn.conf .
 .Pp
-It then creates a work-list of all the package installations to do.
-Any already installed and up-to-date packages will be dropped from the
-list unless the
+The list of packages matching the pkg-name pattern(s) are then examined.
+Any package that is already installed and already at the latest version
+is dropped unless the
 .Fl f
 (force) option is supplied, in which case those packages will be
 reinstalled.
 .Pp
-The dependencies of packages in the list are examined and any missing
-packages are added to the list for installation.
-Such implicitly added packages are flagged as candidates for
-autoremoval.
+The dependencies of packages in the list are recursively determined.
+Any dependencies that aren't already installed are added to the queue.
+These implicitly added packages are designated as candidates for
+autoremoval (automatic flag is set).
 See
 .Xr rvn-autoremove 8
 for details.
 .Pp
-Autoremoval flags are sticky, and will persist over reinstallation or
-upgrade of the packages concerned, even if subsequently the packages
-are named explicitly on a command line.
+Autoremoval flags are sticky, and they will persist over reinstallations
+package upgrades even when explicitly specified on the command line.
 See
 .Xr rvn-query 8
 for finding the autoremoval status of a package.
 .Pp
-Any already installed but out of date packages, either named on the
-command line or from the sum of all their dependencies are added to
-the work list as upgrade jobs.
-The work list is sorted into dependency order and
+Any already installed but outdated packages present in the queue will
+be upgraded rather than dropped or reinstalled.
+The queue is arranged by dependency order and
 .Nm
-will present it to the user for approval before proceeding, unless
+will present it to the user for approval before proceeding unless
 overridden by the
 .Fl y
-option or the
+option or if
 .Cm ASSUME_ALWAYS_YES
-setting in
+is set to
+.Dq true
+in
 .Pa rvn.conf .
 .Pp
-Packages are fetched from the repositories into the local package
-cache if they are not already present, or if the checksum of the
-cached package file differs from the one in the repository.
-Packages may be downloaded from any of the repositories mentioned
-in
-.Xr rvn.conf 5
-or in the files in
+Packages are fetched from the configured repository and stored into the
+local package cache if they are not already present, or if the digest of the
+cached package file differs from the version in the remote repository.
+Packages will be downloaded from the highest priority mirror configured in
 .Pa /usr/local/etc/rvn/repo .
 See
 .Xr rvn-repository 5
+and
+.Xr rvn.conf 5
 for details.
 .Pp
-Package repository catalogs will be automatically updated whenever
+The remote repository catalog will be automatically updated whenever
 .Nm
 is run by a user ID with write access to the package database,
 unless disabled by the
@@ -99,59 +96,76 @@ The following options are supported by
 .Nm :
 .Bl -tag -width automatic
 .It Fl A , Cm --automatic
-Mark the installed packages as automatic.
-Will be automatically removed if no other packages depend on them.
-For more information please refer to
-.Xr rvn-autoremove 8 .
-.It Fl C , Cm --case-sensitive
-Switch to glob matching of the
-.Ar pkg-name
-which is inherently case-sensitive .
-.It Fl E , Cm --exact-match
-Disables explicit and implied wildcards so when the
-.Ar pkg-name
-exactly matches the namebase-subpackage-variant
-package name is successful.
+When used in conjunction with the
+.Cm --exact-match
+switch, it will mark newly installed packages as automatic and similarly
+it will set already installed packages as automatic.
+This allows the
+.Xr rvn-autoremove 8
+command to automatically deinstall the package when no other package
+requires it.
+.It Fl M , Cm --manual
+When used in conjunction with the
+.Cm --exact-match
+switch, it will mark newly installed dependency packages as non-automatic
+and similarly it will set already installed automatic packages as
+manual removals.
 .It Fl F , Cm --fetch-only
-Do not perform actual installation of packages, merely fetch packages
-that should be upgraded and detect possible conflicts.
+With this option, the installation stops after the package files are
+retrieved from the remote repository.
+.It Fl d , Cm --drop-depends
+Skip the recursive determination of dependency packages that need to
+be installed to support the matched packages.
+This option is dangerous; the potentially missing dependencies can
+easily result in non-functional packages.
 .It Fl f , Cm --force
-Force the reinstallation of the package if already installed.
+Force the reinstallation of selected packages that are already installed
+rather than dropping them from the queue.
 .It Fl I , Cm --no-scripts
-If any installation scripts (pre-install or post-install) exist for a given
-package, do not execute them.
-When a package is updated, deinstallation scripts (pre-deinstall or
-post-deinstall) are not run either.
-.It Fl M , Cm --ignore-missing
-Force the installation of the package with missing dependencies.
+This option prevents the execution of installation scripts (pre-install or
+post-install, Lua or shell) if they are provided with the package being
+installed.
 .It Fl n , Cm --dry-run
 Dry-run mode.
-The list of changes to packages is always printed, but
-no changes are actually made.
+The list of changes to packages is always printed, but no changes are
+actually made.
+Package fetching is also inhibited with this option.
 .It Fl q , Cm --quiet
-Force quiet output, except when
-.Fl n
-is used, where
-.Nm
-will always show packages to be installed, upgraded or deleted.
-.It Fl R , Cm --recursive
-When used with
-.Fl f ,
-reinstalls any packages that require the given package.
+Force quiet output.
+This option is incompatible with
+.Cm --dry-run
+since the purpose is to show packages to be installed, upgraded or deleted.
 .It Fl r Ar reponame , Cm --repository Ar reponame
-Install packages from only the named repository,
-irrespective of the configured
-.Dq active
-status from
-.Pa repo.conf .
-.It Fl U , Cm --no-repo-update
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
+.It Fl U , Fl -no-repo-update
 Suppress the automatic update of the local copy of the repository catalog
 from remote.
-Automatic repository catalog updates are only attempted when the
-effective UID of the process has write access to the package database.
-Otherwise they are silently ignored.
 .It Fl y , Cm --yes
 Assume yes when asked for confirmation before package installation.
+.El
+.Ss pkg-name matching algorithm
+By default, the
+.Ar pkg-name
+pattern is considered to be a case-insensitive regular expression
+according to the "modern" or "extended" syntax of
+.Xr re_format 7 .
+Effectively this matches any substring of the search field unless the
+.Dq ^
+anchor symbol is used at the start of the pattern.
+The following mutually exclusive options modify this default behavior.
+.Bl -tag -width xxxx
+.It Fl C , Cm --case-sensitive
+This option still processes the search pattern as a regular expression,
+but changes the search to be case sensitive.
+.It Fl E , Cm --exact-match
+This option requires the searched data be equal to the search pattern.
+This is case sensitive and the entire string must match for success.
+.It Fl g , Cm --glob
+This option treats the search pattern as a case-sensitive glob pattern.
 .El
 .Sh SPECIAL OPTIONS
 The following options are not intended for regular use and may be ignored.

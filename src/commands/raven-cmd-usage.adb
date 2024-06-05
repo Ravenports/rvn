@@ -464,7 +464,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "install [-AfIMnFqRUy] [-r reponame] [-CE] <pkg-name-pattern>";
+         msg1 : constant String := "install [-AMdfInFqUy] [-r reponame] [-CEg] <pkg-name-pattern>";
          msg2 : constant String := "install --[[no|only]-registration| [--file] <path-rvn-archive>";
       begin
          display_error (error_msg);
@@ -493,7 +493,8 @@ package body Raven.Cmd.Usage is
             return alert ("--repository" & not_with_file);
          end if;
          if comline.common_options.exact_match or else
-           comline.common_options.case_sensitive
+           comline.common_options.case_sensitive or else
+           comline.cmd_install.glob_input
          then
             return alert ("-CE" & not_with_file);
          end if;
@@ -508,8 +509,8 @@ package body Raven.Cmd.Usage is
          if Natural (comline.common_options.multiple_patterns.Length) > 1 then
             return alert ("Multiple file paths unsupported.  Limit to 1.");
          end if;
-         if comline.cmd_install.recursive then
-            return alert ("--recursive" & not_with_file);
+         if comline.cmd_install.drop_depends then
+            return alert ("--drop_depends" & not_with_file);
          end if;
       end if;
 
@@ -525,6 +526,14 @@ package body Raven.Cmd.Usage is
 
       if not Archive.Unix.user_is_root then
          return alert ("The install command is restricted to the superuser.");
+      end if;
+
+      if comline.cmd_install.automatic and then not comline.common_options.exact_match then
+         return alert ("--automatic requires --exact-match to be set.");
+      end if;
+
+      if comline.cmd_install.manual and then not comline.common_options.exact_match then
+         return alert ("--manual requires --exact-match to be set.");
       end if;
 
       return True;

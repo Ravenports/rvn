@@ -41,8 +41,8 @@ package body Raven.Cmd.Install is
       if comline.common_options.assume_yes then
          return currently_unsupported ("--assume-yes");
       end if;
-      if comline.cmd_install.recursive then
-         return currently_unsupported ("--recursive");
+      if comline.cmd_install.manual then
+         return currently_unsupported ("--manual");
       end if;
       if comline.cmd_install.automatic then
          return currently_unsupported ("--automatic");
@@ -53,8 +53,8 @@ package body Raven.Cmd.Install is
       if comline.cmd_install.force_install then
          return currently_unsupported ("--force");
       end if;
-      if comline.cmd_install.ignore_missing then
-         return currently_unsupported ("--ignore-missing");
+      if comline.cmd_install.drop_depends then
+         return currently_unsupported ("--drop-depends");
       end if;
 
       if comline.cmd_install.local_file then

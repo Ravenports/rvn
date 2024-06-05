@@ -159,11 +159,12 @@ private
    type switches_install_cmd is
       record
          automatic          : Boolean := False;  --  -A, --automatic
+         manual             : Boolean := False;  --  -M, --manual
          fetch_only         : Boolean := False;  --  -F, --fetch-only
          force_install      : Boolean := False;  --  -f, --force
          inhibit_scripts    : Boolean := False;  --  -I, --no-scripts
-         ignore_missing     : Boolean := False;  --  -M, --ignore-missing
-         recursive          : Boolean := False;  --  -R, --recursive
+         drop_depends       : Boolean := False;  --  -d, --drop_depends
+         glob_input         : Boolean := False;  --  -g, --glob
          local_file         : Boolean := False;  --      --file
          no_register        : Boolean := False;          --no-register
          only_register      : Boolean := False;          --only-register

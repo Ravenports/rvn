@@ -415,18 +415,20 @@ package body Raven.Cmd.Line is
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
+                  elsif datum = "-g" or else datum = "--glob" then
+                     data.cmd_annotate.glob_input := True;
                   elsif datum = "-A" or else datum = "--automatic" then
                      data.cmd_install.automatic := True;
+                  elsif datum = "-M" or else datum = "--manual" then
+                     data.cmd_install.manual := True;
                   elsif datum = "-F" or else datum = "--fetch-only" then
                      data.cmd_install.fetch_only := True;
                   elsif datum = "-f" or else datum = "--force" then
                      data.cmd_install.force_install := True;
                   elsif datum = "-I" or else datum = "--no-scripts" then
                      data.cmd_install.inhibit_scripts := True;
-                  elsif datum = "-M" or else datum = "--ignore-missing" then
-                     data.cmd_install.ignore_missing := True;
-                  elsif datum = "-R" or else datum = "--recursive" then
-                     data.cmd_install.recursive := True;
+                  elsif datum = "-d" or else datum = "--drop-depends" then
+                     data.cmd_install.drop_depends := True;
                   elsif datum = "--file" then
                      data.cmd_install.local_file := True;
                   elsif datum = "--no-registration" then
