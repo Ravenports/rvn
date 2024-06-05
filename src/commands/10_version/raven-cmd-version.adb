@@ -9,6 +9,7 @@ with Raven.Cmd.Unset;
 with Raven.Event;
 with Raven.Context;
 with Raven.Fetch;
+with Raven.Database.Lock;
 with Raven.Database.Cmdversion;
 with Raven.Database.Operations;
 with Raven.Repository;
@@ -22,6 +23,7 @@ package body Raven.Cmd.Version is
    package DIR renames Ada.Directories;
    package VER renames Raven.Version;
    package RCU renames Raven.Cmd.Unset;
+   package LOK renames Raven.Database.Lock;
    package DBC renames Raven.Database.Cmdversion;
    package OPS renames Raven.Database.Operations;
    package CAL renames curl_callbacks;
@@ -240,6 +242,12 @@ package body Raven.Cmd.Version is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (localdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (localdb);
+         return False;
+      end if;
+
       DBC.map_nsv_to_local_version
         (db           => localdb,
          behave_cs    => behave_cs,
@@ -248,6 +256,12 @@ package body Raven.Cmd.Version is
          version_map  => local_installation);
 
       OPS.rdb_close (localdb);
+
+      if not LOK.release_lock (localdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (localdb);
+         return False;
+      end if;
 
       local_installation.Iterate (print'Access);
       return True;
@@ -312,7 +326,20 @@ package body Raven.Cmd.Version is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       DBC.map_nsv_to_local_version (rdb, False, False, "", remote_versions);
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       OPS.rdb_close (rdb);
 
       case OPS.rdb_open_localdb (localdb, Database.installed_packages) is
@@ -320,7 +347,20 @@ package body Raven.Cmd.Version is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (localdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (localdb);
+         return False;
+      end if;
+
       DBC.map_nsv_to_local_version (localdb, behave_cs, behave_exact, pattern, local_installation);
+
+      if not LOK.release_lock (localdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (localdb);
+         return False;
+      end if;
+
       OPS.rdb_close (localdb);
 
       local_installation.Iterate (print'Access);
