@@ -113,7 +113,7 @@ private
       quiet    : Boolean);
 
    procedure display_annotations
-     (dmap     : Pkgtypes.NV_Pairs.Map;
+     (dmap     : Pkgtypes.NoteSet.Map;
       active   : Boolean;
       single   : Boolean;
       quiet    : Boolean);

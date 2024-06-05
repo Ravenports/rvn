@@ -70,6 +70,19 @@ package Raven.Pkgtypes is
      (Element_Type => File_Item,
       Index_Type   => Natural);
 
+   type Note_Item is
+      record
+         tag    : Text;
+         note   : Text;
+         custom : Boolean;
+      end record;
+
+   package NoteSet is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => Note_Item,
+      Hash            => Raven.Miscellaneous.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
    type A_Package is
       record
          id            : Package_ID;
@@ -98,8 +111,8 @@ package Raven.Pkgtypes is
          libs_adjacent : Text_List.Vector;
          directories   : Text_List.Vector;
          dependencies  : NV_Pairs.Map;
-         annotations   : NV_Pairs.Map;
          options       : NV_Pairs.Map;
+         annotations   : NoteSet.Map;
          messages      : Message_Set;
          scripts       : Script_Set;
          files         : File_List.Vector;

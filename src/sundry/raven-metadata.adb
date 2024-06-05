@@ -413,6 +413,50 @@ package body Raven.Metadata is
    end set_nvpair;
 
 
+   -----------------
+   --  set_notes  --
+   -----------------
+   Procedure set_notes
+     (metatree : ThickUCL.UclTree;
+      field    : metadata_field;
+      new_dict : in out Pkgtypes.NoteSet.Map)
+   is
+      key   : constant String := metadata_field_label (field);
+      dtype : ThickUCL.Leaf_type;
+      vndx  : ThickUCL.object_index;
+      jar   : ThickUCL.jar_string.Vector;
+
+      procedure insert_nv (Position : ThickUCL.jar_string.Cursor)
+      is
+         key2 : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+      begin
+         case metatree.get_object_data_type (vndx, key2) is
+            when ThickUCL.data_string =>
+               declare
+                  value : constant String := metatree.get_object_value (vndx, key2);
+                  mynote : Pkgtypes.Note_Item;
+               begin
+                  mynote.tag := ThickUCL.jar_string.Element (Position).payload;
+                  mynote.note := SUS (value);
+                  mynote.custom := False;
+                  new_dict.Insert (SUS (key2), mynote);
+               end;
+            when others => null;  --problem
+         end case;
+      end insert_nv;
+   begin
+      new_dict.Clear;
+      dtype := ThickUCL.get_data_type (metatree, key);
+      case dtype is
+         when ThickUCL.data_object =>
+            vndx := metatree.get_index_of_base_ucl_object (key);
+            metatree.get_object_object_keys (vndx, jar);
+         when others => null;
+      end case;
+      jar.Iterate (insert_nv'Access);
+   end set_notes;
+
+
    ------------------------
    --  convert_to_phase  --
    ------------------------
@@ -674,8 +718,8 @@ package body Raven.Metadata is
       new_pkg.files.Clear;
       files.Iterate (scan'Access);
 
+      set_notes (metatree, annotations, new_pkg.annotations);
       set_nvpair (metatree, dependencies, new_pkg.dependencies);
-      set_nvpair (metatree, annotations, new_pkg.annotations);
       set_nvpair (metatree, options, new_pkg.options);
       set_scripts (metatree, new_pkg.scripts);
       set_messages (metatree, new_pkg.messages);

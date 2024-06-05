@@ -34,8 +34,6 @@ package body Raven.Deinstall is
                                           inhibit_scripts     : Boolean;
                                           post_report         : TIO.File_Type)
    is
-      --  Do not use for upgrades
-
       --  Step 1.  run pre-deinstall shell scripts (create tmp output file first)
       --  Step 2.  run pre-deinstall lua scripts (create tmp output file first)
       --  Step 3.  iterate file container and delete each one.
@@ -49,8 +47,8 @@ package body Raven.Deinstall is
       --  Step 6.  run post-deinstall lua scripts
       --  Step 7.  echo shell script output (if any) (caller might have redirected to file)
       --  Step 8.  echo lua script output (if any) (caller might have redirected to file)
-      --  Step 9.  Delete tmo output files of lua and shell scripts
-      --  Call needs to deregister from database (assumed to be successful?)
+      --  Step 9.  Delete two output files of lua and shell scripts
+      --  Caller needs to deregister from database (assumed to be successful?)
 
       upgrading         : constant Boolean := False;
       tmp_message_shell : constant String := Bourne.unique_msgfile_path;
@@ -101,8 +99,10 @@ package body Raven.Deinstall is
          end if;
       end eradicate_file;
    begin
-      run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, tmp_message_shell);
-      run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, tmp_message_lua);
+      if not inhibit_scripts then
+         run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, tmp_message_shell);
+         run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, tmp_message_lua);
+      end if;
 
       installed_package.files.Iterate (eradicate_file'Access);
       prune_empty_directories (installed_package);

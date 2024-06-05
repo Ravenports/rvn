@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Raven.Event;
+with Raven.Cmd.Unset;
 with Raven.Deinstall;
 with Raven.Database.Lock;
 with Raven.Database.Remove;
@@ -15,6 +16,7 @@ package body Raven.Cmd.Remove is
    package OPS renames Raven.Database.Operations;
    package DEL renames Raven.Database.Remove;
    package LOK renames Raven.Database.Lock;
+   package RCU renames Raven.Cmd.Unset;
 
 
    ------------------------------
@@ -74,10 +76,11 @@ package body Raven.Cmd.Remove is
    function execute_remove_command_core (rdb     : in out Database.RDB_Connection;
                                          comline : Cldata) return Boolean
    is
-      success     : Boolean := True;
-      toplist     : Pkgtypes.Package_Set.Vector;
-      purge_list  : Pkgtypes.Package_Set.Vector;
-      purge_order : Deinstall.Purge_Order_Crate.Vector;
+      success      : Boolean := True;
+      toplist      : Pkgtypes.Package_Set.Vector;
+      purge_list   : Pkgtypes.Package_Set.Vector;
+      purge_order  : Deinstall.Purge_Order_Crate.Vector;
+      skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
    begin
       if comline.common_options.all_installed_pkgs then
          success := DEL.top_level_deletion_list
@@ -155,7 +158,7 @@ package body Raven.Cmd.Remove is
          purge_list   => purge_list,
          purge_order  => purge_order,
          skip_verify  => comline.cmd_remove.skip_verify,
-         skip_scripts => comline.cmd_remove.inhibit_scripts,
+         skip_scripts => skip_scripts,
          quiet        => comline.common_options.quiet);
 
       if not LOK.downgrade_lock (rdb, LOK.lock_exclusive, LOK.lock_advisory) then

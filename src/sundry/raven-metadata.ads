@@ -115,6 +115,11 @@ private
       field    : metadata_field;
       new_dict : in out Pkgtypes.NV_Pairs.Map);
 
+   Procedure set_notes
+     (metatree : ThickUCL.UclTree;
+      field    : metadata_field;
+      new_dict : in out Pkgtypes.NoteSet.Map);
+
    procedure set_scripts
      (metatree : ThickUCL.UclTree;
       new_list : in out Pkgtypes.Script_Set);

@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Raven.Event;
+with Raven.Cmd.Unset;
 with Raven.Deinstall;
 with Raven.Database.Lock;
 with Raven.Database.Remove;
@@ -12,6 +13,7 @@ package body Raven.Cmd.Autoremove is
    package DEL renames Raven.Database.Remove;
    package OPS renames Raven.Database.Operations;
    package LOK renames Raven.Database.Lock;
+   package RCU renames Raven.Cmd.Unset;
 
    ----------------------------------
    --  execute_autoremove_command  --
@@ -71,9 +73,10 @@ package body Raven.Cmd.Autoremove is
      (rdb     : in out Database.RDB_Connection;
       comline : Cldata) return Boolean
    is
-      toplist     : Pkgtypes.Package_Set.Vector;
-      purge_list  : Pkgtypes.Package_Set.Vector;
-      purge_order : Deinstall.Purge_Order_Crate.Vector;
+      toplist      : Pkgtypes.Package_Set.Vector;
+      purge_list   : Pkgtypes.Package_Set.Vector;
+      purge_order  : Deinstall.Purge_Order_Crate.Vector;
+      skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
    begin
       if not DEL.autoremoval_list (rdb, toplist) then
          Event.emit_error ("Failed to retrieve autoremoval list");
@@ -119,7 +122,7 @@ package body Raven.Cmd.Autoremove is
          purge_list   => purge_list,
          purge_order  => purge_order,
          skip_verify  => comline.cmd_remove.skip_verify,
-         skip_scripts => comline.cmd_remove.inhibit_scripts,
+         skip_scripts => skip_scripts,
          quiet        => comline.common_options.quiet);
 
       --  Run query again to see if any new packages were orphaned and let the user know.

@@ -721,7 +721,7 @@ package body Raven.Cmd.Info is
    --  display_annotations #2  --
    ------------------------------
    procedure display_annotations
-     (dmap     : Pkgtypes.NV_Pairs.Map;
+     (dmap     : Pkgtypes.NoteSet.Map;
       active   : Boolean;
       single   : Boolean;
       quiet    : Boolean)
@@ -730,10 +730,11 @@ package body Raven.Cmd.Info is
       this_label : constant attr_label := format_label (data_label);
       counter    : Natural := 0;
 
-      procedure print (Position : Pkgtypes.NV_Pairs.Cursor)
+      procedure print (Position : Pkgtypes.NoteSet.Cursor)
       is
-         key   : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
-         value : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
+         mynote : Pkgtypes.Note_Item renames Pkgtypes.NoteSet.Element (Position);
+         key   : constant String := USS (mynote.tag);
+         value : constant String := USS (mynote.note);
          line  : constant String := key & " => " & value;
       begin
          if single and then quiet

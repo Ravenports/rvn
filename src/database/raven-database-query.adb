@@ -849,7 +849,7 @@ package body Raven.Database.Query is
       new_stmt : SQLite.thick_stmt;
       func : constant String := "finish_package_annotations";
       sql : constant String :=
-        "SELECT x.annotation_id, ml.note_key, x.annotation FROM pkg_annotations x " &
+        "SELECT x.annotation_id, ml.note_key, x.annotation, x.custom FROM pkg_annotations x " &
         "JOIN annotations ml ON x.annotation_id = ml.annotation_id " &
         "WHERE x.package_id = ? ORDER BY ml.note_key";
    begin
@@ -866,10 +866,16 @@ package body Raven.Database.Query is
             when SQLite.no_more_data => exit;
             when SQLite.row_present =>
                declare
+                  mynote : Pkgtypes.Note_Item;
+
                   key : constant String := SQLite.retrieve_string (new_stmt, 1);
                   val : constant String := SQLite.retrieve_string (new_stmt, 2);
+                  custom : constant Boolean := SQLite.retrieve_boolean (new_stmt, 3);
                begin
-                  incomplete.annotations.Insert (SUS (key), SUS (val));
+                  mynote.tag := SUS (key);
+                  mynote.note := SUS (val);
+                  mynote.custom := custom;
+                  incomplete.annotations.Insert (SUS (key), mynote);
                end;
             when SQLite.something_else =>
                CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,

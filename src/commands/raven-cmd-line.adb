@@ -427,6 +427,7 @@ package body Raven.Cmd.Line is
                      data.cmd_install.force_install := True;
                   elsif datum = "-I" or else datum = "--no-scripts" then
                      data.cmd_install.inhibit_scripts := True;
+                     Unset.override_setting (Unset.CFG.run_scripts, False);
                   elsif datum = "-d" or else datum = "--drop-depends" then
                      data.cmd_install.drop_depends := True;
                   elsif datum = "--file" then
@@ -740,6 +741,7 @@ package body Raven.Cmd.Line is
                      data.cmd_remove.force_breakage := True;
                   elsif datum = "-I" or else datum = "--no-scripts" then
                      data.cmd_remove.inhibit_scripts := True;
+                     Unset.override_setting (Unset.CFG.run_scripts, False);
                   elsif datum = "-s" or else datum = "--skip-verify" then
                      data.cmd_remove.skip_verify := True;
                   elsif datum (datum'First) = '-' then
@@ -757,6 +759,7 @@ package body Raven.Cmd.Line is
                      data.common_options.dry_run := True;
                   elsif datum = "-I" or else datum = "--no-scripts" then
                      data.cmd_autoremove.inhibit_scripts := True;
+                     Unset.override_setting (Unset.CFG.run_scripts, False);
                   elsif datum = "-s" or else datum = "--skip-verify" then
                      data.cmd_autoremove.skip_verify := True;
                   elsif datum (datum'First) = '-' then

@@ -872,9 +872,9 @@ package body Raven.Database.Pkgs is
       func       : constant String := "run_prstmt_note";
       keep_going : Boolean := True;
 
-      procedure insert_main (Position : Pkgtypes.NV_Pairs.Cursor)
+      procedure insert_main (Position : Pkgtypes.NoteSet.Cursor)
       is
-         note_key : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
+         note_key : constant String := USS (Pkgtypes.NoteSet.Key (Position));
       begin
          if not keep_going then
             return;
@@ -895,19 +895,22 @@ package body Raven.Database.Pkgs is
          end if;
       end insert_main;
 
-      procedure insert_into_package (Position : Pkgtypes.NV_Pairs.Cursor)
+      procedure insert_into_package (Position : Pkgtypes.NoteSet.Cursor)
       is
-         note_key  : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
-         note_text : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
+         mynote : Pkgtypes.Note_Item renames Pkgtypes.NoteSet.Element (Position);
       begin
          if not keep_going then
             return;
          end if;
          if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
-            SQLite.bind_string  (pack_stmt, 2, note_key);
-            SQLite.bind_string  (pack_stmt, 3, note_text);
-            SQLite.bind_integer (pack_stmt, 4, 0);  --  custom=false
+            SQLite.bind_string  (pack_stmt, 2, USS (mynote.tag));
+            SQLite.bind_string  (pack_stmt, 3, USS (mynote.note));
+            if mynote.custom then
+               SQLite.bind_integer (pack_stmt, 4, 1);
+            else
+               SQLite.bind_integer (pack_stmt, 4, 0);
+            end if;
             debug_running_stmt (pack_stmt);
             case SQLite.step (pack_stmt) is
                when SQLite.no_more_data => null;

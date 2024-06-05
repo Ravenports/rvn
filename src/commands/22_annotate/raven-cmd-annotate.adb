@@ -111,17 +111,17 @@ package body Raven.Cmd.Annotate is
       is
          myrec : Pkgtypes.A_Package := Pkgtypes.Package_Set.Element (Position);
 
-         procedure check_tag (innerpos : Pkgtypes.NV_Pairs.Cursor)
+         procedure check_tag (innerpos : Pkgtypes.NoteSet.Cursor)
          is
-            tag : constant String := USS (Pkgtypes.NV_Pairs.Key (innerpos));
+            mynote : Pkgtypes.Note_Item renames Pkgtypes.NoteSet.Element (innerpos);
          begin
-            if match_tag = tag then
+            if match_tag = USS (mynote.tag) then
                declare
                   name : constant String := Pkgtypes.nsv_identifier (myrec);
-                  note : constant String := USS (Pkgtypes.NV_Pairs.Element (innerpos));
+                  note : constant String := USS (mynote.note);
                   leftname : constant String := pad_right (name, 39);
                begin
-                  Event.emit_message (leftname & " " & tag & " => " & note);
+                  Event.emit_message (leftname & " " & USS (mynote.tag) & " => " & note);
                end;
             end if;
          end check_tag;
@@ -151,17 +151,17 @@ package body Raven.Cmd.Annotate is
          myrec : Pkgtypes.A_Package := Pkgtypes.Package_Set.Element (Position);
          tag_found : Boolean := False;
 
-         procedure check_tag (innerpos : Pkgtypes.NV_Pairs.Cursor)
+         procedure check_tag (innerpos : Pkgtypes.NoteSet.Cursor)
          is
-            tag : constant String := USS (Pkgtypes.NV_Pairs.Key (innerpos));
+            mynote : Pkgtypes.Note_Item renames Pkgtypes.NoteSet.Element (innerpos);
          begin
-            if match_tag = tag then
+            if match_tag = USS (mynote.tag) then
                counter := counter + 1;
                tag_found := True;
                if not quiet then
                   declare
                      name : constant String := Pkgtypes.nsv_identifier (myrec);
-                     note : constant String := USS (Pkgtypes.NV_Pairs.Element (innerpos));
+                     note : constant String := USS (mynote.note);
                      leftname : constant String := pad_right (name, 39);
                   begin
                      Event.emit_message
@@ -260,13 +260,13 @@ package body Raven.Cmd.Annotate is
          tag_found : Boolean := False;
          note_found : Text;
 
-         procedure check_tag (innerpos : Pkgtypes.NV_Pairs.Cursor)
+         procedure check_tag (innerpos : Pkgtypes.NoteSet.Cursor)
          is
-            tag : constant String := USS (Pkgtypes.NV_Pairs.Key (innerpos));
+            mynote : Pkgtypes.Note_Item renames Pkgtypes.NoteSet.Element (innerpos);
          begin
-            if tag = new_tag then
+            if USS (mynote.tag) = new_tag then
                tag_found := True;
-               note_found := Pkgtypes.NV_Pairs.Element (innerpos);
+               note_found := mynote.note;
             end if;
          end check_tag;
       begin

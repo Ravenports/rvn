@@ -115,7 +115,7 @@ package body Raven.Cmd.Install is
       metatree     : ThickUCL.UclTree;
       operation    : Archive.Unpack.Darc;
       result       : Boolean := True;
-      skip_scripts : Boolean;
+      skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
 
       function archive_path return String is
       begin
@@ -168,13 +168,6 @@ package body Raven.Cmd.Install is
               (rdb, metatree, file_list, comline.cmd_install.automatic,
                comline.cmd_install.force_install);
          end if;
-
-         if comline.cmd_install.inhibit_scripts then
-            skip_scripts := True;
-         else
-            skip_scripts := not RCU.config_setting (RCU.CFG.run_scripts);
-         end if;
-
 
          if result then
             Event.emit_install_begin (N, S, V, MET.reveal_version (metatree));
