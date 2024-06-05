@@ -70,8 +70,8 @@ package body Raven.Cmd.Which is
          when others => return False;
       end case;
       if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
          OPS.rdb_close (rdb);
-         Event.emit_error ("Cannot get a read lock on a database, it is locked by another process");
          return False;
       end if;
 
@@ -88,7 +88,9 @@ package body Raven.Cmd.Which is
       end if;
 
       if not LOK.release_lock (rdb, LOK.lock_readonly) then
-         null;
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
       end if;
       OPS.rdb_close (rdb);
 
