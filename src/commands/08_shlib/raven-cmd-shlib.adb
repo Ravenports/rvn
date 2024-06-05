@@ -31,8 +31,8 @@ package body Raven.Cmd.Shlib is
          when others => return False;
       end case;
       if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
-         OPS.rdb_close (rdb);
          Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
          return False;
       end if;
 
@@ -43,7 +43,9 @@ package body Raven.Cmd.Shlib is
       end if;
 
       if not LOK.release_lock (rdb, LOK.lock_readonly) then
-         null;
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
       end if;
       OPS.rdb_close (rdb);
 
