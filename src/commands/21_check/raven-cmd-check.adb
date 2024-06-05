@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Raven.Event;
+with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Strings;
@@ -13,6 +14,7 @@ use Raven.Strings;
 
 package body Raven.Cmd.Check is
 
+   package LOK renames Raven.Database.Lock;
    package QRY renames Raven.Database.Query;
    package OPS renames Raven.Database.Operations;
    package ARC renames Archive.Unpack;
@@ -32,6 +34,12 @@ package body Raven.Cmd.Check is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       if not comline.cmd_check.only_files then
          if not check_dependencies (rdb, quiet, verbose) then
             issue_found := True;
@@ -48,6 +56,12 @@ package body Raven.Cmd.Check is
                Event.emit_message ("File integrity checking is restricted to the superuser.");
             end if;
          end if;
+      end if;
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
       end if;
 
       OPS.rdb_close (rdb);
