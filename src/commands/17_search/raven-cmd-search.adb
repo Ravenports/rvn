@@ -6,6 +6,7 @@ with Raven.Event;
 with Raven.Context;
 with Raven.Pkgtypes;
 with Raven.Repository;
+with Raven.Database.Lock;
 with Raven.Database.Search;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
@@ -13,6 +14,7 @@ with Archive.Unix;
 
 package body Raven.Cmd.Search is
 
+   package LOK renames Raven.Database.Lock;
    package SEA renames Raven.Database.Search;
    package OPS renames Raven.Database.Operations;
 
@@ -121,13 +123,19 @@ package body Raven.Cmd.Search is
          return False;
       end if;
 
+      if Context.reveal_case_sensitive then
+         behave_cs := True;
+      end if;
+
       case OPS.rdb_open_localdb (rdb, Database.catalog) is
          when RESULT_OK => null;
          when others => return False;
       end case;
 
-      if Context.reveal_case_sensitive then
-         behave_cs := True;
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
       end if;
 
       SEA.rvn_core_search
@@ -142,6 +150,12 @@ package body Raven.Cmd.Search is
          packages     => packages);
 
       packages.Iterate (display_package'Access);
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
 
       OPS.rdb_close (rdb);
       return True;
