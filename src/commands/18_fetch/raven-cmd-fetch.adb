@@ -5,6 +5,7 @@ with Raven.Event;
 with Raven.Context;
 with Raven.Cmd.Unset;
 with Raven.Repository;
+with Raven.Database.Lock;
 with Raven.Database.Fetch;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
@@ -13,6 +14,7 @@ with Archive.Unix;
 package body Raven.Cmd.Fetch is
 
    package RCU renames Raven.Cmd.Unset;
+   package LOK renames Raven.Database.Lock;
    package FET renames Raven.Database.Fetch;
    package OPS renames Raven.Database.Operations;
 
@@ -22,9 +24,7 @@ package body Raven.Cmd.Fetch is
    function execute_fetch_command (comline : Cldata) return Boolean
    is
       rdb        : Database.RDB_Connection;
-      behave_cs  : Boolean := comline.common_options.case_sensitive;
-      behave_yes : Boolean := comline.common_options.assume_yes;
-      success    : Boolean;
+      succeeded  : Boolean;
       repo_solo  : constant String := USS (comline.common_options.repo_name);
    begin
       if not refresh_catalog (repo_solo) then
@@ -36,6 +36,37 @@ package body Raven.Cmd.Fetch is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
+      succeeded := execute_fetch_command_core (rdb, repo_solo, comline);
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
+      OPS.rdb_close (rdb);
+      return succeeded;
+
+   end execute_fetch_command;
+
+
+   ----------------------------------
+   --  execute_fetch_command_core  --
+   ----------------------------------
+   function execute_fetch_command_core (rdb       : in out Database.RDB_Connection;
+                                        repo_solo : String;
+                                        comline   : Cldata) return Boolean
+   is
+      behave_cs  : Boolean := comline.common_options.case_sensitive;
+      behave_yes : Boolean := comline.common_options.assume_yes;
+      success    : Boolean;
+   begin
       if Context.reveal_case_sensitive then
          behave_cs := True;
       end if;
@@ -55,7 +86,21 @@ package body Raven.Cmd.Fetch is
                   when RESULT_OK => null;
                   when others => return False;
                end case;
+
+               if not LOK.obtain_lock (ldb, LOK.lock_readonly) then
+                  Event.emit_error (LOK.no_read_lock);
+                  OPS.rdb_close (ldb);
+                  return False;
+               end if;
+
                FET.list_of_upgradeable_packages (ldb, rdb, upgrade_list);
+
+               if not LOK.release_lock (ldb, LOK.lock_readonly) then
+                  Event.emit_error (LOK.no_read_unlock);
+                  OPS.rdb_close (ldb);
+                  return False;
+               end if;
+
                OPS.rdb_close (ldb);
             end;
             if upgrade_list.Is_Empty then
@@ -89,10 +134,9 @@ package body Raven.Cmd.Fetch is
             single_repo  => repo_solo);
       end if;
 
-      OPS.rdb_close (rdb);
-      return (success);
+      return success;
 
-   end execute_fetch_command;
+   end execute_fetch_command_core;
 
 
    -----------------------
