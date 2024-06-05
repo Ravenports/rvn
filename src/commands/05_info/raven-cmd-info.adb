@@ -11,6 +11,7 @@ with Raven.Cmd.Unset;
 with Raven.Event;
 with Raven.Context;
 with Raven.Strings;
+with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Search;
 with Raven.Database.Operations;
@@ -20,6 +21,7 @@ Use Raven.Strings;
 package body Raven.Cmd.Info is
 
    package RCU renames Raven.Cmd.Unset;
+   package LOK renames Raven.Database.Lock;
    package OPS renames Raven.Database.Operations;
    package LAT renames Ada.Characters.Latin_1;
 
@@ -946,6 +948,12 @@ package body Raven.Cmd.Info is
          when others => return False;
       end case;
 
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
       Database.Search.rvn_core_search
         (db           => rdb,
          srch_pattern => USS (comline.common_options.name_pattern),
@@ -958,6 +966,12 @@ package body Raven.Cmd.Info is
          packages     => unfinished_packages);
 
       unfinished_packages.Iterate (finish'Access);
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
 
       OPS.rdb_close (rdb);
 
