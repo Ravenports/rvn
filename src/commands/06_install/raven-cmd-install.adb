@@ -2,10 +2,9 @@
 --  Reference: /License.txt
 
 with Raven.Event;
-with Raven.Context;
+with Raven.Install;
 with Raven.Pkgtypes;
 with Raven.Cmd.Unset;
-with Raven.Miscellaneous;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
 with Raven.Database.Query;
@@ -16,9 +15,7 @@ with Archive.Unix;
 
 package body Raven.Cmd.Install is
 
-   package EV   renames Raven.Event;
    package RCU  renames Raven.Cmd.Unset;
-   package MISC renames Raven.Miscellaneous;
    package PKGS renames Raven.Database.Pkgs;
    package LOK  renames Raven.Database.Lock;
    package QRY  renames Raven.Database.Query;
@@ -100,7 +97,7 @@ package body Raven.Cmd.Install is
    -----------------------------
    function currently_unsupported (switch : String) return Boolean is
    begin
-      EV.emit_error ("switch " & switch & " is currently unsupported.");
+      Event.emit_error ("switch " & switch & " is currently unsupported.");
       return False;
    end currently_unsupported;
 
@@ -135,7 +132,7 @@ package body Raven.Cmd.Install is
 
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
       if not operation.extract_manifest (file_list, extract_location) then
-         EV.emit_error ("Failed to extract manifest of packaged files.");
+         Event.emit_error ("Failed to extract manifest of packaged files.");
       end if;
       operation.populate_metadata_tree (metatree);
       operation.close_rvn_archive;
@@ -151,7 +148,7 @@ package body Raven.Cmd.Install is
                case QRY.package_installed (rdb, N, S, V) is
                   when Pkgtypes.Package_Not_Installed => null;
                   when others =>
-                     EV.emit_error ("The " & P & " package is already installed.");
+                     Event.emit_error ("The " & P & " package is already installed.");
                      return False;
                end case;
             end if;
@@ -172,7 +169,7 @@ package body Raven.Cmd.Install is
          if result then
             Event.emit_install_begin (N, S, V, MET.reveal_version (metatree));
 
-            result := install_files_from_archive
+            result := Raven.Install.install_files_from_archive
               (archive_path    => archive_path,
                root_directory  => extract_location,
                inhibit_scripts => skip_scripts,
@@ -196,61 +193,6 @@ package body Raven.Cmd.Install is
 
       return result;
    end install_single_local_package;
-
-
-   ----------------------------------
-   --  install_files_from_archive  --
-   ----------------------------------
-   function install_files_from_archive
-     (archive_path      : String;
-      root_directory    : String;
-      inhibit_scripts   : Boolean;
-      be_silent         : Boolean;
-      dry_run_only      : Boolean;
-      upgrading         : Boolean) return Boolean
-   is
-      operation : Archive.Unpack.Darc;
-      level     : Archive.info_level := Archive.normal;
-      basename  : constant String := MISC.archive_basename (archive_path);
-      rootuser  : constant Boolean := Archive.Unix.user_is_root;
-      pipe_fd   : constant Archive.Unix.File_Descriptor :=
-        Archive.Unix.File_Descriptor (Context.reveal_event_pipe);
-      good_extraction : Boolean;
-
-      function action return String is
-      begin
-         if upgrading then
-            return "upgrade";
-         end if;
-         return "install";
-      end action;
-   begin
-      --  Placeholder, needs to update graphically with indents and lines.
-      if dry_run_only then
-         EV.emit_message ("dry-run: " & action & " " & basename & " package");
-         return True;
-      else
-         if not be_silent then
-            EV.emit_notice (action & " " & basename & " package");
-         end if;
-      end if;
-
-      if be_silent then
-         level := Archive.silent;
-      end if;
-
-      operation.open_rvn_archive (archive_path, level, pipe_fd);
-      good_extraction := operation.extract_archive
-        (top_directory => root_directory,
-         set_owners    => rootuser,
-         set_perms     => rootuser,
-         set_modtime   => False,
-         skip_scripts  => inhibit_scripts,
-         upgrading     => upgrading);
-      operation.close_rvn_archive;
-
-      return good_extraction;
-   end install_files_from_archive;
 
 
    -------------------------------

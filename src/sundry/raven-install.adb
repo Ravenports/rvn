@@ -1,10 +1,11 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
-with Ada.Text_IO;
 with Raven.Event;
+with Raven.Context;
 with Raven.Metadata;
 with Raven.Deinstall;
+with Raven.Miscellaneous;
 with Raven.Database.Pkgs;
 with Archive.Unpack;
 with Archive.Unix;
@@ -13,6 +14,7 @@ with ThickUCL;
 package body Raven.Install is
 
    package TIO  renames Ada.Text_IO;
+   package MISC renames Raven.Miscellaneous;
    package PKGS renames Raven.Database.Pkgs;
 
    function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
@@ -74,7 +76,7 @@ package body Raven.Install is
                                                    verify_digest_first => False,
                                                    quiet               => True,
                                                    inhibit_scripts     => no_scripts,
-                                                   post_report         => TIO.File_Type);
+                                                   post_report         => post_report);
 
             success := PKGS.rdb_register_package (db     => rdb,
                                                   pkg    => shiny_pkg,
@@ -99,10 +101,68 @@ package body Raven.Install is
                                                       dry_run_only    => False,
                                                       upgrading       => False);
                end if;
-            end case;
+
+         when new_install =>
+            success := False;
+      end case;
 
       return success;
 
    end reinstall_or_upgrade;
+
+
+   ----------------------------------
+   --  install_files_from_archive  --
+   ----------------------------------
+   function install_files_from_archive
+     (archive_path      : String;
+      root_directory    : String;
+      inhibit_scripts   : Boolean;
+      be_silent         : Boolean;
+      dry_run_only      : Boolean;
+      upgrading         : Boolean) return Boolean
+   is
+      operation : Archive.Unpack.Darc;
+      level     : Archive.info_level := Archive.normal;
+      basename  : constant String := MISC.archive_basename (archive_path);
+      rootuser  : constant Boolean := Archive.Unix.user_is_root;
+      pipe_fd   : constant Archive.Unix.File_Descriptor :=
+        Archive.Unix.File_Descriptor (Context.reveal_event_pipe);
+      good_extraction : Boolean;
+
+      function action return String is
+      begin
+         if upgrading then
+            return "upgrade";
+         end if;
+         return "install";
+      end action;
+   begin
+      --  Placeholder, needs to update graphically with indents and lines.
+      if dry_run_only then
+         Event.emit_message ("dry-run: " & action & " " & basename & " package");
+         return True;
+      else
+         if not be_silent then
+            Event.emit_notice (action & " " & basename & " package");
+         end if;
+      end if;
+
+      if be_silent then
+         level := Archive.silent;
+      end if;
+
+      operation.open_rvn_archive (archive_path, level, pipe_fd);
+      good_extraction := operation.extract_archive
+        (top_directory => root_directory,
+         set_owners    => rootuser,
+         set_perms     => rootuser,
+         set_modtime   => False,
+         skip_scripts  => inhibit_scripts,
+         upgrading     => upgrading);
+      operation.close_rvn_archive;
+
+      return good_extraction;
+   end install_files_from_archive;
 
 end Raven.Install;

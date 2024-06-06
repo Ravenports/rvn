@@ -34,24 +34,4 @@ private
       force_install  : Boolean) return Boolean;
 
 
-   --  Prior to this routine many things need to have been done:
-   --  * archive_path verified to be an existing regular file
-   --  * conflict check (conflicts overridden by --forced)
-   --  * interactive user confirmations
-   --  * plan to handle dependencies (affected by --ignore-missing and --recursive)
-   --  * This routine populates the file list.
-   --  This routine installs the files from the RVN archive into the root directory
-   --    (affected by rvn -[r|c]).   If dry-run selected no installation will actually occur.
-   --  Returns true if extraction was successful.
-   function install_files_from_archive
-     (archive_path      : String;
-      root_directory    : String;
-      inhibit_scripts   : Boolean;
-      be_silent         : Boolean;
-      dry_run_only      : Boolean;
-      upgrading         : Boolean) return Boolean;
-
-
-
-
 end Raven.Cmd.Install;
