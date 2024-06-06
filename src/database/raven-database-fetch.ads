@@ -18,7 +18,6 @@ package Raven.Database.Fetch is
       behave_exact : Boolean;
       behave_cs    : Boolean;
       behave_quiet : Boolean;
-      behave_yes   : Boolean;
       select_all   : Boolean;
       select_deps  : Boolean;
       destination  : String;
