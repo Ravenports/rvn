@@ -112,7 +112,8 @@ package Raven.Database.Query is
 
    procedure finish_package_dependencies
      (db         : RDB_Connection;
-      incomplete : in out Pkgtypes.A_Package);
+      incomplete : in out Pkgtypes.A_Package;
+      cfg_filter : Boolean := False);
 
    procedure finish_package_annotations
      (db         : RDB_Connection;

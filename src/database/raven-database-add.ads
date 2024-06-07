@@ -16,4 +16,6 @@ private
    internal_srcfile : constant String := "raven-database-add.adb";
    nsv_formula : constant String := "p.namebase ||'-'|| p.subpackage ||'-'|| p.variant";
 
+   function allow_addition (subpackage : String) return Boolean;
+
 end Raven.Database.Add;

@@ -237,8 +237,14 @@ package body Raven.Install is
          declare
             priority  : Descendant_Set.Vector;
             cache_map : Pkgtypes.Package_Map.Map;
+            --  procedure print (Position : Descendant_Set.Cursor) is
+            --  begin
+            --     Event.emit_message (USS (Descendant_Set.Element (Position).nsv) & "  priority="
+            --                           & int2str(Descendant_Set.Element (Position).descendents));
+            --  end print;
          begin
             calculate_descendants (rdb, catalog_map, cache_map, priority);
+            --  priority.Iterate (print'Access);
          end;
       end if;
 
@@ -352,8 +358,16 @@ package body Raven.Install is
       cache_map.Clear;
       catalog_map.Iterate (clone'Access);
       catalog_map.Iterate (calc'Access);
-      --  sort
+      Desc_sorter.Sort (priority);
    end calculate_descendants;
 
+
+   -----------------
+   --  desc_desc  --
+   -----------------
+   function desc_desc (left, right : Descendant_Type) return Boolean is
+   begin
+      return left.descendents > right.descendents;
+   end desc_desc;
 
 end Raven.Install;

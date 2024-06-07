@@ -5,11 +5,15 @@ with SQLite;
 with Blake_3;
 with Raven.Event;
 with Raven.Strings;
+with Raven.Cmd.Unset;
 with Raven.Database.CommonSQL;
 
 use Raven.Strings;
 
 package body Raven.Database.Query is
+
+   package RCU renames Raven.Cmd.Unset;
+
 
    ------------------------------------
    --  number_of_installed_packages  --
@@ -803,7 +807,8 @@ package body Raven.Database.Query is
    -----------------------------------
    procedure finish_package_dependencies
      (db         : RDB_Connection;
-      incomplete : in out Pkgtypes.A_Package)
+      incomplete : in out Pkgtypes.A_Package;
+      cfg_filter : Boolean := False)
    is
       new_stmt : SQLite.thick_stmt;
       func : constant String := "finish_package_dependencies";
@@ -811,6 +816,32 @@ package body Raven.Database.Query is
         "SELECT x.dependency_id, ml.nsv, ml.version FROM pkg_dependencies x " &
         "JOIN dependencies ml ON x.dependency_id = ml.dependency_id " &
         "WHERE x.package_id = ? ORDER BY ml.nsv";
+
+      function allow_insert (dep_nsv : String) return Boolean is
+      begin
+         if not cfg_filter then
+            return True;
+         end if;
+         declare
+            spkg_index : constant Natural := count_char (dep_nsv, '-');
+            subpackage : constant String := specific_field (dep_nsv, spkg_index, "-");
+         begin
+            if subpackage = "dev" then
+               return not RCU.config_setting (RCU.CFG.skip_dev);
+            elsif subpackage = "docs" then
+               return not RCU.config_setting (RCU.CFG.skip_doc);
+            elsif subpackage = "man" then
+               return not RCU.config_setting (RCU.CFG.skip_man);
+            elsif subpackage = "nls" then
+               return not RCU.config_setting (RCU.CFG.skip_nls);
+            elsif subpackage = "info" then
+               return not RCU.config_setting (RCU.CFG.skip_info);
+            elsif subpackage = "examples" then
+               return not RCU.config_setting (RCU.CFG.skip_examples);
+            end if;
+            return True;
+         end;
+      end allow_insert;
    begin
       incomplete.dependencies.clear;
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
@@ -828,7 +859,9 @@ package body Raven.Database.Query is
                   nsv : constant String := SQLite.retrieve_string (new_stmt, 1);
                   ver : constant String := SQLite.retrieve_string (new_stmt, 2);
                begin
-                  incomplete.dependencies.Insert (SUS (nsv), SUS (ver));
+                  if allow_insert (nsv) then
+                     incomplete.dependencies.Insert (SUS (nsv), SUS (ver));
+                  end if;
                end;
             when SQLite.something_else =>
                CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,

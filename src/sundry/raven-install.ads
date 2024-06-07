@@ -82,10 +82,13 @@ private
          descendents     : Natural := 0;
          nsv             : text := SU.Null_Unbounded_String;
       end record;
+   function desc_desc (left, right : Descendant_Type) return Boolean;
 
    package Descendant_Set is new Ada.Containers.Vectors
      (Element_Type => Descendant_Type,
       Index_Type   => Natural);
+
+   package Desc_sorter is new Descendant_Set.Generic_Sorting ("<" => desc_desc);
 
    function assemble_work_queue
      (rdb             : in out Database.RDB_Connection;

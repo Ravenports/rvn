@@ -5,6 +5,7 @@ with Raven.Event;
 with Raven.Context;
 with Raven.Strings;
 with Raven.Pkgtypes;
+with Raven.Cmd.Unset;
 with Raven.Database.Query;
 with Raven.Database.CommonSQL;
 
@@ -14,6 +15,7 @@ use Raven.Pkgtypes;
 package body Raven.Database.Add is
 
    package QRY renames Raven.Database.Query;
+   package RCU renames Raven.Cmd.Unset;
 
 
    -------------------------------
@@ -62,28 +64,32 @@ package body Raven.Database.Add is
             when SQLite.row_present =>
                declare
                   myrec : Pkgtypes.A_Package;
+                  subpackage : constant String := SQLite.retrieve_string (new_stmt, 2);
                begin
-                  myrec.namebase   := SUS (SQLite.retrieve_string (new_stmt, 1));
-                  myrec.subpackage := SUS (SQLite.retrieve_string (new_stmt, 2));
-                  myrec.variant    := SUS (SQLite.retrieve_string (new_stmt, 3));
-                  myrec.version    := SUS (SQLite.retrieve_string (new_stmt, 4));
-                  myrec.comment    := SUS (SQLite.retrieve_string (new_stmt, 5));
-                  myrec.desc       := SUS (SQLite.retrieve_string (new_stmt, 6));
-                  myrec.www        := SUS (SQLite.retrieve_string (new_stmt, 7));
-                  myrec.maintainer := SUS (SQLite.retrieve_string (new_stmt, 8));
-                  myrec.prefix     := SUS (SQLite.retrieve_string (new_stmt, 9));
-                  myrec.abi        := SUS (SQLite.retrieve_string (new_stmt, 10));
-                  myrec.rvndigest  := SUS (SQLite.retrieve_string (new_stmt, 11));
-                  myrec.rvnsize    := Package_Size (SQLite.retrieve_integer (new_stmt, 12));
-                  myrec.flatsize   := Package_Size (SQLite.retrieve_integer (new_stmt, 13));
-                  myrec.licenselogic := License_Logic'Val (SQLite.retrieve_integer (new_stmt, 14));
-                  myrec.id         := Package_ID (SQLite.retrieve_integer (new_stmt, 15));
+                  if allow_addition (subpackage) then
+                     myrec.namebase   := SUS (SQLite.retrieve_string (new_stmt, 1));
+                     myrec.subpackage := SUS (subpackage);
+                     myrec.variant    := SUS (SQLite.retrieve_string (new_stmt, 3));
+                     myrec.version    := SUS (SQLite.retrieve_string (new_stmt, 4));
+                     myrec.comment    := SUS (SQLite.retrieve_string (new_stmt, 5));
+                     myrec.desc       := SUS (SQLite.retrieve_string (new_stmt, 6));
+                     myrec.www        := SUS (SQLite.retrieve_string (new_stmt, 7));
+                     myrec.maintainer := SUS (SQLite.retrieve_string (new_stmt, 8));
+                     myrec.prefix     := SUS (SQLite.retrieve_string (new_stmt, 9));
+                     myrec.abi        := SUS (SQLite.retrieve_string (new_stmt, 10));
+                     myrec.rvndigest  := SUS (SQLite.retrieve_string (new_stmt, 11));
+                     myrec.rvnsize    := Package_Size (SQLite.retrieve_integer (new_stmt, 12));
+                     myrec.flatsize   := Package_Size (SQLite.retrieve_integer (new_stmt, 13));
+                     myrec.licenselogic := License_Logic'Val (SQLite.retrieve_integer
+                                                              (new_stmt, 14));
+                     myrec.id         := Package_ID (SQLite.retrieve_integer (new_stmt, 15));
 
-                  QRY.finish_package_dependencies (db, myrec);
-                  QRY.finish_package_libs_provided (db, myrec);
-                  packages.Append (myrec);
-                  Event.emit_debug (high_level, "Added to top-level match for addition: " &
-                                      Pkgtypes.nsv_identifier (myrec));
+                     QRY.finish_package_dependencies (db, myrec, True);
+                     QRY.finish_package_libs_provided (db, myrec);
+                     packages.Append (myrec);
+                     Event.emit_debug (high_level, "Added to top-level match for addition: " &
+                                         Pkgtypes.nsv_identifier (myrec));
+                  end if;
                end;
             when SQLite.something_else =>
                CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
@@ -96,5 +102,27 @@ package body Raven.Database.Add is
       return success;
 
    end top_level_addition_list;
+
+
+   ----------------------
+   --  allow_addition  --
+   ----------------------
+   function allow_addition (subpackage : String) return Boolean is
+      begin
+      if subpackage = "dev" then
+         return not RCU.config_setting (RCU.CFG.skip_dev);
+      elsif subpackage = "docs" then
+         return not RCU.config_setting (RCU.CFG.skip_doc);
+      elsif subpackage = "man" then
+         return not RCU.config_setting (RCU.CFG.skip_man);
+      elsif subpackage = "nls" then
+         return not RCU.config_setting (RCU.CFG.skip_nls);
+      elsif subpackage = "info" then
+         return not RCU.config_setting (RCU.CFG.skip_info);
+      elsif subpackage = "examples" then
+         return not RCU.config_setting (RCU.CFG.skip_examples);
+      end if;
+      return True;
+   end;
 
 end Raven.Database.Add;
