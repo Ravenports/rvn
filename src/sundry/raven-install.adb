@@ -178,23 +178,20 @@ package body Raven.Install is
    end install_files_from_archive;
 
 
-   -----------------------------------
-   --  install_from_remote_catalog  --
-   -----------------------------------
-   function install_from_remote_catalog (opt_exact_match  : Boolean;
-                                         opt_glob_input   : Boolean;
-                                         opt_quiet        : Boolean;
-                                         opt_automatic    : Boolean;
-                                         opt_manual       : Boolean;
-                                         opt_drop_depends : Boolean;
-                                         opt_force        : Boolean;
-                                         opt_skip_scripts : Boolean;
-                                         opt_dry_run      : Boolean;
-                                         opt_fetch_only   : Boolean;
-                                         opt_skip_catup   : Boolean;
-                                         repo_name        : String;
-                                         patterns         : Pkgtypes.Text_List.Vector)
-                                         return Boolean
+   -------------------------------
+   --  install_remote_packages  --
+   -------------------------------
+   function install_remote_packages (opt_exact_match  : Boolean;
+                                     opt_quiet        : Boolean;
+                                     opt_automatic    : Boolean;
+                                     opt_manual       : Boolean;
+                                     opt_drop_depends : Boolean;
+                                     opt_force        : Boolean;
+                                     opt_skip_scripts : Boolean;
+                                     opt_dry_run      : Boolean;
+                                     opt_fetch_only   : Boolean;
+                                     patterns         : Pkgtypes.Text_List.Vector)
+                                     return Boolean
    is
       --  case-sensitive accessed via RCU settings
       --  assume-yes accessed via RCU settings
@@ -243,7 +240,7 @@ package body Raven.Install is
       OPS.rdb_close (rdb);
       return succeeded and then released;
 
-   end install_from_remote_catalog;
+   end install_remote_packages;
 
 
    ---------------------------

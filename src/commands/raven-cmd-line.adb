@@ -439,7 +439,7 @@ package body Raven.Cmd.Line is
                   elsif datum (datum'First) = '-' then
                      set_illegal_command (datum);
                   else
-                     handle_pkg_patterns (data, datum, datumtxt);
+                     data.cmd_install.name_patterns.append (datumtxt);
                   end if;
 
                when cv_shell =>
@@ -1035,19 +1035,6 @@ package body Raven.Cmd.Line is
          end if;
       end if;
    end handle_trailing_pkgname;
-
-
-   ---------------------------
-   --  handle_pkg_patterns  --
-   ---------------------------
-   procedure handle_pkg_patterns (self : in out Cldata; datum : String; datumtxt : Text) is
-   begin
-      if datum (datum'First) = LAT.Hyphen then
-         set_error (self, "Unexpected switch: " & datum);
-         return;
-      end if;
-      self.common_options.multiple_patterns.Append (datumtxt);
-   end handle_pkg_patterns;
 
 
    -----------------------

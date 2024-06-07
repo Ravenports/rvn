@@ -502,10 +502,10 @@ package body Raven.Cmd.Usage is
          then
             return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
          end if;
-         if comline.common_options.multiple_patterns.Is_Empty then
+         if comline.cmd_install.name_patterns.Is_Empty then
             return alert ("Missing path to rvn archive");
          end if;
-         if Natural (comline.common_options.multiple_patterns.Length) > 1 then
+         if Natural (comline.cmd_install.name_patterns.Length) > 1 then
             return alert ("Multiple file paths unsupported.  Limit to 1.");
          end if;
          if comline.cmd_install.drop_depends then
@@ -513,7 +513,7 @@ package body Raven.Cmd.Usage is
          end if;
       end if;
 
-      if comline.common_options.multiple_patterns.Is_Empty then
+      if comline.cmd_install.name_patterns.Is_Empty then
          return alert ("Missing package name pattern");
       end if;
 

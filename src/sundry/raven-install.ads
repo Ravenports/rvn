@@ -49,6 +49,19 @@ package Raven.Install is
       dry_run_only      : Boolean;
       upgrading         : Boolean) return Boolean;
 
+   function install_remote_packages
+     (opt_exact_match  : Boolean;
+      opt_quiet        : Boolean;
+      opt_automatic    : Boolean;
+      opt_manual       : Boolean;
+      opt_drop_depends : Boolean;
+      opt_force        : Boolean;
+      opt_skip_scripts : Boolean;
+      opt_dry_run      : Boolean;
+      opt_fetch_only   : Boolean;
+      patterns         : Pkgtypes.Text_List.Vector)
+      return Boolean;
+
 private
 
    type Install_Order_Type is

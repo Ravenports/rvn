@@ -86,7 +86,6 @@ private
          no_repo_update     : Boolean := False;  --  -U, --no-repo-update
          name_pattern       : Text;
          repo_name          : Text;
-         multiple_patterns  : string_crate.Vector;
       end record;
 
    type switches_alias_cmd is
@@ -167,6 +166,7 @@ private
          local_file         : Boolean := False;  --      --file
          no_register        : Boolean := False;          --no-register
          only_register      : Boolean := False;          --only-register
+         name_patterns      : Pkgtypes.Text_List.Vector;
       end record;
 
    type switches_shell_cmd is

@@ -5,6 +5,7 @@ with Raven.Event;
 with Raven.Install;
 with Raven.Pkgtypes;
 with Raven.Cmd.Unset;
+with Raven.Repository;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
 with Raven.Database.Query;
@@ -27,36 +28,10 @@ package body Raven.Cmd.Install is
    function execute_install_command (comline : Cldata) return Boolean
    is
       install_success : Boolean;
-      rdb : Database.RDB_Connection;
+      rdb     : Database.RDB_Connection;
+      mirrors : Repository.A_Repo_Config_Set;
+      single  : constant String := USS (comline.common_options.repo_name);
    begin
-      if comline.common_options.case_sensitive then
-         return currently_unsupported ("--case-sensitive");
-      end if;
-      if comline.common_options.exact_match then
-         return currently_unsupported ("--exact-match");
-      end if;
-      if comline.common_options.no_repo_update then
-         return currently_unsupported ("--no-repo-update");
-      end if;
-      if comline.common_options.assume_yes then
-         return currently_unsupported ("--assume-yes");
-      end if;
-      if comline.cmd_install.manual then
-         return currently_unsupported ("--manual");
-      end if;
-      if comline.cmd_install.automatic then
-         return currently_unsupported ("--automatic");
-      end if;
-      if comline.cmd_install.fetch_only then
-         return currently_unsupported ("--fetch-only");
-      end if;
-      if comline.cmd_install.force_install then
-         return currently_unsupported ("--force");
-      end if;
-      if comline.cmd_install.drop_depends then
-         return currently_unsupported ("--drop-depends");
-      end if;
-
       if comline.cmd_install.local_file then
          if not comline.cmd_install.no_register then
             case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
@@ -85,8 +60,29 @@ package body Raven.Cmd.Install is
 
          return install_success;
       else
-         Raven.Event.emit_error ("Installation from repository not yet supported");
-         return False;
+
+         if Archive.Unix.user_is_root then
+            Repository.load_repository_configurations (mirrors, single);
+            if not Repository.create_local_catalog_database
+              (remote_repositories  => mirrors,
+               forced               => False,
+               quiet                => True)
+            then
+               Event.emit_error ("Failed to update the local catalog");
+            end if;
+         end if;
+
+         return Raven.Install.install_remote_packages
+           (opt_exact_match  => comline.common_options.exact_match,
+            opt_quiet        => comline.common_options.quiet,
+            opt_automatic    => comline.cmd_install.automatic,
+            opt_manual       => comline.cmd_install.manual,
+            opt_drop_depends => comline.cmd_install.drop_depends,
+            opt_force        => comline.cmd_install.force_install,
+            opt_skip_scripts => comline.cmd_install.inhibit_scripts,
+            opt_dry_run      => comline.common_options.dry_run,
+            opt_fetch_only   => comline.cmd_install.fetch_only,
+            patterns         => comline.cmd_install.name_patterns);
       end if;
 
    end execute_install_command;
@@ -116,7 +112,7 @@ package body Raven.Cmd.Install is
 
       function archive_path return String is
       begin
-         return USS (comline.common_options.multiple_patterns.Element (0));
+         return USS (comline.cmd_install.name_patterns.Element (0));
       end archive_path;
 
       function extract_location return String

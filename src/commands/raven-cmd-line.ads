@@ -19,7 +19,6 @@ private
    function get_command (component : String) return Command_verb;
    procedure set_error (self : in out Cldata; error_msg : String);
    procedure handle_trailing_pkgname (self : in out Cldata; datum : String; datumtxt : Text);
-   procedure handle_pkg_patterns (self : in out Cldata; datum : String; datumtxt : Text);
    procedure check_search_default (self : in out Cldata);
    procedure set_search_type (self : in out Cldata; new_type : search_type);
    procedure set_query_modifier (self : in out Cldata; modifier : String);
