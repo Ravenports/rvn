@@ -6,10 +6,10 @@ with Raven.Context;
 with Raven.Metadata;
 with Raven.Deinstall;
 with Raven.Miscellaneous;
+with Raven.Database.Add;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
 with Raven.Database.Query;
-with Raven.Database.Remove;
 with Raven.Database.Operations;
 with Raven.Strings;
 with Archive.Unpack;
@@ -23,10 +23,10 @@ package body Raven.Install is
 
    package TIO  renames Ada.Text_IO;
    package MISC renames Raven.Miscellaneous;
+   package INST renames Raven.Database.Add;
    package PKGS renames Raven.Database.Pkgs;
    package LOK  renames Raven.Database.Lock;
    package QRY  renames Raven.Database.Query;
-   package DEL  renames Raven.Database.Remove;
    package OPS  renames Raven.Database.Operations;
 
    function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
@@ -219,7 +219,7 @@ package body Raven.Install is
          active_lock := LOK.lock_readonly;
       end if;
 
-      case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
+      case OPS.rdb_open_localdb (rdb, Database.catalog) is
          when RESULT_OK => null;
          when others => return False;
       end case;
@@ -235,6 +235,14 @@ package body Raven.Install is
       end if;
 
       succeeded := assemble_work_queue (rdb, opt_exact_match, patterns, catalog_map);
+      if succeeded then
+         declare
+            priority  : Descendant_Set.Vector;
+            cache_map : Pkgtypes.Package_Map.Map;
+         begin
+            calculate_descendants (rdb, catalog_map, cache_map, priority);
+         end;
+      end if;
 
       released := release_active_lock;
       OPS.rdb_close (rdb);
@@ -273,13 +281,11 @@ package body Raven.Install is
          declare
             small_set : Pkgtypes.Package_Set.Vector;
          begin
-            success := DEL.top_level_deletion_list
+            success := INST.top_level_addition_list
               (db             => rdb,
                packages       => small_set,
                pattern        => USS (patterns.Element (patt_index)),
-               all_packages   => False,
-               override_exact => opt_exact_match,
-               force          => True);
+               override_exact => opt_exact_match);
             exit when not success;
             small_set.Iterate (merge'Access);
          end;
@@ -312,13 +318,11 @@ package body Raven.Install is
             if cache_map.Contains (dep_nsv) then
                cache_map.Element (dep_nsv).dependencies.Iterate (check_single_dep'Access);
             else
-               if DEL.top_level_deletion_list
+               if INST.top_level_addition_list
                  (db             => rdb,
                   packages       => local_set,
                   pattern        => USS (dep_nsv),
-                  all_packages   => False,
-                  override_exact => True,
-                  force          => True)
+                  override_exact => True)
                then
                   if not local_set.Is_Empty then
                      declare
