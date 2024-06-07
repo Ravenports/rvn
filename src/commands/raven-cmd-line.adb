@@ -415,8 +415,6 @@ package body Raven.Cmd.Line is
                      context.register_case_sensitivity (True);
                   elsif datum = sws_exact or else datum = swl_exact then
                      data.common_options.exact_match := True;
-                  elsif datum = "-g" or else datum = "--glob" then
-                     data.cmd_annotate.glob_input := True;
                   elsif datum = "-A" or else datum = "--automatic" then
                      data.cmd_install.automatic := True;
                   elsif datum = "-M" or else datum = "--manual" then

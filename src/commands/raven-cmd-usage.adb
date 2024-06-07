@@ -493,8 +493,7 @@ package body Raven.Cmd.Usage is
             return alert ("--repository" & not_with_file);
          end if;
          if comline.common_options.exact_match or else
-           comline.common_options.case_sensitive or else
-           comline.cmd_install.glob_input
+           comline.common_options.case_sensitive
          then
             return alert ("-CE" & not_with_file);
          end if;

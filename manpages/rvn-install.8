@@ -3,7 +3,7 @@
 .Os
 .Sh NAME
 .Nm "rvn install"
-.Nd install packages from package repositories, local or remote
+.Nd install packages from remote package repositories
 .Sh SYNOPSIS
 .Nm
 .Op Fl AMdfInFqUy
@@ -15,19 +15,16 @@
 .Op Cm --{automatic,manual,drop-depends,force,no-scripts}
 .Op Cm --{dry-run,fetch-only,quiet,no-repo-update,yes}
 .Op Cm --repository Ar reponame
-.Op Cm --{case-sensitive,exact-match,glob}
+.Op Cm --{case-sensitive,exact-match}
 .Ar pkg-name ...
 .Sh DESCRIPTION
 .Nm
 is used for the installation of packages acquired from package repositories.
 Multiple package names can be specified on the command line, either
 explicitly or by pattern matching.
-By default, a case-insensitive regular expression match against the
-namebase-subpackage-variant triplet name is performed on every provided
-.Ar pkg-name .
 .Pp
 .Nm
-first acquires the latest repository category if neccessary unless
+first acquires the latest repository category if necessary unless
 .Cm REPO_AUTOUPDATE
 has been set to
 .Sy NO
@@ -150,22 +147,19 @@ Assume yes when asked for confirmation before package installation.
 .Ss pkg-name matching algorithm
 By default, the
 .Ar pkg-name
-pattern is considered to be a case-insensitive regular expression
-according to the "modern" or "extended" syntax of
-.Xr re_format 7 .
-Effectively this matches any substring of the search field unless the
-.Dq ^
-anchor symbol is used at the start of the pattern.
+pattern is considered to be a case-insensitive match against the start
+of the namebase-subpackage-variant triplet identifier.
 The following mutually exclusive options modify this default behavior.
 .Bl -tag -width xxxx
 .It Fl C , Cm --case-sensitive
-This option still processes the search pattern as a regular expression,
-but changes the search to be case sensitive.
+Switch to glob matching of the
+.Ar pattern .
+which is inherently case-sensitive .
 .It Fl E , Cm --exact-match
-This option requires the searched data be equal to the search pattern.
-This is case sensitive and the entire string must match for success.
-.It Fl g , Cm --glob
-This option treats the search pattern as a case-sensitive glob pattern.
+Disables explicit and implied wildcards so when the
+.Ar pattern .
+exactly matches the namebase-subpackage-variant
+package name is successful.
 .El
 .Sh SPECIAL OPTIONS
 The following options are not intended for regular use and may be ignored.

@@ -5,6 +5,8 @@ with Ada.Text_IO;
 with Raven.Pkgtypes;
 with Raven.Database;
 
+private with Ada.Containers.Vectors;
+
 package Raven.Install is
 
    --  current_pkg only needs to be an unfinished package + annotations.
@@ -46,5 +48,42 @@ package Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean) return Boolean;
+
+private
+
+   type Install_Order_Type is
+      record
+         action          : refresh_action := new_install;
+         prov_lib_change : Boolean := False;
+         automatic       : Boolean := False;
+         level           : Natural := 0;
+         nsv             : text := SU.Null_Unbounded_String;
+      end record;
+
+   package Install_Order_Set is new Ada.Containers.Vectors
+     (Element_Type => Install_Order_Type,
+      Index_Type   => Natural);
+
+   type Descendant_Type is
+      record
+         descendents     : Natural := 0;
+         nsv             : text := SU.Null_Unbounded_String;
+      end record;
+
+   package Descendant_Set is new Ada.Containers.Vectors
+     (Element_Type => Descendant_Type,
+      Index_Type   => Natural);
+
+   function assemble_work_queue
+     (rdb             : in out Database.RDB_Connection;
+      opt_exact_match : Boolean;
+      patterns        : Pkgtypes.Text_List.Vector;
+      toplevel        : in out Pkgtypes.Package_Map.Map) return Boolean;
+
+   procedure calculate_descendants
+     (rdb         : in out Database.RDB_Connection;
+      catalog_map : Pkgtypes.Package_Map.Map;
+      cache_map   : in out Pkgtypes.Package_Map.Map;
+      priority    : in out Descendant_Set.Vector);
 
 end Raven.Install;

@@ -122,6 +122,12 @@ package Raven.Pkgtypes is
      (Element_Type => A_Package,
       Index_Type   => Natural);
 
+   package Package_Map is new CON.Hashed_Maps
+     (Key_Type        => Text,
+      Element_Type    => A_Package,
+      Hash            => Raven.Miscellaneous.map_hash,
+      Equivalent_Keys => Strings.equivalent);
+
    package ID_Set is new CON.Vectors
      (Element_Type => Package_ID,
       Index_Type   => Natural);
