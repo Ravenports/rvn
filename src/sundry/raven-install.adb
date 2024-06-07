@@ -9,7 +9,6 @@ with Raven.Miscellaneous;
 with Raven.Database.Add;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
-with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Strings;
 with Archive.Unpack;
@@ -26,7 +25,6 @@ package body Raven.Install is
    package INST renames Raven.Database.Add;
    package PKGS renames Raven.Database.Pkgs;
    package LOK  renames Raven.Database.Lock;
-   package QRY  renames Raven.Database.Query;
    package OPS  renames Raven.Database.Operations;
 
    function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
@@ -269,8 +267,6 @@ package body Raven.Install is
          nsvv_key : constant Text := SUS (nsvv);
       begin
          if not toplevel.Contains (nsvv_key) then
-            QRY.finish_package_dependencies (rdb, myrec);
-            QRY.finish_package_libs_provided (rdb, myrec);
             toplevel.Insert (nsvv_key, myrec);
          end if;
       end merge;
@@ -316,6 +312,7 @@ package body Raven.Install is
          begin
             myrec.descendents := myrec.descendents + 1;
             if cache_map.Contains (dep_nsv) then
+               Event.emit_debug (moderate, "cached " & USS (dep_nsv));
                cache_map.Element (dep_nsv).dependencies.Iterate (check_single_dep'Access);
             else
                if INST.top_level_addition_list
@@ -328,8 +325,6 @@ package body Raven.Install is
                      declare
                         new_rec : Pkgtypes.A_Package := local_set.Element (0);
                      begin
-                        QRY.finish_package_dependencies (rdb, new_rec);
-                        QRY.finish_package_libs_provided (rdb, new_rec);
                         cache_map.Insert (dep_nsv, new_rec);
                         cache_map.Element (dep_nsv).dependencies.Iterate (check_single_dep'Access);
                      end;
