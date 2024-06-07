@@ -66,7 +66,7 @@ package body Raven.Database.Add is
                   myrec : Pkgtypes.A_Package;
                   subpackage : constant String := SQLite.retrieve_string (new_stmt, 2);
                begin
-                  if allow_addition (subpackage) then
+                  if allow_addition (subpackage, override_exact) then
                      myrec.namebase   := SUS (SQLite.retrieve_string (new_stmt, 1));
                      myrec.subpackage := SUS (subpackage);
                      myrec.variant    := SUS (SQLite.retrieve_string (new_stmt, 3));
@@ -107,8 +107,11 @@ package body Raven.Database.Add is
    ----------------------
    --  allow_addition  --
    ----------------------
-   function allow_addition (subpackage : String) return Boolean is
-      begin
+   function allow_addition (subpackage : String; override_exact : Boolean) return Boolean is
+   begin
+      if override_exact then
+         return True;
+      end if;
       if subpackage = "dev" then
          return not RCU.config_setting (RCU.CFG.skip_dev);
       elsif subpackage = "docs" then
