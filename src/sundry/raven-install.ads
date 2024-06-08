@@ -118,4 +118,9 @@ private
       opt_drop_deps : Boolean;
       queue         : in out Install_Order_Set.Vector);
 
+   procedure calc_dependency_descendants
+     (depend_set : Pkgtypes.NV_Pairs.Map;
+      cache_map  : Pkgtypes.Package_Map.Map;
+      priority   : in out Descendant_Set.Vector);
+
 end Raven.Install;

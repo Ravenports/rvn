@@ -412,6 +412,38 @@ package body Raven.Install is
    end calculate_descendants;
 
 
+   -----------------------------------
+   --  calc_dependency_descendants  --
+   -----------------------------------
+   procedure calc_dependency_descendants
+     (depend_set : Pkgtypes.NV_Pairs.Map;
+      cache_map  : Pkgtypes.Package_Map.Map;
+      priority   : in out Descendant_Set.Vector)
+   is
+      procedure calc (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         myrec : Descendant_Type;
+
+         procedure check_single_dep (innerpos : Pkgtypes.NV_Pairs.Cursor)
+         is
+            dep_nsv : Text renames Pkgtypes.NV_Pairs.Key (innerpos);
+         begin
+            myrec.descendents := myrec.descendents + 1;
+            cache_map.Element (dep_nsv).dependencies.Iterate (check_single_dep'Access);
+         end check_single_dep;
+      begin
+         myrec.nsv := Pkgtypes.NV_Pairs.Key (Position);
+         myrec.descendents := 1;
+         cache_map.Element (myrec.nsv).dependencies.Iterate (check_single_dep'Access);
+         priority.Append (myrec);
+      end calc;
+   begin
+      priority.Clear;
+      depend_set.Iterate (calc'Access);
+      Desc_sorter.Sort (priority);
+   end calc_dependency_descendants;
+
+
    -----------------
    --  desc_desc  --
    -----------------
@@ -478,15 +510,15 @@ package body Raven.Install is
          return False;
       end libraries_changed;
 
-      procedure drill_down (parent_level : Natural; deps : Pkgtypes.NV_Pairs.Map)
+      procedure drill_down (parent_level : Natural; deps : Descendant_Set.Vector)
       is
          this_level : constant Natural := parent_level + 1;
 
-         procedure scan_dependency (Position : Pkgtypes.NV_Pairs.Cursor)
+         procedure scan_dependency (Position : Descendant_Set.Cursor)
          is
             myrec : Install_Order_Type;
          begin
-            myrec.nsv := Pkgtypes.NV_Pairs.Key (Position);
+            myrec.nsv := Descendant_Set.Element (Position).nsv;
             myrec.level := this_level;
             if already_seen.Contains (myrec.nsv) then
                return;
@@ -538,7 +570,15 @@ package body Raven.Install is
             end if;
             queue.Append (myrec);
             if not opt_drop_deps then
-               drill_down (this_level, cache_map.Element (myrec.nsv).dependencies);
+               declare
+                  subdep_priority : Descendant_Set.Vector;
+               begin
+                  calc_dependency_descendants
+                    (depend_set => cache_map.Element (myrec.nsv).dependencies,
+                     cache_map  => cache_map,
+                     priority   => subdep_priority);
+                  drill_down (this_level, subdep_priority);
+               end;
             end if;
          end scan_dependency;
       begin
@@ -601,7 +641,15 @@ package body Raven.Install is
 
          queue.Append (myrec);
          if not opt_drop_deps then
-            drill_down (myrec.level, cache_map.Element (myrec.nsv).dependencies);
+            declare
+               dep_priority : Descendant_Set.Vector;
+            begin
+               calc_dependency_descendants
+                 (depend_set => cache_map.Element (myrec.nsv).dependencies,
+                  cache_map  => cache_map,
+                  priority   => dep_priority);
+                drill_down (myrec.level, dep_priority);
+            end;
          end if;
       end scan_top;
    begin
