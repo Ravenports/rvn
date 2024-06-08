@@ -3,6 +3,7 @@
 
 with Raven.Event;
 with Raven.Context;
+with Raven.Version;
 with Raven.Metadata;
 with Raven.Deinstall;
 with Raven.Miscellaneous;
@@ -202,6 +203,7 @@ package body Raven.Install is
       released2   : Boolean;
       catalog_map : Pkgtypes.Package_Map.Map;
       install_map : Pkgtypes.Package_Map.Map;
+      queue       : Install_Order_Set.Vector;
 
       function release_active_lock (db : in out Database.RDB_Connection) return Boolean is
       begin
@@ -266,10 +268,29 @@ package body Raven.Install is
             --     Event.emit_message (USS (Descendant_Set.Element (Position).nsv) & "  priority="
             --                           & int2str(Descendant_Set.Element (Position).descendents));
             --  end print;
+            procedure printq (Position : Install_Order_Set.Cursor) is
+               myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+            begin
+               Event.emit_message (USS (myrec.nsv) & " level=" & int2str(myrec.level) &
+                                     " auto=" & myrec.automatic'Img &
+                                     " action=" & myrec.action'Img &
+                                     " libdelta=" & myrec.prov_lib_change'Img);
+            end printq;
          begin
             calculate_descendants (rdb, catalog_map, cache_map, priority);
             load_installation_data (localdb, cache_map, install_map);
+            finalize_work_queue
+              (install_map   => install_map,
+               cache_map     => cache_map,
+               priority      => priority,
+               opt_automatic => opt_automatic,
+               opt_manual    => opt_manual,
+               opt_exactly   => opt_exact_match,
+               opt_force     => opt_force,
+               opt_drop_deps => opt_drop_depends,
+               queue         => queue);
             --  priority.Iterate (print'Access);
+            queue.iterate (printq'Access);
          end;
       end if;
 
@@ -431,5 +452,163 @@ package body Raven.Install is
    begin
       cache_map.Iterate (get_local_package_data'Access);
    end load_installation_data;
+
+
+   ---------------------------
+   --  finalize_work_queue  --
+   ---------------------------
+   procedure finalize_work_queue
+     (install_map   : Pkgtypes.Package_Map.Map;
+      cache_map     : Pkgtypes.Package_Map.Map;
+      priority      : Descendant_Set.Vector;
+      opt_automatic : Boolean;
+      opt_manual    : Boolean;
+      opt_exactly   : Boolean;
+      opt_force     : Boolean;
+      opt_drop_deps : Boolean;
+      queue         : in out Install_Order_Set.Vector)
+   is
+      already_seen : Pkgtypes.NV_Pairs.Map;
+      yes          : constant Text := SUS ("yes");
+
+      function libraries_changed (ins_libs : Pkgtypes.Text_List.Vector;
+                                  cat_libs : Pkgtypes.Text_List.Vector) return Boolean
+      is
+      begin
+         return False;
+      end libraries_changed;
+
+      procedure drill_down (parent_level : Natural; deps : Pkgtypes.NV_Pairs.Map)
+      is
+         this_level : constant Natural := parent_level + 1;
+
+         procedure scan_dependency (Position : Pkgtypes.NV_Pairs.Cursor)
+         is
+            myrec : Install_Order_Type;
+         begin
+            myrec.nsv := Pkgtypes.NV_Pairs.Key (Position);
+            myrec.level := this_level;
+            if already_seen.Contains (myrec.nsv) then
+               return;
+            end if;
+
+            already_seen.Insert (myrec.nsv, yes);
+            if not install_map.Contains (myrec.nsv) then
+               myrec.action    := new_install;
+               myrec.automatic := True;
+               if opt_exactly and then opt_manual then
+                  myrec.automatic := False;
+               end if;
+               myrec.prov_lib_change := False;
+            else
+               myrec.automatic := install_map.Element (myrec.nsv).automatic;
+               declare
+                  cat_version : constant String := USS (cache_map.Element (myrec.nsv).version);
+                  ins_version : constant String := USS (install_map.Element (myrec.nsv).version);
+               begin
+                  case Version.pkg_version_cmp (ins_version, cat_version) is
+
+                     when 0 =>  --  same version
+
+                        if not opt_force then
+                           return;
+                        end if;
+                        myrec.action := reinstall;
+                        myrec.prov_lib_change := False;  --  In theory, no prov change with reinstall
+
+                     when 1 =>   --  downgrade
+
+                        if not opt_force then
+                           return;
+                        end if;
+                        myrec.action := upgrade;
+                        myrec.prov_lib_change := libraries_changed
+                          (install_map.Element (myrec.nsv).libs_provided,
+                           cache_map.Element (myrec.nsv).libs_provided);
+
+                     when -1 =>   --  upgrade
+
+                        myrec.action := upgrade;
+                        myrec.prov_lib_change := libraries_changed
+                          (install_map.Element (myrec.nsv).libs_provided,
+                           cache_map.Element (myrec.nsv).libs_provided);
+
+                  end case;
+               end;
+            end if;
+            queue.Append (myrec);
+            if not opt_drop_deps then
+               drill_down (this_level, cache_map.Element (myrec.nsv).dependencies);
+            end if;
+         end scan_dependency;
+      begin
+         deps.Iterate (scan_dependency'Access);
+      end drill_down;
+
+      procedure scan_top (priority_pos : Descendant_Set.Cursor)
+      is
+         myrec : Install_Order_Type;
+      begin
+         myrec.nsv := Descendant_Set.Element (priority_pos).nsv;
+         myrec.level := 0;
+         if already_seen.Contains (myrec.nsv) then
+            return;
+         end if;
+         already_seen.Insert (myrec.nsv, yes);
+         if not install_map.Contains (myrec.nsv) then
+            myrec.action    := new_install;
+            myrec.automatic := False;
+            if opt_exactly and then opt_automatic then
+               myrec.automatic := True;
+            end if;
+            myrec.prov_lib_change := False;
+         else
+            myrec.automatic := install_map.Element (myrec.nsv).automatic;
+            declare
+               cat_version : constant String := USS (cache_map.Element (myrec.nsv).version);
+               ins_version : constant String := USS (install_map.Element (myrec.nsv).version);
+            begin
+               case Version.pkg_version_cmp (ins_version, cat_version) is
+
+                  when 0 =>  --  same version
+
+                     if not opt_force then
+                        return;
+                     end if;
+                     myrec.action := reinstall;
+                     myrec.prov_lib_change := False;  --  In theory, no prov change with reinstall
+
+                  when 1 =>   --  downgrade
+
+                     if not opt_force then
+                        return;
+                     end if;
+                     myrec.action := upgrade;
+                     myrec.prov_lib_change := libraries_changed
+                       (install_map.Element (myrec.nsv).libs_provided,
+                        cache_map.Element (myrec.nsv).libs_provided);
+
+                  when -1 =>   --  upgrade
+
+                     myrec.action := upgrade;
+                     myrec.prov_lib_change := libraries_changed
+                       (install_map.Element (myrec.nsv).libs_provided,
+                        cache_map.Element (myrec.nsv).libs_provided);
+
+               end case;
+            end;
+         end if;
+
+         queue.Append (myrec);
+         if not opt_drop_deps then
+            drill_down (myrec.level, cache_map.Element (myrec.nsv).dependencies);
+         end if;
+      end scan_top;
+   begin
+      already_seen.Clear;
+      priority.Iterate (scan_top'Access);
+
+   end finalize_work_queue;
+
 
 end Raven.Install;

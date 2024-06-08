@@ -105,7 +105,17 @@ private
    procedure load_installation_data
      (localdb     : Database.RDB_Connection;
       cache_map   : Pkgtypes.Package_Map.Map;
-      install_map : in out  Pkgtypes.Package_Map.Map);
+      install_map : in out Pkgtypes.Package_Map.Map);
 
+   procedure finalize_work_queue
+     (install_map   : Pkgtypes.Package_Map.Map;
+      cache_map     : Pkgtypes.Package_Map.Map;
+      priority      : Descendant_Set.Vector;
+      opt_automatic : Boolean;
+      opt_manual    : Boolean;
+      opt_exactly   : Boolean;
+      opt_force     : Boolean;
+      opt_drop_deps : Boolean;
+      queue         : in out Install_Order_Set.Vector);
 
 end Raven.Install;
