@@ -108,7 +108,8 @@ private
       install_map : in out Pkgtypes.Package_Map.Map);
 
    procedure finalize_work_queue
-     (install_map   : Pkgtypes.Package_Map.Map;
+     (localdb       : Database.RDB_Connection;
+      install_map   : Pkgtypes.Package_Map.Map;
       cache_map     : Pkgtypes.Package_Map.Map;
       priority      : Descendant_Set.Vector;
       opt_automatic : Boolean;

@@ -280,7 +280,8 @@ package body Raven.Install is
             calculate_descendants (rdb, catalog_map, cache_map, priority);
             load_installation_data (localdb, cache_map, install_map);
             finalize_work_queue
-              (install_map   => install_map,
+              (localdb       => localdb,
+               install_map   => install_map,
                cache_map     => cache_map,
                priority      => priority,
                opt_automatic => opt_automatic,
@@ -490,7 +491,8 @@ package body Raven.Install is
    --  finalize_work_queue  --
    ---------------------------
    procedure finalize_work_queue
-     (install_map   : Pkgtypes.Package_Map.Map;
+     (localdb       : Database.RDB_Connection;
+      install_map   : Pkgtypes.Package_Map.Map;
       cache_map     : Pkgtypes.Package_Map.Map;
       priority      : Descendant_Set.Vector;
       opt_automatic : Boolean;
@@ -500,14 +502,28 @@ package body Raven.Install is
       opt_drop_deps : Boolean;
       queue         : in out Install_Order_Set.Vector)
    is
+      prov_check   : Install_Order_Set.Vector;
       already_seen : Pkgtypes.NV_Pairs.Map;
       yes          : constant Text := SUS ("yes");
 
       function libraries_changed (ins_libs : Pkgtypes.Text_List.Vector;
                                   cat_libs : Pkgtypes.Text_List.Vector) return Boolean
       is
+         --  Only iterate over installed libraries
+         change_detected : Boolean := False;
+
+         procedure check (Position : Pkgtypes.Text_List.Cursor)
+         is
+            installed_library : Text renames Pkgtypes.Text_List.Element (Position);
+         begin
+            if not cat_libs.Contains (installed_library) then
+               change_detected := True;
+            end if;
+         end check;
       begin
-         return False;
+         ins_libs.Iterate (check'Access);
+
+         return change_detected;
       end libraries_changed;
 
       procedure drill_down (parent_level : Natural; deps : Descendant_Set.Vector)
@@ -652,9 +668,57 @@ package body Raven.Install is
             end;
          end if;
       end scan_top;
+
+      procedure filter_provides (Position : Install_Order_Set.Cursor)
+      is
+        myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+      begin
+         if myrec.prov_lib_change then
+            prov_check.Append (myrec);
+         end if;
+      end filter_provides;
+
+      procedure append_queue_from_lib_reinstalls (Position : Pkgtypes.Text_List.Cursor)
+      is
+         nsv : Text renames Pkgtypes.Text_List.Element (Position);
+         myrec : Install_Order_Type;
+      begin
+         if not already_seen.Contains (nsv) then
+            myrec.nsv    := nsv;
+            myrec.level  := 0;
+            myrec.action := reinstall;
+            myrec.automatic := install_map.Element (nsv).automatic;
+            myrec.prov_lib_change := False;
+            queue.Append (myrec);
+            already_seen.Insert (nsv, yes);
+         end if;
+      end append_queue_from_lib_reinstalls;
+
+      procedure add_reinstallations (Position : Install_Order_Set.Cursor)
+      is
+         myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+
+         procedure get_affected (libpos : Pkgtypes.Text_List.Cursor)
+         is
+            shared_library : Text renames Pkgtypes.Text_List.Element (libpos);
+         begin
+            if not cache_map.Element (myrec.nsv).libs_provided.Contains (shared_library) then
+               declare
+                  alist : Pkgtypes.Text_List.Vector;
+               begin
+                  INST.gather_packages_affected_by_libchange (localdb, USS (shared_library), alist);
+                  alist.Iterate (append_queue_from_lib_reinstalls'Access);
+               end;
+            end if;
+         end get_affected;
+      begin
+         install_map.Element (myrec.nsv).libs_provided.Iterate (get_affected'Access);
+      end;
    begin
       already_seen.Clear;
       priority.Iterate (scan_top'Access);
+      queue.iterate (filter_provides'Access);
+      prov_check.Iterate (add_reinstallations'Access);
 
    end finalize_work_queue;
 

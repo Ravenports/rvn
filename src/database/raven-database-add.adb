@@ -128,4 +128,46 @@ package body Raven.Database.Add is
       return True;
    end;
 
+
+   ---------------------------------------------
+   --  gather_packages_affected_by_libchange  --
+   ---------------------------------------------
+   procedure gather_packages_affected_by_libchange
+     (db             : RDB_Connection;
+      old_library    : String;
+      affected_list  : in out Pkgtypes.Text_List.Vector)
+   is
+      func     : constant String := "gather_packages_affected_by_libchange";
+      new_stmt : SQLite.thick_stmt;
+      sql      : constant String :=
+        "SELECT " & nsv_formula & " as nsv000 " &
+        "FROM packages p " &
+        "JOIN pkg_libs_required x ON x.package_id = p.id " &
+        "JOIN libraries ml on ml.library_id = x.library_id " &
+        "WHERE ml.name = ?";
+   begin
+      affected_list.Clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  nsv : constant String := SQLite.retrieve_string (new_stmt, 0);
+               begin
+                  affected_list.Append (SUS (nsv));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end gather_packages_affected_by_libchange;
+
+
 end Raven.Database.Add;

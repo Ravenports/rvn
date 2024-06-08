@@ -11,6 +11,11 @@ package Raven.Database.Add is
       pattern        : String;
       override_exact : Boolean) return Boolean;
 
+   procedure gather_packages_affected_by_libchange
+     (db             : RDB_Connection;
+      old_library    : String;
+      affected_list  : in out Pkgtypes.Text_List.Vector);
+
 private
 
    internal_srcfile : constant String := "raven-database-add.adb";
