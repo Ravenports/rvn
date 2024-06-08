@@ -10,6 +10,7 @@ with Raven.Miscellaneous;
 with Raven.Database.Add;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
+with Raven.Database.Fetch;
 with Raven.Database.Operations;
 with Raven.Strings;
 with Archive.Unpack;
@@ -26,6 +27,7 @@ package body Raven.Install is
    package INST renames Raven.Database.Add;
    package PKGS renames Raven.Database.Pkgs;
    package LOK  renames Raven.Database.Lock;
+   package FET  renames Raven.Database.Fetch;
    package OPS  renames Raven.Database.Operations;
 
    function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
@@ -189,6 +191,7 @@ package body Raven.Install is
                                      opt_skip_scripts : Boolean;
                                      opt_dry_run      : Boolean;
                                      opt_fetch_only   : Boolean;
+                                     single_repo      : String;
                                      patterns         : Pkgtypes.Text_List.Vector)
                                      return Boolean
    is
@@ -264,6 +267,7 @@ package body Raven.Install is
             cache_map   : Pkgtypes.Package_Map.Map;
             install_map : Pkgtypes.Package_Map.Map;
             upgrades    : Pkgtypes.Text_List.Vector;
+            fetch_list  : Pkgtypes.Text_List.Vector;
             file_collection : Pkgtypes.NV_Pairs.Map;
 
             procedure gather_upgrades (Position : Install_Order_Set.Cursor)
@@ -275,6 +279,12 @@ package body Raven.Install is
                   when upgrade => upgrades.Append (myrec.nsv);
                end case;
             end gather_upgrades;
+
+            procedure gather_fetch_list (Position : Install_Order_Set.Cursor)
+            is
+            begin
+               fetch_list.Append (Install_Order_Set.Element (Position).nsv);
+            end gather_fetch_list;
 
             procedure printq (Position : Install_Order_Set.Cursor) is
                myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
@@ -300,10 +310,21 @@ package body Raven.Install is
                queue         => queue);
 
             queue.Iterate (gather_upgrades'Access);
+            queue.Iterate (gather_fetch_list'Access);
             queue.iterate (printq'Access);
 
             INST.collect_installed_files (localdb, upgrades, file_collection);
             --  succeeded := conflict_free (queue, cache_map, file_collection);
+
+            succeeded := FET.rvn_core_retrieval (db           => rdb,
+                                                 patterns     => fetch_list,
+                                                 behave_exact => True,
+                                                 behave_cs    => False,
+                                                 behave_quiet => opt_quiet,
+                                                 select_all   => False,
+                                                 select_deps  => False,
+                                                 destination  => "",
+                                                 single_repo  => single_repo);
          end;
       end if;
 

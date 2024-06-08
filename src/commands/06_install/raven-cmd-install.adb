@@ -82,6 +82,7 @@ package body Raven.Cmd.Install is
             opt_skip_scripts => comline.cmd_install.inhibit_scripts,
             opt_dry_run      => comline.common_options.dry_run,
             opt_fetch_only   => comline.cmd_install.fetch_only,
+            single_repo      => single,
             patterns         => comline.cmd_install.name_patterns);
       end if;
 

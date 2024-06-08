@@ -59,6 +59,7 @@ package Raven.Install is
       opt_skip_scripts : Boolean;
       opt_dry_run      : Boolean;
       opt_fetch_only   : Boolean;
+      single_repo      : String;
       patterns         : Pkgtypes.Text_List.Vector)
       return Boolean;
 
