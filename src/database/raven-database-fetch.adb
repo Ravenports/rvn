@@ -193,8 +193,8 @@ package body Raven.Database.Fetch is
          if not behave_quiet then
             Event.emit_message
               ("No files matching the given pattern(s) have been found in the catalog.");
-            return False;
          end if;
+         return False;
       end if;
 
       prune_remote_files_list (download_list, download_dir);
@@ -203,8 +203,8 @@ package body Raven.Database.Fetch is
          if not behave_quiet then
             Event.emit_message
               ("The latest versions of the requested packages are already available locally.");
-            return True;
          end if;
+         return True;
       end if;
 
       sort_queue (download_list, download_order);
@@ -218,7 +218,7 @@ package body Raven.Database.Fetch is
       end if;
 
       if not granted_permission_to_proceed (behave_quiet) then
-         return True;
+         return False;
       end if;
 
       return download_packages
