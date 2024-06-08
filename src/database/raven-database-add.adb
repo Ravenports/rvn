@@ -183,8 +183,8 @@ package body Raven.Database.Add is
       func     : constant String := "gather_packages_affected_by_libchange";
       new_stmt : SQLite.thick_stmt;
       sqlbase  : constant String :=
-        "SELECT " & nsv_formula & " as nsv000, ml.path " &
-        "FROM packages p" &
+        "SELECT " & nsv_formula & " as nsv, ml.path " &
+        "FROM packages p " &
         "JOIN pkg_files ml ON ml.package_id = p.id " &
         "WHERE nsv NOT IN ('nada'";
       sql : Text := SUS (sqlbase);
