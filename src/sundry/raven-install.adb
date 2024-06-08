@@ -303,7 +303,7 @@ package body Raven.Install is
             queue.iterate (printq'Access);
 
             INST.collect_installed_files (localdb, upgrades, file_collection);
-            succeeded := conflict_free (queue, cache_map, file_collection);
+            --  succeeded := conflict_free (queue, cache_map, file_collection);
          end;
       end if;
 
