@@ -195,14 +195,17 @@ package body Raven.Install is
       --  assume-yes accessed via RCU settings
 
       rdb         : Database.RDB_Connection;
+      localdb     : Database.RDB_Connection;
       active_lock : LOK.lock_type := LOK.lock_advisory;
       succeeded   : Boolean;
-      released    : Boolean;
+      released1   : Boolean;
+      released2   : Boolean;
       catalog_map : Pkgtypes.Package_Map.Map;
+      install_map : Pkgtypes.Package_Map.Map;
 
-      function release_active_lock return Boolean is
+      function release_active_lock (db : in out Database.RDB_Connection) return Boolean is
       begin
-         if not LOK.release_lock (rdb, active_lock) then
+         if not LOK.release_lock (db, active_lock) then
             case active_lock is
                when LOK.lock_advisory  => Event.emit_error (LOK.no_advisory_unlock);
                when LOK.lock_exclusive => Event.emit_error (LOK.no_exclusive_unlock);
@@ -222,6 +225,13 @@ package body Raven.Install is
          when others => return False;
       end case;
 
+      case OPS.rdb_open_localdb (localdb, Database.installed_packages) is
+         when RESULT_OK => null;
+         when others =>
+            OPS.rdb_close (localdb);
+            return False;
+      end case;
+
       if not LOK.obtain_lock (rdb, active_lock) then
          case active_lock is
             when LOK.lock_advisory  => Event.emit_error (LOK.no_adv_lock);
@@ -229,14 +239,28 @@ package body Raven.Install is
             when LOK.lock_readonly  => Event.emit_error (LOK.no_read_lock);
          end case;
          OPS.rdb_close (rdb);
+         OPS.rdb_close (localdb);
+         return False;
+      end if;
+
+      if not LOK.obtain_lock (localdb, active_lock) then
+         case active_lock is
+            when LOK.lock_advisory  => Event.emit_error (LOK.no_adv_lock);
+            when LOK.lock_exclusive => Event.emit_error (LOK.no_exc_lock);
+            when LOK.lock_readonly  => Event.emit_error (LOK.no_read_lock);
+         end case;
+         released1 := release_active_lock (rdb);
+         OPS.rdb_close (rdb);
+         OPS.rdb_close (localdb);
          return False;
       end if;
 
       succeeded := assemble_work_queue (rdb, opt_exact_match, patterns, catalog_map);
       if succeeded then
          declare
-            priority  : Descendant_Set.Vector;
-            cache_map : Pkgtypes.Package_Map.Map;
+            priority    : Descendant_Set.Vector;
+            cache_map   : Pkgtypes.Package_Map.Map;
+            install_map : Pkgtypes.Package_Map.Map;
             --  procedure print (Position : Descendant_Set.Cursor) is
             --  begin
             --     Event.emit_message (USS (Descendant_Set.Element (Position).nsv) & "  priority="
@@ -244,13 +268,18 @@ package body Raven.Install is
             --  end print;
          begin
             calculate_descendants (rdb, catalog_map, cache_map, priority);
+            load_installation_data (localdb, cache_map, install_map);
             --  priority.Iterate (print'Access);
          end;
       end if;
 
-      released := release_active_lock;
+      released2 := release_active_lock (localdb);
+      OPS.rdb_close (localdb);
+
+      released1 := release_active_lock (rdb);
       OPS.rdb_close (rdb);
-      return succeeded and then released;
+
+      return succeeded and then released1 and then released2;
 
    end install_remote_packages;
 
@@ -369,5 +398,38 @@ package body Raven.Install is
    begin
       return left.descendents > right.descendents;
    end desc_desc;
+
+
+   ------------------------------
+   --  load_installation_data  --
+   ------------------------------
+   procedure load_installation_data
+     (localdb     : Database.RDB_Connection;
+      cache_map   : Pkgtypes.Package_Map.Map;
+      install_map : in out  Pkgtypes.Package_Map.Map)
+   is
+      procedure get_local_package_data (Position : Pkgtypes.Package_Map.Cursor)
+      is
+         local_pkg : Pkgtypes.Package_Set.Vector;
+         nsv       : constant String := USS (Pkgtypes.Package_Map.Key (Position));
+      begin
+         if INST.top_level_addition_list
+           (db             => localdb,
+            packages       => local_pkg,
+            pattern        => nsv,
+            override_exact => True)
+         then
+            if not local_pkg.Is_Empty then
+               declare
+                  new_rec : Pkgtypes.A_Package := local_pkg.Element (0);
+               begin
+                  install_map.Insert (SUS (nsv), new_rec);
+               end;
+            end if;
+         end if;
+      end get_local_package_data;
+   begin
+      cache_map.Iterate (get_local_package_data'Access);
+   end load_installation_data;
 
 end Raven.Install;

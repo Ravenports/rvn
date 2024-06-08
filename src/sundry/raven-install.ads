@@ -102,4 +102,10 @@ private
       cache_map   : in out Pkgtypes.Package_Map.Map;
       priority    : in out Descendant_Set.Vector);
 
+   procedure load_installation_data
+     (localdb     : Database.RDB_Connection;
+      cache_map   : Pkgtypes.Package_Map.Map;
+      install_map : in out  Pkgtypes.Package_Map.Map);
+
+
 end Raven.Install;
