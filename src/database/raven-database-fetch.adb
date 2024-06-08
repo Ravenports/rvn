@@ -249,10 +249,18 @@ package body Raven.Database.Fetch is
       is
          full_path : constant String := filedir & "/" &
            USS (Remote_Files_Set.Element (Position).nsvv) & extension;
+         features : Archive.Unix.File_Characteristics;
       begin
-         if Archive.Unix.file_exists (full_path) then
-            purge_list.Append (SUS (Remote_Files_Set.Key (Position)));
-         end if;
+         features := Archive.Unix.get_charactistics (full_path);
+         case features.ftype is
+            when Archive.regular | Archive.hardlink =>
+               purge_list.Append (SUS (Remote_Files_Set.Key (Position)));
+            when Archive.symlink =>
+               if Archive.Unix.file_exists (Archive.Unix.link_target (full_path)) then
+                  purge_list.Append (SUS (Remote_Files_Set.Key (Position)));
+               end if;
+            when Archive.unsupported | Archive.fifo | Archive.directory => null;
+         end case;
       end check_for_file;
 
       procedure drop_element (Position : Text_List.Cursor) is
