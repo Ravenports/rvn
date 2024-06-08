@@ -5,6 +5,7 @@ with Raven.Event;
 with Raven.Context;
 with Raven.Version;
 with Raven.Metadata;
+with Raven.Cmd.Unset;
 with Raven.Deinstall;
 with Raven.Miscellaneous;
 with Raven.Database.Add;
@@ -29,6 +30,7 @@ package body Raven.Install is
    package LOK  renames Raven.Database.Lock;
    package FET  renames Raven.Database.Fetch;
    package OPS  renames Raven.Database.Operations;
+   package RCU  renames Raven.Cmd.Unset;
 
    function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
                                   action      : refresh_action;
@@ -309,22 +311,28 @@ package body Raven.Install is
                opt_drop_deps => opt_drop_depends,
                queue         => queue);
 
-            queue.Iterate (gather_upgrades'Access);
-            queue.Iterate (gather_fetch_list'Access);
-            queue.iterate (printq'Access);
+            --  if queue is empty, there's nothing more to do
+            if not queue.Is_Empty then
+               queue.Iterate (gather_upgrades'Access);
+               queue.Iterate (gather_fetch_list'Access);
+               queue.iterate (printq'Access);
 
-            INST.collect_installed_files (localdb, upgrades, file_collection);
-            --  succeeded := conflict_free (queue, cache_map, file_collection);
+               INST.collect_installed_files (localdb, upgrades, file_collection);
 
-            succeeded := FET.rvn_core_retrieval (db           => rdb,
-                                                 patterns     => fetch_list,
-                                                 behave_exact => True,
-                                                 behave_cs    => False,
-                                                 behave_quiet => opt_quiet,
-                                                 select_all   => False,
-                                                 select_deps  => False,
-                                                 destination  => "",
-                                                 single_repo  => single_repo);
+               succeeded := FET.rvn_core_retrieval (db           => rdb,
+                                                    patterns     => fetch_list,
+                                                    behave_exact => True,
+                                                    behave_cs    => False,
+                                                    behave_quiet => opt_quiet,
+                                                    select_all   => False,
+                                                    select_deps  => False,
+                                                    destination  => "",
+                                                    single_repo  => single_repo);
+
+               if succeeded then
+                  succeeded := conflict_free (queue, cache_map, file_collection);
+               end if;
+            end if;
          end;
       end if;
 
@@ -768,37 +776,56 @@ package body Raven.Install is
 
       procedure check_package (Position : Install_Order_Set.Cursor)
       is
+         operation  : Archive.Unpack.Darc;
          myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+         rvn_path : constant String := RCU.config_setting (RCU.CFG.cachedir) & "/" &
+           Pkgtypes.nsvv_identifier (cache_map (myrec.nsv)) & extension;
       begin
          case myrec.action is
             when reinstall => null;
             when new_install | upgrade =>
                declare
-                  num_files : constant Natural := Natural (cache_map (myrec.nsv).files.Length);
+                  num_files : Natural;
+                  shipped_files : Archive.Unpack.file_records.Vector;
                begin
-                  for findex in 0 .. num_files - 1 loop
-                     declare
-                        fpath : Text renames cache_map (myrec.nsv).files.Element (findex).path;
-                     begin
-                        if file_collection.Contains (fpath) then
-                           conflict_found := True;
-                           Event.emit_message
-                             ("Conflict found: " & USS (myrec.nsv) &
-                                " package installs files in the same location as " &
-                                USS (file_collection.Element (fpath)));
-                           exit;
-                        end if;
-                     end;
-                  end loop;
-                  for findex in 0 .. num_files - 1 loop
-                     declare
-                        fpath : Text renames cache_map (myrec.nsv).files.Element (findex).path;
-                     begin
-                        if not file_collection.Contains (fpath) then
-                           file_collection.Insert (fpath, myrec.nsv);
-                        end if;
-                     end;
-                  end loop;
+                  operation.open_rvn_archive (rvn_path, Archive.silent);
+                  if not operation.extract_manifest (shipped_files, "/") then
+                     conflict_found := True;
+                     Event.emit_error ("Unxpected error acquiring file list from " & rvn_path);
+                     num_files := 0;
+                  else
+                     num_files := Natural (shipped_files.Length);
+                  end if;
+                  operation.close_rvn_archive;
+
+                  if num_files > 0 then
+                     for findex in 0 .. num_files - 1 loop
+                        declare
+                           fpath : Text := shipped_files.Element (findex).path;
+                        begin
+                           if file_collection.Contains (fpath) then
+                              if not conflict_found then
+                                 Event.emit_error ("");
+                              end if;
+                              conflict_found := True;
+                              Event.emit_error
+                                ("Conflict found: " & USS (myrec.nsv) &
+                                   " package installs files in the same location as " &
+                                   USS (file_collection.Element (fpath)));
+                              exit;
+                           end if;
+                        end;
+                     end loop;
+                     for findex in 0 .. num_files - 1 loop
+                        declare
+                           fpath : Text := shipped_files.Element (findex).path;
+                        begin
+                           if not file_collection.Contains (fpath) then
+                              file_collection.Insert (fpath, myrec.nsv);
+                           end if;
+                        end;
+                     end loop;
+                  end if;
                end;
          end case;
       end check_package;
