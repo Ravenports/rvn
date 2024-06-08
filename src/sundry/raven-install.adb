@@ -263,11 +263,19 @@ package body Raven.Install is
             priority    : Descendant_Set.Vector;
             cache_map   : Pkgtypes.Package_Map.Map;
             install_map : Pkgtypes.Package_Map.Map;
-            --  procedure print (Position : Descendant_Set.Cursor) is
-            --  begin
-            --     Event.emit_message (USS (Descendant_Set.Element (Position).nsv) & "  priority="
-            --                           & int2str(Descendant_Set.Element (Position).descendents));
-            --  end print;
+            upgrades    : Pkgtypes.Text_List.Vector;
+            file_collection : Pkgtypes.NV_Pairs.Map;
+
+            procedure gather_upgrades (Position : Install_Order_Set.Cursor)
+            is
+               myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+            begin
+               case myrec.action is
+                  when new_install | reinstall => null;
+                  when upgrade => upgrades.Append (myrec.nsv);
+               end case;
+            end gather_upgrades;
+
             procedure printq (Position : Install_Order_Set.Cursor) is
                myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
             begin
@@ -290,8 +298,12 @@ package body Raven.Install is
                opt_force     => opt_force,
                opt_drop_deps => opt_drop_depends,
                queue         => queue);
-            --  priority.Iterate (print'Access);
+
+            queue.Iterate (gather_upgrades'Access);
             queue.iterate (printq'Access);
+
+            INST.collect_installed_files (localdb, upgrades, file_collection);
+            succeeded := conflict_free (queue, cache_map, file_collection);
          end;
       end if;
 
@@ -721,6 +733,58 @@ package body Raven.Install is
       prov_check.Iterate (add_reinstallations'Access);
 
    end finalize_work_queue;
+
+
+   ---------------------
+   --  conflict_free  --
+   ---------------------
+   function conflict_free
+     (queue           : Install_Order_Set.Vector;
+      cache_map       : Pkgtypes.Package_Map.Map;
+      file_collection : in out Pkgtypes.NV_Pairs.Map) return Boolean
+   is
+      conflict_found : Boolean := False;
+
+      procedure check_package (Position : Install_Order_Set.Cursor)
+      is
+         myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+      begin
+         case myrec.action is
+            when reinstall => null;
+            when new_install | upgrade =>
+               declare
+                  num_files : constant Natural := Natural (cache_map (myrec.nsv).files.Length);
+               begin
+                  for findex in 0 .. num_files - 1 loop
+                     declare
+                        fpath : Text renames cache_map (myrec.nsv).files.Element (findex).path;
+                     begin
+                        if file_collection.Contains (fpath) then
+                           conflict_found := True;
+                           Event.emit_message
+                             ("Conflict found: " & USS (myrec.nsv) &
+                                " package installs files in the same location as " &
+                                USS (file_collection.Element (fpath)));
+                           exit;
+                        end if;
+                     end;
+                  end loop;
+                  for findex in 0 .. num_files - 1 loop
+                     declare
+                        fpath : Text renames cache_map (myrec.nsv).files.Element (findex).path;
+                     begin
+                        if not file_collection.Contains (fpath) then
+                           file_collection.Insert (fpath, myrec.nsv);
+                        end if;
+                     end;
+                  end loop;
+               end;
+         end case;
+      end check_package;
+   begin
+      queue.Iterate (check_package'Access);
+      return not conflict_found;
+   end conflict_free;
 
 
 end Raven.Install;

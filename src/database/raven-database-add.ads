@@ -16,6 +16,11 @@ package Raven.Database.Add is
       old_library    : String;
       affected_list  : in out Pkgtypes.Text_List.Vector);
 
+   procedure collect_installed_files
+     (db             : RDB_Connection;
+      new_upgrades   : Pkgtypes.Text_List.Vector;
+      collection     : in out Pkgtypes.NV_Pairs.Map);
+
 private
 
    internal_srcfile : constant String := "raven-database-add.adb";

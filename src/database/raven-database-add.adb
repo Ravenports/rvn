@@ -86,6 +86,7 @@ package body Raven.Database.Add is
 
                      QRY.finish_package_dependencies (db, myrec, True);
                      QRY.finish_package_libs_provided (db, myrec);
+                     QRY.finish_package_files (db, myrec);
                      packages.Append (myrec);
                      Event.emit_debug (high_level, "Added to top-level match for addition: " &
                                          Pkgtypes.nsv_identifier (myrec));
@@ -151,6 +152,7 @@ package body Raven.Database.Add is
          Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
          return;
       end if;
+      debug_running_stmt (new_stmt);
       loop
          case SQLite.step (new_stmt) is
             when SQLite.no_more_data => exit;
@@ -168,6 +170,68 @@ package body Raven.Database.Add is
       end loop;
       SQLite.finalize_statement (new_stmt);
    end gather_packages_affected_by_libchange;
+
+
+   -------------------------------
+   --  collect_installed_files  --
+   -------------------------------
+   procedure collect_installed_files
+     (db             : RDB_Connection;
+      new_upgrades   : Pkgtypes.Text_List.Vector;
+      collection     : in out Pkgtypes.NV_Pairs.Map)
+   is
+      func     : constant String := "gather_packages_affected_by_libchange";
+      new_stmt : SQLite.thick_stmt;
+      sqlbase  : constant String :=
+        "SELECT " & nsv_formula & " as nsv000, ml.path " &
+        "FROM packages p" &
+        "JOIN pkg_files ml ON ml.package_id = p.id " &
+        "WHERE nsv NOT IN ('nada'";
+      sql : Text := SUS (sqlbase);
+      column : Natural := 0;
+
+      procedure build_up (Position : Pkgtypes.Text_List.Cursor) is
+      begin
+         SU.Append (sql, ", ?");
+      end build_up;
+
+      procedure bind_up (Position : Pkgtypes.Text_List.Cursor)
+      is
+         nsv : constant String := USS (Pkgtypes.Text_List.Element (Position));
+      begin
+         column := column + 1;
+         SQLite.bind_string (new_stmt, column, nsv);
+      end bind_up;
+   begin
+      collection.Clear;
+      new_upgrades.Iterate (build_up'Access);
+      SU.Append (sql, ")");
+
+      if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
+         Database.CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, USS (sql));
+         return;
+      end if;
+
+      new_upgrades.Iterate (bind_up'Access);
+      debug_running_stmt (new_stmt);
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  nsv  : constant String := SQLite.retrieve_string (new_stmt, 0);
+                  path : constant String := SQLite.retrieve_string (new_stmt, 1);
+               begin
+                  collection.Insert (SUS (path), SUS (nsv));
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+               exit;
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end collect_installed_files;
 
 
 end Raven.Database.Add;

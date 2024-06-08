@@ -124,4 +124,9 @@ private
       cache_map  : Pkgtypes.Package_Map.Map;
       priority   : in out Descendant_Set.Vector);
 
+   function conflict_free
+     (queue           : Install_Order_Set.Vector;
+      cache_map       : Pkgtypes.Package_Map.Map;
+      file_collection : in out Pkgtypes.NV_Pairs.Map) return Boolean;
+
 end Raven.Install;
