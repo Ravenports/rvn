@@ -805,6 +805,7 @@ package body SQLite is
       end case;
    end set_busy_timeout;
 
+
    -----------------------------
    --  get_last_insert_rowid  --
    -----------------------------
@@ -815,5 +816,21 @@ package body SQLite is
       res := sqlite_h.sqlite3_last_insert_rowid (db);
       return sql_int64 (res);
    end get_last_insert_rowid;
+
+
+   ----------------------
+   --  in_transaction  --
+   ----------------------
+   function in_transaction (db : db3) return Boolean
+   is
+      res : IC.int;
+   begin
+      res := sqlite_h.sqlite3_get_autocommit (db);
+      case res is
+         when 0      => return True;
+         when others => return False;
+      end case;
+   end in_transaction;
+
 
 end SQLite;

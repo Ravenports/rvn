@@ -225,6 +225,8 @@ package SQLite is
 
    function get_last_insert_rowid (db : db3) return sql_int64;
 
+   function in_transaction (db : db3) return Boolean;
+
 private
 
    last_errmsg : Interfaces.C.Strings.chars_ptr;
