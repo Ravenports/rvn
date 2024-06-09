@@ -471,6 +471,7 @@ package body Raven.Database.Fetch is
             myrec  : A_Remote_File renames remote_files.Element (digkey);
          begin
             counter := counter + 1;
+            Event.emit_fetch_begin (USS (repo.url), myrec.rvnsize);
             case download_package (remote_url    => repo.url,
                                    remote_proto  => repo.protocol,
                                    remote_file   => myrec,
@@ -491,6 +492,7 @@ package body Raven.Database.Fetch is
                   SU.Append (postlog, "Checksum verification failed: " &
                                USS (myrec.nsvv) & extension & LAT.LF);
             end case;
+            Event.emit_fetch_finished (USS (repo.url), myrec.rvnsize);
          end retrieve_rvn_file;
       begin
          download_order.Iterate (retrieve_rvn_file'Access);

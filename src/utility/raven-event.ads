@@ -26,6 +26,11 @@ package Raven.Event is
    procedure emit_extract_end   (pkg : Pkgtypes.A_Package);
    procedure emit_remove_begin  (pkg : Pkgtypes.A_Package);
    procedure emit_remove_end    (pkg : Pkgtypes.A_Package);
+   procedure emit_upgrade_begin (pkg : Pkgtypes.A_Package; newpkg : Pkgtypes.A_Package);
+   procedure emit_upgrade_end   (pkg : Pkgtypes.A_Package; newpkg : Pkgtypes.A_Package);
+
+   procedure emit_fetch_begin    (url : String; rvnsize : Pkgtypes.Package_Size);
+   procedure emit_fetch_finished (url : String; rvnsize : Pkgtypes.Package_Size);
 
 private
 

@@ -135,17 +135,21 @@ package body Raven.Cmd.Install is
       operation.close_rvn_archive;
 
       declare
-         N : constant String := MET.reveal_namebase (metatree);
-         S : constant String := MET.reveal_subpackage (metatree);
-         V : constant String := MET.reveal_variant (metatree);
-         P : constant String := N & "-" & S & "-" & V;
+         dummy_pkg   : Pkgtypes.A_Package;
+         dummy_files : Archive.Unpack.file_records.Vector;
       begin
+         Metadata.convert_to_package (metatree, dummy_files, dummy_pkg, False);
          if not comline.cmd_install.no_register then
             if not comline.cmd_install.force_install then
-               case QRY.package_installed (rdb, N, S, V) is
+               case QRY.package_installed (rdb,
+                                           USS (dummy_pkg.namebase),
+                                           USS (dummy_pkg.subpackage),
+                                           USS (dummy_pkg.variant))
+               is
                   when Pkgtypes.Package_Not_Installed => null;
                   when others =>
-                     Event.emit_error ("The " & P & " package is already installed.");
+                     Event.emit_error ("The " & Pkgtypes.nsv_identifier (dummy_pkg) &
+                                         " package is already installed.");
                      return False;
                end case;
             end if;
@@ -164,7 +168,7 @@ package body Raven.Cmd.Install is
          end if;
 
          if result then
-            Event.emit_install_begin (N, S, V, MET.reveal_version (metatree));
+            Event.emit_install_begin (dummy_pkg);
 
             result := Raven.Install.install_files_from_archive
               (archive_path    => archive_path,
@@ -174,17 +178,7 @@ package body Raven.Cmd.Install is
                dry_run_only    => comline.common_options.dry_run,
                upgrading       => False);
 
-            declare
-               function end_message return String is
-               begin
-                  if result then
-                     return "successful";
-                  end if;
-                  return "installation failed";
-               end end_message;
-            begin
-               Event.emit_install_end (N, S, V, MET.reveal_version (metatree), end_message);
-            end;
+            Event.emit_install_end (dummy_pkg);
          end if;
       end;
 
