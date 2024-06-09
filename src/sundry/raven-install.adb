@@ -65,10 +65,29 @@ package body Raven.Install is
    begin
       features := Archive.Unix.get_charactistics (updated_pkg);
       case features.ftype is
-         when Archive.regular => null;
+         when Archive.regular =>
+            operation.open_rvn_archive (updated_pkg, Archive.silent, Archive.Unix.not_connected);
          when Archive.unsupported =>
             Event.emit_error ("Dev error: " & updated_pkg & " package D.N.E.");
             return False;
+         when Archive.symlink =>
+            declare
+               tgt : constant String := Archive.Unix.link_target (updated_pkg);
+               target_features : Archive.Unix.File_Characteristics;
+            begin
+               target_features := Archive.Unix.get_charactistics (tgt);
+               case target_features.ftype is
+                  when Archive.regular =>
+                     operation.open_rvn_archive (tgt, Archive.silent, Archive.Unix.not_connected);
+                  when Archive.unsupported =>
+                     Event.emit_error ("dangling symlink: " & updated_pkg);
+                     return False;
+                  when others =>
+                     Event.emit_error ("symlinked to " & target_features.ftype'Img &
+                                         " file: " & updated_pkg);
+                     return False;
+               end case;
+            end;
          when others =>
             Event.emit_error ("Not a regular file: " & updated_pkg);
             return False;
