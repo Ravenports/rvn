@@ -11,7 +11,7 @@
 .Op Fl v
 .Op Fl d
 .Op Fl l
-.Op Fl c Ao chroot path Ac | Fl r Ao root directory Ac
+.Op Fl C Ao chroot path Ac
 .Op Fl C Ao configuration file Ac
 .Op Fl o Ao option=value Ac
 .Op Fl R Ao repository configuration directory Ac
@@ -23,7 +23,7 @@
 .Op Cm --debug
 .Op Cm --list
 .Op Cm --status-check
-.Op Cm --chroot Ao chroot path Ac | Cm --rootdir Ao root directory Ac
+.Op Cm --chroot Ao chroot path Ac
 .Op Cm --config Ao configuration file Ac
 .Op Cm --option Ao option=value Ac
 .Op Cm --repo-conf-dir Ao repository configuration directory Ac
@@ -90,10 +90,6 @@ Example usage:
 will chroot in the
 .Ao chroot path Ac
 environment.
-.It Fl r Ao root directory Ac , Cm --rootdir Ao root directory Ac
-.Nm
-will install all packages within the specified
-.Ao root directory Ac .
 .It Fl C Ao configuration file Ac , Cm --config Ao configuration file Ac
 .Nm
 will use the specified file as a configuration file.

@@ -186,23 +186,11 @@ package body Raven.Configuration is
    ----------------------------
    --  get_default_value #3  --
    ----------------------------
-   function get_default_value (ci : Configuration_Item; root_directory : String) return String
-   is
-      function with_rootdir (this_dir : String) return String is
-      begin
-         if root_directory = "" then
-            return this_dir;
-         end if;
-         declare
-            root_prefix : constant String := Archive.Unix.real_path (root_directory);
-         begin
-            return root_prefix & this_dir;
-         end;
-      end with_rootdir;
+   function get_default_value (ci : Configuration_Item) return String is
    begin
       case ci is
-         when dbdir          => return with_rootdir ("/var/db/" & progname);
-         when cachedir       => return with_rootdir ("/var/cache/" & progname);
+         when dbdir          => return "/var/db/" & progname;
+         when cachedir       => return "/var/cache/" & progname;
          when keywords_dir   => return "/var/ravenports/conspiracy/Mk/Keywords";
          when abi            => return Archive.Misc.determine_abi;
          when nameserver     => return "";
@@ -639,9 +627,7 @@ package body Raven.Configuration is
    ------------------------------------------
    --  set_defaults_on_remaining_settings  --
    ------------------------------------------
-   procedure set_defaults_on_remaining_settings
-     (session_configuration : in out ThickUCL.UclTree;
-      root_directory        : String)
+   procedure set_defaults_on_remaining_settings (session_configuration : in out ThickUCL.UclTree)
    is
       procedure set_configuration (name : String; ci : Configuration_Item);
       procedure set_configuration (name : String; ci : Configuration_Item)
@@ -652,7 +638,7 @@ package body Raven.Configuration is
             when ThickUCL.data_not_present => null;
             when ThickUCL.data_string =>
                declare
-                  val : constant String := get_default_value (ci, root_directory);
+                  val : constant String := get_default_value (ci);
                begin
                   session_configuration.insert (name, val);
                   ENV.Set (name, val);
@@ -739,14 +725,13 @@ package body Raven.Configuration is
      (configuration_file    : String;
       command_line_options  : String;
       debug_level_cli       : A_Debug_Level;
-      root_directory        : String;
       session_configuration : in out ThickUCL.UclTree)
    is
    begin
       set_command_line_options (command_line_options, debug_level_cli, session_configuration);
       set_environment_options (session_configuration);
       set_configuration_from_file (configuration_file, session_configuration);
-      set_defaults_on_remaining_settings (session_configuration, root_directory);
+      set_defaults_on_remaining_settings (session_configuration);
    end establish_configuration;
 
 

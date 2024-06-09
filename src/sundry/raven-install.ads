@@ -34,7 +34,6 @@ package Raven.Install is
    --  Returns true if extraction was successful.
    function install_files_from_archive
      (archive_path      : String;
-      root_directory    : String;
       inhibit_scripts   : Boolean;
       be_silent         : Boolean;
       dry_run_only      : Boolean;
@@ -51,7 +50,6 @@ package Raven.Install is
       opt_skip_scripts : Boolean;
       opt_dry_run      : Boolean;
       opt_fetch_only   : Boolean;
-      root_directory   : String;
       single_repo      : String;
       patterns         : Pkgtypes.Text_List.Vector)
       return Boolean;
@@ -89,7 +87,6 @@ private
       action      : refresh_action;
       current_pkg : Pkgtypes.A_Package;
       updated_pkg : String;
-      rootdir     : String;
       no_scripts  : Boolean;
       post_report : Ada.Text_IO.File_Type) return Boolean;
 
@@ -150,6 +147,7 @@ private
    --  function execute_installation_queue
    --    (queue        : Install_Order_Set.Vector;
    --     cache_map    : Pkgtypes.Package_Map.Map;
+   --     rootdir      : String;
    --     behave_quiet : Boolean) return Boolean;
 
 end Raven.Install;

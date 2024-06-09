@@ -38,7 +38,6 @@ package body Raven.Install is
                                   action      : refresh_action;
                                   current_pkg : Pkgtypes.A_Package;
                                   updated_pkg : String;
-                                  rootdir     : String;
                                   no_scripts  : Boolean;
                                   post_report : TIO.File_Type) return Boolean
    is
@@ -48,6 +47,7 @@ package body Raven.Install is
       metatree  : ThickUCL.UclTree;
       shiny_pkg : Pkgtypes.A_Package;
       success   : Boolean;
+      rootdir   : constant String := "/";
 
       procedure transfer_custom_notes (Position : Pkgtypes.NoteSet.Cursor)
       is
@@ -92,7 +92,6 @@ package body Raven.Install is
                                                   forced => False);
             if success then
                success := install_files_from_archive (archive_path    => updated_pkg,
-                                                      root_directory  => rootdir,
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
@@ -105,7 +104,6 @@ package body Raven.Install is
                                                   forced => True);
             if success then
                success := install_files_from_archive (archive_path    => updated_pkg,
-                                                      root_directory  => rootdir,
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
@@ -127,7 +125,6 @@ package body Raven.Install is
    ----------------------------------
    function install_files_from_archive
      (archive_path      : String;
-      root_directory    : String;
       inhibit_scripts   : Boolean;
       be_silent         : Boolean;
       dry_run_only      : Boolean;
@@ -136,6 +133,7 @@ package body Raven.Install is
    is
       operation : Archive.Unpack.Darc;
       level     : Archive.info_level := Archive.normal;
+      rootdir   : constant String := "/";
       basename  : constant String := MISC.archive_basename (archive_path);
       rootuser  : constant Boolean := Archive.Unix.user_is_root;
       pipe_fd   : constant Archive.Unix.File_Descriptor :=
@@ -166,7 +164,7 @@ package body Raven.Install is
       Event.emit_extract_begin (package_data);
       operation.open_rvn_archive (archive_path, level, pipe_fd);
       good_extraction := operation.extract_archive
-        (top_directory => root_directory,
+        (top_directory => rootdir,
          set_owners    => rootuser,
          set_perms     => rootuser,
          set_modtime   => False,
@@ -191,7 +189,6 @@ package body Raven.Install is
                                      opt_skip_scripts : Boolean;
                                      opt_dry_run      : Boolean;
                                      opt_fetch_only   : Boolean;
-                                     root_directory   : String;
                                      single_repo      : String;
                                      patterns         : Pkgtypes.Text_List.Vector)
                                      return Boolean
