@@ -71,12 +71,13 @@ package body Raven.Cmd.Help is
    begin
       TIO.Put_Line ("Global options supported:");
       PL ("-d", "Increment debug level");
-      PL ("-r", "Execute " & prog & "using relocating installation to <rootdir>");
       PL ("-c", "Execute " & prog & "inside a chroot(8)");
       PL ("-C", "Use the specified configuration file");
       PL ("-R", "Directory to search for individual repository configurations");
       PL ("-o", "Override configuration option from the command line");
       PL ("-l", "List available commands and exit");
+      PL ("-4", "Only use IPv4");
+      PL ("-6", "Only use IPv6");
       PL ("-v", "Display " & prog & "version");
       PL ("-v -v", "Display all configuration settings");
       PL ("--status-check", "Check " & prog & " functionality non-invasively");
