@@ -889,7 +889,9 @@ package body Raven.Install is
          for x in 1 .. nextpkg.level loop
             verts (index) := '|';
             index := index + 1;
-            verts (index) := '`';
+            if x = nextpkg.level then
+               verts (index) := '`';
+            end if;
             index := index + 2;
          end loop;
          Event.emit_message (progress & verts & USS (nextpkg.nsv) & '-' & version & star);
