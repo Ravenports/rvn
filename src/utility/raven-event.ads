@@ -1,6 +1,8 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Raven.Pkgtypes;
+
 package Raven.Event is
 
    procedure emit_error          (message : String);
@@ -18,18 +20,12 @@ package Raven.Event is
       err_argument : String;
       err_number   : Integer);
 
-   procedure emit_install_begin
-     (namebase   : String;
-      subpackage : String;
-      variant    : String;
-      version    : String);
-
-   procedure emit_install_end
-     (namebase   : String;
-      subpackage : String;
-      variant    : String;
-      version    : String;
-      message    : String);
+   procedure emit_install_begin (pkg : Pkgtypes.A_Package);
+   procedure emit_install_end   (pkg : Pkgtypes.A_Package);
+   procedure emit_extract_begin (pkg : Pkgtypes.A_Package);
+   procedure emit_extract_end   (pkg : Pkgtypes.A_Package);
+   procedure emit_remove_begin  (pkg : Pkgtypes.A_Package);
+   procedure emit_remove_end    (pkg : Pkgtypes.A_Package);
 
 private
 

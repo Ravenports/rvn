@@ -138,4 +138,7 @@ package Raven.Pkgtypes is
    --  returns name-subpackage-variant
    function nsv_identifier (pkg : A_Package) return String;
 
+   --  returns messages of the same type (install, remove, upgrade) joined by a line feed
+   function combined_messages (pkg : A_Package; mtype : Message_Type) return String;
+
 end Raven.Pkgtypes;

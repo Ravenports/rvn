@@ -164,19 +164,16 @@ package body Raven.Event is
    --------------------------
    --  emit_install_begin  --
    --------------------------
-   procedure emit_install_begin (namebase   : String;
-                                 subpackage : String;
-                                 variant    : String;
-                                 version    : String)
+   procedure emit_install_begin (pkg : Pkgtypes.A_Package)
    is
       jmsg : ThickUCL.UclTree;
    begin
       jmsg.insert ("type", "INFO_INSTALL_BEGIN");
       jmsg.start_object ("data");
-      jmsg.insert ("namebase", namebase);
-      jmsg.insert ("subpackage", subpackage);
-      jmsg.insert ("variant", variant);
-      jmsg.insert ("version", version);
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_install_begin;
@@ -185,23 +182,93 @@ package body Raven.Event is
    ------------------------
    --  emit_install_end  --
    ------------------------
-   procedure emit_install_end (namebase   : String;
-                               subpackage : String;
-                               variant    : String;
-                               version    : String;
-                               message    : String)
+   procedure emit_install_end (pkg : Pkgtypes.A_Package)
    is
       jmsg : ThickUCL.UclTree;
    begin
       jmsg.insert ("type", "INFO_INSTALL_FINISHED");
       jmsg.start_object ("data");
-      jmsg.insert ("namebase", namebase);
-      jmsg.insert ("subpackage", subpackage);
-      jmsg.insert ("variant", variant);
-      jmsg.insert ("version", version);
-      jmsg.insert ("message", message);
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
+      jmsg.insert ("message", Pkgtypes.combined_messages (pkg, Pkgtypes.install));
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_install_end;
+
+
+   --------------------------
+   --  emit_extract_begin  --
+   --------------------------
+   procedure emit_extract_begin (pkg : Pkgtypes.A_Package)
+   is
+      jmsg : ThickUCL.UclTree;
+   begin
+      jmsg.insert ("type", "INFO_EXTRACT_BEGIN");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
+   end emit_extract_begin;
+
+
+   ------------------------
+   --  emit_extract_end  --
+   ------------------------
+   procedure emit_extract_end (pkg : Pkgtypes.A_Package)
+   is
+      jmsg : ThickUCL.UclTree;
+   begin
+      jmsg.insert ("type", "INFO_EXTRACT_FINISHED");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
+   end emit_extract_end;
+
+
+   -------------------------
+   --  emit_remove_begin  --
+   -------------------------
+   procedure emit_remove_begin  (pkg : Pkgtypes.A_Package)
+   is
+      jmsg : ThickUCL.UclTree;
+   begin
+      jmsg.insert ("type", "INFO_REMOVE_BEGIN");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
+   end emit_remove_begin;
+
+
+   -----------------------
+   --  emit_remove_end  --
+   -----------------------
+   procedure emit_remove_end (pkg : Pkgtypes.A_Package)
+   is
+      jmsg : ThickUCL.UclTree;
+   begin
+      jmsg.insert ("type", "INFO_REMOVE_FINISHED");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
+      jmsg.insert ("message", Pkgtypes.combined_messages (pkg, Pkgtypes.deinstall));
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
+   end emit_remove_end;
+
 
 end Raven.Event;
