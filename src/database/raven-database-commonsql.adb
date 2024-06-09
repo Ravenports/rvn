@@ -83,7 +83,7 @@ package body Raven.Database.CommonSQL is
       if IsBlank (savepoint) then
          return run_transaction (db, srcfile, func, "ROLLBACK TRANSACTION", "");
       else
-         return run_transaction (db, srcfile, func, "ROLLBACK TO SAVEPOINT", savepoint);
+         return run_transaction (db, srcfile, func, "ROLLBACK TRANSACTION TO SAVEPOINT", savepoint);
       end if;
    end transaction_rollback;
 
@@ -125,8 +125,8 @@ package body Raven.Database.CommonSQL is
 
       stmt : SQLite.thick_stmt;
    begin
-      Event.emit_debug (high_level, "RDB: running " & DQ (joinsql));
       if SQLite.prepare_sql (db, joinsql, stmt) then
+         debug_running_stmt (stmt);
          if not SQLite.step_to_completion (stmt => stmt, num_retries => 6) then
             ERROR_SQLITE (db, srcfile, func, joinsql);
             SQLite.finalize_statement (stmt);
