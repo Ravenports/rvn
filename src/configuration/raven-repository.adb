@@ -477,6 +477,7 @@ package body Raven.Repository is
             return False;
          end if;
 
+         Event.emit_fetch_begin (url_str, 0);
          result := Fetch.download_file
            (remote_file_url => url_str,
             etag_file       => "",
@@ -495,9 +496,18 @@ package body Raven.Repository is
                if not CAL.set_expiration_time (cached_copy, 300) then
                   Event.emit_debug (high_level, "Failed to update mtime on " & cached_copy);
                end if;
+               case result is
+                  when Fetch.retrieval_failed => null;  --  impossible
+                  when Fetch.cache_valid =>
+                     Event.emit_fetch_finished (url_str, 0, "cache-valid");
+                  when Fetch.file_downloaded =>
+                     Event.emit_fetch_finished (url_str, Pkgtypes.get_file_size (cached_copy),
+                                                "downloaded");
+               end case;
                return True;
             when Fetch.retrieval_failed =>
                Event.emit_error ("Failed to obtain reference checksum from the " & master_repo);
+               Event.emit_fetch_finished (url_str, 0, "failed");
                return False;
          end case;
       end;

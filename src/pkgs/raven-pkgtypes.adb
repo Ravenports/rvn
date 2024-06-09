@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Archive.Unix;
 with Raven.Version;
 with Raven.Strings;
 use Raven.Strings;
@@ -75,5 +76,24 @@ package body Raven.Pkgtypes is
       pkg.messages (mtype).Iterate (join'Access);
       return USS (combined_msg);
    end combined_messages;
+
+
+   ---------------------
+   --  get_file_size  --
+   ---------------------
+   function get_file_size (path : String) return Package_Size
+   is
+      features : Archive.Unix.File_Characteristics;
+   begin
+      features := Archive.Unix.get_charactistics (path);
+      case features.ftype is
+         when Archive.unsupported => return 0;
+         when Archive.directory |
+              Archive.symlink |
+              Archive.fifo => return 0;
+         when Archive.regular | Archive.hardlink => return Package_Size (features.size);
+      end case;
+   end get_file_size;
+
 
 end Raven.Pkgtypes;

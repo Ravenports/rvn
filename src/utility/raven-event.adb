@@ -329,7 +329,10 @@ package body Raven.Event is
    ---------------------------
    --  emit_fetch_finished  --
    ---------------------------
-   procedure emit_fetch_finished (url : String; rvnsize : Pkgtypes.Package_Size)
+   procedure emit_fetch_finished
+     (url     : String;
+      rvnsize : Pkgtypes.Package_Size;
+      result  : String)
    is
       jmsg : ThickUCL.UclTree;
    begin
@@ -337,6 +340,7 @@ package body Raven.Event is
       jmsg.start_object ("data");
       jmsg.insert ("url", url);
       jmsg.insert ("size", Ucl.ucl_integer (rvnsize));
+      jmsg.insert ("result", result);
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_fetch_finished;

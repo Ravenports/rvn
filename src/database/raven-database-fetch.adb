@@ -482,17 +482,19 @@ package body Raven.Database.Fetch is
                                    file_counter  => counter,
                                    total_files   => total_files)
             is
-               when verified_download => null;
+               when verified_download =>
+                  Event.emit_fetch_finished (USS (repo.url), myrec.rvnsize, "successful");
                when failed_download =>
                   success := False;
+                  Event.emit_fetch_finished (USS (repo.url), 0, "failed download");
                   SU.Append (postlog, "Failed download: " &
                                USS (myrec.nsvv) & extension & LAT.LF);
                when failed_verification =>
                   success := False;
+                  Event.emit_fetch_finished (USS (repo.url), 0, "failed verification");
                   SU.Append (postlog, "Checksum verification failed: " &
                                USS (myrec.nsvv) & extension & LAT.LF);
             end case;
-            Event.emit_fetch_finished (USS (repo.url), myrec.rvnsize);
          end retrieve_rvn_file;
       begin
          download_order.Iterate (retrieve_rvn_file'Access);
