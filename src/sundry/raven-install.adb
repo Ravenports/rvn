@@ -849,21 +849,21 @@ package body Raven.Install is
       begin
          if total = 0 then
             if counter < 10_000 then
-               return pad_left (int2str (counter), 4) & ". ";
+               return pad_left (int2str (counter), 4) & ".  ";
             end if;
-            return pad_left (int2str (counter), 5) & ' ';  --  truncates from front at 100,000+
+            return pad_left (int2str (counter), 5) & "  ";  --  truncates from front at 100,000+
          end if;
           case total is
             when 0 .. 9 =>
-               return "[" & int2str (counter) & "/" & int2str (total) & "] ";
+               return "[" & int2str (counter) & "/" & int2str (total) & "]  ";
             when 10 .. 99 =>
-               return "[" & zeropad (counter, 2) & "/" & int2str (total) & "] ";
+               return "[" & zeropad (counter, 2) & "/" & int2str (total) & "]  ";
             when 100 .. 999 =>
-               return "[" & zeropad (counter, 3) & "/" & int2str (total) & "] ";
+               return "[" & zeropad (counter, 3) & "/" & int2str (total) & "]  ";
             when 1000 .. 9999 =>
-               return "[" & zeropad (counter, 4) & "/" & int2str (total) & "] ";
+               return "[" & zeropad (counter, 4) & "/" & int2str (total) & "]  ";
             when others =>
-               return "[" & zeropad (counter, 5) & "/" & int2str (total) & "] ";
+               return "[" & zeropad (counter, 5) & "/" & int2str (total) & "]  ";
          end case;
       end progress;
 
@@ -940,6 +940,11 @@ package body Raven.Install is
          use type Pkgtypes.Package_Size;
       begin
          total_flatsize := total_flatsize - flatsize;
+      exception
+         when others =>
+            --  Package_Size can't go negative, so attempting it throws an exception
+            --  That could only happen if an upgrade is smaller than the current installation.
+            total_flatsize := 0;
       end decrement;
 
       procedure display (Position : Install_Order_Set.Cursor)
