@@ -492,16 +492,18 @@ package body Raven.Database.Operations is
                return False;
             end if;
 
+            Event.emit_debug (high_level, "executing " & SQ (sql));
             if not SQLite.exec_sql (db.handle, sql) then
-               Event.emit_error ("schema update failed, sql: " & sql);
+               Event.emit_error ("schema update failed");
                if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, "") then
                   Event.emit_error ("schema update rollback failed.");
                end if;
                return False;
             end if;
 
+            Event.emit_debug (high_level, "executing " & SQ (pragsql));
             if not SQLite.exec_sql (db.handle, pragsql) then
-               Event.emit_error ("schema update failed, sql: " & pragsql);
+               Event.emit_error ("schema update failed");
                if not CommonSQL.transaction_rollback (db.handle, internal_srcfile, func, "") then
                   Event.emit_error ("schema update rollback failed.");
                end if;
