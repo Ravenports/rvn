@@ -202,7 +202,7 @@ package body Raven.Database.Fetch is
       if download_list.Is_Empty then
          if not behave_quiet then
             Event.emit_message
-              ("The latest versions of the requested packages are already available locally.");
+              ("The latest versions of the requested packages are already cached.");
          end if;
          return True;
       end if;

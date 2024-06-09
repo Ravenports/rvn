@@ -910,7 +910,7 @@ package body Raven.Install is
          return True;
       end if;
 
-      Event.emit_message (LAT.LF & "Proceed with installing packages? [y/n]: ");
+      Event.emit_message ("Proceed with installing packages? [y/n]: ");
       Ada.Text_IO.Get_Immediate (cont);
       case cont is
          when 'Y' | 'y' => return True;
