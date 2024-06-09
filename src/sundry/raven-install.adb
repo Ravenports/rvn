@@ -296,12 +296,8 @@ package body Raven.Install is
          return False;
       end if;
 
-      if not LOK.obtain_lock (localdb, active_lock) then
-         case active_lock is
-            when LOK.lock_advisory  => Event.emit_error (LOK.no_adv_lock);
-            when LOK.lock_exclusive => Event.emit_error (LOK.no_exc_lock);
-            when LOK.lock_readonly  => Event.emit_error (LOK.no_read_lock);
-         end case;
+      if not LOK.obtain_lock (localdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
          released1 := release_active_lock (rdb);
          OPS.rdb_close (rdb);
          OPS.rdb_close (localdb);
@@ -388,13 +384,13 @@ package body Raven.Install is
          end;
       end if;
 
-      released2 := release_active_lock (localdb);
+      released2 := LOK.release_lock (localdb, LOK.lock_readonly);
       OPS.rdb_close (localdb);
 
       released1 := release_active_lock (rdb);
       OPS.rdb_close (rdb);
 
-      return succeeded and then released1 and then released2;
+      return succeeded and then released1;
 
    end install_remote_packages;
 
