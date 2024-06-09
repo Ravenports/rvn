@@ -132,7 +132,18 @@ private
       file_collection : in out Pkgtypes.NV_Pairs.Map) return Boolean;
 
    procedure print_next_installation
-     (nextpkg : Install_Order_Type;
-      version : String);
+     (nextpkg  : Install_Order_Type;
+      version  : String;
+      counter  : Natural;
+      total    : Natural);
+
+   function granted_permission_to_proceed
+     (quiet : Boolean) return Boolean;
+
+   procedure show_proposed_queue
+     (queue        : Install_Order_Set.Vector;
+      cache_map    : Pkgtypes.Package_Map.Map;
+      install_map  : Pkgtypes.Package_Map.Map;
+      behave_quiet : Boolean);
 
 end Raven.Install;

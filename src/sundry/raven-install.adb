@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Context;
 with Raven.Version;
@@ -24,6 +25,7 @@ use Raven.Strings;
 package body Raven.Install is
 
    package TIO  renames Ada.Text_IO;
+   package LAT  renames Ada.Characters.Latin_1;
    package MISC renames Raven.Miscellaneous;
    package INST renames Raven.Database.Add;
    package PKGS renames Raven.Database.Pkgs;
@@ -156,7 +158,6 @@ package body Raven.Install is
          return "install";
       end action;
    begin
-      --  Placeholder, needs to update graphically with indents and lines.
       if dry_run_only then
          Event.emit_message ("dry-run: " & action & " " & basename & " package");
          return True;
@@ -327,6 +328,11 @@ package body Raven.Install is
 
                if succeeded then
                   succeeded := conflict_free (queue, cache_map, file_collection);
+               end if;
+
+               if succeeded then
+                  show_proposed_queue (queue, cache_map, install_map, opt_quiet);
+                  succeeded := granted_permission_to_proceed (opt_quiet);
                end if;
             end if;
          end;
@@ -834,11 +840,44 @@ package body Raven.Install is
    -------------------------------
    --  print_next_installation  --
    -------------------------------
-   procedure print_next_installation (nextpkg : Install_Order_Type; version : String)
+   procedure print_next_installation (nextpkg  : Install_Order_Type;
+                                      version  : String;
+                                      counter  : Natural;
+                                      total    : Natural)
    is
+      function progress return String is
+      begin
+         if total = 0 then
+            if counter < 10_000 then
+               return pad_left (int2str (counter), 4) & ". ";
+            end if;
+            return pad_left (int2str (counter), 5) & ' ';  --  truncates from front at 100,000+
+         end if;
+          case total is
+            when 0 .. 9 =>
+               return "[" & int2str (counter) & "/" & int2str (total) & "] ";
+            when 10 .. 99 =>
+               return "[" & zeropad (counter, 2) & "/" & int2str (total) & "] ";
+            when 100 .. 999 =>
+               return "[" & zeropad (counter, 3) & "/" & int2str (total) & "] ";
+            when 1000 .. 9999 =>
+               return "[" & zeropad (counter, 4) & "/" & int2str (total) & "] ";
+            when others =>
+               return "[" & zeropad (counter, 5) & "/" & int2str (total) & "] ";
+         end case;
+      end progress;
+
+      function star return String is
+      begin
+         case nextpkg.action is
+            when reinstall   => return " [*]";
+            when upgrade     => return " [U]";
+            when new_install => return "";
+         end case;
+      end star;
    begin
       if nextpkg.level = 0 then
-         Event.emit_message (USS (nextpkg.nsv) & "-" & version);
+         Event.emit_message (progress & USS (nextpkg.nsv) & "-" & version & star);
          return;
       end if;
 
@@ -853,8 +892,81 @@ package body Raven.Install is
             verts (index) := '`';
             index := index + 2;
          end loop;
-         Event.emit_message (verts & USS (nextpkg.nsv) & '-' & version);
+         Event.emit_message (progress & verts & USS (nextpkg.nsv) & '-' & version & star);
       end;
    end print_next_installation;
+
+
+   -------------------------------------
+   --  granted_permission_to_proceed  --
+   -------------------------------------
+   function granted_permission_to_proceed (quiet : Boolean) return Boolean
+   is
+      cont : Character;
+   begin
+      if quiet or else RCU.config_setting (RCU.CFG.assume_yes) then
+         return True;
+      end if;
+
+      Event.emit_message (LAT.LF & "Proceed with installing packages? [y/n]: ");
+      Ada.Text_IO.Get_Immediate (cont);
+      case cont is
+         when 'Y' | 'y' => return True;
+         when others => return False;
+      end case;
+   end granted_permission_to_proceed;
+
+
+   procedure show_proposed_queue
+     (queue        : Install_Order_Set.Vector;
+      cache_map    : Pkgtypes.Package_Map.Map;
+      install_map  : Pkgtypes.Package_Map.Map;
+      behave_quiet : Boolean)
+   is
+      counter : Natural := 0;
+      total_flatsize : Pkgtypes.Package_Size := 0;
+
+      procedure increment (flatsize : Pkgtypes.Package_Size)
+      is
+         use type Pkgtypes.Package_Size;
+      begin
+         total_flatsize := total_flatsize + flatsize;
+      end increment;
+
+      procedure decrement (flatsize : Pkgtypes.Package_Size)
+      is
+         use type Pkgtypes.Package_Size;
+      begin
+         total_flatsize := total_flatsize - flatsize;
+      end decrement;
+
+      procedure display (Position : Install_Order_Set.Cursor)
+      is
+         myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+         version : constant String := USS (cache_map.Element (myrec.nsv).version);
+         already_installed : constant Boolean := install_map.Contains (myrec.nsv);
+      begin
+         counter := counter + 1;
+         print_next_installation (myrec, version, counter, 0);
+         case myrec.action is
+            when new_install =>
+               increment (cache_map.Element (myrec.nsv).flatsize);
+            when reinstall | upgrade =>
+               increment (cache_map.Element (myrec.nsv).flatsize);
+               if already_installed then
+                  decrement (install_map.Element (myrec.nsv).flatsize);
+               end if;
+         end case;
+      end display;
+   begin
+      if behave_quiet then
+         return;
+      end if;
+      Event.emit_message ("The following packages will be installed:" & LAT.LF);
+      queue.Iterate (display'Access);
+      Event.emit_message (LAT.LF & "Disk space required to install these packages: " &
+                           Metadata.human_readable_size (int64 (total_flatsize)));
+   end show_proposed_queue;
+
 
 end Raven.Install;
