@@ -85,7 +85,7 @@ package Raven.Pkgtypes is
 
    type A_Package is
       record
-         id            : Package_ID;
+         id            : Package_ID := 0;
          namebase      : Text;
          subpackage    : Text;
          variant       : Text;
@@ -97,11 +97,11 @@ package Raven.Pkgtypes is
          comment       : Text;
          desc          : Text;
          rvndigest     : Text;
-         licenselogic  : License_Logic;
-         automatic     : Boolean;
-         rvnsize       : Package_Size;
-         flatsize      : Package_Size;
-         install_time  : Epoch_Timestamp;
+         licenselogic  : License_Logic := License_Logic'First;
+         automatic     : Boolean := False;
+         rvnsize       : Package_Size := 0;
+         flatsize      : Package_Size := 0;
+         install_time  : Epoch_Timestamp := 0;
          users         : Text_List.Vector;
          groups        : Text_List.Vector;
          licenses      : Text_List.Vector;
