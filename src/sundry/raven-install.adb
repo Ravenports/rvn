@@ -904,6 +904,7 @@ package body Raven.Install is
       begin
          if total = 0 then
             Event.emit_message (msg);
+            return;
          end if;
          declare
             canvas : String (1 .. 75) := pad_right (msg, 75);
