@@ -81,7 +81,7 @@ package body Raven.Database.Lock is
             when SQLite.no_more_data =>
                exit;
             when SQLite.row_present =>
-               pid := Unix.Process_ID (SQLite.retrieve_integer (new_stmt, 1));
+               pid := Unix.Process_ID (SQLite.retrieve_integer (new_stmt, 0));
                if pid /= lpid then
                   if Unix.running_process (pid) then
                      Event.emit_debug (moderate, "found stale pid" & pid'Img &
