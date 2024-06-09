@@ -13,6 +13,7 @@ with Raven.Database.Add;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
 with Raven.Database.Fetch;
+with Raven.Database.Remove;
 with Raven.Database.Operations;
 with Raven.Strings;
 with Archive.Unpack;
@@ -31,15 +32,19 @@ package body Raven.Install is
    package PKGS renames Raven.Database.Pkgs;
    package LOK  renames Raven.Database.Lock;
    package FET  renames Raven.Database.Fetch;
+   package DEL  renames Raven.Database.Remove;
    package OPS  renames Raven.Database.Operations;
    package RCU  renames Raven.Cmd.Unset;
 
-   function reinstall_or_upgrade (rdb         : in out Database.RDB_Connection;
-                                  action      : refresh_action;
-                                  current_pkg : Pkgtypes.A_Package;
-                                  updated_pkg : String;
-                                  no_scripts  : Boolean;
-                                  post_report : TIO.File_Type) return Boolean
+   --------------------------
+   --  install_or_upgrade  --
+   --------------------------
+   function install_or_upgrade (rdb         : in out Database.RDB_Connection;
+                                action      : refresh_action;
+                                current_pkg : Pkgtypes.A_Package;
+                                updated_pkg : String;
+                                no_scripts  : Boolean;
+                                post_report : TIO.File_Type) return Boolean
    is
       features  : Archive.Unix.File_Characteristics;
       file_list : Archive.Unpack.file_records.Vector;
@@ -81,43 +86,70 @@ package body Raven.Install is
 
       case action is
          when upgrade =>
+            Event.emit_remove_begin (current_pkg);
             Deinstall.deinstall_extracted_package (installed_package   => current_pkg,
                                                    verify_digest_first => False,
                                                    quiet               => True,
                                                    inhibit_scripts     => no_scripts,
                                                    post_report         => post_report);
 
+            DEL.drop_package_with_cascade (rdb, current_pkg.id);
+            Event.emit_remove_end (current_pkg);
+
+            Event.emit_install_begin (shiny_pkg);
             success := PKGS.rdb_register_package (db     => rdb,
                                                   pkg    => shiny_pkg,
                                                   forced => False);
             if success then
+               Event.emit_extract_begin (shiny_pkg);
                success := install_files_from_archive (archive_path    => updated_pkg,
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => True,
                                                       package_data    => shiny_pkg);
+               Event.emit_extract_end (shiny_pkg);
             end if;
+            Event.emit_install_end (shiny_pkg);
          when reinstall =>
+            Event.emit_install_begin (shiny_pkg);
             success := PKGS.rdb_register_package (db     => rdb,
                                                   pkg    => shiny_pkg,
                                                   forced => True);
             if success then
+               Event.emit_extract_begin (shiny_pkg);
                success := install_files_from_archive (archive_path    => updated_pkg,
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
                                                       package_data    => shiny_pkg);
-               end if;
+               Event.emit_extract_end (shiny_pkg);
+            end if;
+            Event.emit_install_end (shiny_pkg);
 
          when new_install =>
-            success := False;
+            Event.emit_install_begin (shiny_pkg);
+            success := PKGS.rdb_register_package (db     => rdb,
+                                                  pkg    => shiny_pkg,
+                                                  forced => False);
+
+            if success then
+               Event.emit_extract_begin (shiny_pkg);
+               success := install_files_from_archive (archive_path    => updated_pkg,
+                                                      inhibit_scripts => no_scripts,
+                                                      be_silent       => True,
+                                                      dry_run_only    => False,
+                                                      upgrading       => False,
+                                                      package_data    => shiny_pkg);
+               Event.emit_extract_end (shiny_pkg);
+            end if;
+            Event.emit_install_end (shiny_pkg);
       end case;
 
       return success;
 
-   end reinstall_or_upgrade;
+   end install_or_upgrade;
 
 
    ----------------------------------
@@ -297,6 +329,7 @@ package body Raven.Install is
                opt_exactly   => opt_exact_match,
                opt_force     => opt_force,
                opt_drop_deps => opt_drop_depends,
+               opt_noscripts => opt_skip_scripts,
                queue         => queue);
 
             --  if queue is empty, there's nothing more to do
@@ -533,6 +566,7 @@ package body Raven.Install is
       opt_exactly   : Boolean;
       opt_force     : Boolean;
       opt_drop_deps : Boolean;
+      opt_noscripts : Boolean;
       queue         : in out Install_Order_Set.Vector)
    is
       prov_check   : Install_Order_Set.Vector;
@@ -865,9 +899,21 @@ package body Raven.Install is
             when new_install => return "";
          end case;
       end star;
+
+      procedure emit (msg : String) is
+      begin
+         if total = 0 then
+            Event.emit_message (msg);
+         end if;
+         declare
+            canvas : String (1 .. 75) := pad_right (msg, 75);
+         begin
+            Event.emit_premessage (canvas);
+         end;
+      end emit;
    begin
       if nextpkg.level = 0 then
-         Event.emit_message (progress & USS (nextpkg.nsv) & "-" & version & star);
+         emit (progress & USS (nextpkg.nsv) & "-" & version & star);
          return;
       end if;
 
@@ -884,7 +930,7 @@ package body Raven.Install is
             end if;
             index := index + 2;
          end loop;
-         Event.emit_message (progress & verts & USS (nextpkg.nsv) & '-' & version & star);
+         emit (progress & verts & USS (nextpkg.nsv) & '-' & version & star);
       end;
    end print_next_installation;
 
@@ -972,13 +1018,88 @@ package body Raven.Install is
    ----------------------------------
    --  execute_installation_queue  --
    ----------------------------------
-   --  function execute_installation_queue
-   --    (queue        : Install_Order_Set.Vector;
-   --     cache_map    : Pkgtypes.Package_Map.Map;
-   --     behave_quiet : Boolean)
-   --  is
-   --  begin
-   --  end execute_installation_queue;
+   function execute_installation_queue
+     (rdb          : in out Database.RDB_Connection;
+      queue        : Install_Order_Set.Vector;
+      cache_map    : Pkgtypes.Package_Map.Map;
+      install_map  : Pkgtypes.Package_Map.Map;
+      skip_scripts : Boolean;
+      behave_quiet : Boolean) return Boolean
+   is
+      tmp_filename  : constant String := Miscellaneous.get_temporary_filename ("install");
+      total_steps   : constant Natural := Natural (queue.Length);
+      this_step     : Natural := 0;
+      install_log   : TIO.File_Type;
+      problem_found : Boolean := False;
+
+      procedure execute_step (Position : Install_Order_Set.Cursor)
+      is
+         myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+         version : constant String := USS (cache_map.Element (myrec.nsv).version);
+         rvn_path : constant String := RCU.config_setting (RCU.CFG.cachedir) & "/" &
+           Pkgtypes.nsvv_identifier (cache_map (myrec.nsv)) & extension;
+         dummy_pkg : Pkgtypes.A_Package;
+         succeeded : Boolean;
+      begin
+         if problem_found then
+            return;
+         end if;
+
+         this_step := this_step + 1;
+         if not behave_quiet then
+            print_next_installation (myrec, version, this_step, total_steps);
+         end if;
+         case myrec.action is
+            when reinstall | upgrade =>
+              succeeded := install_or_upgrade (rdb         => rdb,
+                                               action      => myrec.action,
+                                               current_pkg => install_map.Element (myrec.nsv),
+                                               updated_pkg => rvn_path,
+                                               no_scripts  => skip_scripts,
+                                               post_report => install_log);
+            when new_install =>
+               succeeded := install_or_upgrade (rdb         => rdb,
+                                                action      => myrec.action,
+                                                current_pkg => dummy_pkg,
+                                                updated_pkg => rvn_path,
+                                                no_scripts  => skip_scripts,
+                                                post_report => install_log);
+         end case;
+         if succeeded then
+            if not behave_quiet then
+               Event.emit_message ("[ok]");
+            end if;
+         else
+            problem_found := True;
+            if not behave_quiet then
+               Event.emit_message ("FAIL");
+            end if;
+            Event.emit_error ("Installation failure detected! Remaining steps skipped.");
+         end if;
+      end execute_step;
+   begin
+      TIO.Create (install_log, TIO.Out_File, tmp_filename);
+      queue.Iterate (execute_step'Access);
+      TIO.Close (install_log);
+
+      if not behave_quiet then
+         if Pkgtypes.">" (Pkgtypes.get_file_size (tmp_filename), 5) then
+            TIO.Open (install_log, TIO.In_File, tmp_filename);
+            while not  TIO.End_Of_File (install_log) Loop
+               Event.emit_message (TIO.Get_Line (install_log));
+            end loop;
+            TIO.Close (install_log);
+         end if;
+      end if;
+
+      if Archive.Unix.file_exists (tmp_filename) then
+         if not Archive.Unix.unlink_file (tmp_filename) then
+            Event.emit_debug (moderate, "Failed to unlink temporary file " & tmp_filename);
+         end if;
+      end if;
+
+      return not problem_found;
+   end execute_installation_queue;
 
 
 end Raven.Install;

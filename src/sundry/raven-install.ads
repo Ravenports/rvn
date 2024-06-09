@@ -82,7 +82,7 @@ private
 
    package Desc_sorter is new Descendant_Set.Generic_Sorting ("<" => desc_desc);
 
-   function reinstall_or_upgrade
+   function install_or_upgrade
      (rdb         : in out Database.RDB_Connection;
       action      : refresh_action;
       current_pkg : Pkgtypes.A_Package;
@@ -117,6 +117,7 @@ private
       opt_exactly   : Boolean;
       opt_force     : Boolean;
       opt_drop_deps : Boolean;
+      opt_noscripts : Boolean;
       queue         : in out Install_Order_Set.Vector);
 
    procedure calc_dependency_descendants
@@ -144,10 +145,12 @@ private
       install_map  : Pkgtypes.Package_Map.Map;
       behave_quiet : Boolean);
 
-   --  function execute_installation_queue
-   --    (queue        : Install_Order_Set.Vector;
-   --     cache_map    : Pkgtypes.Package_Map.Map;
-   --     rootdir      : String;
-   --     behave_quiet : Boolean) return Boolean;
+   function execute_installation_queue
+     (rdb          : in out Database.RDB_Connection;
+      queue        : Install_Order_Set.Vector;
+      cache_map    : Pkgtypes.Package_Map.Map;
+      install_map  : Pkgtypes.Package_Map.Map;
+      skip_scripts : Boolean;
+      behave_quiet : Boolean) return Boolean;
 
 end Raven.Install;
