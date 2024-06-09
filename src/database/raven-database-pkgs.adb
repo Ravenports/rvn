@@ -143,11 +143,11 @@ package body Raven.Database.Pkgs is
          onward := run_prstmt_file (db, pkg);
       end if;
 
-      if not new_package then
-         remove_orphaned_files (pkg, old_files);
-      end if;
-
       if onward then
+         if not new_package then
+            remove_orphaned_files (pkg, old_files);
+         end if;
+
          if not CommonSQL.transaction_commit (db.handle, internal_srcfile, func, save) then
             Event.emit_error (func & ": Failed to commit transaction");
             return False;
