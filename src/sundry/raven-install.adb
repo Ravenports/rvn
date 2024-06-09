@@ -49,14 +49,6 @@ package body Raven.Install is
       shiny_pkg : Pkgtypes.A_Package;
       success   : Boolean;
 
-      function extract_location return String is
-      begin
-         if rootdir = "" then
-            return "/";
-         end if;
-         return rootdir;
-      end extract_location;
-
       procedure transfer_custom_notes (Position : Pkgtypes.NoteSet.Cursor)
       is
          mynote : Pkgtypes.Note_Item renames Pkgtypes.NoteSet.Element (Position);
@@ -78,7 +70,7 @@ package body Raven.Install is
       end case;
 
       operation.open_rvn_archive (updated_pkg, Archive.silent, Archive.Unix.not_connected);
-      if not operation.extract_manifest (file_list, extract_location) then
+      if not operation.extract_manifest (file_list, rootdir) then
          Event.emit_error ("Failed to extract manifest of packaged files.");
       end if;
       operation.populate_metadata_tree (metatree);
@@ -100,7 +92,7 @@ package body Raven.Install is
                                                   forced => False);
             if success then
                success := install_files_from_archive (archive_path    => updated_pkg,
-                                                      root_directory  => extract_location,
+                                                      root_directory  => rootdir,
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
@@ -113,7 +105,7 @@ package body Raven.Install is
                                                   forced => True);
             if success then
                success := install_files_from_archive (archive_path    => updated_pkg,
-                                                      root_directory  => extract_location,
+                                                      root_directory  => rootdir,
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
@@ -199,6 +191,7 @@ package body Raven.Install is
                                      opt_skip_scripts : Boolean;
                                      opt_dry_run      : Boolean;
                                      opt_fetch_only   : Boolean;
+                                     root_directory   : String;
                                      single_repo      : String;
                                      patterns         : Pkgtypes.Text_List.Vector)
                                      return Boolean
@@ -919,6 +912,9 @@ package body Raven.Install is
    end granted_permission_to_proceed;
 
 
+   ---------------------------
+   --  show_proposed_queue  --
+   ---------------------------
    procedure show_proposed_queue
      (queue        : Install_Order_Set.Vector;
       cache_map    : Pkgtypes.Package_Map.Map;
@@ -974,6 +970,18 @@ package body Raven.Install is
       Event.emit_message (LAT.LF & "Disk space required to install these packages: " &
                            Metadata.human_readable_size (int64 (total_flatsize)));
    end show_proposed_queue;
+
+
+   ----------------------------------
+   --  execute_installation_queue  --
+   ----------------------------------
+   --  function execute_installation_queue
+   --    (queue        : Install_Order_Set.Vector;
+   --     cache_map    : Pkgtypes.Package_Map.Map;
+   --     behave_quiet : Boolean)
+   --  is
+   --  begin
+   --  end execute_installation_queue;
 
 
 end Raven.Install;

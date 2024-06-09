@@ -23,15 +23,6 @@ package Raven.Install is
 
    type refresh_action is (new_install, reinstall, upgrade);
 
-   function reinstall_or_upgrade
-     (rdb         : in out Database.RDB_Connection;
-      action      : refresh_action;
-      current_pkg : Pkgtypes.A_Package;
-      updated_pkg : String;
-      rootdir     : String;
-      no_scripts  : Boolean;
-      post_report : Ada.Text_IO.File_Type) return Boolean;
-
    --  Prior to this routine many things need to have been done:
    --  * archive_path verified to be an existing regular file
    --  * conflict check (conflicts overridden by --forced)
@@ -60,6 +51,7 @@ package Raven.Install is
       opt_skip_scripts : Boolean;
       opt_dry_run      : Boolean;
       opt_fetch_only   : Boolean;
+      root_directory   : String;
       single_repo      : String;
       patterns         : Pkgtypes.Text_List.Vector)
       return Boolean;
@@ -91,6 +83,15 @@ private
       Index_Type   => Natural);
 
    package Desc_sorter is new Descendant_Set.Generic_Sorting ("<" => desc_desc);
+
+   function reinstall_or_upgrade
+     (rdb         : in out Database.RDB_Connection;
+      action      : refresh_action;
+      current_pkg : Pkgtypes.A_Package;
+      updated_pkg : String;
+      rootdir     : String;
+      no_scripts  : Boolean;
+      post_report : Ada.Text_IO.File_Type) return Boolean;
 
    function assemble_work_queue
      (rdb             : in out Database.RDB_Connection;
@@ -145,5 +146,10 @@ private
       cache_map    : Pkgtypes.Package_Map.Map;
       install_map  : Pkgtypes.Package_Map.Map;
       behave_quiet : Boolean);
+
+   --  function execute_installation_queue
+   --    (queue        : Install_Order_Set.Vector;
+   --     cache_map    : Pkgtypes.Package_Map.Map;
+   --     behave_quiet : Boolean) return Boolean;
 
 end Raven.Install;

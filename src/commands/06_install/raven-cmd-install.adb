@@ -31,6 +31,16 @@ package body Raven.Cmd.Install is
       rdb     : Database.RDB_Connection;
       mirrors : Repository.A_Repo_Config_Set;
       single  : constant String := USS (comline.common_options.repo_name);
+
+      function extract_location return String
+      is
+         rootdir : constant String := USS (comline.pre_command.install_rootdir);
+      begin
+         if rootdir = "" then
+            return "/";
+         end if;
+         return rootdir;
+      end extract_location;
    begin
       if comline.cmd_install.local_file then
          if not comline.cmd_install.no_register then
@@ -82,6 +92,7 @@ package body Raven.Cmd.Install is
             opt_skip_scripts => comline.cmd_install.inhibit_scripts,
             opt_dry_run      => comline.common_options.dry_run,
             opt_fetch_only   => comline.cmd_install.fetch_only,
+            root_directory   => extract_location,
             single_repo      => single,
             patterns         => comline.cmd_install.name_patterns);
       end if;
