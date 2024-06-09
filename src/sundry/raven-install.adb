@@ -93,7 +93,6 @@ package body Raven.Install is
             return False;
       end case;
 
-      operation.open_rvn_archive (updated_pkg, Archive.silent, Archive.Unix.not_connected);
       if not operation.extract_manifest (file_list, rootdir) then
          Event.emit_error ("Failed to extract manifest of packaged files.");
       end if;
