@@ -155,7 +155,7 @@ package body Raven.Database.Lock is
                                         "WHERE exclusive=0 AND advisory=0;";
       set_excl_sql : constant String := "UPDATE lock_state SET exclusive=1 " &
                                         "WHERE exclusive=0 AND advisory=0 AND read=0;";
-      save         : constant String := "LOCKDB";
+      save         : constant String := lock'Img;
       func         : constant String := "obtain_lock";
       read_lock    : constant Boolean := RCU.config_setting (RCU.CFG.read_lock);
       locked       : Boolean;
