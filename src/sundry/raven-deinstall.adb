@@ -99,6 +99,7 @@ package body Raven.Deinstall is
          end if;
       end eradicate_file;
    begin
+      Event.emit_remove_begin (installed_package);
       if not inhibit_scripts then
          run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, tmp_message_shell);
          run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, tmp_message_lua);
@@ -125,6 +126,7 @@ package body Raven.Deinstall is
       if not Archive.Unix.unlink_file (tmp_message_lua) then
          null;
       end if;
+      Event.emit_remove_end (installed_package);
    end deinstall_extracted_package;
 
 

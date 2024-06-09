@@ -161,6 +161,21 @@ package body Raven.Event is
    end emit_no_local_db;
 
 
+   -------------------------
+   --  emit_no_remote_db  --
+   -------------------------
+   procedure emit_no_remote_db
+   is
+      jmsg : ThickUCL.UclTree;
+   begin
+      jmsg.insert ("type", "ERROR_NOREMOTEDB");
+      jmsg.start_object ("data");
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
+      warnx ("Catalog database nonexistent!");
+   end emit_no_remote_db;
+
+
    --------------------------
    --  emit_install_begin  --
    --------------------------

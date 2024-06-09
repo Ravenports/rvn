@@ -10,6 +10,7 @@ package Raven.Event is
    procedure emit_message        (message : String);
    procedure emit_premessage     (message : String);
    procedure emit_no_local_db;
+   procedure emit_no_remote_db;
 
    procedure emit_debug
      (debug_level : A_Debug_Level;

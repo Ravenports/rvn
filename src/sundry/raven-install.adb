@@ -831,4 +831,30 @@ package body Raven.Install is
    end conflict_free;
 
 
+   -------------------------------
+   --  print_next_installation  --
+   -------------------------------
+   procedure print_next_installation (nextpkg : Install_Order_Type; version : String)
+   is
+   begin
+      if nextpkg.level = 0 then
+         Event.emit_message (USS (nextpkg.nsv) & "-" & version);
+         return;
+      end if;
+
+      declare
+         vlast : Natural := 3 * nextpkg.level;
+         verts : string (1 .. vlast) := (others => ' ');
+         index : Natural := 1;
+      begin
+         for x in 1 .. nextpkg.level loop
+            verts (index) := '|';
+            index := index + 1;
+            verts (index) := '`';
+            index := index + 2;
+         end loop;
+         Event.emit_message (verts & USS (nextpkg.nsv) & '-' & version);
+      end;
+   end print_next_installation;
+
 end Raven.Install;

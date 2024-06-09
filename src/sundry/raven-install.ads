@@ -131,4 +131,8 @@ private
       cache_map       : Pkgtypes.Package_Map.Map;
       file_collection : in out Pkgtypes.NV_Pairs.Map) return Boolean;
 
+   procedure print_next_installation
+     (nextpkg : Install_Order_Type;
+      version : String);
+
 end Raven.Install;

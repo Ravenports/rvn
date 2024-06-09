@@ -76,6 +76,14 @@ package body Raven.Database.Operations is
       attrs : Archive.Unix.File_Characteristics;
       okay  : Boolean;
       create_local_db : Boolean := False;
+
+      procedure emit_absent_db is
+      begin
+         case contents is
+            when installed_packages => Event.emit_no_local_db;
+            when catalog            => Event.emit_no_remote_db;
+         end case;
+      end emit_absent_db;
    begin
       if SQLite.db_connected (db.handle) then
          return RESULT_OK;
@@ -92,28 +100,31 @@ package body Raven.Database.Operations is
             exception
                when others =>
                   Event.emit_error (func & ": Failed to create " & key & " directory");
+                  emit_absent_db;
                   return RESULT_FATAL;
             end;
          when others =>
             Event.emit_error (func & ": " & key & " exists but is not a directory");
+            emit_absent_db;
             return RESULT_FATAL;
       end case;
 
       dirfd := Context.reveal_db_directory_fd;
       if not Unix.file_connected (dirfd) then
          Event.emit_error (func & ": Failed to open " & key & " directory as a file descriptor");
+         emit_absent_db;
          return RESULT_FATAL;
       end if;
 
       if not Unix.relative_file_readable (dirfd, database_filename (contents)) then
          if Unix.relative_file_exists (dirfd, database_filename (contents)) then
             --  db file exists but we can't read it, fail
-            Event.emit_no_local_db;
+            emit_absent_db;
             return RESULT_ENODB;
          elsif not Unix.relative_file_writable (dirfd, ".") then
             --  We need to create db file but we can't write to the containing
             --  directory, so fail
-            Event.emit_no_local_db;
+            emit_absent_db;
             return RESULT_ENODB;
          else
             create_local_db := True;
@@ -135,6 +146,7 @@ package body Raven.Database.Operations is
               (func & ": Database corrupt.  Are you running on NFS?  " &
                  "If so, ensure the locking mechanism is properly set up.");
          end if;
+         emit_absent_db;
          return RESULT_FATAL;
       end if;
 
@@ -148,6 +160,7 @@ package body Raven.Database.Operations is
          Event.emit_debug (moderate, func & ": import initial schema to blank rvn db");
          if not create_localhost_database (db) then
             rdb_close (db);
+            emit_absent_db;
             return RESULT_FATAL;
          end if;
       end if;
@@ -156,6 +169,7 @@ package body Raven.Database.Operations is
       CustomCmds.define_three_functions (db.handle);
 
       if not upgrade_schema (db) then
+         emit_absent_db;
          return RESULT_FATAL;
       end if;
 
@@ -167,6 +181,7 @@ package body Raven.Database.Operations is
          if not SQLite.exec_sql (db.handle, sql) then
             CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, func, sql);
             rdb_close (db);
+            emit_absent_db;
             return RESULT_FATAL;
          end if;
       end;
@@ -177,6 +192,7 @@ package body Raven.Database.Operations is
          if not SQLite.exec_sql (db.handle, sql) then
             CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, func, sql);
             rdb_close (db);
+            emit_absent_db;
             return RESULT_FATAL;
          end if;
       end;
@@ -284,16 +300,19 @@ package body Raven.Database.Operations is
             exception
                when others =>
                   Event.emit_error (func & ": Failed to create rvnindex database directory");
+                  Event.emit_no_local_db;
                   return RESULT_FATAL;
             end;
          when others =>
             Event.emit_error (func & ": " & index_dbdir & " exists but is not a directory");
+            Event.emit_no_local_db;
             return RESULT_FATAL;
       end case;
 
       dirfd := Unix.open_file (index_dbdir, dirflags);
       if not Unix.file_connected (dirfd) then
          Event.emit_error (func & ": Failed to open database directory as a file descriptor");
+         Event.emit_no_local_db;
          return RESULT_FATAL;
       end if;
 
@@ -306,6 +325,7 @@ package body Raven.Database.Operations is
                when others =>
                   Unix.close_file_blind (dirfd);
                   Event.emit_error ("Failed to delete existing database: " & index_dbname);
+                  Event.emit_no_local_db;
                   return RESULT_ENODB;
             end;
          end if;
@@ -354,6 +374,7 @@ package body Raven.Database.Operations is
               (func & ": Database corrupt.  Are you running on NFS?  " &
                  "If so, ensure the locking mechanism is properly set up.");
          end if;
+         Event.emit_no_local_db;
          return RESULT_FATAL;
       end if;
 
@@ -362,6 +383,7 @@ package body Raven.Database.Operations is
          Event.emit_debug (moderate, func & ": import initial schema to blank rvnindex db");
          if not create_rvnindex_database (db) then
             rdb_close (db);
+            Event.emit_no_local_db;
             return RESULT_FATAL;
          end if;
       end if;
