@@ -357,6 +357,15 @@ package body Raven.Install is
                   show_proposed_queue (queue, cache_map, install_map, opt_quiet);
                   succeeded := granted_permission_to_proceed (opt_quiet);
                end if;
+
+               if succeeded then
+                  succeeded := execute_installation_queue (rdb          => rdb,
+                                                           queue        => queue,
+                                                           cache_map    => cache_map,
+                                                           install_map  => install_map,
+                                                           skip_scripts => opt_skip_scripts,
+                                                           behave_quiet => opt_quiet);
+               end if;
             end if;
          end;
       end if;
