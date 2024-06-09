@@ -176,7 +176,8 @@ package body Raven.Cmd.Install is
                inhibit_scripts => skip_scripts,
                be_silent       => comline.common_options.quiet,
                dry_run_only    => comline.common_options.dry_run,
-               upgrading       => False);
+               upgrading       => False,
+               package_data    => dummy_pkg);
 
             Event.emit_install_end (dummy_pkg);
          end if;

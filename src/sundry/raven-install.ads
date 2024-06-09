@@ -47,7 +47,8 @@ package Raven.Install is
       inhibit_scripts   : Boolean;
       be_silent         : Boolean;
       dry_run_only      : Boolean;
-      upgrading         : Boolean) return Boolean;
+      upgrading         : Boolean;
+      package_data      : Pkgtypes.A_Package) return Boolean;
 
    function install_remote_packages
      (opt_exact_match  : Boolean;

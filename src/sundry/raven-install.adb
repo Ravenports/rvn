@@ -102,7 +102,8 @@ package body Raven.Install is
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
-                                                      upgrading       => True);
+                                                      upgrading       => True,
+                                                      package_data    => shiny_pkg);
             end if;
          when reinstall =>
             success := PKGS.rdb_register_package (db     => rdb,
@@ -114,7 +115,8 @@ package body Raven.Install is
                                                       inhibit_scripts => no_scripts,
                                                       be_silent       => True,
                                                       dry_run_only    => False,
-                                                      upgrading       => False);
+                                                      upgrading       => False,
+                                                      package_data    => shiny_pkg);
                end if;
 
          when new_install =>
@@ -135,7 +137,8 @@ package body Raven.Install is
       inhibit_scripts   : Boolean;
       be_silent         : Boolean;
       dry_run_only      : Boolean;
-      upgrading         : Boolean) return Boolean
+      upgrading         : Boolean;
+      package_data      : Pkgtypes.A_Package) return Boolean
    is
       operation : Archive.Unpack.Darc;
       level     : Archive.info_level := Archive.normal;
@@ -167,6 +170,7 @@ package body Raven.Install is
          level := Archive.silent;
       end if;
 
+      Event.emit_extract_begin (package_data);
       operation.open_rvn_archive (archive_path, level, pipe_fd);
       good_extraction := operation.extract_archive
         (top_directory => root_directory,
@@ -176,6 +180,7 @@ package body Raven.Install is
          skip_scripts  => inhibit_scripts,
          upgrading     => upgrading);
       operation.close_rvn_archive;
+      Event.emit_extract_end (package_data);
 
       return good_extraction;
    end install_files_from_archive;
