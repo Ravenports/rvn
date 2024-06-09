@@ -39,7 +39,5 @@ private
    --  Push data through a connected pipe
    procedure pipe_event (json_message : String);
 
-   -- placeholder
-   procedure check_progress;
 
 end Raven.Event;

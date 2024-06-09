@@ -107,24 +107,4 @@ package Raven.Strings is
    --  Numeric image with left-padded zeros
    function zeropad (N : Natural; places : Positive) return String;
 
-
-   ----------------------
-   --  JSON functions  --
-   ----------------------
-
-   --  Escape " and \ characters by prefacing them with a \ character
-   function json_escape (S : String) return String;
-
-   --  Returns '{ arg1 }'
-   function json_object (content : String) return String;
-
-   --  Returns '"arg1" : "json_escape(arg2)"'
-   function json_pair (name, value : String) return String;
-
-   --  Returns '"arg1" { arg2 }'
-   function json_objectpair (name, content : String) return String;
-
-   --  Returns '"arg1" [ arg2 ]'
-   function json_arraypair (name, content : String) return String;
-
 end Raven.Strings;

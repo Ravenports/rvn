@@ -4,6 +4,8 @@
 with Ada.Text_IO;
 with Raven.Unix;
 with Raven.Context;
+with ThickUCL.Emitter;
+with Ucl;
 with Raven.Strings; use Raven.Strings;
 
 package body Raven.Event is
@@ -21,16 +23,6 @@ package body Raven.Event is
    end pipe_event;
 
 
-   ----------------------
-   --  check_progress  --
-   ----------------------
-   procedure check_progress is
-   begin
-      --  Placeholder in the event progressbar is brought back
-      null;
-   end check_progress;
-
-
    -------------
    --  warnx  --
    -------------
@@ -45,13 +37,13 @@ package body Raven.Event is
    -------------------
    procedure emit_notice (message : String)
    is
-      jmsg : constant String := json_object
-        (CC
-           (json_pair ("type", "NOTICE"),
-            json_objectpair ("data", json_pair ("msg", message))));
+      jmsg : ThickUCL.UclTree;
    begin
-      check_progress;
-      pipe_event (jmsg);
+      jmsg.insert ("type", "NOTICE");
+      jmsg.start_object ("data");
+      jmsg.insert ("msg", message);
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
       TIO.Put_Line (message);
    end emit_notice;
 
@@ -61,13 +53,13 @@ package body Raven.Event is
    ------------------
    procedure emit_error (message : String)
    is
-      jmsg : constant String := json_object
-        (CC
-           (json_pair ("type", "ERROR"),
-            json_objectpair ("data", json_pair ("msg", message))));
+      jmsg : ThickUCL.UclTree;
    begin
-      check_progress;
-      pipe_event (jmsg);
+      jmsg.insert ("type", "ERROR");
+      jmsg.start_object ("data");
+      jmsg.insert ("msg", message);
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
       warnx (message);
    end emit_error;
 
@@ -79,7 +71,6 @@ package body Raven.Event is
    is
       --  Do not send messages to event pipe
    begin
-      check_progress;
       TIO.Put_Line (message);
    end emit_message;
 
@@ -103,7 +94,6 @@ package body Raven.Event is
       --  Do not send debug events to event pipe
       show_message : Boolean := False;
    begin
-      check_progress;
       case Context.reveal_debug_level is
          when low_level =>
             show_message := True;
@@ -142,17 +132,16 @@ package body Raven.Event is
                          err_argument : String;
                          err_number   : Integer)
    is
+      jmsg : ThickUCL.UclTree;
       info : constant String := err_function & '(' & err_argument & "): " &
                                 Unix.strerror (err_number);
-      jmsg : constant String := json_object
-        (CC
-           (json_pair ("type", "ERROR"),
-            json_objectpair ("data",
-              CC (json_pair ("msg", info),
-                  json_pair ("errno", int2str (err_number))))));
    begin
-      check_progress;
-      pipe_event (jmsg);
+      jmsg.insert ("type", "ERROR");
+      jmsg.start_object ("data");
+      jmsg.insert ("msg", info);
+      jmsg.insert ("errno", Ucl.ucl_integer (err_number));
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
       warnx (info);
    end emit_errno;
 
@@ -162,13 +151,12 @@ package body Raven.Event is
    ------------------------
    procedure emit_no_local_db
    is
-      jmsg : constant String := json_object
-        (CC
-           (json_pair ("type", "ERROR_NOLOCALDB"),
-            json_objectpair ("data", "")));
+      jmsg : ThickUCL.UclTree;
    begin
-      check_progress;
-      pipe_event (jmsg);
+      jmsg.insert ("type", "ERROR_NOLOCALDB");
+      jmsg.start_object ("data");
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
       warnx ("Local package database nonexistent!");
    end emit_no_local_db;
 
@@ -181,40 +169,39 @@ package body Raven.Event is
                                  variant    : String;
                                  version    : String)
    is
-      nsv : constant String := namebase & "-" & subpackage & "-" & variant;
-      jmsg : constant String := json_object
-        (CC
-           (json_pair ("type", "INFO_INSTALL_BEGIN"),
-            json_objectpair ("data",
-              CC (json_pair ("pkgname", nsv),
-                  json_pair ("pkgversion", version)))));
+      jmsg : ThickUCL.UclTree;
    begin
-      check_progress;
-      pipe_event (jmsg);
+      jmsg.insert ("type", "INFO_INSTALL_BEGIN");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", namebase);
+      jmsg.insert ("subpackage", subpackage);
+      jmsg.insert ("variant", variant);
+      jmsg.insert ("version", version);
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_install_begin;
 
 
-   --------------------------
-   --  emit_install_begin  --
-   --------------------------
+   ------------------------
+   --  emit_install_end  --
+   ------------------------
    procedure emit_install_end (namebase   : String;
                                subpackage : String;
                                variant    : String;
                                version    : String;
                                message    : String)
    is
-      nsv : constant String := namebase & "-" & subpackage & "-" & variant;
-      jmsg : constant String := json_object
-        (CC
-           (json_pair ("type", "INFO_INSTALL_FINISHED"),
-            json_objectpair ("data",
-              CC (CC (
-                json_pair ("pkgname", nsv),
-                json_pair ("pkgversion", version)),
-                json_pair ("message", message)))));
+      jmsg : ThickUCL.UclTree;
    begin
-      check_progress;
-      pipe_event (jmsg);
+      jmsg.insert ("type", "INFO_INSTALL_FINISHED");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", namebase);
+      jmsg.insert ("subpackage", subpackage);
+      jmsg.insert ("variant", variant);
+      jmsg.insert ("version", version);
+      jmsg.insert ("message", message);
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_install_end;
 
 end Raven.Event;

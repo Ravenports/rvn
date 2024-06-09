@@ -288,14 +288,6 @@ package body Raven.Install is
                fetch_list.Append (Install_Order_Set.Element (Position).nsv);
             end gather_fetch_list;
 
-            procedure printq (Position : Install_Order_Set.Cursor) is
-               myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
-            begin
-               Event.emit_message (USS (myrec.nsv) & " level=" & int2str(myrec.level) &
-                                     " auto=" & myrec.automatic'Img &
-                                     " action=" & myrec.action'Img &
-                                     " libdelta=" & myrec.prov_lib_change'Img);
-            end printq;
          begin
             calculate_descendants (rdb, catalog_map, cache_map, priority);
             load_installation_data (localdb, cache_map, install_map);
@@ -315,7 +307,6 @@ package body Raven.Install is
             if not queue.Is_Empty then
                queue.Iterate (gather_upgrades'Access);
                queue.Iterate (gather_fetch_list'Access);
-               queue.iterate (printq'Access);
 
                INST.collect_installed_files (localdb, upgrades, file_collection);
 
