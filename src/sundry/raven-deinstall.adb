@@ -262,29 +262,34 @@ package body Raven.Deinstall is
          return False;
       end;
 
+      procedure add_head (mydir : String)
+      is
+         numslash : constant Natural := count_char (mydir, '/');
+         mydir_txt : constant Text := SUS (mydir);
+      begin
+         if not dirmap.Contains (mydir_txt) then
+            if not on_blacklist (mydir_txt) then
+               dirmap.Insert (mydir_txt, SUS (int2str (numslash)));
+            end if;
+         end if;
+         if numslash > 1 then
+            add_head (head (mydir, "/"));
+         end if;
+      end add_head;
+
       procedure add_dirs (Position : Pkgtypes.Text_List.Cursor)
       is
          owned_dir : constant String := USS (Pkgtypes.Text_List.Element (Position));
-         slash     : constant Natural := count_char (owned_dir, '/');
       begin
-         dirmap.Insert (Key      => Pkgtypes.Text_List.Element (Position),
-                        New_Item => SUS (int2str (slash)));
+         add_head (owned_dir);
       end add_dirs;
 
       procedure check_file (Position : Pkgtypes.File_List.Cursor)
       is
          full_path  : Text renames Pkgtypes.File_List.Element (Position).path;
-         parent_dir : constant Text := head (full_path, SUS ("/"));
+         parent_dir : constant String := head (USS (full_path), "/");
       begin
-         if not on_blacklist (parent_dir) and then
-           not dirmap.Contains (parent_dir)
-         then
-            declare
-               slash : constant Natural := count_char (USS (parent_dir), '/');
-            begin
-               dirmap.Insert (parent_dir, SUS (int2str (slash)));
-            end;
-         end if;
+         add_head (parent_dir);
       end check_file;
 
       procedure set_dircount (Position : Pkgtypes.NV_Pairs.Cursor)
