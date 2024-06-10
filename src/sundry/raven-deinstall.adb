@@ -101,6 +101,9 @@ package body Raven.Deinstall is
    begin
       Event.emit_remove_begin (installed_package);
       if not inhibit_scripts then
+         --  redirect
+         TIO.Set_Output (post_report);
+         TIO.Set_Error (post_report);
          run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, tmp_message_shell);
          run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, tmp_message_lua);
       end if;
@@ -112,10 +115,9 @@ package body Raven.Deinstall is
          run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, tmp_message_shell);
          run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, tmp_message_lua);
 
-         --  redirect
-         TIO.Set_Output (post_report);
          Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant);
          Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant);
+         TIO.Set_Error (TIO.Standard_Error);
          TIO.Set_Output (TIO.Standard_Output);
       end if;
 

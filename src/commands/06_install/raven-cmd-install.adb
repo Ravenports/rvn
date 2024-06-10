@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Text_IO;
 with Raven.Event;
 with Raven.Install;
 with Raven.Pkgtypes;
@@ -168,7 +169,8 @@ package body Raven.Cmd.Install is
                be_silent       => comline.common_options.quiet,
                dry_run_only    => comline.common_options.dry_run,
                upgrading       => False,
-               package_data    => dummy_pkg);
+               package_data    => dummy_pkg,
+               post_report     => Ada.Text_IO.Standard_Error);
 
             Event.emit_install_end (dummy_pkg);
          end if;

@@ -126,7 +126,8 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => True,
-                                                      package_data    => shiny_pkg);
+                                                      package_data    => shiny_pkg,
+                                                      post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
             end if;
             Event.emit_install_end (shiny_pkg);
@@ -142,7 +143,8 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
-                                                      package_data    => shiny_pkg);
+                                                      package_data    => shiny_pkg,
+                                                      post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
             end if;
             Event.emit_install_end (shiny_pkg);
@@ -160,7 +162,8 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
-                                                      package_data    => shiny_pkg);
+                                                      package_data    => shiny_pkg,
+                                                      post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
             end if;
             Event.emit_install_end (shiny_pkg);
@@ -180,7 +183,8 @@ package body Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean;
-      package_data      : Pkgtypes.A_Package) return Boolean
+      package_data      : Pkgtypes.A_Package;
+      post_report       : TIO.File_Type) return Boolean
    is
       operation : Archive.Unpack.Darc;
       level     : Archive.info_level := Archive.normal;
@@ -214,6 +218,11 @@ package body Raven.Install is
 
       Event.emit_extract_begin (package_data);
       operation.open_rvn_archive (archive_path, level, pipe_fd);
+      if not inhibit_scripts then
+         --  redirect
+         TIO.Set_Output (post_report);
+         TIO.Set_Error (post_report);
+      end if;
       begin
          good_extraction := operation.extract_archive
            (top_directory => rootdir,
@@ -228,6 +237,10 @@ package body Raven.Install is
             Event.emit_error (LAT.LF & basename & " wants to run shell scripts during " &
                                 "installation, but no interpreter was found");
       end;
+      if not inhibit_scripts then
+         TIO.Set_Error (TIO.Standard_Error);
+         TIO.Set_Output (TIO.Standard_Output);
+      end if;
       operation.close_rvn_archive;
       Event.emit_extract_end (package_data);
 

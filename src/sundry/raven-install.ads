@@ -38,7 +38,8 @@ package Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean;
-      package_data      : Pkgtypes.A_Package) return Boolean;
+      package_data      : Pkgtypes.A_Package;
+      post_report       : Ada.Text_IO.File_Type) return Boolean;
 
    function install_remote_packages
      (opt_exact_match  : Boolean;
