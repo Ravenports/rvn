@@ -167,6 +167,10 @@ package body Raven.Install is
                Event.emit_extract_end (shiny_pkg);
             end if;
             Event.emit_install_end (shiny_pkg);
+
+         when reset_auto =>
+            success := PKGS.rdb_reset_automatic (rdb, shiny_pkg);
+            Event.emit_override_auto (shiny_pkg, success);
       end case;
 
       return success;
@@ -340,7 +344,7 @@ package body Raven.Install is
                myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
             begin
                case myrec.action is
-                  when new_install | reinstall => null;
+                  when new_install | reinstall | reset_auto => null;
                   when upgrade => upgrades.Append (myrec.nsv);
                end case;
             end gather_upgrades;
@@ -352,7 +356,7 @@ package body Raven.Install is
             end gather_fetch_list;
 
          begin
-            calculate_descendants (rdb, catalog_map, cache_map, priority);
+            calculate_descendants (rdb, catalog_map, cache_map, priority, opt_drop_depends);
             load_installation_data (localdb, cache_map, install_map);
             finalize_work_queue
               (localdb       => localdb,
@@ -480,7 +484,8 @@ package body Raven.Install is
      (rdb         : in out Database.RDB_Connection;
       catalog_map : Pkgtypes.Package_Map.Map;
       cache_map   : in out Pkgtypes.Package_Map.Map;
-      priority    : in out Descendant_Set.Vector)
+      priority    : in out Descendant_Set.Vector;
+      skip_depend : Boolean)
    is
       procedure calc (Position : Pkgtypes.Package_Map.Cursor)
       is
@@ -518,7 +523,9 @@ package body Raven.Install is
       begin
          myrec.nsv := SUS (Pkgtypes.nsv_identifier (catpkg));
          myrec.descendents := 1;
-         catpkg.dependencies.Iterate (check_single_dep'Access);
+         if not skip_depend then
+            catpkg.dependencies.Iterate (check_single_dep'Access);
+         end if;
          Event.emit_debug (moderate, USS (myrec.nsv) & " descendents=" & myrec.descendents'Img);
          priority.Append (myrec);
       end calc;
@@ -684,11 +691,21 @@ package body Raven.Install is
 
                      when 0 =>  --  same version
 
-                        if not opt_force then
-                           return;
+                        if opt_force then
+                           myrec.action := reinstall;
+                           myrec.prov_lib_change := False;
+                        else
+                           if opt_automatic then
+                              if not install_map.Element (myrec.nsv).automatic then
+                                 myrec.action := reset_auto;
+                              end if;
+                           elsif opt_manual then
+                              if install_map.Element (myrec.nsv).automatic then
+                                 myrec.action := reset_auto;
+                              end if;
+                           end if;
+                           return;  --  Nothing to do
                         end if;
-                        myrec.action := reinstall;
-                        myrec.prov_lib_change := False;  --  In theory, no prov change with reinstall
 
                      when 1 =>   --  downgrade
 
@@ -754,11 +771,21 @@ package body Raven.Install is
 
                   when 0 =>  --  same version
 
-                     if not opt_force then
-                        return;
+                     if opt_force then
+                           myrec.action := reinstall;
+                           myrec.prov_lib_change := False;
+                        else
+                           if opt_automatic then
+                              if not install_map.Element (myrec.nsv).automatic then
+                                 myrec.action := reset_auto;
+                              end if;
+                           elsif opt_manual then
+                              if install_map.Element (myrec.nsv).automatic then
+                                 myrec.action := reset_auto;
+                              end if;
+                           end if;
+                           return;  --  Nothing to do
                      end if;
-                     myrec.action := reinstall;
-                     myrec.prov_lib_change := False;  --  In theory, no prov change with reinstall
 
                   when 1 =>   --  downgrade
 
@@ -867,7 +894,7 @@ package body Raven.Install is
            Pkgtypes.nsvv_identifier (cache_map (myrec.nsv)) & extension;
       begin
          case myrec.action is
-            when reinstall => null;
+            when reinstall | reset_auto => null;
             when new_install | upgrade =>
                declare
                   num_files : Natural;
@@ -956,6 +983,12 @@ package body Raven.Install is
             when reinstall   => return " [*]";
             when upgrade     => return " [U]";
             when new_install => return "";
+            when reset_auto  =>
+               if nextpkg.automatic then
+                  return " [A]";
+               else
+                  return " [M]";
+               end if;
          end case;
       end star;
 
@@ -1063,6 +1096,7 @@ package body Raven.Install is
                if already_installed then
                   decrement (install_map.Element (myrec.nsv).flatsize);
                end if;
+            when reset_auto => null;
          end case;
       end display;
    begin
@@ -1115,7 +1149,7 @@ package body Raven.Install is
             print_next_installation (myrec, version, this_step, total_steps);
          end if;
          case myrec.action is
-            when reinstall | upgrade =>
+            when reinstall | upgrade | reset_auto =>
                clone_pkg := install_map.Element (myrec.nsv);
                clone_pkg.automatic := myrec.automatic;
                succeeded := install_or_upgrade (rdb         => rdb,

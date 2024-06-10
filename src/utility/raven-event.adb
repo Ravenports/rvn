@@ -361,4 +361,24 @@ package body Raven.Event is
    end emit_fetch_finished;
 
 
+   --------------------------
+   --  emit_override_auto  --
+   --------------------------
+   procedure emit_override_auto (pkg : Pkgtypes.A_Package; result : Boolean)
+   is
+      jmsg : ThickUCL.UclTree;
+   begin
+      jmsg.insert ("type", "INFO_AUTOMATIC_OVERRIDE");
+      jmsg.start_object ("data");
+      jmsg.insert ("namebase", USS (pkg.namebase));
+      jmsg.insert ("subpackage", USS (pkg.subpackage));
+      jmsg.insert ("variant", USS (pkg.variant));
+      jmsg.insert ("version", USS (pkg.version));
+      jmsg.insert ("successful", result);
+      jmsg.insert ("old_value", not pkg.automatic);
+      jmsg.insert ("new_value", pkg.automatic);
+      jmsg.close_object;
+      pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
+   end emit_override_auto;
+
 end Raven.Event;

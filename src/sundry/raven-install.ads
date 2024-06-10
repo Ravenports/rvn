@@ -21,7 +21,7 @@ package Raven.Install is
    --  Step 5. Extract rvn package
    --  Step 6. Register package
 
-   type refresh_action is (new_install, reinstall, upgrade);
+   type refresh_action is (new_install, reinstall, upgrade, reset_auto);
 
    --  Prior to this routine many things need to have been done:
    --  * archive_path verified to be an existing regular file
@@ -101,7 +101,8 @@ private
      (rdb         : in out Database.RDB_Connection;
       catalog_map : Pkgtypes.Package_Map.Map;
       cache_map   : in out Pkgtypes.Package_Map.Map;
-      priority    : in out Descendant_Set.Vector);
+      priority    : in out Descendant_Set.Vector;
+      skip_depend : Boolean);
 
    procedure load_installation_data
      (localdb     : Database.RDB_Connection;

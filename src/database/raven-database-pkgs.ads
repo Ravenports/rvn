@@ -9,10 +9,17 @@ private with SQLite;
 package Raven.Database.Pkgs is
 
    --  Upon file path conflict, this will rollback unless "forced" is set.
+   --  Conflicts are checked *before* this is run, so the rollback should not occur.
    function rdb_register_package
      (db  : in out RDB_Connection;
       pkg : in out Pkgtypes.A_Package;
       forced : Boolean) return Boolean;
+
+   --  changes the automatic flag.
+   --  This routine should only be run when the flag is different from desired.
+   function rdb_reset_automatic
+     (db  : in out RDB_Connection;
+      pkg : in out Pkgtypes.A_Package) return Boolean;
 
 private
 

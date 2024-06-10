@@ -21,6 +21,7 @@ package Raven.Event is
       err_argument : String;
       err_number   : Integer);
 
+   procedure emit_override_auto (pkg : Pkgtypes.A_Package; result : Boolean);
    procedure emit_install_begin (pkg : Pkgtypes.A_Package);
    procedure emit_install_end   (pkg : Pkgtypes.A_Package);
    procedure emit_extract_begin (pkg : Pkgtypes.A_Package);

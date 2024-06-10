@@ -1250,4 +1250,44 @@ package body Raven.Database.Pkgs is
    end overwrite_file;
 
 
+   ---------------------------
+   --  rdb_reset_automatic  --
+   ---------------------------
+   function rdb_reset_automatic
+     (db  : in out RDB_Connection;
+      pkg : in out Pkgtypes.A_Package) return Boolean
+   is
+      new_setting : SQLite.sql_int64 := 0;
+      success  : Boolean := False;
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "rdb_reset_automatic";
+      sql : constant String :=
+        "UPDATE packages SET automatic = ? " &
+        "WHERE namebase = ? AND subpackage = ? AND variant = ?";
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return False;
+      end if;
+
+      if pkg.automatic then
+         new_setting := 1;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, new_setting);
+      SQLite.bind_string  (new_stmt, 2, USS (pkg.namebase));
+      SQLite.bind_string  (new_stmt, 3, USS (pkg.subpackage));
+      SQLite.bind_string  (new_stmt, 4, USS (pkg.variant));
+       debug_running_stmt (new_stmt);
+      case SQLite.step (new_stmt) is
+         when SQLite.no_more_data =>
+            success := True;
+         when SQLite.row_present | SQLite.something_else =>
+            CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                         SQLite.get_expanded_sql (new_stmt));
+      end case;
+      SQLite.finalize_statement (new_stmt);
+      return success;
+   end rdb_reset_automatic;
+
+
 end Raven.Database.Pkgs;
