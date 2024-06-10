@@ -5,11 +5,13 @@ with Ucl;
 with Ada.Characters.Latin_1;
 with Raven.Unix;
 with Raven.event;
+with Raven.Cmd.Unset;
 with Raven.Strings; Use Raven.Strings;
 
 package body Raven.Metadata is
 
    package LAT renames Ada.Characters.Latin_1;
+   package RCU renames Raven.Cmd.Unset;
 
    ----------------------------
    --  metadata_field_label  --
@@ -719,7 +721,7 @@ package body Raven.Metadata is
       files.Iterate (scan'Access);
 
       set_notes (metatree, annotations, new_pkg.annotations);
-      set_nvpair (metatree, dependencies, new_pkg.dependencies);
+      set_dependencies (metatree, dependencies, new_pkg.dependencies);
       set_nvpair (metatree, options, new_pkg.options);
       set_scripts (metatree, new_pkg.scripts);
       set_messages (metatree, new_pkg.messages);
@@ -753,5 +755,58 @@ package body Raven.Metadata is
          when Pkgtypes.LICENSE_UNLISTED => return "unlisted";
       end case;
    end get_license_scheme;
+
+
+   ------------------------
+   --  set_dependencies  --
+   ------------------------
+   Procedure set_dependencies
+     (metatree : ThickUCL.UclTree;
+      field    : metadata_field;
+      new_dict : in out Pkgtypes.NV_Pairs.Map)
+   is
+      key   : constant String := metadata_field_label (field);
+      dtype : ThickUCL.Leaf_type;
+      vndx  : ThickUCL.object_index;
+      jar   : ThickUCL.jar_string.Vector;
+
+      procedure insert_nv (Position : ThickUCL.jar_string.Cursor)
+      is
+         dep_nsv : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+         spkg_index : constant Natural := count_char (dep_nsv, '-');
+         subpackage : constant String := specific_field (dep_nsv, spkg_index, "-");
+      begin
+         if (subpackage = "dev" and then RCU.config_setting (RCU.CFG.skip_dev)) or else
+           (subpackage = "dev" and then RCU.config_setting (RCU.CFG.skip_dev)) or else
+           (subpackage = "docs" and then RCU.config_setting (RCU.CFG.skip_doc)) or else
+           (subpackage = "man" and then RCU.config_setting (RCU.CFG.skip_man)) or else
+           (subpackage = "nls" and then RCU.config_setting (RCU.CFG.skip_nls)) or else
+           (subpackage = "info" and then RCU.config_setting (RCU.CFG.skip_info)) or else
+           (subpackage = "examples" and then RCU.config_setting (RCU.CFG.skip_examples))
+         then
+            return;
+         end if;
+
+         case metatree.get_object_data_type (vndx, dep_nsv) is
+            when ThickUCL.data_string =>
+               declare
+                  value : constant String := metatree.get_object_value (vndx, dep_nsv);
+               begin
+                  new_dict.Insert (SUS (dep_nsv), SUS (value));
+               end;
+            when others => null;  --problem
+         end case;
+      end insert_nv;
+   begin
+      new_dict.Clear;
+      dtype := ThickUCL.get_data_type (metatree, key);
+      case dtype is
+         when ThickUCL.data_object =>
+            vndx := metatree.get_index_of_base_ucl_object (key);
+            metatree.get_object_object_keys (vndx, jar);
+         when others => null;
+      end case;
+      jar.Iterate (insert_nv'Access);
+   end set_dependencies;
 
 end Raven.Metadata;
