@@ -19,6 +19,7 @@ with Raven.Strings;
 with Archive.Unpack;
 with Archive.Unix;
 with ThickUCL;
+with Bourne;
 
 use Raven.Strings;
 
@@ -213,13 +214,20 @@ package body Raven.Install is
 
       Event.emit_extract_begin (package_data);
       operation.open_rvn_archive (archive_path, level, pipe_fd);
-      good_extraction := operation.extract_archive
-        (top_directory => rootdir,
-         set_owners    => rootuser,
-         set_perms     => rootuser,
-         set_modtime   => False,
-         skip_scripts  => inhibit_scripts,
-         upgrading     => upgrading);
+      begin
+         good_extraction := operation.extract_archive
+           (top_directory => rootdir,
+            set_owners    => rootuser,
+            set_perms     => rootuser,
+            set_modtime   => False,
+            skip_scripts  => inhibit_scripts,
+            upgrading     => upgrading);
+      exception
+         when Bourne.interpreter_missing =>
+            good_extraction := False;
+            Event.emit_error (LAT.LF & basename & " wants to run shell scripts during " &
+                                "installation, but no interpreter was found");
+      end;
       operation.close_rvn_archive;
       Event.emit_extract_end (package_data);
 
