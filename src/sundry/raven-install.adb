@@ -373,7 +373,7 @@ package body Raven.Install is
                end if;
 
                if succeeded then
-                  succeeded := execute_installation_queue (rdb          => rdb,
+                  succeeded := execute_installation_queue (rdb          => localdb,
                                                            queue        => queue,
                                                            cache_map    => cache_map,
                                                            install_map  => install_map,
