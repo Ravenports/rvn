@@ -696,15 +696,21 @@ package body Raven.Install is
                            myrec.prov_lib_change := False;
                         else
                            if opt_automatic then
-                              if not install_map.Element (myrec.nsv).automatic then
-                                 myrec.action := reset_auto;
+                              Event.emit_message (USS (myrec.nsv) & " setting=" & myrec.automatic'Img);
+                              if myrec.automatic then
+                                 return;
                               end if;
+                              myrec.automatic := True;
+                              myrec.action := reset_auto;
                            elsif opt_manual then
-                              if install_map.Element (myrec.nsv).automatic then
-                                 myrec.action := reset_auto;
+                              if not myrec.automatic then
+                                 return;
                               end if;
+                              myrec.automatic := False;
+                              myrec.action := reset_auto;
+                           else
+                              return;
                            end if;
-                           return;  --  Nothing to do
                         end if;
 
                      when 1 =>   --  downgrade
@@ -774,17 +780,23 @@ package body Raven.Install is
                      if opt_force then
                            myrec.action := reinstall;
                            myrec.prov_lib_change := False;
-                        else
-                           if opt_automatic then
-                              if not install_map.Element (myrec.nsv).automatic then
-                                 myrec.action := reset_auto;
-                              end if;
-                           elsif opt_manual then
-                              if install_map.Element (myrec.nsv).automatic then
-                                 myrec.action := reset_auto;
-                              end if;
+                     else
+                        Event.emit_message (USS (myrec.nsv) & " setting=" & myrec.automatic'Img);
+                        if opt_automatic then
+                           if myrec.automatic then
+                              return;
                            end if;
-                           return;  --  Nothing to do
+                           myrec.automatic := True;
+                           myrec.action := reset_auto;
+                        elsif opt_manual then
+                           if not myrec.automatic then
+                              return;
+                           end if;
+                           myrec.automatic := False;
+                           myrec.action := reset_auto;
+                        else
+                           return;
+                        end if;
                      end if;
 
                   when 1 =>   --  downgrade

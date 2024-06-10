@@ -32,7 +32,7 @@ package body Raven.Database.Add is
       func    : constant String := "top_level_addition_list";
       sqlbase : constant String := "SELECT " & nsv_formula & " as nsv000, " &
         "namebase, subpackage, variant, version, comment, desc, www, maintainer, prefix, " &
-        "abi, rvndigest, rvnsize, flatsize, licenselogic, id " &
+        "abi, rvndigest, rvnsize, flatsize, licenselogic, id, automatic " &
         "FROM packages as p";
       new_stmt : SQLite.thick_stmt;
       sql : Text := SUS (sqlbase);
@@ -83,6 +83,7 @@ package body Raven.Database.Add is
                      myrec.licenselogic := License_Logic'Val (SQLite.retrieve_integer
                                                               (new_stmt, 14));
                      myrec.id         := Package_ID (SQLite.retrieve_integer (new_stmt, 15));
+                     myrec.automatic  := SQLite.retrieve_boolean (new_stmt, 16);
 
                      QRY.finish_package_dependencies (db, myrec, True);
                      QRY.finish_package_libs_provided (db, myrec);
