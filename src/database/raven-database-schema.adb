@@ -240,8 +240,7 @@ package body Raven.Database.Schema is
    ----------------------------
    function index_dependencies_3 return String is
    begin
-      return "CREATE UNIQUE INDEX dep_unique ON " &
-        "dependencies(nsv, version, dependency_id);";
+      return "CREATE UNIQUE INDEX dep_unique ON dependencies(nsv, version);";
    end index_dependencies_3;
 
 
