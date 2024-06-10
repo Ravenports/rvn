@@ -144,7 +144,8 @@ private
      (queue        : Install_Order_Set.Vector;
       cache_map    : Pkgtypes.Package_Map.Map;
       install_map  : Pkgtypes.Package_Map.Map;
-      behave_quiet : Boolean);
+      behave_quiet : Boolean;
+      only_dryrun  : Boolean);
 
    function execute_installation_queue
      (rdb          : in out Database.RDB_Connection;

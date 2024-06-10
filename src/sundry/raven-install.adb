@@ -389,11 +389,14 @@ package body Raven.Install is
                end if;
 
                if succeeded then
-                  show_proposed_queue (queue, cache_map, install_map, opt_quiet);
-                  succeeded := granted_permission_to_proceed (opt_quiet);
+                  show_proposed_queue (queue, cache_map, install_map, opt_quiet, opt_dry_run);
+
+                  if not opt_dry_run then
+                     succeeded := granted_permission_to_proceed (opt_quiet);
+                  end if;
                end if;
 
-               if succeeded then
+               if not opt_dry_run and then succeeded then
                   succeeded := execute_installation_queue (rdb          => localdb,
                                                            queue        => queue,
                                                            cache_map    => cache_map,
@@ -1007,7 +1010,8 @@ package body Raven.Install is
      (queue        : Install_Order_Set.Vector;
       cache_map    : Pkgtypes.Package_Map.Map;
       install_map  : Pkgtypes.Package_Map.Map;
-      behave_quiet : Boolean)
+      behave_quiet : Boolean;
+      only_dryrun  : Boolean)
    is
       counter : Natural := 0;
       total_flatsize : Pkgtypes.Package_Size := 0;
@@ -1052,6 +1056,9 @@ package body Raven.Install is
    begin
       if behave_quiet then
          return;
+      end if;
+      If only_dryrun then
+         Event.emit_premessage ("Dry-run: ");
       end if;
       Event.emit_message ("The following packages will be installed:" & LAT.LF);
       queue.Iterate (display'Access);
