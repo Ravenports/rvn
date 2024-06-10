@@ -367,8 +367,11 @@ package body Raven.Install is
                opt_noscripts => opt_skip_scripts,
                queue         => queue);
 
-            --  if queue is empty, there's nothing more to do
-            if not queue.Is_Empty then
+            if queue.Is_Empty then
+               if not opt_quiet then
+                  Event.emit_message ("All specified packages are already installed.");
+               end if;
+            else
                queue.Iterate (gather_upgrades'Access);
                queue.Iterate (gather_fetch_list'Access);
 
@@ -406,6 +409,10 @@ package body Raven.Install is
                end if;
             end if;
          end;
+      else
+         if not opt_quiet then
+            Event.emit_message ("No matches in the remote catalog were found.");
+         end if;
       end if;
 
       released2 := LOK.release_lock (localdb, LOK.lock_readonly);
@@ -457,7 +464,12 @@ package body Raven.Install is
          end;
       end loop;
 
-      return success;
+      if success then
+         return not toplevel.Is_Empty;
+      else
+         return False;
+      end if;
+
    end assemble_work_queue;
 
 
