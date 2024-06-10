@@ -1084,6 +1084,7 @@ package body Raven.Install is
          rvn_path : constant String := RCU.config_setting (RCU.CFG.cachedir) & "/" &
            Pkgtypes.nsvv_identifier (cache_map (myrec.nsv)) & extension;
          dummy_pkg : Pkgtypes.A_Package;
+         clone_pkg : Pkgtypes.A_Package;
          succeeded : Boolean;
       begin
          if problem_found then
@@ -1096,13 +1097,16 @@ package body Raven.Install is
          end if;
          case myrec.action is
             when reinstall | upgrade =>
-              succeeded := install_or_upgrade (rdb         => rdb,
+               clone_pkg := install_map.Element (myrec.nsv);
+               clone_pkg.automatic := myrec.automatic;
+               succeeded := install_or_upgrade (rdb         => rdb,
                                                action      => myrec.action,
-                                               current_pkg => install_map.Element (myrec.nsv),
+                                               current_pkg => clone_pkg,
                                                updated_pkg => rvn_path,
                                                no_scripts  => skip_scripts,
                                                post_report => install_log);
             when new_install =>
+               dummy_pkg.automatic := myrec.automatic;
                succeeded := install_or_upgrade (rdb         => rdb,
                                                 action      => myrec.action,
                                                 current_pkg => dummy_pkg,
