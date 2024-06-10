@@ -227,6 +227,8 @@ package SQLite is
 
    function in_transaction (db : db3) return Boolean;
 
+   do_not_use_this : exception;
+
 private
 
    last_errmsg : Interfaces.C.Strings.chars_ptr;

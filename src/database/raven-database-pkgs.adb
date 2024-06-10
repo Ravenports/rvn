@@ -102,7 +102,10 @@ package body Raven.Database.Pkgs is
             onward := run_prstmt_main_pkg (db, pkg);
          end if;
          if onward then
-            pkg.id := Pkgtypes.Package_ID (SQLite.get_last_insert_rowid (db.handle));
+            pkg.id := QRY.package_installed (db,
+                                             USS (pkg.namebase),
+                                             USS (pkg.subpackage),
+                                             USS (pkg.variant));
          end if;
       end if;
 

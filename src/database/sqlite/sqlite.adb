@@ -814,6 +814,7 @@ package body SQLite is
       res : sqlite_h.sql64;
    begin
       res := sqlite_h.sqlite3_last_insert_rowid (db);
+      raise do_not_use_this with "unreliable, current value =" & res'Img;
       return sql_int64 (res);
    end get_last_insert_rowid;
 
