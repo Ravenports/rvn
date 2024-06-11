@@ -51,6 +51,10 @@ package Raven.Cmd.Unset is
    --  Rewrite boolean configuration setting
    procedure override_setting (setting : CFG.Configuration_Item; new_value : Boolean);
 
+   --  Return true if the configuration prevents a subpackage from being installed
+   --  or listed as a dependency.
+   function subpackage_type_banned (subpackage : String) return Boolean;
+
 private
 
    program_configuration : ThickUCL.UclTree;

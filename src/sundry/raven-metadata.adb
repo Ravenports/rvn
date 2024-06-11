@@ -776,14 +776,7 @@ package body Raven.Metadata is
          spkg_index : constant Natural := count_char (dep_nsv, '-');
          subpackage : constant String := specific_field (dep_nsv, spkg_index, "-");
       begin
-         if (subpackage = "dev" and then RCU.config_setting (RCU.CFG.skip_dev)) or else
-           (subpackage = "dev" and then RCU.config_setting (RCU.CFG.skip_dev)) or else
-           (subpackage = "docs" and then RCU.config_setting (RCU.CFG.skip_doc)) or else
-           (subpackage = "man" and then RCU.config_setting (RCU.CFG.skip_man)) or else
-           (subpackage = "nls" and then RCU.config_setting (RCU.CFG.skip_nls)) or else
-           (subpackage = "info" and then RCU.config_setting (RCU.CFG.skip_info)) or else
-           (subpackage = "examples" and then RCU.config_setting (RCU.CFG.skip_examples))
-         then
+         if RCU.subpackage_type_banned (subpackage) then
             return;
          end if;
 

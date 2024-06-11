@@ -559,4 +559,20 @@ package body Raven.Cmd.Unset is
       Configuration.override_setting (program_configuration, setting, new_value);
    end override_setting;
 
+
+   ------------------------------
+   --  subpackage_type_banned  --
+   ------------------------------
+   function subpackage_type_banned (subpackage : String) return Boolean is
+   begin
+      return
+        (subpackage = "dev" and then config_setting (CFG.skip_dev)) or else
+        (subpackage = "docs" and then config_setting (CFG.skip_doc)) or else
+        (subpackage = "man" and then config_setting (CFG.skip_man)) or else
+        (subpackage = "nls" and then config_setting (CFG.skip_nls)) or else
+        (subpackage = "info" and then config_setting (CFG.skip_info)) or else
+        (subpackage = "examples" and then config_setting (CFG.skip_examples));
+   end subpackage_type_banned;
+
+
 end Raven.Cmd.Unset;

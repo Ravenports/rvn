@@ -114,20 +114,7 @@ package body Raven.Database.Add is
       if override_exact then
          return True;
       end if;
-      if subpackage = "dev" then
-         return not RCU.config_setting (RCU.CFG.skip_dev);
-      elsif subpackage = "docs" then
-         return not RCU.config_setting (RCU.CFG.skip_doc);
-      elsif subpackage = "man" then
-         return not RCU.config_setting (RCU.CFG.skip_man);
-      elsif subpackage = "nls" then
-         return not RCU.config_setting (RCU.CFG.skip_nls);
-      elsif subpackage = "info" then
-         return not RCU.config_setting (RCU.CFG.skip_info);
-      elsif subpackage = "examples" then
-         return not RCU.config_setting (RCU.CFG.skip_examples);
-      end if;
-      return True;
+      return not RCU.subpackage_type_banned (subpackage);
    end;
 
 

@@ -826,20 +826,7 @@ package body Raven.Database.Query is
             spkg_index : constant Natural := count_char (dep_nsv, '-');
             subpackage : constant String := specific_field (dep_nsv, spkg_index, "-");
          begin
-            if subpackage = "dev" then
-               return not RCU.config_setting (RCU.CFG.skip_dev);
-            elsif subpackage = "docs" then
-               return not RCU.config_setting (RCU.CFG.skip_doc);
-            elsif subpackage = "man" then
-               return not RCU.config_setting (RCU.CFG.skip_man);
-            elsif subpackage = "nls" then
-               return not RCU.config_setting (RCU.CFG.skip_nls);
-            elsif subpackage = "info" then
-               return not RCU.config_setting (RCU.CFG.skip_info);
-            elsif subpackage = "examples" then
-               return not RCU.config_setting (RCU.CFG.skip_examples);
-            end if;
-            return True;
+            return not RCU.subpackage_type_banned (subpackage);
          end;
       end allow_insert;
    begin
