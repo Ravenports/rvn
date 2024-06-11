@@ -42,12 +42,10 @@ private
       cv_shell,
       cv_shlib,
       cv_stats,
+      cv_upgrade,
       cv_version,
       cv_which
      );
-
-     --   cv_upgrade,
-
 
    type Command2_verb is
      (cv2_unset,
@@ -166,6 +164,15 @@ private
          local_file         : Boolean := False;  --      --file
          no_register        : Boolean := False;          --no-register
          only_register      : Boolean := False;          --only-register
+         name_patterns      : Pkgtypes.Text_List.Vector;
+      end record;
+
+   type switches_upgrade_cmd is
+      record
+         fetch_only         : Boolean := False;  --  -F, --fetch-only
+         force_install      : Boolean := False;  --  -f, --force
+         inhibit_scripts    : Boolean := False;  --  -I, --no-scripts
+         drop_depends       : Boolean := False;  --  -d, --drop_depends
          name_patterns      : Pkgtypes.Text_List.Vector;
       end record;
 
@@ -314,6 +321,7 @@ private
          cmd_shell              : switches_shell_cmd;
          cmd_shlib              : switches_shlib_cmd;
          cmd_stats              : switches_stats_cmd;
+         cmd_upgrade            : switches_upgrade_cmd;
          cmd_version            : switches_version_cmd;
          cmd_which              : switches_which_cmd;
       end record;

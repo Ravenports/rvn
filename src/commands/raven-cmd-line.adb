@@ -438,6 +438,38 @@ package body Raven.Cmd.Line is
                      data.cmd_install.name_patterns.append (datumtxt);
                   end if;
 
+               when cv_upgrade =>
+                   if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = sws_yes or else datum = swl_yes then
+                     data.common_options.assume_yes := True;
+                     Unset.override_setting (Unset.CFG.assume_yes, True);
+                  elsif datum = sws_dryrun or else datum = swl_dryrun then
+                     data.common_options.dry_run := True;
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
+                  elsif datum = sws_case or else datum = swl_case then
+                     data.common_options.case_sensitive := True;
+                     Unset.override_setting (Unset.CFG.case_match, True);
+                     context.register_case_sensitivity (True);
+                  elsif datum = sws_exact or else datum = swl_exact then
+                     data.common_options.exact_match := True;
+                  elsif datum = "-F" or else datum = "--fetch-only" then
+                     data.cmd_install.fetch_only := True;
+                  elsif datum = "-f" or else datum = "--force" then
+                     data.cmd_install.force_install := True;
+                  elsif datum = "-I" or else datum = "--no-scripts" then
+                     data.cmd_install.inhibit_scripts := True;
+                     Unset.override_setting (Unset.CFG.run_scripts, False);
+                  elsif datum = sws_repo or else datum = swl_repo then
+                     last_cmd := generic_repo_name;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     data.cmd_install.name_patterns.append (datumtxt);
+                  end if;
+
                when cv_shell =>
                   data.cmd_shell.pass_arguments.Append (datumtxt);
 
@@ -964,10 +996,9 @@ package body Raven.Cmd.Line is
          ("shell     ", cv_shell),
          ("shlib     ", cv_shlib),
          ("stats     ", cv_stats),
+         ("upgrade   ", cv_upgrade),
          ("version   ", cv_version),
          ("which     ", cv_which)
-
-         --  ("upgrade   ", cv_upgrade),
         );
 
       bandolier : keyword_string := (others => ' ');

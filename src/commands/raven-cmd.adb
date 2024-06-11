@@ -33,6 +33,7 @@ package body Raven.Cmd is
          when cv_shell      => return "shell";
          when cv_shlib      => return "shlib";
          when cv_stats      => return "stats";
+         when cv_upgrade    => return "upgrade";
          when cv_version    => return "version";
          when cv_which      => return "which";
       end case;

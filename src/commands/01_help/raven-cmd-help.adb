@@ -117,9 +117,9 @@ package body Raven.Cmd.Help is
                when cv_shell   => PL (C, "Opens a command shell for the local SQLite database");
                when cv_shlib   => PL (C, "Displays packages that link against a specific library");
                when cv_stats   => PL (C, "Displays package database statistics");
+               when cv_upgrade => PL (C, "Upgrades installed packages");
                when cv_version => PL (C, "Displays the currency of installed packages");
                when cv_which   => PL (C, "Displays which package installed a specific file");
-               --  when cv_upgrade  => PL (C, "Upgrades installed packge distributions");
             end case;
          end;
       end loop;

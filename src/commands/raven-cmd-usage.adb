@@ -101,8 +101,9 @@ package body Raven.Cmd.Usage is
          when cv_shell      => return verb_shell (comline);
          when cv_shlib      => return verb_shlib (comline);
          when cv_stats      => return verb_stats (comline);
-         when cv_which      => return verb_which (comline);
          when cv_version    => return verb_version (comline);
+         when cv_upgrade    => return verb_upgrade (comline);
+         when cv_which      => return verb_which (comline);
       end case;
    end command_line_valid;
 
@@ -440,7 +441,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "install [-AMdfInFqUy] [-r reponame] [-CEg] <pkg-name-pattern>";
+         msg1 : constant String := "install [-AMdfInFqUy] [-r reponame] [-CE] <pkg-name> <...>";
          msg2 : constant String := "install --[[no|only]-registration| [--file] <path-rvn-archive>";
       begin
          display_error (error_msg);
@@ -472,11 +473,6 @@ package body Raven.Cmd.Usage is
            comline.common_options.case_sensitive
          then
             return alert ("-CE" & not_with_file);
-         end if;
-         if comline.common_options.exact_match and then
-           comline.common_options.case_sensitive
-         then
-            return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
          end if;
          if comline.cmd_install.name_patterns.Is_Empty then
             return alert ("Missing path to rvn archive");
@@ -511,9 +507,53 @@ package body Raven.Cmd.Usage is
          return alert ("--manual requires --exact-match to be set.");
       end if;
 
+      if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
       return True;
    end verb_install;
 
+
+   --------------------
+   --  verb_upgrade  --
+   --------------------
+   function verb_upgrade (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg1 : constant String := "upgrade [-fInFqUy] [-r reponame] [-CE] <pkg-name> <...>";
+      begin
+         display_error (error_msg);
+         display_usage (msg1, True);
+         display_help_suggestion (cv_upgrade);
+         return False;
+      end alert;
+   begin
+       if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+
+      if comline.common_options.quiet and then
+        comline.common_options.dry_run
+      then
+         return alert ("--dry-run and --quiet are incompatible options.");
+      end if;
+
+      if not Archive.Unix.user_is_root then
+         return alert ("The upgrade command is restricted to the superuser.");
+      end if;
+
+      if comline.common_options.exact_match and then
+        comline.common_options.case_sensitive
+      then
+         return alert ("--exact-match and --case-sensitive (glob) are incompatible switches");
+      end if;
+
+      return True;
+   end verb_upgrade;
 
    ----------------------------------
    --  alert_command_unrecognized  --
