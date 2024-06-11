@@ -156,4 +156,12 @@ private
       skip_scripts : Boolean;
       behave_quiet : Boolean) return Boolean;
 
+   --  queue represents the most important top-level ports branching to their dependencies.
+   --  for building, we need to install the dependencies first.  reverse_queue is not simply
+   --  reversing the order of the queue.  It is the order or recursively iterating over the
+   --  dependencies in order of priority, returning once the dependencies are depleted.
+   procedure build_reverse_queue
+     (queue        : Install_Order_Set.Vector;
+      rev_queue    : in out Install_Order_Set.Vector);
+
 end Raven.Install;

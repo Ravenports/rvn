@@ -280,6 +280,7 @@ package body Raven.Install is
       catalog_map : Pkgtypes.Package_Map.Map;
       install_map : Pkgtypes.Package_Map.Map;
       queue       : Install_Order_Set.Vector;
+      rev_queue   : Install_Order_Set.Vector;
 
       function release_active_lock (db : in out Database.RDB_Connection) return Boolean is
       begin
@@ -371,13 +372,15 @@ package body Raven.Install is
                opt_noscripts => opt_skip_scripts,
                queue         => queue);
 
-            if queue.Is_Empty then
+            build_reverse_queue (queue, rev_queue);
+
+            if rev_queue.Is_Empty then
                if not opt_quiet then
                   Event.emit_message ("All specified packages are already installed.");
                end if;
             else
-               queue.Iterate (gather_upgrades'Access);
-               queue.Iterate (gather_fetch_list'Access);
+               rev_queue.Iterate (gather_upgrades'Access);
+               rev_queue.Iterate (gather_fetch_list'Access);
 
                INST.collect_installed_files (localdb, upgrades, file_collection);
 
@@ -392,11 +395,11 @@ package body Raven.Install is
                                                     single_repo  => single_repo);
 
                if succeeded then
-                  succeeded := conflict_free (queue, cache_map, file_collection);
+                  succeeded := conflict_free (rev_queue, cache_map, file_collection);
                end if;
 
                if succeeded then
-                  show_proposed_queue (queue, cache_map, install_map, opt_quiet, opt_dry_run);
+                  show_proposed_queue (rev_queue, cache_map, install_map, opt_quiet, opt_dry_run);
 
                   if not opt_dry_run then
                      succeeded := granted_permission_to_proceed (opt_quiet);
@@ -405,7 +408,7 @@ package body Raven.Install is
 
                if not opt_dry_run and then succeeded then
                   succeeded := execute_installation_queue (rdb          => localdb,
-                                                           queue        => queue,
+                                                           queue        => rev_queue,
                                                            cache_map    => cache_map,
                                                            install_map  => install_map,
                                                            skip_scripts => opt_skip_scripts,
@@ -1216,5 +1219,61 @@ package body Raven.Install is
       return not problem_found;
    end execute_installation_queue;
 
+
+   ---------------------------
+   --  build_reverse_queue  --
+   ---------------------------
+   procedure build_reverse_queue
+     (queue        : Install_Order_Set.Vector;
+      rev_queue    : in out Install_Order_Set.Vector)
+   is
+      qstack : Install_Order_Set.Vector;
+
+      procedure scan_next (Position : Install_Order_Set.Cursor)
+      is
+         myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+      begin
+         if qstack.Is_Empty then
+            qstack.Append (myrec);
+            return;
+         end if;
+         if myrec.level > qstack.Last_Element.level then
+            qstack.Append (myrec);
+            return;
+         end if;
+         --  if levels are equal, pop and push
+         if myrec.level = qstack.Last_Element.level then
+            rev_queue.Append (qstack.Last_Element);
+            qstack.Delete_Last;
+            qstack.Append (myrec);
+            return;
+         end if;
+
+         --  stack level is higher than current item.  Pop until current item is lower than stack
+         loop
+            if myrec.level = qstack.Last_Element.level then
+               rev_queue.Append (qstack.Last_Element);
+               qstack.Delete_Last;
+               exit;
+            end if;
+            rev_queue.Append (qstack.Last_Element);
+            qstack.Delete_Last;
+         end loop;
+         qstack.Append (myrec);
+      end scan_next;
+
+   begin
+      qstack.Clear;
+      rev_queue.Clear;
+      if queue.Is_Empty then
+         return;
+      end if;
+      queue.iterate (scan_next'Access);
+
+      for x in 1 .. Natural (qstack.Length) loop
+         rev_queue.Append (qstack.Last_Element);
+         qstack.Delete_Last;
+      end loop;
+   end build_reverse_queue;
 
 end Raven.Install;

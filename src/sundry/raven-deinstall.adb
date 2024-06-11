@@ -368,14 +368,13 @@ package body Raven.Deinstall is
 
       procedure scan (Position : Pkgtypes.Package_Set.Cursor)
       is
-         n : Text renames Pkgtypes.Package_Set.Element (Position).namebase;
-         s : Text renames Pkgtypes.Package_Set.Element (Position).subpackage;
-         v : Text renames Pkgtypes.Package_Set.Element (Position).variant;
+         mypkg : Pkgtypes.A_Package renames Pkgtypes.Package_Set.Element (Position);
       begin
          declare
-            nsvplus : constant String := USS (n) & '-' & USS (s) & '-' & USS (v) &
-              delim & int2str (counter);
+            nsvplus : constant String :=
+              Pkgtypes.nsv_identifier (mypkg) & delim & int2str (counter);
          begin
+            event.emit_debug (high_level, "purge list: " & nsvplus);
             tmp_list.Append (SUS (nsvplus));
             counter := counter + 1;
          end;
