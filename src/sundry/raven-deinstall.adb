@@ -362,7 +362,6 @@ package body Raven.Deinstall is
      (purge_list  : Pkgtypes.Package_Set.Vector;
       purge_order : in out Purge_Order_Crate.Vector)
    is
-      tmp_list : Pkgtypes.Text_List.Vector;
       delim    : constant String (1 .. 1) := (others => LAT.HT);
       counter  : Natural := 0;
 
@@ -375,7 +374,7 @@ package body Raven.Deinstall is
               Pkgtypes.nsv_identifier (mypkg) & delim & int2str (counter);
          begin
             event.emit_debug (high_level, "purge list: " & nsvplus);
-            tmp_list.Append (SUS (nsvplus));
+            purge_order.Prepend (counter);
             counter := counter + 1;
          end;
       end scan;
@@ -387,11 +386,8 @@ package body Raven.Deinstall is
          purge_order.Append (Natural'Value (deux));
       end set_order;
    begin
-      tmp_list.Clear;
       purge_order.Clear;
       purge_list.Iterate (scan'Access);
-      Pkgtypes.sorter.Sort (tmp_list);
-      tmp_list.Iterate (set_order'Access);
    end determine_purge_order;
 
 
