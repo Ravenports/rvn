@@ -3,9 +3,147 @@
 .Os
 .Sh NAME
 .Nm "rvn upgrade"
-.Nd Upgrade installed packge distributions
+.Nd Upgrade installed packages
 .Sh SYNOPSIS
-Not yet implemented.
+.Nm
+.Op Fl fInFqUy
+.Op Fl r Ar reponame
+.Op Fl CE
+.Ar pkg-name ...
+.Pp
+.Nm
+.Op Cm --{force,no-scripts,dry-run,fetch-only}
+.Op Cm --{quiet,no-repo-update,yes}
+.Op Cm --repository Ar reponame
+.Op Cm --{case-sensitive,exact-match}
+.Ar pkg-name ...
+.Sh DESCRIPTION
+.Nm
+is used for upgrading packaged software distributions.
+.Pp
+.Nm
+compares the versions of specified packages installed on the system
+to what is available in the configured package repository.
+If no packages are specified, all installed packages will be checked.
+The identified obsolete packages are added to a work list for processing.
+.Nm
+will not install new packages unless they required by the newer versions
+of the upgraded packages.
+.Pp
+The assembled work list is then examined.
+Any package that is already installed and current is dropped unless the
+.Fl f
+(force) option is supplied, in which case that package will be reinstalled.
+.Pp
+The dependencies of packages in the list are recursively determined.
+Any dependencies that aren't already installed are added to the queue.
+These implicitly added packages are designated as candidates for
+autoremoval (automatic flag is set).
+See
+.Xr rvn-autoremove 8
+for details.
+.Pp
+Autoremoval flags are sticky, and they will persist over reinstallations
+and upgrades even when explicitly specified on the command line.
+See
+.Xr rvn-query 8
+for finding the autoremoval status of a package.
+.Pp
+When a package on the work list supplies a shared library, and that
+library has been updated, all packages requiring that shared library
+will also be added to the work list as reinstallation jobs.
+The queue is arranged by dependency order and
+.Nm
+will present it to the user for approval before proceeding unless
+overridden by the
+.Fl y
+option or if
+.Cm ASSUME_ALWAYS_YES
+is set to
+.Dq true
+in
+.Pa rvn.conf .
+.Pp
+Packages are fetched from the configured repository and stored into the
+local package cache if they are not already present, or if the digest of the
+cached package file differs from the version in the remote repository.
+Packages will be downloaded from the highest priority mirror configured in
+.Pa /usr/local/etc/rvn/repo .
+See
+.Xr rvn-repository 5
+and
+.Xr rvn.conf 5
+for details.
+.Pp
+Finally, the work list is executed in previously presented order.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width automatic
+.It Fl F , Cm --fetch-only
+With this option, the installation stops after the package files are
+retrieved from the remote repository.
+.It Fl f , Cm --force
+Force the reinstallation of selected packages that are already installed
+rather than dropping them from the queue.
+.It Fl I , Cm --no-scripts
+This option prevents the execution of installation scripts (pre-install or
+post-install, Lua or shell) if they are provided with the package being
+installed.
+.It Fl n , Cm --dry-run
+Dry-run mode.
+The list of changes to packages is always printed, but no changes are
+actually made.
+Package fetching is also inhibited with this option.
+.It Fl q , Cm --quiet
+Force quiet output.
+This option is incompatible with
+.Cm --dry-run
+since the purpose is to show packages to be installed, upgraded or deleted.
+.It Fl r Ar reponame , Cm --repository Ar reponame
+This switch specifies that the given named repository shall be
+considered the reference and only mirror to be used to download the
+catalog, regardless of the repository configuration and
+.Dq enabled
+setting of that named repository.
+.It Fl U , Fl -no-repo-update
+Suppress the automatic update of the local copy of the repository catalog
+from remote.
+.It Fl y , Cm --yes
+Assume yes when asked for confirmation before package installation.
+.El
+.Ss pkg-name matching algorithm
+By default, the
+.Ar pkg-name
+pattern is considered to be a case-insensitive match against the start
+of the namebase-subpackage-variant triplet identifier.
+The following mutually exclusive options modify this default behavior.
+.Bl -tag -width xxxx
+.It Fl C , Cm --case-sensitive
+Switch to glob matching of the
+.Ar pattern .
+which is inherently case-sensitive .
+.It Fl E , Cm --exact-match
+Disables explicit and implied wildcards so when the
+.Ar pattern .
+exactly matches the namebase-subpackage-variant
+package name is successful.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+See
+.Xr rvn.conf 5
+for further description.
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev ASSUME_ALWAYS_YES
+.It Ev CASE_SENSITIVE_MATCH
+.It Ev HANDLE_RC_SCRIPTS
+.It Ev REPO_AUTOUPDATE
+.It Ev RUN_SCRIPTS
+.It Ev RVN_CACHEDIR
+.It Ev RVN_DBDIR
+.El
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
