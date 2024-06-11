@@ -554,11 +554,16 @@ package body Raven.Deinstall is
       purge_order.Iterate (remove_installed_package'Access);
       TIO.Close (deinstall_log);
 
-      TIO.Open (deinstall_log, TIO.In_File, tmp_filename);
-      while not  TIO.End_Of_File (deinstall_log) Loop
-         Event.emit_message (TIO.Get_Line (deinstall_log));
-      end loop;
-      TIO.Close (deinstall_log);
+      if not quiet then
+         if Pkgtypes.">" (Pkgtypes.get_file_size (tmp_filename), 5) then
+            Event.emit_message ("");
+            TIO.Open (deinstall_log, TIO.In_File, tmp_filename);
+            while not  TIO.End_Of_File (deinstall_log) Loop
+               Event.emit_message (TIO.Get_Line (deinstall_log));
+            end loop;
+            TIO.Close (deinstall_log);
+         end if;
+      end if;
 
       if Archive.Unix.file_exists (tmp_filename) then
          if not Archive.Unix.unlink_file (tmp_filename) then

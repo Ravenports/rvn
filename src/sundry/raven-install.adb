@@ -1198,6 +1198,7 @@ package body Raven.Install is
 
       if not behave_quiet then
          if Pkgtypes.">" (Pkgtypes.get_file_size (tmp_filename), 5) then
+            Event.emit_message ("");
             TIO.Open (install_log, TIO.In_File, tmp_filename);
             while not  TIO.End_Of_File (install_log) Loop
                Event.emit_message (TIO.Get_Line (install_log));
