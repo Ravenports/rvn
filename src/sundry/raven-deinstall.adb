@@ -100,19 +100,25 @@ package body Raven.Deinstall is
       end eradicate_file;
    begin
       Event.emit_remove_begin (installed_package);
+      Event.emit_debug (moderate, "Deinstalling " & Pkgtypes.nsv_identifier (installed_package));
       if not inhibit_scripts then
          --  redirect
          TIO.Set_Output (post_report);
          TIO.Set_Error (post_report);
+         Event.emit_debug (moderate, "Running pre-deinstall Bourne shell scripts");
          run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, tmp_message_shell);
+         Event.emit_debug (moderate, "Running pre-deinstall Lua scripts");
          run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, tmp_message_lua);
       end if;
 
+      Event.emit_debug (moderate, "Removing files");
       installed_package.files.Iterate (eradicate_file'Access);
       prune_empty_directories (installed_package);
 
       if not inhibit_scripts then
+         Event.emit_debug (moderate, "Running post-deinstall Bourne shell scripts");
          run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, tmp_message_shell);
+         Event.emit_debug (moderate, "Running post-deinstall Lua scripts");
          run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, tmp_message_lua);
 
          Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant);
@@ -128,6 +134,7 @@ package body Raven.Deinstall is
       if not Archive.Unix.unlink_file (tmp_message_lua) then
          null;
       end if;
+      Event.emit_debug (moderate, "Deinstall complete");
       Event.emit_remove_end (installed_package);
    end deinstall_extracted_package;
 
