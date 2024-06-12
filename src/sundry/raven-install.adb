@@ -47,6 +47,7 @@ package body Raven.Install is
                                 current_pkg : Pkgtypes.A_Package;
                                 updated_pkg : String;
                                 no_scripts  : Boolean;
+                                rootdir     : String;
                                 post_report : TIO.File_Type) return Boolean
    is
       features  : Archive.Unix.File_Characteristics;
@@ -55,7 +56,6 @@ package body Raven.Install is
       metatree  : ThickUCL.UclTree;
       shiny_pkg : Pkgtypes.A_Package;
       success   : Boolean;
-      rootdir   : constant String := "/";
 
       procedure transfer_custom_notes (Position : Pkgtypes.NoteSet.Cursor)
       is
@@ -112,6 +112,7 @@ package body Raven.Install is
                                                    verify_digest_first => False,
                                                    quiet               => True,
                                                    inhibit_scripts     => no_scripts,
+                                                   rootdir             => rootdir,
                                                    post_report         => post_report);
 
             DEL.drop_package_with_cascade (rdb, current_pkg.id);
@@ -128,6 +129,7 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => True,
+                                                      rootdir         => rootdir,
                                                       package_data    => shiny_pkg,
                                                       post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
@@ -145,6 +147,7 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
+                                                      rootdir         => rootdir,
                                                       package_data    => shiny_pkg,
                                                       post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
@@ -164,6 +167,7 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
+                                                      rootdir         => rootdir,
                                                       package_data    => shiny_pkg,
                                                       post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
@@ -189,12 +193,12 @@ package body Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean;
+      rootdir           : String;
       package_data      : Pkgtypes.A_Package;
       post_report       : TIO.File_Type) return Boolean
    is
       operation : Archive.Unpack.Darc;
       level     : Archive.info_level := Archive.normal;
-      rootdir   : constant String := "/";
       basename  : constant String := MISC.archive_basename (archive_path);
       rootuser  : constant Boolean := Archive.Unix.user_is_root;
       pipe_fd   : constant Archive.Unix.File_Descriptor :=
@@ -208,6 +212,14 @@ package body Raven.Install is
          end if;
          return "install";
       end action;
+
+      function extract_location return String is
+      begin
+         if rootdir = "" then
+            return "/";
+         end if;
+         return rootdir;
+      end extract_location;
    begin
       if dry_run_only then
          Event.emit_message ("dry-run: " & action & " " & basename & " package");
@@ -231,7 +243,7 @@ package body Raven.Install is
       end if;
       begin
          good_extraction := operation.extract_archive
-           (top_directory => rootdir,
+           (top_directory => extract_location,
             set_owners    => rootuser,
             set_perms     => rootuser,
             set_modtime   => False,
@@ -264,6 +276,7 @@ package body Raven.Install is
                                         opt_dry_run      : Boolean;
                                         opt_fetch_only   : Boolean;
                                         single_repo      : String;
+                                        rootdir          : String;
                                         patterns         : Pkgtypes.Text_List.Vector)
                                         return Boolean
    is
@@ -440,7 +453,8 @@ package body Raven.Install is
                                                            cache_map    => cache_map,
                                                            install_map  => install_map,
                                                            skip_scripts => opt_skip_scripts,
-                                                           behave_quiet => opt_quiet);
+                                                           behave_quiet => opt_quiet,
+                                                           rootdir      => rootdir);
                end if;
             end if;
          end;
@@ -474,6 +488,7 @@ package body Raven.Install is
                                      opt_dry_run      : Boolean;
                                      opt_fetch_only   : Boolean;
                                      single_repo      : String;
+                                     rootdir          : String;
                                      patterns         : Pkgtypes.Text_List.Vector)
                                      return Boolean
    is
@@ -621,7 +636,8 @@ package body Raven.Install is
                                                            cache_map    => cache_map,
                                                            install_map  => install_map,
                                                            skip_scripts => opt_skip_scripts,
-                                                           behave_quiet => opt_quiet);
+                                                           behave_quiet => opt_quiet,
+                                                           rootdir      => rootdir);
                end if;
             end if;
          end;
@@ -1389,7 +1405,8 @@ package body Raven.Install is
       cache_map    : Pkgtypes.Package_Map.Map;
       install_map  : Pkgtypes.Package_Map.Map;
       skip_scripts : Boolean;
-      behave_quiet : Boolean) return Boolean
+      behave_quiet : Boolean;
+      rootdir      : String) return Boolean
    is
       tmp_filename  : constant String := Miscellaneous.get_temporary_filename ("install");
       total_steps   : constant Natural := Natural (queue.Length);
@@ -1420,11 +1437,12 @@ package body Raven.Install is
                clone_pkg := install_map.Element (myrec.nsv);
                clone_pkg.automatic := myrec.automatic;
                succeeded := install_or_upgrade (rdb         => rdb,
-                                               action      => myrec.action,
-                                               current_pkg => clone_pkg,
-                                               updated_pkg => rvn_path,
-                                               no_scripts  => skip_scripts,
-                                               post_report => install_log);
+                                                action      => myrec.action,
+                                                current_pkg => clone_pkg,
+                                                updated_pkg => rvn_path,
+                                                no_scripts  => skip_scripts,
+                                                rootdir     => rootdir,
+                                                post_report => install_log);
             when new_install =>
                dummy_pkg.automatic := myrec.automatic;
                succeeded := install_or_upgrade (rdb         => rdb,
@@ -1432,6 +1450,7 @@ package body Raven.Install is
                                                 current_pkg => dummy_pkg,
                                                 updated_pkg => rvn_path,
                                                 no_scripts  => skip_scripts,
+                                                rootdir     => rootdir,
                                                 post_report => install_log);
          end case;
          if succeeded then

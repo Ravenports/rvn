@@ -26,6 +26,7 @@ package Raven.Deinstall is
       verify_digest_first : Boolean;
       quiet               : Boolean;
       inhibit_scripts     : Boolean;
+      rootdir             : String;
       post_report         : TIO.File_Type);
 
    function format_removal_order (counter : Natural) return String;
@@ -44,7 +45,8 @@ package Raven.Deinstall is
       purge_order    : Purge_Order_Crate.Vector;
       skip_verify    : Boolean;
       skip_scripts   : Boolean;
-      quiet          : Boolean);
+      quiet          : Boolean;
+      rootdir        : String);
 
 private
 
@@ -52,12 +54,14 @@ private
      (phase       : ARW.package_phase;
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
+      rootdir     : String;
       msg_outfile : String);
 
    procedure run_lua_scripts
      (phase       : ARW.package_phase;
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
+      rootdir     : String;
       msg_outfile : String);
 
    procedure prune_empty_directories

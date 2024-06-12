@@ -81,6 +81,14 @@ package body Raven.Cmd.Remove is
       purge_list   : Pkgtypes.Package_Set.Vector;
       purge_order  : Deinstall.Purge_Order_Crate.Vector;
       skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
+
+      function extract_location return String is
+      begin
+         if IsBlank (comline.pre_command.install_rootdir) then
+            return "/";
+         end if;
+         return USS (comline.pre_command.install_rootdir);
+      end extract_location;
    begin
       if comline.common_options.all_installed_pkgs then
          success := DEL.top_level_deletion_list
@@ -159,7 +167,8 @@ package body Raven.Cmd.Remove is
          purge_order  => purge_order,
          skip_verify  => comline.cmd_remove.skip_verify,
          skip_scripts => skip_scripts,
-         quiet        => comline.common_options.quiet);
+         quiet        => comline.common_options.quiet,
+         rootdir      => extract_location);
 
       if not LOK.downgrade_lock (rdb, LOK.lock_exclusive, LOK.lock_advisory) then
          Event.emit_error ("Failed downgrade to advisory lock");

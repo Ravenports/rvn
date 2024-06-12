@@ -38,6 +38,7 @@ package Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean;
+      rootdir           : String;
       package_data      : Pkgtypes.A_Package;
       post_report       : Ada.Text_IO.File_Type) return Boolean;
 
@@ -52,6 +53,7 @@ package Raven.Install is
       opt_dry_run      : Boolean;
       opt_fetch_only   : Boolean;
       single_repo      : String;
+      rootdir          : String;
       patterns         : Pkgtypes.Text_List.Vector)
       return Boolean;
 
@@ -63,6 +65,7 @@ package Raven.Install is
       opt_dry_run      : Boolean;
       opt_fetch_only   : Boolean;
       single_repo      : String;
+      rootdir          : String;
       patterns         : Pkgtypes.Text_List.Vector)
       return Boolean;
 
@@ -100,6 +103,7 @@ private
       current_pkg : Pkgtypes.A_Package;
       updated_pkg : String;
       no_scripts  : Boolean;
+      rootdir     : String;
       post_report : Ada.Text_IO.File_Type) return Boolean;
 
    function assemble_work_queue
@@ -166,7 +170,8 @@ private
       cache_map    : Pkgtypes.Package_Map.Map;
       install_map  : Pkgtypes.Package_Map.Map;
       skip_scripts : Boolean;
-      behave_quiet : Boolean) return Boolean;
+      behave_quiet : Boolean;
+      rootdir      : String) return Boolean;
 
    --  queue represents the most important top-level ports branching to their dependencies.
    --  for building, we need to install the dependencies first.  reverse_queue is not simply

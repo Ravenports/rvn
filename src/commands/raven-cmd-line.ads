@@ -36,6 +36,7 @@ private
       global_chroot,
       global_config,
       global_repoconfdir,
+      global_rootdir,
       global_option);
 
    type Clswitch is

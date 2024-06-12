@@ -85,6 +85,7 @@ package body Raven.Cmd.Install is
             opt_dry_run      => comline.common_options.dry_run,
             opt_fetch_only   => comline.cmd_install.fetch_only,
             single_repo      => single,
+            rootdir          => USS (comline.pre_command.install_rootdir),
             patterns         => comline.cmd_install.name_patterns);
       end if;
 
@@ -111,17 +112,24 @@ package body Raven.Cmd.Install is
       metatree     : ThickUCL.UclTree;
       operation    : Archive.Unpack.Darc;
       result       : Boolean := True;
-      rootdir      : constant String := "/";
       skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
 
       function archive_path return String is
       begin
          return USS (comline.cmd_install.name_patterns.Element (0));
       end archive_path;
+
+      function extract_location return String is
+      begin
+         if IsBlank (comline.pre_command.install_rootdir) then
+            return "/";
+         end if;
+         return USS (comline.pre_command.install_rootdir);
+      end extract_location;
    begin
 
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
-      if not operation.extract_manifest (file_list, rootdir) then
+      if not operation.extract_manifest (file_list, extract_location) then
          Event.emit_error ("Failed to extract manifest of packaged files.");
       end if;
       operation.populate_metadata_tree (metatree);
@@ -169,6 +177,7 @@ package body Raven.Cmd.Install is
                be_silent       => comline.common_options.quiet,
                dry_run_only    => comline.common_options.dry_run,
                upgrading       => False,
+               rootdir         => USS (comline.pre_command.install_rootdir),
                package_data    => dummy_pkg,
                post_report     => Ada.Text_IO.Standard_Error);
 

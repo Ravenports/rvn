@@ -80,6 +80,9 @@ package body Raven.Cmd.Line is
             elsif datum = "-R" or else datum = "--repo-conf-dir"
             then
                last_cmd := global_repoconfdir;
+            elsif datum = "-r" or else datum = "--rootdir"
+            then
+               last_cmd := global_rootdir;
             elsif datum = "-o" or else datum = "--option"
             then
                last_cmd := global_option;
@@ -99,6 +102,7 @@ package body Raven.Cmd.Line is
                when global_chroot      => result.pre_command.chroot_first      := datumtxt;
                when global_config      => result.pre_command.custom_configfile := datumtxt;
                when global_repoconfdir => result.pre_command.custom_repos_dir  := datumtxt;
+               when global_rootdir     => result.pre_command.install_rootdir   := datumtxt;
                when global_option =>
                   if IsBlank (result.pre_command.option_nvpairs) then
                      result.pre_command.option_nvpairs := datumtxt;

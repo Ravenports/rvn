@@ -32,6 +32,7 @@ package body Raven.Deinstall is
                                           verify_digest_first : Boolean;
                                           quiet               : Boolean;
                                           inhibit_scripts     : Boolean;
+                                          rootdir             : String;
                                           post_report         : TIO.File_Type)
    is
       --  Step 1.  run pre-deinstall shell scripts (create tmp output file first)
@@ -106,9 +107,11 @@ package body Raven.Deinstall is
          TIO.Set_Output (post_report);
          TIO.Set_Error (post_report);
          Event.emit_debug (moderate, "Running pre-deinstall Bourne shell scripts");
-         run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, tmp_message_shell);
+         run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, rootdir,
+                            tmp_message_shell);
          Event.emit_debug (moderate, "Running pre-deinstall Lua scripts");
-         run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, tmp_message_lua);
+         run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, rootdir,
+                          tmp_message_lua);
       end if;
 
       Event.emit_debug (moderate, "Removing files");
@@ -117,9 +120,11 @@ package body Raven.Deinstall is
 
       if not inhibit_scripts then
          Event.emit_debug (moderate, "Running post-deinstall Bourne shell scripts");
-         run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, tmp_message_shell);
+         run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, rootdir,
+                            tmp_message_shell);
          Event.emit_debug (moderate, "Running post-deinstall Lua scripts");
-         run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, tmp_message_lua);
+         run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, rootdir,
+                          tmp_message_lua);
 
          Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant);
          Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant);
@@ -146,6 +151,7 @@ package body Raven.Deinstall is
      (phase       : ARW.package_phase;
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
+      rootdir     : String;
       msg_outfile : String)
    is
       num_scripts : Natural;
@@ -171,7 +177,7 @@ package body Raven.Deinstall is
                subpackage  => USS (the_package.subpackage),
                variant     => USS (the_package.variant),
                prefix      => USS (the_package.prefix),
-               root_dir    => "/",
+               root_dir    => rootdir,
                upgrading   => upgrading,
                interpreter => interpreter,
                script      => USS (the_package.scripts (phase)(script_index).code),
@@ -193,6 +199,7 @@ package body Raven.Deinstall is
      (phase       : ARW.package_phase;
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
+      rootdir     : String;
       msg_outfile : String)
    is
       num_scripts : Natural;
@@ -217,7 +224,7 @@ package body Raven.Deinstall is
                subpackage  => USS (the_package.subpackage),
                variant     => USS (the_package.variant),
                prefix      => USS (the_package.prefix),
-               root_dir    => "/",
+               root_dir    => rootdir,
                upgrading   => upgrading,
                script      => USS (the_package.scripts (phase)(script_index).code),
                arg_chain   => USS (the_package.scripts (phase)(script_index).args),
@@ -496,7 +503,8 @@ package body Raven.Deinstall is
       purge_order    : Purge_Order_Crate.Vector;
       skip_verify    : Boolean;
       skip_scripts   : Boolean;
-      quiet          : Boolean)
+      quiet          : Boolean;
+      rootdir        : String)
    is
       tmp_filename  : constant String := Miscellaneous.get_temporary_filename ("remove");
       total_pkgs    : constant Natural := Natural (purge_order.Length);
@@ -548,6 +556,7 @@ package body Raven.Deinstall is
             verify_digest_first => not skip_verify,
             quiet               => quiet,
             inhibit_scripts     => skip_scripts,
+            rootdir             => rootdir,
             post_report         => deinstall_log);
          DEL.drop_package_with_cascade (rdb, mypackage.id);
       end remove_installed_package;

@@ -41,6 +41,7 @@ package body Raven.Cmd.Upgrade is
          opt_dry_run      => comline.common_options.dry_run,
          opt_fetch_only   => comline.cmd_install.fetch_only,
          single_repo      => single,
+         rootdir          => USS (comline.pre_command.install_rootdir),
          patterns         => comline.cmd_install.name_patterns);
 
    end execute_upgrade_command;

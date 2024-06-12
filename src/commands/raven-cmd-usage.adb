@@ -16,9 +16,9 @@ package body Raven.Cmd.Usage is
    is
       procedure alert (error_msg : String)
       is
-         m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>] [-4|-6]";
+         m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>|-r <rootdir>]";
          m2 : constant String := "[-o var=value] [-C <configuration file>] [-R <repo config dir>]";
-         m3 : constant String := "<command> [<args>]";
+         m3 : constant String := "[-4|-6] <command> [<args>]";
       begin
          display_error (error_msg);
          display_usage (m1, True);
@@ -35,6 +35,30 @@ package body Raven.Cmd.Usage is
       if comline.pending_argument then
          alert ("The last switch requires an argument");
          return error_found;
+      end if;
+
+      if not IsBlank (comline.pre_command.install_rootdir) and
+        not IsBlank (comline.pre_command.chroot_first)
+      then
+         alert ("-c and -r are mutually exclusive");
+         return error_found;
+      end if;
+
+      if not IsBlank (comline.pre_command.install_rootdir) then
+         declare
+            features : UNX.File_Characteristics :=
+              UNX.get_charactistics (USS (comline.pre_command.install_rootdir));
+         begin
+            case features.ftype is
+               when Archive.directory => null;
+               when Archive.unsupported =>
+                  alert ("rootdir does not exist");
+                  return error_found;
+               when others =>
+                  alert ("rootdir exists, but is not a directory");
+                  return error_found;
+            end case;
+         end;
       end if;
 
       if not IsBlank (comline.pre_command.chroot_first) then

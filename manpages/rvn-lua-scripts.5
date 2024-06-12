@@ -73,6 +73,12 @@ variant of the package.
 .It Va pkg_prefix
 .Va PREFIX
 defined within the package at build time.
+.It Va pkg_rootdir
+represents the root directory where the package will be installed as specified
+by the
+.Fl r
+arguments passed to
+.Xr rvn 8 .
 .It Va pkg_upgrade
 Boolean to inform the script that it is running in the context of an upgrade
 .El

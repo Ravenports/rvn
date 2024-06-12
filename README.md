@@ -15,9 +15,3 @@ Subsequent times (from root)
 ```
 git submodule update --recursive --remote
 ```
-
-## Incomplete commands
-
-### Info
-
-- Implement query on installed package database

@@ -73,6 +73,7 @@ package body Raven.Cmd.Help is
       PL ("-d", "Increment debug level");
       PL ("-c", "Execute " & prog & "inside a chroot(8)");
       PL ("-C", "Use the specified configuration file");
+      PL ("-r", "Relocate installation from / to <rootdir>");
       PL ("-R", "Directory to search for individual repository configurations");
       PL ("-o", "Override configuration option from the command line");
       PL ("-l", "List available commands and exit");
