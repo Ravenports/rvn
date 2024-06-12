@@ -924,7 +924,6 @@ package body Raven.Install is
                            myrec.prov_lib_change := False;
                         else
                            if opt_automatic then
-                              Event.emit_message (USS (myrec.nsv) & " setting=" & myrec.automatic'Img);
                               if myrec.automatic then
                                  return;
                               end if;
