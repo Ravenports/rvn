@@ -16,8 +16,8 @@ package body Raven.Cmd.Usage is
    is
       procedure alert (error_msg : String)
       is
-         m1 : constant String := "[-v] [-d] [-l] [--status-check] -c <chroot path> [-o var=value]";
-         m2 : constant String := "[-C <configuration file>] [-R <repo config dir>] [-4|-6]";
+         m1 : constant String := "[-v] [-d] [-l] [--status-check] [-c <chroot path>] [-4|-6]";
+         m2 : constant String := "[-o var=value] [-C <configuration file>] [-R <repo config dir>]";
          m3 : constant String := "<command> [<args>]";
       begin
          display_error (error_msg);
