@@ -385,7 +385,8 @@ package body Raven.Install is
                fetch_list.Append (Install_Order_Set.Element (Position).nsv);
             end gather_fetch_list;
          begin
-            calculate_descendants (rdb, install_map, cache_map, priority, False);
+            calculate_descendants (rdb, install_map, cache_map, priority, False, True);
+            load_installation_data (localdb, cache_map, install_map);
             finalize_work_queue
               (localdb       => localdb,
                install_map   => install_map,
@@ -565,7 +566,7 @@ package body Raven.Install is
             end gather_fetch_list;
 
          begin
-            calculate_descendants (rdb, catalog_map, cache_map, priority, opt_drop_depends);
+            calculate_descendants (rdb, catalog_map, cache_map, priority, opt_drop_depends, False);
             load_installation_data (localdb, cache_map, install_map);
             finalize_work_queue
               (localdb       => localdb,
@@ -711,7 +712,8 @@ package body Raven.Install is
       catalog_map : Pkgtypes.Package_Map.Map;
       cache_map   : in out Pkgtypes.Package_Map.Map;
       priority    : in out Descendant_Set.Vector;
-      skip_depend : Boolean)
+      skip_depend : Boolean;
+      from_local  : Boolean)
    is
       procedure calc (Position : Pkgtypes.Package_Map.Cursor)
       is
@@ -763,10 +765,34 @@ package body Raven.Install is
       begin
          cache_map.Insert (Pkgtypes.Package_Map.Key (Position), myrec);
       end clone;
+
+      procedure set_cache (Position : Pkgtypes.Package_Map.Cursor)
+      is
+         nsv : constant String := Pkgtypes.nsv_identifier (Pkgtypes.Package_Map.Element (Position));
+         local_set : Pkgtypes.Package_Set.Vector;
+         new_rec   : Pkgtypes.A_Package;
+      begin
+          if INST.top_level_addition_list
+                 (db             => rdb,
+                  packages       => local_set,
+                  pattern        => nsv,
+                  override_exact => True,
+                  select_all     => False)
+         then
+            if not local_set.Is_Empty then
+               new_rec := local_set.Element (0);
+               cache_map.Insert (SUS (nsv), new_rec);
+            end if;
+         end if;
+      end set_cache;
    begin
       priority.Clear;
       cache_map.Clear;
-      catalog_map.Iterate (clone'Access);
+      if from_local then
+         catalog_map.Iterate (set_cache'Access);
+      else
+         catalog_map.Iterate (clone'Access);
+      end if;
       catalog_map.Iterate (calc'Access);
       Desc_sorter.Sort (priority);
    end calculate_descendants;
@@ -826,6 +852,9 @@ package body Raven.Install is
          local_pkg : Pkgtypes.Package_Set.Vector;
          nsv       : constant String := USS (Pkgtypes.Package_Map.Key (Position));
       begin
+         if install_map.Contains (SUS (nsv)) then
+            return;
+         end if;
          if INST.top_level_addition_list
            (db             => localdb,
             packages       => local_pkg,
@@ -1008,7 +1037,6 @@ package body Raven.Install is
                            myrec.action := reinstall;
                            myrec.prov_lib_change := False;
                      else
-                        Event.emit_message (USS (myrec.nsv) & " setting=" & myrec.automatic'Img);
                         if opt_automatic then
                            if myrec.automatic then
                               return;

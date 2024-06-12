@@ -113,7 +113,8 @@ private
       catalog_map : Pkgtypes.Package_Map.Map;
       cache_map   : in out Pkgtypes.Package_Map.Map;
       priority    : in out Descendant_Set.Vector;
-      skip_depend : Boolean);
+      skip_depend : Boolean;
+      from_local  : Boolean);
 
    procedure load_installation_data
      (localdb     : Database.RDB_Connection;
