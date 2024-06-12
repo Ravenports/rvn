@@ -9,7 +9,8 @@ package Raven.Database.Add is
      (db             : RDB_Connection;
       packages       : in out Pkgtypes.Package_Set.Vector;
       pattern        : String;
-      override_exact : Boolean) return Boolean;
+      override_exact : Boolean;
+      select_all     : Boolean) return Boolean;
 
    procedure gather_packages_affected_by_libchange
      (db             : RDB_Connection;

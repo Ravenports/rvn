@@ -80,6 +80,47 @@ package body Raven.Database.Query is
    end package_installed;
 
 
+   ---------------------------
+   --  get_package_version  --
+   ---------------------------
+   function get_package_version
+     (db         : RDB_Connection;
+      namebase   : String;
+      subpackage : String;
+      variant    : String) return String
+   is
+      func : constant String := "get_package_version";
+      sql : constant String := "SELECT version FROM packages where namebase = ?1 " &
+                               "AND subpackage = ?2 AND variant = ?3";
+      new_stmt : SQLite.thick_stmt;
+   begin
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         raise package_not_found;
+      end if;
+      SQLite.bind_string (new_stmt, 1, namebase);
+      SQLite.bind_string (new_stmt, 2, subpackage);
+      SQLite.bind_string (new_stmt, 3, variant);
+      debug_running_stmt (new_stmt);
+
+      case SQLite.step (new_stmt) is
+         when SQLite.no_more_data => null;
+         when SQLite.row_present =>
+            declare
+               version : constant String := SQLite.retrieve_string (new_stmt, 0);
+            begin
+               SQLite.finalize_statement (new_stmt);
+               return version;
+            end;
+         when SQLite.something_else =>
+            CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                         SQLite.get_expanded_sql (new_stmt));
+      end case;
+      SQLite.finalize_statement (new_stmt);
+      raise package_not_found;
+   end get_package_version;
+
+
    -------------------------
    --  get_package_files  --
    -------------------------

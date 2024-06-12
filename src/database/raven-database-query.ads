@@ -6,6 +6,8 @@ with Archive.Unpack;
 
 package Raven.Database.Query is
 
+   package_not_found : exception;
+
    type A_Measurement_Set is
       record
          num_packages : Natural := 0;
@@ -32,6 +34,13 @@ package Raven.Database.Query is
    --  Returns number of installed packages.  Used for the rvn --status-check
    function number_of_installed_packages
      (db         : RDB_Connection) return Pkgtypes.Package_ID;
+
+   --  Returns version string.  Throws "package_not_found" exception if query is fruitless
+   function get_package_version
+     (db         : RDB_Connection;
+      namebase   : String;
+      subpackage : String;
+      variant    : String) return String;
 
    --  Populates a container of truncates packages (only data from main table, no joins)
    procedure rvn_which

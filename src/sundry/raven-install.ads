@@ -55,6 +55,17 @@ package Raven.Install is
       patterns         : Pkgtypes.Text_List.Vector)
       return Boolean;
 
+   function upgrade_installed_packages
+     (opt_exact_match  : Boolean;
+      opt_quiet        : Boolean;
+      opt_force        : Boolean;
+      opt_skip_scripts : Boolean;
+      opt_dry_run      : Boolean;
+      opt_fetch_only   : Boolean;
+      single_repo      : String;
+      patterns         : Pkgtypes.Text_List.Vector)
+      return Boolean;
+
 private
 
    type Install_Order_Type is

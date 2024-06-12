@@ -25,7 +25,8 @@ package body Raven.Database.Add is
      (db             : RDB_Connection;
       packages       : in out Pkgtypes.Package_Set.Vector;
       pattern        : String;
-      override_exact : Boolean) return Boolean
+      override_exact : Boolean;
+      select_all     : Boolean) return Boolean
    is
       leading_match : Boolean := False;
       success : Boolean := True;
@@ -37,13 +38,15 @@ package body Raven.Database.Add is
       new_stmt : SQLite.thick_stmt;
       sql : Text := SUS (sqlbase);
    begin
-      if override_exact then
-         sql := SUS (sqlbase & " WHERE nsv000 = ?");
-      elsif Context.reveal_case_sensitive then
-         sql := SUS (sqlbase & " WHERE nsv000 GLOB ?");
-      else
-         sql := SUS (sqlbase & " WHERE nsv000 LIKE ?");
-         leading_match := True;
+      if not select_all then
+         if override_exact then
+            sql := SUS (sqlbase & " WHERE nsv000 = ?");
+         elsif Context.reveal_case_sensitive then
+            sql := SUS (sqlbase & " WHERE nsv000 GLOB ?");
+         else
+            sql := SUS (sqlbase & " WHERE nsv000 LIKE ?");
+            leading_match := True;
+         end if;
       end if;
 
       if not SQLite.prepare_sql (db.handle, USS (sql), new_stmt) then
@@ -51,10 +54,12 @@ package body Raven.Database.Add is
          return False;
       end if;
 
-      if leading_match then
-         SQLite.bind_string (new_stmt, 1, pattern & '%');
-      else
-         SQLite.bind_string (new_stmt, 1, pattern);
+      if not select_all then
+         if leading_match then
+            SQLite.bind_string (new_stmt, 1, pattern & '%');
+         else
+            SQLite.bind_string (new_stmt, 1, pattern);
+         end if;
       end if;
       debug_running_stmt (new_stmt);
 
