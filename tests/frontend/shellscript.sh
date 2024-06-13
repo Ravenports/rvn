@@ -192,7 +192,7 @@ EOF
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" catalog -f
 
-    mkdir -p ${TMPDIR}/target/var/cache/rvn
+	mkdir -p ${TMPDIR}/target/var/cache/rvn
 	atf_check \
 		-e empty \
 		-o match:"upgrade:TRUE" \

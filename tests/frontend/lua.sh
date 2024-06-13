@@ -19,9 +19,7 @@ tests_init \
 	script_sample_exists \
 	script_stat \
 	script_arguments \
-
-#	
-# requires genrepo:	script_upgrade
+	script_upgrade
 
 
 script_basic_body() {
@@ -249,21 +247,23 @@ EOS
 }
 EOF
 
+	mkdir -p ${TMPDIR}/files
+	mkdir -p ${TMPDIR}/oneoff
 	touch dummy.plist
 	atf_check \
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
+		rvn create -o ${TMPDIR}/oneoff -r . -m test.ucl -w dummy.plist
 
 	mkdir -p ${TMPDIR}/target
 	atf_check \
 		-e empty \
 		-o empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --file ${TMPDIR}/oneoff/test-single-standard-1.rvn
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "2" "/"
 	cat << EOF >> test.ucl
 scripts: {
   post-install-lua: [
@@ -274,24 +274,23 @@ if pkg_upgrade then
  pkg.print_msg("upgrade:".. tostring(pkg_upgrade))
 end
 EOS
-,
+    }
   ]
 }
 EOF
 
-	rm ${TMPDIR}/test-single-standard-1.rvn
 	atf_check \
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
-		
+		rvn create -o ${TMPDIR}/files -r . -m test.ucl -w dummy.plist
+
 	mkdir -p ${TMPDIR}/target
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg repo .
+		rvn genrepo .
 	mkdir reposconf
 	cat <<EOF >> reposconf/repo.conf
 local: {
@@ -299,11 +298,19 @@ local: {
 	enabled: true
 }
 EOF
+
+	atf_check \
+		-o ignore \
+		-e empty \
+		-s exit:0 \
+		rvn -R "${TMPDIR}/reposconf" catalog -f
+
+	mkdir -p ${TMPDIR}/target/var/cache/rvn
 	atf_check \
 		-e empty \
 		-o match:"upgrade:true" \
 		-s exit:0 \
-		pkg -o REPOS_DIR="${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -U -y
 }
 
 script_filecmp_body() {
@@ -760,7 +767,7 @@ EOF
 		-e empty \
 		-s exit:0 \
 		rvn create -o ${TMPDIR} -r . -m test.ucl -w stat.plist
-		
+
 	mkdir ${TMPDIR}/target
 	atf_check \
 		-o inline:"zero\nreg\n" \
