@@ -6,8 +6,7 @@ tests_init \
 	basic \
 	message \
 	daemon \
-
-#	upgrade  (requires rvn genrepo to be implemented)
+	upgrade
 
 basic_body() {
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
@@ -127,19 +126,28 @@ EOS
 }
 EOF
 
+	mkdir -p ${TMPDIR}/files
+	mkdir -p ${TMPDIR}/oneoff
 	touch dummy.plist
 	atf_check \
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
+		rvn create -o ${TMPDIR}/oneoff -r . -m test.ucl -w dummy.plist
 		
 	mkdir -p ${TMPDIR}/target
 	atf_check \
 		-e empty \
 		-o ignore \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --file ${TMPDIR}/oneoff/test-single-standard-1.rvn
+
+atf_check \
+		-e empty \
+		-o match:"test-single-standard 1" \
+		-s exit:0 \
+		rvn -r ${TMPDIR}/target query -a "{nsv} {version}"
+
 
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "2" "/"
 	cat << EOF >> test.ucl
@@ -162,19 +170,14 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
-		
-	mkdir -p ${TMPDIR}/target
+		rvn create -o ${TMPDIR}/files -r . -m test.ucl -w dummy.plist
+
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn info -R -F ./test-2.rvn
-	atf_check \
-		-o ignore \
-		-e empty \
-		-s exit:0 \
-		rvn genrepo .
+		rvn genrepo ${TMPDIR}
+
 	mkdir reposconf
 	cat <<EOF >> reposconf/repo.conf
 local: {
@@ -182,9 +185,17 @@ local: {
 	enabled: true
 }
 EOF
+
+	atf_check \
+		-o ignore \
+		-e empty \
+		-s exit:0 \
+		rvn -R "${TMPDIR}/reposconf" catalog -f
+
+    mkdir -p ${TMPDIR}/target/var/cache/rvn
 	atf_check \
 		-e empty \
-		-o match:"upgrade:true" \
+		-o match:"upgrade:TRUE" \
 		-s exit:0 \
-		pkg -o REPOS_DIR="${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -U -y
 }
