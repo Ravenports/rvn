@@ -193,6 +193,7 @@ package body Raven.Cmd.Genrepo is
          tracker   : Natural := 0;
          worklimit : Natural := 0;
          worker    : Scanner_Range := 1;
+         features  : Archive.Unix.File_Characteristics;
 
          MIN_PACKAGE_COUNT : constant Positive := 240;
 
@@ -231,6 +232,17 @@ package body Raven.Cmd.Genrepo is
             end if;
          end slice_rvn_files;
       begin
+         features := Archive.Unix.get_charactistics (repo_path & "/files");
+         case features.ftype is
+            when archive.directory => null;
+            when archive.unsupported =>
+               Event.emit_error ("There is no 'files' subdirectory of repository at " & repo_path);
+               return;
+            when others =>
+               Event.emit_error (repo_path & "/files is not a directory");
+               return;
+         end case;
+
          SCN.scan_directory (repo_path & "/files", all_files);
          all_files.Iterate (filter_rvn_files'Access);
          total_num := Natural (rvn_files.Length);
