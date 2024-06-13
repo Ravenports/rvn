@@ -34,7 +34,7 @@ EOF
 
 	mkdir ${TMPDIR}/target
 	atf_check \
-		-o inline:"this is post install1\nthis is post install2\n" \
+		-o inline:"test-single-standard shell script messages  -------------------------------\nthis is post install1\nthis is post install2\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn

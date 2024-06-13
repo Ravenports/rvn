@@ -423,31 +423,31 @@ EOF
 		rvn -o KEYWORDS_DIR=. create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF >> output.ucl
-abi: '*:*:0'
+abi: "*:*:0"
 categories: [
-  'test'
+  "test"
 ]
-comment: 'a test'
-desc: 'Yet another test'
+comment: "a test"
+desc: "Yet another test"
 directories: [
   {
     group: false
     owner: false
-    path: 'B'
+    path: "B"
     perms: false
   }
 ]
 flatsize: 0
-maintainer: 'test'
-messages: {
-}
-namebase: 'test'
-prefix: '/'
+maintainer: "test"
+messages: [
+]
+namebase: "test"
+prefix: "/"
 scripts: {
   post-install: [
     {
-      args: 'A B'
-      code: 'echo \$1 \$2'
+      args: "A B"
+      code: "echo \$1 \$2"
     }
   ]
 }
@@ -457,10 +457,10 @@ shlibs_provided: [
 ]
 shlibs_required: [
 ]
-subpackage: 'single'
-variant: 'standard'
-version: '1'
-www: 'http://test'
+subpackage: "single"
+variant: "standard"
+version: "1"
+www: "http://test"
 
 EOF
 
@@ -482,20 +482,20 @@ create_from_manifest_and_plist_body() {
 		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 
 cat << EOF >> output.ucl
-abi: '*:*:0'
+abi: "*:*:0"
 categories: [
-  'test'
+  "test"
 ]
-comment: 'a test'
-desc: 'Yet another test'
+comment: "a test"
+desc: "Yet another test"
 directories: [
 ]
 flatsize: 0
-maintainer: 'test'
-messages: {
-}
-namebase: 'test'
-prefix: '/'
+maintainer: "test"
+messages: [
+]
+namebase: "test"
+prefix: "/"
 scripts: {
 }
 shlibs_adjacent: [
@@ -504,10 +504,10 @@ shlibs_provided: [
 ]
 shlibs_required: [
 ]
-subpackage: 'single'
-variant: 'standard'
-version: '1'
-www: 'http://test'
+subpackage: "single"
+variant: "standard"
+version: "1"
+www: "http://test"
 
 EOF
 
@@ -556,26 +556,26 @@ create_from_manifest_dir_body() {
 		rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist --timestamp 100020008
 
 cat << EOF >> output.ucl
-abi: '*:*:0'
+abi: "*:*:0"
 categories: [
-  'test'
+  "test"
 ]
-comment: 'a test'
-desc: 'Yet another test'
+comment: "a test"
+desc: "Yet another test"
 directories: [
   {
     group: false
     owner: false
-    path: 'testdir'
+    path: "testdir"
     perms: 420
   }
 ]
 flatsize: 0
-maintainer: 'test'
-messages: {
-}
-namebase: 'test'
-prefix: '/'
+maintainer: "test"
+messages: [
+]
+namebase: "test"
+prefix: "/"
 scripts: {
 }
 shlibs_adjacent: [
@@ -584,10 +584,10 @@ shlibs_provided: [
 ]
 shlibs_required: [
 ]
-subpackage: 'single'
-variant: 'standard'
-version: '1'
-www: 'http://test'
+subpackage: "single"
+variant: "standard"
+version: "1"
+www: "http://test"
 
 EOF
 
@@ -612,19 +612,19 @@ create_from_plist_pkg_descr_body() {
 
 
 cat << EOF >> METADATA
-messages: {
-  always: "This message always displayed."
-  install: "This is install message."
-  upgrade: "This is upgrade message."
-}
+messages: [
+  {type: "install", message: "This is an install message."}
+  {type: "remove", message: "This is a deinstall message."}
+  {type: "upgrade", message: "This is an upgrade message."}
+]
 EOF
 
 	atf_check rvn create -o ${TMPDIR} -r . -m METADATA -w test.plist
 	atf_check \
-		-o match:"^This message always displayed[.]$" \
+		-o match:"^This is an install message[.]$" \
 		-e empty \
 		-s exit:0 \
-		rvn info --pkg-message -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info --install-message -F ${TMPDIR}/test-single-standard-1.rvn
 }
 
 create_from_plist_with_keyword_and_message_body() {
@@ -635,35 +635,34 @@ cat << EOF > showmsg.ucl
 actions: []
 messages: [
 	{ message: "always" },
-	{ message: "on upgrade";type = "upgrade" },
+	{ message: "on upgrade"; type = "upgrade" },
 	{ message: "on install"; type = "install" },
 ]
 EOF
 
 cat << EOF >> output.ucl
-abi: '*:*:0'
+abi: "*:*:0"
 categories: [
-  'test'
+  "test"
 ]
-comment: 'a test'
-desc: 'Yet another test'
+comment: "a test"
+desc: "Yet another test"
 directories: [
 ]
 flatsize: 0
-maintainer: 'test'
-messages: {
-  always: [
-    'always'
-  ]
-  install: [
-    'on install'
-  ]
-  upgrade: [
-    'on upgrade'
-  ]
-}
-namebase: 'test'
-prefix: '/'
+maintainer: "test"
+messages: [
+  {
+    message: "on install"
+    type: "install"
+  }
+  {
+    message: "on upgrade"
+    type: "upgrade"
+  }
+]
+namebase: "test"
+prefix: "/"
 scripts: {
 }
 shlibs_adjacent: [
@@ -672,10 +671,10 @@ shlibs_provided: [
 ]
 shlibs_required: [
 ]
-subpackage: 'single'
-variant: 'standard'
-version: '1'
-www: 'http://test'
+subpackage: "single"
+variant: "standard"
+version: "1"
+www: "http://test"
 
 EOF
 
