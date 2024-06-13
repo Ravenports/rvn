@@ -312,15 +312,24 @@ package body Raven.Install is
          S : constant String := USS (myrec.subpackage);
          V : constant String := USS (myrec.variant);
          installed_version : constant String := USS (myrec.version);
-         catalog_version   : constant String := QRY.get_package_version (rdb, N, S, V);
       begin
-         case Version.pkg_version_cmp (installed_version, catalog_version) is
-            when 0 => return;  --  equal
-            when 1 => return;  --  downgrade
-            when -1 =>
-               install_map.Insert (Pkgtypes.Package_Map.Key (Position),
-                                   Pkgtypes.Package_Map.Element (Position));
-         end case;
+         declare
+            catalog_version : constant String := QRY.get_package_version (rdb, N, S, V);
+         begin
+            case Version.pkg_version_cmp (installed_version, catalog_version) is
+               when 0 => return;  --  equal
+               when 1 => return;  --  downgrade
+               when -1 =>
+                  install_map.Insert (Pkgtypes.Package_Map.Key (Position),
+                                      Pkgtypes.Package_Map.Element (Position));
+            end case;
+         end;
+      exception
+         when QRY.package_not_found =>
+            if not opt_quiet then
+               Event.emit_message (Pkgtypes.nsv_identifier (myrec) & " is not installed.");
+            end if;
+            return;
       end select_outdated;
    begin
       if opt_dry_run then
