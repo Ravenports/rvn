@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Text_IO;
 with Ada.Exceptions;
 with Ada.Directories;
 with Raven.Cmd.Unset;
@@ -832,6 +833,7 @@ package body Raven.Repository is
       operation       : Archive.Unpack.Darc;
       level           : constant Archive.info_level := Archive.silent;
       archive_path    : constant String := downloaded_file_path (catalog_archive);
+      dummy_file      : Ada.Text_IO.File_type;
       good_extraction : Boolean;
    begin
       --  Remove old files in case new archives have less files
@@ -846,7 +848,8 @@ package body Raven.Repository is
          set_perms     => True,
          set_modtime   => True,
          skip_scripts  => True,
-         upgrading     => False);
+         upgrading     => False,
+         extract_log   => dummy_file);
       operation.close_rvn_archive;
 
       if not good_extraction then

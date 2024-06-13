@@ -112,6 +112,7 @@ package body Raven.Cmd.Install is
       metatree     : ThickUCL.UclTree;
       operation    : Archive.Unpack.Darc;
       result       : Boolean := True;
+      dummy_file   : TIO.File_Type;
       skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
 
       function archive_path return String is
@@ -179,7 +180,7 @@ package body Raven.Cmd.Install is
                upgrading       => False,
                rootdir         => USS (comline.pre_command.install_rootdir),
                package_data    => dummy_pkg,
-               post_report     => Ada.Text_IO.Standard_Output);
+               post_report     => dummy_file);
 
             Event.emit_install_end (dummy_pkg);
          end if;

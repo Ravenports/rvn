@@ -236,11 +236,6 @@ package body Raven.Install is
 
       Event.emit_extract_begin (package_data);
       operation.open_rvn_archive (archive_path, level, pipe_fd);
-      if not inhibit_scripts then
-         --  redirect
-         TIO.Set_Output (post_report);
-         TIO.Set_Error (post_report);
-      end if;
       begin
          good_extraction := operation.extract_archive
            (top_directory => extract_location,
@@ -248,17 +243,14 @@ package body Raven.Install is
             set_perms     => rootuser,
             set_modtime   => False,
             skip_scripts  => inhibit_scripts,
-            upgrading     => upgrading);
+            upgrading     => upgrading,
+            extract_log   => post_report);
       exception
          when Bourne.interpreter_missing =>
             good_extraction := False;
             Event.emit_error (LAT.LF & basename & " wants to run shell scripts during " &
                                 "installation, but no interpreter was found");
       end;
-      if not inhibit_scripts then
-         TIO.Set_Error (TIO.Standard_Error);
-         TIO.Set_Output (TIO.Standard_Output);
-      end if;
       operation.close_rvn_archive;
       Event.emit_extract_end (package_data);
 
