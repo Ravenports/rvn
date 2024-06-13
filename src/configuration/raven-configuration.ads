@@ -19,6 +19,7 @@ package Raven.Configuration is
      (configuration_file    : String;
       command_line_options  : String;
       debug_level_cli       : A_Debug_Level;
+      repoconfdir_cli       : String;
       root_directory        : String;
       session_configuration : in out ThickUCL.UclTree);
 
@@ -140,6 +141,7 @@ private
    procedure set_command_line_options 
      (options               : String;
       debug_level_cli       : A_Debug_Level;
+      repoconfdir_cli       : String;
       session_configuration : in out ThickUCL.UclTree);
    
    --  Delegate the logic that sets some configuration parameters via the environment

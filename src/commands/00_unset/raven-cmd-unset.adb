@@ -186,6 +186,7 @@ package body Raven.Cmd.Unset is
          command_line_options  => USS (comline.pre_command.option_nvpairs),
          debug_level_cli       => comline.pre_command.debug_setting,
          root_directory        => USS (comline.pre_command.install_rootdir),
+         repoconfdir_cli       => USS (comline.pre_command.custom_repos_dir),
          session_configuration => program_configuration);
 
       declare

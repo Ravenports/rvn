@@ -279,6 +279,7 @@ package body Raven.Configuration is
    procedure set_command_line_options
      (options               : String;
       debug_level_cli       : A_Debug_Level;
+      repoconfdir_cli       : String;
       session_configuration : in out ThickUCL.UclTree)
    is
       --  if debug level is set by both -d command line option and the -o command line option,
@@ -360,6 +361,18 @@ package body Raven.Configuration is
             end case;
          end;
       end if;
+
+      if not session_configuration.key_exists (get_ci_key (repos_dir)) and then
+        not IsBlank (repoconfdir_cli)
+      then
+         declare
+            name : constant String := get_ci_key (repos_dir);
+         begin
+            session_configuration.insert (name, repoconfdir_cli);
+            ENV.Set (Name, repoconfdir_cli);
+         end;
+      end if;
+
 
    end set_command_line_options;
 
@@ -739,11 +752,13 @@ package body Raven.Configuration is
      (configuration_file    : String;
       command_line_options  : String;
       debug_level_cli       : A_Debug_Level;
+      repoconfdir_cli       : String;
       root_directory        : String;
       session_configuration : in out ThickUCL.UclTree)
    is
    begin
-      set_command_line_options (command_line_options, debug_level_cli, session_configuration);
+      set_command_line_options (command_line_options, debug_level_cli, repoconfdir_cli,
+                                session_configuration);
       set_environment_options (session_configuration);
       set_configuration_from_file (configuration_file, session_configuration);
       set_defaults_on_remaining_settings (session_configuration, root_directory);
