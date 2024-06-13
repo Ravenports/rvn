@@ -573,8 +573,6 @@ package body Raven.Cmd.Line is
                            set_error (data, "The --remote switch is incompatible with " &
                                         "-[SITt] switches.");
                      end case;
-                  elsif datum (datum'First) = '-' then
-                     set_illegal_command (datum);
                   else
                      case data.cmd_version.behavior is
                         when compare_against_pattern |
