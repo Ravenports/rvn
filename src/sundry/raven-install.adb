@@ -1470,15 +1470,15 @@ package body Raven.Install is
       queue.Iterate (execute_step'Access);
       TIO.Close (install_log);
 
-      if not behave_quiet then
-         if Pkgtypes.">" (Pkgtypes.get_file_size (tmp_filename), 5) then
+      if Pkgtypes.">" (Pkgtypes.get_file_size (tmp_filename), 5) then
+         if not behave_quiet then
             Event.emit_message ("");
-            TIO.Open (install_log, TIO.In_File, tmp_filename);
-            while not  TIO.End_Of_File (install_log) Loop
-               Event.emit_message (TIO.Get_Line (install_log));
-            end loop;
-            TIO.Close (install_log);
          end if;
+         TIO.Open (install_log, TIO.In_File, tmp_filename);
+         while not  TIO.End_Of_File (install_log) Loop
+            Event.emit_message (TIO.Get_Line (install_log));
+         end loop;
+         TIO.Close (install_log);
       end if;
 
       if Archive.Unix.file_exists (tmp_filename) then

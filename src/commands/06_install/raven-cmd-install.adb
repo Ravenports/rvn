@@ -179,7 +179,7 @@ package body Raven.Cmd.Install is
                upgrading       => False,
                rootdir         => USS (comline.pre_command.install_rootdir),
                package_data    => dummy_pkg,
-               post_report     => Ada.Text_IO.Standard_Error);
+               post_report     => Ada.Text_IO.Standard_Output);
 
             Event.emit_install_end (dummy_pkg);
          end if;
