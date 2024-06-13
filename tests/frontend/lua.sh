@@ -337,7 +337,7 @@ EOF
 
 	mkdir ${TMPDIR}/target
 	atf_check \
-		-o inline:"test-single-standard Lua script messages  ---------------------------------\nsame\n" \
+		-o inline:"same\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
@@ -372,7 +372,7 @@ EOF
 
 	mkdir ${TMPDIR}/target
 	atf_check \
-		-o inline:"test-single-standard Lua script messages  ---------------------------------\ndifferent\n" \
+		-o inline:"different\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
@@ -413,7 +413,7 @@ EOF
 
 	mkdir ${TMPDIR}/target
 	atf_check \
-		-o inline:"test-single-standard Lua script messages  ---------------------------------\nsame\n" \
+		-o inline:"same\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
@@ -452,7 +452,7 @@ EOF
 
 	mkdir ${TMPDIR}/target
 	atf_check \
-		-o inline:"test-single-standard Lua script messages  ---------------------------------\ndifferent\n" \
+		-o inline:"different\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
