@@ -113,6 +113,7 @@ package body Raven.Cmd.Install is
       operation    : Archive.Unpack.Darc;
       result       : Boolean := True;
       dummy_file   : TIO.File_Type;
+      features     : Archive.Unix.File_Characteristics;
       skip_scripts : constant Boolean := not RCU.config_setting (RCU.CFG.run_scripts);
 
       function archive_path return String is
@@ -128,6 +129,16 @@ package body Raven.Cmd.Install is
          return USS (comline.pre_command.install_rootdir);
       end extract_location;
    begin
+      features := Archive.Unix.get_charactistics (archive_path);
+      case features.ftype is
+         when Archive.regular => null;
+         when Archive.unsupported =>
+            Event.emit_error ("install error: " & archive_path & " does not exist.");
+            return False;
+         when others =>
+            Event.emit_error ("install error: " & archive_path & " is not a regular file.");
+            return False;
+      end case;
 
       operation.open_rvn_archive (archive_path, Archive.silent, Archive.Unix.not_connected);
       if not operation.extract_manifest (file_list, extract_location) then
