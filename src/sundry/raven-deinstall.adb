@@ -125,7 +125,8 @@ package body Raven.Deinstall is
 
          Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant,
                                         post_report);
-         Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant);
+         Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant,
+                                     post_report);
       end if;
 
       --  clean up

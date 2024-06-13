@@ -413,6 +413,7 @@ package body Raven.Cmd.Genrepo is
       whitelist   : constant String := Miscellaneous.get_temporary_filename ("genrepo_compress");
       output_file : constant String := repo_path & "/" & CAT_RVN;
       file_handle : TIO.File_Type;
+      dummy_log   : TIO.File_Type;
    begin
       TIO.Create (file_handle, TIO.Out_File, whitelist);
       TIO.Put_Line (file_handle, CAT_UCL);
@@ -434,7 +435,8 @@ package body Raven.Cmd.Genrepo is
             output_file         => output_file,
             fixed_timestamp     => 0,
             verbosity           => Archive.silent,
-            record_base_libs    => False)
+            record_base_libs    => False,
+            integrate_log       => dummy_log)
       then
          Event.emit_error ("Failed to integrate catalog to RVN archive");
          DIR.Delete_File (whitelist);

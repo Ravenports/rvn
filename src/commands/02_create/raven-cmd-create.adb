@@ -165,6 +165,7 @@ package body Raven.Cmd.Create is
       declare
          basename     : constant String := determine_basename;
          rvn_filename : constant String := rvn_file (basename, creation_directory (output_dir));
+         dummy_log    : Ada.Text_IO.File_Type;
       begin
          if no_pkgname then
             return False;
@@ -180,7 +181,8 @@ package body Raven.Cmd.Create is
                                         output_file         => rvn_filename,
                                         verbosity           => level,
                                         record_base_libs    => rec_baselib,
-                                        optional_pipe       => remote_FD)
+                                        optional_pipe       => remote_FD,
+                                        integrate_log       => dummy_log)
          then
             return False;
          end if;
