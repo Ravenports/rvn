@@ -1,0 +1,47 @@
+abi: "dragonfly:x86_64:6.4"
+annotations: {
+  cpe: "cpe:2.3:a:sqlite:sqlite:3.46.0:::::dragonfly6.4:x64"
+}
+categories: [
+  "databases"
+]
+comment: "SQL database engine library (GNU/readline) (primary)"
+deps: {
+  ncurses-primary-standard: "6.5"
+  ncurses-terminfo-standard: "6.5"
+  readline-primary-standard: "8.2.10"
+}
+desc: <<EOD
+SQLite is an SQL database engine in a C library. Programs that link the
+SQLite library can have SQL database access without running a separate
+RDBMS process. The distribution comes with a standalone command-line
+access program (sqlite3) that can be used to administer an SQLite database
+and which serves as an example of how to use the SQLite library.
+EOD
+directories: [
+]
+flatsize: 3124127
+licenselogic: "single"
+licenses: [
+  "PUBDOM"
+]
+maintainer: "nobody"
+messages: [
+]
+namebase: "sqlite"
+prefix: "/raven"
+scripts: {
+}
+shlibs_adjacent: [
+]
+shlibs_provided: [
+  "libsqlite3.so.0"
+]
+shlibs_required: [
+  "libreadline.so.8"
+]
+subpackage: "primary"
+variant: "standard"
+version: "3.46.0"
+www: "https://www.sqlite.org/"
+

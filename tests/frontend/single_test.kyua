@@ -1,0 +1,8 @@
+syntax(2)
+
+test_suite('frontend')
+
+--  If permissions are 755, this test is done instead of the full test suite
+--  If permissions are anything else, e.g. 644, this file is ignored
+
+atf_test_program{name='annotate.sh'}
