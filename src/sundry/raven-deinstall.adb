@@ -182,6 +182,11 @@ package body Raven.Deinstall is
                msg_outfile => msg_outfile,
                success     => success);
             if not success then
+               case phase is
+                  when ARW.pre_deinstall  => Event.emit_premessage ("PRE-DEINSTALL: ");
+                  when ARW.post_deinstall => Event.emit_premessage ("POST-DEINSTALL: ");
+                  when others => null;
+               end case;
                Event.emit_notice ("Bourne script" & script_index'Img & " failed");
             end if;
          end;
@@ -228,7 +233,12 @@ package body Raven.Deinstall is
                msg_outfile => msg_outfile,
                success     => success);
             if not success then
-               Event.emit_notice ("Lua script" & script_index'Img & " failed");
+               case phase is
+                  when ARW.pre_deinstall  => Event.emit_premessage ("PRE-DEINSTALL-LUA: ");
+                  when ARW.post_deinstall => Event.emit_premessage ("POST-DEINSTALL-LUA: ");
+                  when others => null;
+               end case;
+               Event.emit_notice ("Script" & script_index'Img & " failed");
             end if;
          end;
       end loop;
