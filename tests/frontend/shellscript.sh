@@ -190,7 +190,7 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -R "${TMPDIR}/reposconf" catalog -f
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target catalog -f
 
 	mkdir -p ${TMPDIR}/target/var/cache/rvn
 	atf_check \
