@@ -382,6 +382,7 @@ package body Raven.Install is
             upgrades    : Pkgtypes.Text_List.Vector;
             fetch_list  : Pkgtypes.Text_List.Vector;
             file_collection : Pkgtypes.NV_Pairs.Map;
+            dependency_missing : Boolean;
 
             procedure gather_upgrades (Position : Install_Order_Set.Cursor)
             is
@@ -399,26 +400,39 @@ package body Raven.Install is
                fetch_list.Append (Install_Order_Set.Element (Position).nsv);
             end gather_fetch_list;
          begin
-            calculate_descendants (rdb, install_map, cache_map, priority, False, True);
-            load_installation_data (localdb, cache_map, install_map);
-            finalize_work_queue
-              (localdb       => localdb,
-               install_map   => install_map,
-               cache_map     => cache_map,
-               priority      => priority,
-               opt_automatic => False,
-               opt_manual    => False,
-               opt_exactly   => False,
-               opt_force     => opt_force,
-               opt_drop_deps => False,
-               opt_noscripts => opt_skip_scripts,
-               queue         => queue);
+            calculate_descendants
+              (rdb         => rdb,
+               catalog_map => install_map,
+               cache_map   => cache_map,
+               priority    => priority,
+               skip_depend => False,
+               from_local  => True,
+               missing_dep => dependency_missing);
 
-            build_reverse_queue (queue, rev_queue);
+            succeeded := not dependency_missing;
+
+            if succeeded then
+               finalize_work_queue
+                 (localdb       => localdb,
+                  install_map   => install_map,
+                  cache_map     => cache_map,
+                  priority      => priority,
+                  opt_automatic => False,
+                  opt_manual    => False,
+                  opt_exactly   => False,
+                  opt_force     => opt_force,
+                  opt_drop_deps => False,
+                  opt_noscripts => opt_skip_scripts,
+                  queue         => queue);
+
+               build_reverse_queue (queue, rev_queue);
+            end if;
 
             if rev_queue.Is_Empty then
-               if not opt_quiet then
-                  Event.emit_message ("All specified packages are current.");
+               if succeeded then
+                  if not opt_quiet then
+                     Event.emit_message ("All specified packages are current.");
+                  end if;
                end if;
             else
                rev_queue.Iterate (gather_upgrades'Access);
@@ -564,6 +578,7 @@ package body Raven.Install is
             upgrades    : Pkgtypes.Text_List.Vector;
             fetch_list  : Pkgtypes.Text_List.Vector;
             file_collection : Pkgtypes.NV_Pairs.Map;
+            dependency_missing : Boolean;
 
             procedure gather_upgrades (Position : Install_Order_Set.Cursor)
             is
@@ -582,26 +597,40 @@ package body Raven.Install is
             end gather_fetch_list;
 
          begin
-            calculate_descendants (rdb, catalog_map, cache_map, priority, opt_drop_depends, False);
-            load_installation_data (localdb, cache_map, install_map);
-            finalize_work_queue
-              (localdb       => localdb,
-               install_map   => install_map,
-               cache_map     => cache_map,
-               priority      => priority,
-               opt_automatic => opt_automatic,
-               opt_manual    => opt_manual,
-               opt_exactly   => opt_exact_match,
-               opt_force     => opt_force,
-               opt_drop_deps => opt_drop_depends,
-               opt_noscripts => opt_skip_scripts,
-               queue         => queue);
+            calculate_descendants
+              (rdb         => rdb,
+               catalog_map => catalog_map,
+               cache_map   => cache_map,
+               priority    => priority,
+               skip_depend => opt_drop_depends,
+               from_local  => False,
+               missing_dep => dependency_missing);
 
-            build_reverse_queue (queue, rev_queue);
+            succeeded := not dependency_missing;
+
+            if succeeded then
+               load_installation_data (localdb, cache_map, install_map);
+               finalize_work_queue
+                 (localdb       => localdb,
+                  install_map   => install_map,
+                  cache_map     => cache_map,
+                  priority      => priority,
+                  opt_automatic => opt_automatic,
+                  opt_manual    => opt_manual,
+                  opt_exactly   => opt_exact_match,
+                  opt_force     => opt_force,
+                  opt_drop_deps => opt_drop_depends,
+                  opt_noscripts => opt_skip_scripts,
+                  queue         => queue);
+
+               build_reverse_queue (queue, rev_queue);
+            end if;
 
             if rev_queue.Is_Empty then
-               if not opt_quiet then
-                  Event.emit_message ("All specified packages are already installed.");
+               if succeeded then
+                  if not opt_quiet then
+                     Event.emit_message ("All specified packages are already installed.");
+                  end if;
                end if;
             else
                rev_queue.Iterate (gather_upgrades'Access);
@@ -730,7 +759,8 @@ package body Raven.Install is
       cache_map   : in out Pkgtypes.Package_Map.Map;
       priority    : in out Descendant_Set.Vector;
       skip_depend : Boolean;
-      from_local  : Boolean)
+      from_local  : Boolean;
+      missing_dep : out Boolean)
    is
       procedure calc (Position : Pkgtypes.Package_Map.Cursor)
       is
@@ -754,7 +784,13 @@ package body Raven.Install is
                   override_exact => True,
                   select_all     => False)
                then
-                  if not local_set.Is_Empty then
+                  if local_set.Is_Empty then
+                     --  Dependency is not catalog.  we need to abort.
+                     Event.emit_error ("Corruption detected. The " & USS (dep_nsv) &
+                                         " dependency is missing from the catalog. ");
+                     Event.emit_error ("Contact the maintainers of this repository.");
+                     missing_dep := True;
+                  else
                      declare
                         new_rec : Pkgtypes.A_Package := local_set.Element (0);
                      begin
@@ -767,6 +803,9 @@ package body Raven.Install is
          end check_single_dep;
 
       begin
+         if missing_dep then
+            return;
+         end if;
          myrec.nsv := SUS (Pkgtypes.nsv_identifier (catpkg));
          myrec.descendents := 1;
          if not skip_depend then
@@ -805,6 +844,7 @@ package body Raven.Install is
    begin
       priority.Clear;
       cache_map.Clear;
+      missing_dep := False;
       if from_local then
          catalog_map.Iterate (set_cache'Access);
       else

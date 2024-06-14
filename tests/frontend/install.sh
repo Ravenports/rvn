@@ -4,38 +4,16 @@
 
 tests_init \
 	reinstall \
-#	pre_script_fail \
-#	post_script_ignored \
-#	install_missing_dep
-
-xxxtest_setup()
-{
-	# Do a local config to avoid permissions-on-system-db errors.
-        cat > ${TMPDIR}/rvn.conf << EOF
-RVN_CACHEDIR=${TMPDIR}/cache
-RVN_DBDIR=${TMPDIR}
-REPOS_DIR=[
-	${TMPDIR}/reposconf
-]
-repositories: {
-        local: { url : file://${TMPDIR} }
-}
-EOF
-	mkdir -p ${TMPDIR}/reposconf
-	cat << EOF > ${TMPDIR}/reposconf/repo.conf
-local: {
-	url: file:///$TMPDIR,
-	enabled: true
-}
-EOF
-}
+	pre_script_fail \
+	post_script_ignored \
+	install_missing_dep
 
 reinstall_body()
 {
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 
 	mkdir -p ${TMPDIR}/files
-    touch dummy.plist
+	touch dummy.plist
 	atf_check \
 		-o ignore \
 		-e empty \
@@ -77,71 +55,71 @@ EOF
 
 pre_script_fail_body()
 {
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg test test 1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	cat << EOF >> test.ucl
 scripts: {
-   pre-install: "exit 1"
+   pre-install: [{code: "exit 1", args: ""}]
 }
 EOF
 
+	mkdir -p ${TMPDIR}/files
+	touch dummy.plist
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg create -M test.ucl
+		rvn create -o ${TMPDIR}/files -r ${TMPDIR} -m test.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e inline:"${PROGNAME}: PRE-INSTALL script failed\n" \
-		-s exit:3 \
-		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.pkg
+		-o match:"pre-install Bourne shell script number 0 failed" \
+		-s exit:0 \
+		rvn -r ${TMPDIR} -o REPOS_DIR="/dev/null" install -y --file ${TMPDIR}/files/test-single-standard-1.rvn
 }
 
 post_script_ignored_body()
 {
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg test test 1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	cat << EOF >> test.ucl
 scripts: {
-   post-install: "exit 1"
+   post-install: [{code: "exit 1", args: ""}]
 }
 EOF
 
+	mkdir -p ${TMPDIR}/files
+	touch dummy.plist
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg create -M test.ucl
+		rvn create -o ${TMPDIR}/files -r ${TMPDIR} -m test.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e inline:"${PROGNAME}: POST-INSTALL script failed\n" \
+		-o match:"post-install Bourne shell script number 0 failed" \
 		-s exit:0 \
-		pkg -o REPOS_DIR="/dev/null" install -y ${TMPDIR}/test-1.pkg
+		rvn -r ${TMPDIR} -o REPOS_DIR="/dev/null" install -y --file ${TMPDIR}/files/test-single-standard-1.rvn
 }
 
 install_missing_dep_body()
 {
-	test_setup
-
 	# Create one package so we at least have a repo.
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg ${TMPDIR}/test test 1 /usr/local
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	cat << EOF >> ${TMPDIR}/test.ucl
-deps: {
-	b: {
-		origin: "wedontcare",
-		version: "1"
-	}
-}
+deps: {"a-primary-standard": "1"}
 EOF
+
+	mkdir -p ${TMPDIR}/files
+	touch dummy.plist
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg -C "${TMPDIR}/pkg.conf" create -o ${TMPDIR} -M ${TMPDIR}/test.ucl
+		rvn create -o ${TMPDIR}/files -r ${TMPDIR} -m test.ucl -w dummy.plist
 
 	atf_check \
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		pkg  -C "${TMPDIR}/pkg.conf" repo ${TMPDIR}
+		rvn genrepo ${TMPDIR}
 
 	mkdir -p ${TMPDIR}/reposconf
 	cat << EOF > ${TMPDIR}/reposconf/repo.conf
@@ -151,9 +129,17 @@ local: {
 }
 EOF
 
+	mkdir -p ${TMPDIR}/target
 	atf_check \
 		-o ignore \
-		-e not-empty \
-		-s not-exit:0 \
-		pkg -C "${TMPDIR}/pkg.conf" install -y test
+		-e empty \
+		-s exit:0 \
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target catalog -f
+
+	mkdir -p ${TMPDIR}/target/var/cache/rvn
+	atf_check \
+		-o empty \
+		-e match:"^Corruption detected[.] The a-primary-standard dependency is missing from the catalog" \
+		-s exit:1 \
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -U -y test-single-standard
 }
