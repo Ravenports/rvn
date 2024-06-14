@@ -40,7 +40,6 @@ package body Raven.Configuration is
          when debug_scripts  => return "DEBUG_SCRIPTS";
          when permissive     => return "PERMISSIVE";
          when autoupdate     => return "REPO_AUTOUPDATE";
-         when nameserver     => return "NAMESERVER";
          when user_agent     => return "HTTP_USER_AGENT";
          when event_pipe     => return "EVENT_PIPE";
          when restrict_dir   => return "SSH_RESTRICT_DIR";
@@ -113,7 +112,6 @@ package body Raven.Configuration is
               cachedir       |
               keywords_dir   |
               abi            |
-              nameserver     |
               user_agent     |
               event_pipe     |
               restrict_dir   |
@@ -205,7 +203,6 @@ package body Raven.Configuration is
          when cachedir       => return with_rootdir ("/var/cache/" & progname);
          when keywords_dir   => return "/var/ravenports/conspiracy/Mk/Keywords";
          when abi            => return Archive.Misc.determine_abi;
-         when nameserver     => return "";
          when user_agent     => return progname & "/" & progversion;
          when event_pipe     => return "";
          when restrict_dir   => return "";

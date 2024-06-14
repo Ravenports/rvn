@@ -129,14 +129,6 @@ Default: 5.
 .It Cm LOCK_WAIT: integer
 Wait time in seconds to regain a lock if it is not available.
 Default: 1.
-.It Cm NAMESERVER: string
-Hostname or IPv4 or IPv6 address of name server to use for DNS
-resolution, overriding the system defaults in
-.Pa /etc/resolv.conf .
-When given as a hostname, will be converted to a list of IPv4 or IPv6
-addresses by the default mechanisms configured on the system.
-See
-.Xr getaddrinfo 3 .
 .It Cm PERMISSIVE: boolean
 Ignore conflicts while registering a package.
 Note that the conflicting files will not be recorded as owned by the new

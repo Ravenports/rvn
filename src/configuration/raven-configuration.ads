@@ -46,7 +46,6 @@ package Raven.Configuration is
       debug_scripts,  --  DEBUG_SCRIPTS (false)
       permissive,     --  PERMISSIVE (false)
       autoupdate,     --  REPO_AUTOUPDATE (true)
-      nameserver,     --  NAMESERVER ("")
       user_agent,     --  HTTP_USER_AGENT (dynamic, e.g. rvn/1.0.0)
       event_pipe,     --  EVENT_PIPE ("")
       restrict_dir,   --  SSH_RESTRICT_DIR ("")
@@ -86,6 +85,7 @@ package Raven.Configuration is
    --                      FILES_IGNORE_REGEX ([])
    --                      UNSET_TIMESTAMP(false)
    --                      DEFAULT_ALWAYS_YES(false) (ASSUME_ALWAYS_YES sufficient)
+   --  nameserver,         NAMESERVER ("")
    
    
    --  Retrieve configuration item key given enum
