@@ -327,8 +327,11 @@ package body Raven.Configuration is
                                             "to boolean, ignored.");
                         end if;
                      when ThickUCL.data_array =>
-                        EV.emit_debug (high_level, "array option " & name & " can not be set " &
-                                         "via the command line.");
+                        --  Set as a single element array, but no environment variable set
+                        session_configuration.start_array (name);
+                        session_configuration.insert ("", val);
+                        session_configuration.close_array;
+                        ENV.Clear (name);
                      when ThickUCL.data_object =>
                         EV.emit_debug (high_level, "object option " & name & " can not be set " &
                                          "via the command line.");
