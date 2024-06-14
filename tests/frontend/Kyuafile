@@ -10,6 +10,7 @@ atf_test_program{name='abi.sh'}
 atf_test_program{name='alias.sh'}
 atf_test_program{name='annotate.sh'}
 atf_test_program{name='clean.sh'}
+atf_test_program{name='config.sh'}
 atf_test_program{name='create.sh'}
 atf_test_program{name='install.sh'}
 atf_test_program{name='lua.sh'}
@@ -20,7 +21,6 @@ atf_test_program{name='version.sh'}
 
 --  atf_test_program{name='autoremove'}
 --  atf_test_program{name='autoupgrade'}
---  atf_test_program{name='config'}
 --  atf_test_program{name='delete'}
 --  atf_test_program{name='extract'}
 --  atf_test_program{name='fetch'}
