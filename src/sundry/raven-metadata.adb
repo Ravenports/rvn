@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ucl;
+with Archive.Unix;
 with Ada.Characters.Latin_1;
 with Raven.Unix;
 with Raven.event;
@@ -375,6 +376,37 @@ package body Raven.Metadata is
    end set_list;
 
 
+   -----------------------
+   --  set_directories  --
+   -----------------------
+   procedure set_directories
+     (metatree : ThickUCL.UclTree;
+      new_list : in out Pkgtypes.Text_List.Vector)
+   is
+      key   : constant String := metadata_field_label (directories);
+      dtype : ThickUCL.Leaf_type;
+      vndx  : ThickUCL.array_index;
+      num_elements : Natural;
+   begin
+      new_list.clear;
+      dtype := ThickUCL.get_data_type (metatree, key);
+      case dtype is
+         when ThickUCL.data_array =>
+            vndx := metatree.get_index_of_base_array (key);
+            num_elements := metatree.get_number_of_array_elements (vndx);
+            for index in 0 .. num_elements - 1 loop
+               declare
+                  isla : Directory_Island;
+               begin
+                  isla := free_directory_characteristics (metatree, index);
+                  new_list.Append (isla.path);
+               end;
+            end loop;
+         when others => null;
+      end case;
+   end set_directories;
+
+
    ------------------
    --  set_nvpair  --
    ------------------
@@ -712,7 +744,6 @@ package body Raven.Metadata is
       set_list (metatree, groups, new_pkg.groups);
       set_list (metatree, licenses, new_pkg.licenses);
       set_list (metatree, categories, new_pkg.categories);
-      set_list (metatree, directories, new_pkg.directories);
       set_list (metatree, shlibs_adjacent, new_pkg.libs_adjacent);
       set_list (metatree, shlibs_provided, new_pkg.libs_provided);
       set_list (metatree, shlibs_required, new_pkg.libs_required);
@@ -720,6 +751,7 @@ package body Raven.Metadata is
       new_pkg.files.Clear;
       files.Iterate (scan'Access);
 
+      set_directories (metatree, new_pkg.directories);
       set_notes (metatree, annotations, new_pkg.annotations);
       set_dependencies (metatree, dependencies, new_pkg.dependencies);
       set_nvpair (metatree, options, new_pkg.options);
@@ -801,5 +833,106 @@ package body Raven.Metadata is
       end case;
       jar.Iterate (insert_nv'Access);
    end set_dependencies;
+
+
+   --------------------------------------
+   --  free_directory_characteristics  --
+   --------------------------------------
+   function free_directory_characteristics
+     (metatree : ThickUCL.UclTree;
+      dirindex : Natural) return Directory_Island
+   is
+      isla : Directory_Island;
+      key  : constant String := metadata_field_label (directories);
+      owngrp_not_found : constant Archive.owngrp_id := 4_000_000_000;
+      dtype : ThickUCL.Leaf_type;
+      vndx  : ThickUCL.array_index;
+      ondx  : ThickUCL.object_index;
+      jar   : ThickUCL.jar_string.Vector;
+      num_elements : Natural;
+
+      procedure process_key (Position : ThickUCL.jar_string.Cursor)
+      is
+         this_key : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+      begin
+         if this_key = "path" then
+            declare
+               path : constant String := metatree.get_object_value (ondx, this_key);
+            begin
+               isla.path := SUS (path);
+            end;
+         elsif this_key = "owner" then
+            case metatree.get_object_data_type (ondx, this_key) is
+               when ThickUCL.data_boolean => null;   -- reset_owner already false
+               when ThickUCL.data_string =>
+                  declare
+                     owner : constant String := metatree.get_object_value (ondx, this_key);
+                     owner_id : constant Archive.owngrp_id := Archive.Unix.lookup_user (owner);
+                  begin
+                     case owner_id is
+                        when owngrp_not_found => null;
+                        when others =>
+                           isla.reset_owner := True;
+                           isla.new_uid := owner_id;
+                     end case;
+                  end;
+               when others => null;
+            end case;
+         elsif this_key = "group" then
+            case metatree.get_object_data_type (ondx, this_key) is
+               when ThickUCL.data_boolean => null;   -- reset_group already false
+               when ThickUCL.data_string =>
+                  declare
+                     group : constant String := metatree.get_object_value (ondx, this_key);
+                     group_id : constant Archive.owngrp_id := Archive.Unix.lookup_user (group);
+                  begin
+                     case group_id is
+                        when owngrp_not_found => null;
+                        when others =>
+                           isla.reset_group := True;
+                           isla.new_gid := group_id;
+                     end case;
+                  end;
+               when others => null;
+            end case;
+         elsif this_key = "perms" then
+            case metatree.get_object_data_type (ondx, this_key) is
+               when ThickUCL.data_boolean => null;   -- reset_perms already false
+               when ThickUCL.data_string =>
+                  declare
+                     perms     : constant String := metatree.get_object_value (ondx, this_key);
+                     converted : Boolean;
+                     filemode  : constant Archive.permissions :=
+                       Archive.Whitelist.convert_mode (perms, converted);
+                  begin
+                     if converted then
+                        isla.reset_perms := True;
+                        isla.new_perms := filemode;
+                     end if;
+                  end;
+               when others => null;
+            end case;
+         end if;
+      end process_key;
+   begin
+      dtype := ThickUCL.get_data_type (metatree, key);
+      case dtype is
+         when ThickUCL.data_array =>
+            vndx := metatree.get_index_of_base_array (key);
+            num_elements := metatree.get_number_of_array_elements (vndx);
+            if dirindex < num_elements then
+               case metatree.get_array_element_type (vndx, dirindex) is
+                  when ThickUCL.data_object =>
+                     ondx := metatree.get_array_element_object (vndx, dirindex);
+                     metatree.get_object_object_keys (ondx, jar);
+                     jar.Iterate (process_key'Access);
+                  when others => null;  --  something is wrong if we get here.
+               end case;
+            end if;
+         when others => null;
+      end case;
+      return isla;
+   end free_directory_characteristics;
+
 
 end Raven.Metadata;

@@ -4,6 +4,7 @@
 with Ada.Text_IO;
 with Raven.Pkgtypes;
 with Raven.Database;
+with ThickUCL;
 
 private with Ada.Containers.Vectors;
 
@@ -181,5 +182,12 @@ private
    procedure build_reverse_queue
      (queue        : Install_Order_Set.Vector;
       rev_queue    : in out Install_Order_Set.Vector);
+
+   --  Only the metadata contains the permissions and ownership of the empty
+   --  directories to create upon extraction
+   procedure create_standalone_directories
+     (package_metadata : ThickUCL.UclTree;
+      num_directories  : Natural;
+      extract_location : String);
 
 end Raven.Install;

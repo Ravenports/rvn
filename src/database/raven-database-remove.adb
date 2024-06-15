@@ -34,6 +34,7 @@ package body Raven.Database.Remove is
         "namebase, subpackage, variant, version, comment, desc, www, maintainer, prefix, " &
         "abi, rvndigest, rvnsize, flatsize, licenselogic, id " &
         "FROM packages as p";
+      not_rvn  : constant String := "nsv000 NOT GLOB 'rvn-*-standard'";
       new_stmt : SQLite.thick_stmt;
       sql : Text;
    begin
@@ -41,15 +42,23 @@ package body Raven.Database.Remove is
          if force then
             sql := SUS (sqlbase);
          else
-            sql := SUS (sqlbase & " WHERE nsv000 NOT GLOB 'rvn-*-standard'");
+            sql := SUS (sqlbase & " WHERE " & not_rvn);
          end if;
       else
          if override_exact then
             sql := SUS (sqlbase & " WHERE nsv000 = ?");
          elsif Context.reveal_case_sensitive then
-            sql := SUS (sqlbase & " WHERE nsv000 GLOB ?");
+            if force then
+               sql := SUS (sqlbase & " WHERE nsv000 GLOB ?");
+            else
+               sql := SUS (sqlbase & " WHERE nsv000 GLOB ? AND " & not_rvn);
+            end if;
          else
-            sql := SUS (sqlbase & " WHERE nsv000 LIKE ?");
+            if force then
+               sql := SUS (sqlbase & " WHERE nsv000 LIKE ?");
+            else
+               sql := SUS (sqlbase & " WHERE nsv000 LIKE ? AND " & not_rvn);
+            end if;
             leading_match := True;
          end if;
       end if;

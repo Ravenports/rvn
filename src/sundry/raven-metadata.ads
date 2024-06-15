@@ -97,6 +97,23 @@ package Raven.Metadata is
       new_pkg   : in out Pkgtypes.A_Package;
       automatic : Boolean);
 
+   type Directory_Island is
+      record
+         reset_owner : Boolean := False;
+         reset_group : Boolean := False;
+         reset_perms : Boolean := False;
+         new_uid     : Archive.owngrp_id := 0;
+         new_gid     : Archive.owngrp_id := 0;
+         new_perms   : Archive.permissions := 0;
+         path        : Text;
+      end record;
+
+   --  Returns the ownership and permissions of the directory at the index
+   --  of the metatree
+   function free_directory_characteristics
+     (metatree : ThickUCL.UclTree;
+      dirindex : Natural) return Directory_Island;
+
 private
 
    package WL renames Archive.Whitelist;
@@ -108,6 +125,10 @@ private
    procedure set_list
      (metatree : ThickUCL.UclTree;
       field    : metadata_field;
+      new_list : in out Pkgtypes.Text_List.Vector);
+
+   procedure set_directories
+     (metatree : ThickUCL.UclTree;
       new_list : in out Pkgtypes.Text_List.Vector);
 
    Procedure set_nvpair

@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Directories;
 with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Context;
@@ -19,7 +20,6 @@ with Raven.Database.Operations;
 with Raven.Strings;
 with Archive.Unpack;
 with Archive.Unix;
-with ThickUCL;
 with Bourne;
 
 use Raven.Strings;
@@ -28,6 +28,7 @@ use Raven.Strings;
 package body Raven.Install is
 
    package TIO  renames Ada.Text_IO;
+   package DIR  renames Ada.Directories;
    package LAT  renames Ada.Characters.Latin_1;
    package MISC renames Raven.Miscellaneous;
    package INST renames Raven.Database.Add;
@@ -220,6 +221,7 @@ package body Raven.Install is
          end if;
          return rootdir;
       end extract_location;
+
    begin
       if dry_run_only then
          Event.emit_message ("dry-run: " & action & " " & basename & " package");
@@ -250,8 +252,18 @@ package body Raven.Install is
             good_extraction := False;
             Event.emit_error (LAT.LF & basename & " wants to run shell scripts during " &
                                 "installation, but no interpreter was found");
-      end;
+         end;
+      if not package_data.directories.Is_Empty then
+         declare
+            metadata_tree : ThickUCL.UclTree;
+            total_dirs    : constant Natural :=  Natural (package_data.directories.Length);
+         begin
+            operation.populate_metadata_tree (metadata_tree);
+            create_standalone_directories (metadata_tree, total_dirs, extract_location);
+         end;
+      end if;
       operation.close_rvn_archive;
+
       Event.emit_extract_end (package_data);
 
       return good_extraction;
@@ -1587,5 +1599,48 @@ package body Raven.Install is
          qstack.Delete_Last;
       end loop;
    end build_reverse_queue;
+
+
+   -------------------------------------
+   --  create_standalone_directories  --
+   -------------------------------------
+   procedure create_standalone_directories
+     (package_metadata : ThickUCL.UclTree;
+      num_directories  : Natural;
+      extract_location : String)
+   is
+   begin
+      for index in 0 .. num_directories - 1 loop
+         declare
+            isla : Metadata.Directory_Island :=
+              Metadata.free_directory_characteristics (package_metadata, index);
+            dirpath : constant String := extract_location & USS (isla.path);
+            mrc : Archive.Unix.metadata_rc;
+         begin
+            if not DIR.Exists (dirpath) then
+               Event.emit_debug (moderate, "free directory: mkdir -p " & dirpath);
+               begin
+                  DIR.Create_Path (dirpath);
+                  mrc := Archive.Unix.adjust_metadata
+                    (path         => dirpath,
+                     reset_owngrp => isla.reset_group or else isla.reset_owner,
+                     reset_perms  => isla.reset_perms,
+                     reset_mtime  => False,
+                     type_of_file => Archive.directory,
+                     new_uid      => isla.new_uid,
+                     new_gid      => isla.new_gid,
+                     new_perms    => isla.new_perms,
+                     new_m_secs   => 0,
+                     new_m_nano   => 0);
+                  Event.emit_debug (moderate, "dir adjustment = " &
+                                      Archive.Unix.metadata_error (mrc));
+               exception
+                  when others =>
+                     Event.emit_debug (high_level, "failed to create directory " & dirpath);
+               end;
+            end if;
+         end;
+      end loop;
+   end create_standalone_directories;
 
 end Raven.Install;
