@@ -13,8 +13,9 @@ atf_test_program{name='autoremove.sh'}
 atf_test_program{name='clean.sh'}
 atf_test_program{name='config.sh'}
 atf_test_program{name='create.sh'}
-atf_test_program{name='delete'}
-atf_test_program{name='extract'}
+atf_test_program{name='delete.sh'}
+atf_test_program{name='extract.sh'}
+atf_test_program{name='fetch.sh'}
 atf_test_program{name='install.sh'}
 atf_test_program{name='lua.sh'}
 atf_test_program{name='rootdir.sh'}
@@ -23,7 +24,6 @@ atf_test_program{name='version.sh'}
 
 
 --  atf_test_program{name='autoupgrade'}
---  atf_test_program{name='fetch'}
 --  atf_test_program{name='fingerprint'}
 --  atf_test_program{name='formula'}
 --  atf_test_program{name='http'}

@@ -111,6 +111,7 @@ package body Raven.Database.Fetch is
       download_dir  : constant String := translate_destination (destination);
       download_order   : Text_List.Vector;
       dependency_queue : Text_List.Vector;
+      repo_corruption  : Boolean := False;
 
       function extended_sql return String is
       begin
@@ -160,6 +161,7 @@ package body Raven.Database.Fetch is
 
       if select_deps then
          loop
+            exit when repo_corruption;
             exit when dependency_queue.Is_Empty;
             declare
                duplicate_queue : Text_List.Vector;
@@ -173,13 +175,19 @@ package body Raven.Database.Fetch is
                is
                   nsv : constant String :=  USS (Text_List.Element (Position));
                begin
-                  insert_into_download_list (db, basesql, nsv, download_list, package_seen);
-                  retrieve_dependency_by_nsv
-                    (db           => db,
-                     base_dep_sql => base_dep_sql,
-                     nsv          => nsv,
-                     package_seen => package_seen,
-                     depend_queue => dependency_queue);
+                  if insert_into_download_list (db, basesql, nsv, download_list, package_seen)
+                  then
+                     retrieve_dependency_by_nsv
+                       (db           => db,
+                        base_dep_sql => base_dep_sql,
+                        nsv          => nsv,
+                        package_seen => package_seen,
+                        depend_queue => dependency_queue);
+                  else
+                     repo_corruption := True;
+                     Event.emit_error ("Repository corruption detection: " & nsv &
+                                      " dependency is missing from the catalog.");
+                  end if;
                end scan;
             begin
                dependency_queue.Iterate (copy_me'Access);
@@ -189,9 +197,13 @@ package body Raven.Database.Fetch is
          end loop;
       end if;
 
+      if repo_corruption then
+         return False;
+      end if;
+
       if download_list.Is_Empty then
          if not behave_quiet then
-            Event.emit_message
+            Event.emit_error
               ("No files matching the given pattern(s) have been found in the catalog.");
          end if;
          return False;
@@ -801,20 +813,21 @@ package body Raven.Database.Fetch is
    ---------------------------------
    --  insert_into_download_list  --
    ---------------------------------
-   procedure insert_into_download_list
+   function insert_into_download_list
      (db           : RDB_Connection;
       base_sql     : String;
       nsv          : String;
       remote_files : in out Remote_Files_Set.Map;
-      package_seen : in out Tracked_Set.Map)
+      package_seen : in out Tracked_Set.Map) return Boolean
    is
       func : constant String := "insert_into_download_list";
       sql  : constant String := base_sql & " WHERE nsv = ?";
+      data_hit : Boolean := False;
       new_stmt : SQLite.thick_stmt;
    begin
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
          CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
-         return;
+         return False;
       end if;
       SQLite.bind_string (new_stmt, 1, nsv);
       debug_running_stmt (new_stmt);
@@ -822,6 +835,7 @@ package body Raven.Database.Fetch is
       loop
          case SQLite.step (new_stmt) is
             when SQLite.row_present =>
+               data_hit := True;
                declare
                   myrec : A_Remote_File;
                   b3dig : constant String := SQLite.retrieve_string (new_stmt, 4);
@@ -845,6 +859,7 @@ package body Raven.Database.Fetch is
          end case;
       end loop;
       SQLite.finalize_statement (new_stmt);
+      return data_hit;
    end insert_into_download_list;
 
 

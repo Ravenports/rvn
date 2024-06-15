@@ -89,12 +89,13 @@ private
       depend_queue : in out Pkgtypes.Text_List.Vector);
 
    --  Given nsv, add new entry to the download list.
-   procedure insert_into_download_list
+   --  returns False if the entry is missing from the database (indicating repo corruption)
+   function insert_into_download_list
      (db           : RDB_Connection;
       base_sql     : String;
       nsv          : String;
       remote_files : in out Remote_Files_Set.Map;
-      package_seen : in out Tracked_Set.Map);
+      package_seen : in out Tracked_Set.Map) return Boolean;
 
    --  Checks to see if the file or symlink link with filename <nsvv>.rvn exists
    --  in cache alternatively the output file.  If it does, remove it from the list.
