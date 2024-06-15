@@ -1614,7 +1614,7 @@ package body Raven.Install is
          declare
             isla : Metadata.Directory_Island :=
               Metadata.free_directory_characteristics (package_metadata, index);
-            dirpath : constant String := extract_location & USS (isla.path);
+            dirpath : constant String := extract_location & "/" & USS (isla.path);
             mrc : Archive.Unix.metadata_rc;
          begin
             if not DIR.Exists (dirpath) then

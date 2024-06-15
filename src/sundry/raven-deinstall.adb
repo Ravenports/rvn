@@ -113,7 +113,7 @@ package body Raven.Deinstall is
 
       Event.emit_debug (moderate, "Removing files");
       installed_package.files.Iterate (eradicate_file'Access);
-      prune_empty_directories (installed_package);
+      prune_empty_directories (installed_package, rootdir);
 
       if not inhibit_scripts then
          Event.emit_debug (moderate, "Running post-deinstall Bourne shell scripts");
@@ -248,7 +248,7 @@ package body Raven.Deinstall is
    -------------------------------
    --  prune_empty_directories  --
    -------------------------------
-   procedure prune_empty_directories (the_package : Pkgtypes.A_Package)
+   procedure prune_empty_directories (the_package : Pkgtypes.A_Package; extract_loc : String)
    is
       dirmap : Pkgtypes.NV_Pairs.Map;
       queue  : Pkgtypes.Text_List.Vector;
@@ -288,6 +288,7 @@ package body Raven.Deinstall is
          numslash : constant Natural := count_char (mydir, '/');
          mydir_txt : constant Text := SUS (mydir);
       begin
+         Event.emit_debug (moderate, "add_head: " & mydir);
          if not dirmap.Contains (mydir_txt) then
             if not on_blacklist (mydir_txt) then
                dirmap.Insert (mydir_txt, SUS (int2str (numslash)));
@@ -300,7 +301,8 @@ package body Raven.Deinstall is
 
       procedure add_dirs (Position : Pkgtypes.Text_List.Cursor)
       is
-         owned_dir : constant String := USS (Pkgtypes.Text_List.Element (Position));
+         owned_dir : constant String := extract_loc & "/" &
+           USS (Pkgtypes.Text_List.Element (Position));
       begin
          add_head (owned_dir);
       end add_dirs;
@@ -363,6 +365,7 @@ package body Raven.Deinstall is
       end drop_if_empty;
 
    begin
+      Event.emit_debug (moderate, "number directories is " & the_package.directories.Length'Img);
       the_package.directories.Iterate (add_dirs'Access);
       the_package.files.Iterate (check_file'Access);
       dirmap.Iterate (set_dircount'Access);

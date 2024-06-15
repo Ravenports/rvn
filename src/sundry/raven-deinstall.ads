@@ -65,6 +65,7 @@ private
       msg_outfile : String);
 
    procedure prune_empty_directories
-     (the_package : Pkgtypes.A_Package);
+     (the_package : Pkgtypes.A_Package;
+      extract_loc : String);
 
 end Raven.Deinstall;
