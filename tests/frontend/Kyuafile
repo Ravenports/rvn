@@ -24,6 +24,7 @@ atf_test_program{name='search.sh'}
 atf_test_program{name='set.sh'}
 atf_test_program{name='shellscript.sh'}
 atf_test_program{name='version.sh'}
+atf_test_program{name='update.sh'}
 
 
 --  atf_test_program{name='autoupgrade'}
@@ -41,6 +42,3 @@ atf_test_program{name='version.sh'}
 --  atf_test_program{name='sqlite3'}
 --  atf_test_program{name='test_subr'}
 --  atf_test_program{name='triggers'}
---  atf_test_program{name='update'}
---  atf_test_program{name='updating'}
-
