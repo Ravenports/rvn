@@ -48,10 +48,15 @@ package body Raven.Pkgtypes is
          minver : constant String := USS (Message_List.Element (Position).minimum_version);
          maxver : constant String := USS (Message_List.Element (Position).maximum_version);
          msg    : constant Text := Message_List.Element (Position).message;
+
+         procedure add_linefeed is
+         begin
+            if not IsBlank (combined_msg) then
+               SU.Append (combined_msg, Character'Val (10));
+            end if;
+         end add_linefeed;
       begin
-         if not IsBlank (combined_msg) then
-            SU.Append (combined_msg, Character'Val (10));
-         end if;
+
          case mtype is
             when upgrade =>
                if minver /= "" then
@@ -66,9 +71,11 @@ package body Raven.Pkgtypes is
                      when 1 => return;      --  pkg.version > max version, eject
                   end case;
                end if;
+               add_linefeed;
                SU.Append (combined_msg, msg);
 
             when install | deinstall =>
+               add_linefeed;
                SU.Append (combined_msg, msg);
          end case;
       end join;

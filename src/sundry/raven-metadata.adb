@@ -630,13 +630,13 @@ package body Raven.Metadata is
       arrndx  : ThickUCL.array_index;
       num_msg : Natural := 0;
 
-      function alway_line_feed (raw : String) return String is
+      function strip_last_line_feed (raw : String) return String is
       begin
          if raw (raw'Last) = LAT.LF then
-            return raw;
+            return raw (raw'First .. raw'Last - 1);
          end if;
-         return raw & LAT.LF;
-      end alway_line_feed;
+         return raw;
+      end strip_last_line_feed;
 
       procedure analyze_message (mndx : Natural)
       is
@@ -670,7 +670,7 @@ package body Raven.Metadata is
                --  failed to convert message type to know value. ignore
                Event.emit_debug (moderate, "set_messages(): Bad 'type key': " & mtype_str);
             end if;
-            myrec.message := SUS (alway_line_feed (message_str));
+            myrec.message := SUS (strip_last_line_feed (message_str));
          end;
          if ThickUCL.key_found (keys, min_key) then
             declare

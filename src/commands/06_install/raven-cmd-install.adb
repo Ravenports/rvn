@@ -193,6 +193,7 @@ package body Raven.Cmd.Install is
                package_data    => dummy_pkg,
                post_report     => dummy_file);
 
+            Event.emit_message (Pkgtypes.combined_messages (dummy_pkg, Pkgtypes.install));
             Event.emit_install_end (dummy_pkg);
          end if;
       end;
