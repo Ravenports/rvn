@@ -25,7 +25,10 @@ EOF
 	atf_check -o inline:"package being installed\n" \
 		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-5.20_3.rvn
 
-
+	atf_check \
+		-o match:"^test-single-standard deinstallation messages" \
+		-o match:"^package being removed$" \
+		rvn -r ${TMPDIR}/target remove -qy test
 }
 
 dummy() {

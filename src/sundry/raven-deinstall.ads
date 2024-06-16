@@ -68,4 +68,8 @@ private
      (the_package : Pkgtypes.A_Package;
       extract_loc : String);
 
+   procedure show_deinstallation_messages
+     (the_package : Pkgtypes.A_Package;
+      post_report : TIO.File_Type);
+
 end Raven.Deinstall;
