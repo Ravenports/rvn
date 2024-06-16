@@ -1633,8 +1633,51 @@ package body Raven.Install is
               Metadata.free_directory_characteristics (package_metadata, index);
             dirpath : constant String := extract_location & "/" & USS (isla.path);
             mrc : Archive.Unix.metadata_rc;
+            features : Archive.Unix.File_Characteristics;
+            try_create : Boolean := False;
+            try_unlink : Boolean := False;
          begin
-            if not DIR.Exists (dirpath) then
+            --  if symlink, check target.
+            --  If target does not exist, delete it.
+            --  If target does exist, and is a directory, skip creation
+            features := Archive.Unix.get_charactistics (dirpath);
+            case features.ftype is
+               when Archive.unsupported => try_create := True;
+               when Archive.directory => null;
+               when Archive.regular |
+                    Archive.hardlink |
+                    Archive.fifo =>
+                  try_unlink := True;
+               when Archive.symlink =>
+                  declare
+                     tgt : constant String := Archive.Unix.link_target (dirpath);
+                     tgt_features : Archive.Unix.File_Characteristics;
+                     function target_path return String is
+                     begin
+                        if tgt (tgt'First) = '/' then
+                           return tgt;
+                        end if;
+                        return head (dirpath, "/") & "/" & tgt;
+                     end target_path;
+                  begin
+                     tgt_features := Archive.Unix.get_charactistics (target_path);
+                     case tgt_features.ftype is
+                        when Archive.directory => null;
+                        when others => try_unlink := True;
+                     end case;
+                  end;
+            end case;
+            if try_unlink then
+               if Archive.Unix.unlink_file (dirpath) then
+                  try_create := True;
+               else
+                  Event.emit_debug (high_level, "failed to remove " & features.ftype'Img &
+                                      " entity before trying to create directory " &
+                                      dirpath & " in the same place");
+               end if;
+            end if;
+
+            if try_create then
                Event.emit_debug (moderate, "free directory: mkdir -p " & dirpath);
                begin
                   DIR.Create_Path (dirpath);
