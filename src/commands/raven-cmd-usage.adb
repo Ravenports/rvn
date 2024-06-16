@@ -860,6 +860,10 @@ package body Raven.Cmd.Usage is
          return False;
       end alert;
    begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+
       if comline.common_options.exact_match and then
         comline.common_options.case_sensitive
       then
@@ -904,6 +908,10 @@ package body Raven.Cmd.Usage is
          return False;
       end alert;
    begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+
       if comline.common_options.exact_match and then
         comline.common_options.case_sensitive
       then
