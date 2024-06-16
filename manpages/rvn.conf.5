@@ -413,17 +413,14 @@ rvn_dbdir: "/var/db/rvn"
 rvn_cachedir: "/var/cache/rvn"
 handle_rc_scripts: false
 assume_always_yes: false
-repos_dir: [
-     "/raven/etc/rvn/repos",
-]
+repos_dir: ["/raven/etc/rvn/repos"]
 syslog: true
 developer_mode: false
 rvn_environ: {
     http_proxy: "http://myproxy:3128",
 }
 alias: {
-    origin: "info -qo",
-    nonauto: "query -e '%a == 0' '%n-%v'"
+    nonauto: "query -e '{auto} eq 0' '{nsv}-{version}'"
 }
 .Ed
 .Sh SEE ALSO
