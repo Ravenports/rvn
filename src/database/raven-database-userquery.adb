@@ -196,7 +196,7 @@ package body Raven.Database.UserQuery is
          when token_ml_rdep_spkg     => return "p.subpackage";
          when token_ml_rdep_variant  => return "p.variant";
          when token_ml_rdep_nsv      => return nsv_formula;
-         when token_ml_rdep_version  => return "ml.version";
+         when token_ml_rdep_version  => return "p.version";
          when token_ml_shlibs_adj    => return "ml.name";
          when token_ml_shlibs_pro    => return "ml.name";
          when token_ml_shlibs_req    => return "ml.name";
