@@ -19,5 +19,5 @@ EOF
 		-o empty \
 		-e inline:"No repositories available from which to fetch checksum\n" \
 		-s exit:1 \
-		rvn -R repos catalog
+		rvn -R repos catalog -f
 }
