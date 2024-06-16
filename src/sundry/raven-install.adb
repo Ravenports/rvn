@@ -108,18 +108,7 @@ package body Raven.Install is
 
       case action is
          when upgrade =>
-            Event.emit_remove_begin (current_pkg);
-            Deinstall.deinstall_extracted_package (installed_package   => current_pkg,
-                                                   verify_digest_first => False,
-                                                   quiet               => True,
-                                                   inhibit_scripts     => no_scripts,
-                                                   rootdir             => rootdir,
-                                                   post_report         => post_report);
-
-            DEL.drop_package_with_cascade (rdb, current_pkg.id);
-            Event.emit_remove_end (current_pkg);
-
-            Event.emit_install_begin (shiny_pkg);
+            Event.emit_upgrade_begin (current_pkg, shiny_pkg);
             success := PKGS.rdb_register_package (db     => rdb,
                                                   pkg    => shiny_pkg,
                                                   forced => False);
@@ -135,7 +124,7 @@ package body Raven.Install is
                                                       post_report     => post_report);
                Event.emit_extract_end (shiny_pkg);
             end if;
-            Event.emit_install_end (shiny_pkg);
+            Event.emit_upgrade_end (current_pkg, shiny_pkg);
          when reinstall =>
             Event.emit_install_begin (shiny_pkg);
             success := PKGS.rdb_register_package (db     => rdb,
@@ -402,7 +391,9 @@ package body Raven.Install is
             begin
                case myrec.action is
                   when new_install | reinstall | reset_auto => null;
-                  when upgrade => upgrades.Append (myrec.nsv);
+                  when upgrade =>
+                     Event.emit_debug (moderate, "gather_upgrades: append " & USS (myrec.nsv));
+                     upgrades.Append (myrec.nsv);
                end case;
             end gather_upgrades;
 
@@ -1469,6 +1460,29 @@ package body Raven.Install is
       install_log   : TIO.File_Type;
       problem_found : Boolean := False;
 
+      procedure execute_upgrade_removal (Position : Install_Order_Set.Cursor)
+      is
+         myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
+      begin
+         case myrec.action is
+            when reinstall | new_install | reset_auto => null;
+            when upgrade =>
+               Event.emit_debug (high_level, "Pre-upgrade: remove " &
+                                   Pkgtypes.nsvv_identifier (install_map.Element (myrec.nsv)));
+               Event.emit_remove_begin (install_map.Element (myrec.nsv));
+               Deinstall.deinstall_extracted_package
+                 (installed_package   => install_map.Element (myrec.nsv),
+                  verify_digest_first => False,
+                  quiet               => True,
+                  inhibit_scripts     => skip_scripts,
+                  rootdir             => rootdir,
+                  post_report         => install_log);
+
+               DEL.drop_package_with_cascade (rdb, install_map.Element (myrec.nsv).id);
+               Event.emit_remove_end (install_map.Element (myrec.nsv));
+         end case;
+      end execute_upgrade_removal;
+
       procedure execute_step (Position : Install_Order_Set.Cursor)
       is
          myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
@@ -1522,6 +1536,7 @@ package body Raven.Install is
       end execute_step;
    begin
       TIO.Create (install_log, TIO.Out_File, tmp_filename);
+      queue.Iterate (execute_upgrade_removal'Access);
       queue.Iterate (execute_step'Access);
       TIO.Close (install_log);
 

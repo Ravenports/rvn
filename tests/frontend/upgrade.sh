@@ -5,10 +5,10 @@
 tests_init \
 	issue1881 \
 	issue1881_newdep \
+	three_digit_revision \
+	dual_conflict \
 
-#	
-#	three_digit_revision \
-#	dual_conflict \
+
 #	file_become_dir \
 #	dir_become_file \
 #	dir_is_symlink_to_a_dir
@@ -93,112 +93,100 @@ EOF
 }
 
 
-
 three_digit_revision_body() {
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg1 pkg_a 1_90
-
-	atf_check \
-		-o ignore \
-		-e empty \
-		-s exit:0 \
-		pkg register -M pkg1.ucl
-
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg pkg1 pkg_a 1_125
-
-	atf_check \
-		-o ignore \
-		-e empty \
-		-s exit:0 \
-		pkg create -M ./pkg1.ucl
-
-	atf_check \
-		-o ignore \
-		-e empty \
-		-s exit:0 \
-		pkg repo .
-
-	mkdir repoconf
-	cat << EOF > repoconf/repo.conf
+	touch dummy.plist
+	mkdir -p ${TMPDIR}/var/cache/rvn
+	mkdir files
+	mkdir target
+	mkdir reposconf
+	cat <<EOF >> reposconf/repo.conf
 local: {
-	url: file:///$TMPDIR,
+	url: file:///${TMPDIR},
 	enabled: true
 }
 EOF
 
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg1" "pkg_a" "single" "standard" "1_90" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg2" "pkg_a" "single" "standard" "1_125" "/"
+
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}       -r . -m pkg1.ucl -w dummy.plist
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg2.ucl -w dummy.plist
+
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a-single-standard-1_90.rvn
+
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
 	atf_check \
-		-o ignore \
+		-o match:"1[.]  pkg_a-single-standard-1_125 \[U\]" \
+		-e ignore \
+		-s exit:0 \
+		rvn -R "${TMPDIR}/reposconf" -r . upgrade -y 'pkg_'
+
+	atf_check \
+		-o inline:"pkg_a-single-standard version: 1_125\n" \
 		-e empty \
 		-s exit:0 \
-		pkg -o REPOS_DIR="$TMPDIR/repoconf" -o PKG_CACHEDIR="$TMPDIR" upgrade -yx '^pkg_'
-	atf_check \
-		-o inline:"pkg_a-1_125\n" \
-		-e empty \
-		-s exit:0 \
-		pkg info -q
+		rvn query --all "{nsv} version: {version}"
 }
 
 dual_conflict_body()
 {
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-1" "pkg-1" "1"
-	echo "${TMPDIR}/file-pkg-1" > plist-1
-	echo "entry" > file-pkg-1
-	atf_check -s exit:0 pkg create -M pkg-1.ucl -p plist-1
-
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-2" "pkg-2" "1"
-	echo "${TMPDIR}/file-pkg-2" > plist-2
-	echo "entry" > file-pkg-2
-	atf_check -s exit:0 pkg create -M pkg-2.ucl -p plist-2
-
-	mkdir repoconf
-	cat << EOF > repoconf/repo.conf
+	touch dummy.plist
+	mkdir -p ${TMPDIR}/var/cache/rvn
+	mkdir files
+	mkdir target
+	mkdir reposconf
+	cat <<EOF >> reposconf/repo.conf
 local: {
-	url: file:///$TMPDIR,
+	url: file:///${TMPDIR},
 	enabled: true
 }
 EOF
 
-	atf_check \
-		-o inline:"Creating repository in .:  done\nPacking files for repository:  done\n" \
-		-e empty \
-		-s exit:0 \
-		pkg repo .
+	echo "file-pkg-1" > plist-1
+	echo "entry" > file-pkg-1
 
-	mkdir ${TMPDIR}/target
-	atf_check \
-		pkg -o REPOS_DIR="$TMPDIR/repoconf" -o PKG_CACHEDIR="$TMPDIR" -r ${TMPDIR}/target install -qy pkg-1 pkg-2
-	pkg -r ${TMPDIR}/target which ${TMPDIR}/file-pkg-1
-	pkg -r ${TMPDIR}/target which ${TMPDIR}/file-pkg-2
-	test -f ${TMPDIR}/target/${TMPDIR}/file-pkg-1 || atf_fail "file absent"
-	test -f ${TMPDIR}/target/${TMPDIR}/file-pkg-2 || atf_fail "file absent"
+	echo "file-pkg-2" > plist-2
+	echo "entry" > file-pkg-2
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-1" "pkg-1" "2"
-	echo "${TMPDIR}/file-pkg-2" > plist-1
-	atf_check -s exit:0 pkg create -M pkg-1.ucl -p plist-1
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-1" "pkg-1" "single" "standard" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-2" "pkg-2" "single" "standard" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-1U" "pkg-1" "single" "standard" "2" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-2U" "pkg-2" "single" "standard" "2" "/"
 
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-2" "pkg-2" "2"
-	echo "${TMPDIR}/file-pkg-1" > plist-2
-	atf_check -s exit:0 pkg create -M pkg-2.ucl -p plist-2
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg-1.ucl -w plist-1
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg-2.ucl -w plist-2
 
-	sleep 1
-	atf_check \
-		-o inline:"Creating repository in .:  done\nPacking files for repository:  done\n" \
-		-e empty \
-		-s exit:0 \
-		pkg repo -l .
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
+	atf_check rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -qy pkg-
+
+	test -f ${TMPDIR}/target/file-pkg-1 || atf_fail "file absent"
+	test -f ${TMPDIR}/target/file-pkg-2 || atf_fail "file absent"
+
+	# reverse file manifests
+	rm ${TMPDIR}/files/*
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg-1U.ucl -w plist-2
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg-2U.ucl -w plist-1
+
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
+	atf_check -e empty -s exit:0 \
+		-o match:"\[1\/2\]  pkg-1-single-standard-2 \[U\][ ]+\[ok\]" \
+		-o match:"\[2\/2\]  pkg-2-single-standard-2 \[U\][ ]+\[ok\]" \
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		pkg -o REPOS_DIR="$TMPDIR/repoconf" -o PKG_CACHEDIR="$TMPDIR" -r ${TMPDIR}/target update -q
+		-o inline:'package pkg-2-single-standard-2\n' \
+		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/file-pkg-1
 
 	atf_check \
-		pkg -o REPOS_DIR="$TMPDIR/repoconf" -o PKG_CACHEDIR="$TMPDIR" -r ${TMPDIR}/target upgrade -qy
-
-	atf_check \
-		-o inline:'pkg-2-2\n' \
-		pkg -r ${TMPDIR}/target which -q ${TMPDIR}/file-pkg-1
-	atf_check \
-		-o inline:'pkg-1-2\n' \
-		pkg -r ${TMPDIR}/target which -q ${TMPDIR}/file-pkg-2
+		-o inline:'package pkg-1-single-standard-2\n' \
+		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/file-pkg-2
 }
 
 file_become_dir_body() {
