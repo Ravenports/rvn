@@ -139,7 +139,10 @@ package Raven.Pkgtypes is
    function nsv_identifier (pkg : A_Package) return String;
 
    --  returns messages of the same type (install, remove, upgrade) joined by a line feed
-   function combined_messages (pkg : A_Package; mtype : Message_Type) return String;
+   function combined_messages
+     (pkg         : A_Package;
+      mtype       : Message_Type;
+      old_version : String) return String;
 
    --  Returns package size of path, and 0 if path does not exist
    function get_file_size (path : String) return Package_Size;

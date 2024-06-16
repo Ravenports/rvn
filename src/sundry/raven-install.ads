@@ -39,6 +39,7 @@ package Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean;
+      old_version       : String;
       rootdir           : String;
       package_data      : Pkgtypes.A_Package;
       post_report       : Ada.Text_IO.File_Type) return Boolean;
@@ -192,6 +193,8 @@ private
 
    procedure show_installation_messages
      (the_package : Pkgtypes.A_Package;
-      post_report : Ada.Text_IO.File_Type);
+      post_report : Ada.Text_IO.File_Type;
+      upgrading   : Boolean;
+      old_version : String);
 
 end Raven.Install;

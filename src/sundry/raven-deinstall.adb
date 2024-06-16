@@ -601,7 +601,7 @@ package body Raven.Deinstall is
       post_report : TIO.File_Type)
    is
       redirected : constant Boolean := TIO.Is_Open (post_report);
-      msg : constant String := Pkgtypes.combined_messages (the_package, Pkgtypes.deinstall);
+      msg : constant String := Pkgtypes.combined_messages (the_package, Pkgtypes.deinstall, "");
       divlength : constant Natural := 75;
       partone : constant String := Pkgtypes.nsv_identifier (the_package) &
         " deinstallation messages  ";

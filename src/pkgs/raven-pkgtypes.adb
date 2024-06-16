@@ -39,7 +39,10 @@ package body Raven.Pkgtypes is
    -------------------------
    --  combined_messages  --
    -------------------------
-   function combined_messages (pkg : A_Package; mtype : Message_Type) return String
+   function combined_messages
+     (pkg         : A_Package;
+      mtype       : Message_Type;
+      old_version : String) return String
    is
       combined_msg : Text := SU.Null_Unbounded_String;
 
@@ -60,15 +63,15 @@ package body Raven.Pkgtypes is
          case mtype is
             when upgrade =>
                if minver /= "" then
-                  case Version.pkg_version_cmp (USS (pkg.version), minver) is
-                     when -1 => return;  -- pkg.version < minver, eject
+                  case Version.pkg_version_cmp (old_version, minver) is
+                     when -1 => return;  -- old_version < minver, eject
                      when 0 | 1 => null;   -- pkg.version >= minver, fallthrough
                   end case;
                end if;
                if maxver /= "" then      --  satified min version (might have been blank)
-                  case Version.pkg_version_cmp (USS (pkg.version), maxver) is
+                  case Version.pkg_version_cmp (old_version, maxver) is
                      when -1 | 0 => null;   --  less than or equal to max version, show it.
-                     when 1 => return;      --  pkg.version > max version, eject
+                     when 1 => return;      --  old_version > max version, eject
                   end case;
                end if;
                add_linefeed;

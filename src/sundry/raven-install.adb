@@ -119,6 +119,7 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => True,
+                                                      old_version     => USS (current_pkg.version),
                                                       rootdir         => rootdir,
                                                       package_data    => shiny_pkg,
                                                       post_report     => post_report);
@@ -137,6 +138,7 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
+                                                      old_version     => "",
                                                       rootdir         => rootdir,
                                                       package_data    => shiny_pkg,
                                                       post_report     => post_report);
@@ -157,6 +159,7 @@ package body Raven.Install is
                                                       be_silent       => True,
                                                       dry_run_only    => False,
                                                       upgrading       => False,
+                                                      old_version     => "",
                                                       rootdir         => rootdir,
                                                       package_data    => shiny_pkg,
                                                       post_report     => post_report);
@@ -183,6 +186,7 @@ package body Raven.Install is
       be_silent         : Boolean;
       dry_run_only      : Boolean;
       upgrading         : Boolean;
+      old_version       : String;
       rootdir           : String;
       package_data      : Pkgtypes.A_Package;
       post_report       : TIO.File_Type) return Boolean
@@ -252,7 +256,7 @@ package body Raven.Install is
          end;
       end if;
       operation.close_rvn_archive;
-      show_installation_messages (package_data, post_report);
+      show_installation_messages (package_data, post_report, upgrading, old_version);
 
       Event.emit_extract_end (package_data);
 
@@ -1710,14 +1714,31 @@ package body Raven.Install is
    ----------------------------------
    procedure show_installation_messages
      (the_package : Pkgtypes.A_Package;
-      post_report : TIO.File_Type)
+      post_report : TIO.File_Type;
+      upgrading   : Boolean;
+      old_version : String)
    is
       redirected : constant Boolean := TIO.Is_Open (post_report);
-      msg : constant String := Pkgtypes.combined_messages (the_package, Pkgtypes.install);
       divlength : constant Natural := 75;
-      partone : constant String := Pkgtypes.nsv_identifier (the_package) &
-        " installation messages  ";
       divider : String (1 .. divlength) := (others => '-');
+
+      function partone return String is
+      begin
+         if upgrading then
+            return Pkgtypes.nsv_identifier (the_package) & " upgrade messages  ";
+         end if;
+         return Pkgtypes.nsv_identifier (the_package) & " installation messages  ";
+      end partone;
+
+      function get_msg return String is
+      begin
+         if upgrading then
+            return Pkgtypes.combined_messages (the_package, Pkgtypes.upgrade, old_version);
+         end if;
+         return Pkgtypes.combined_messages (the_package, Pkgtypes.install, "");
+      end get_msg;
+
+      msg : constant String := get_msg;
    begin
       if IsBlank (msg) then
          return;

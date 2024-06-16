@@ -207,7 +207,7 @@ package body Raven.Event is
       jmsg.insert ("subpackage", USS (pkg.subpackage));
       jmsg.insert ("variant", USS (pkg.variant));
       jmsg.insert ("version", USS (pkg.version));
-      jmsg.insert ("message", Pkgtypes.combined_messages (pkg, Pkgtypes.install));
+      jmsg.insert ("message", Pkgtypes.combined_messages (pkg, Pkgtypes.install, ""));
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_install_end;
@@ -280,7 +280,7 @@ package body Raven.Event is
       jmsg.insert ("subpackage", USS (pkg.subpackage));
       jmsg.insert ("variant", USS (pkg.variant));
       jmsg.insert ("version", USS (pkg.version));
-      jmsg.insert ("message", Pkgtypes.combined_messages (pkg, Pkgtypes.deinstall));
+      jmsg.insert ("message", Pkgtypes.combined_messages (pkg, Pkgtypes.deinstall, ""));
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_remove_end;
@@ -311,6 +311,7 @@ package body Raven.Event is
    procedure emit_upgrade_end (pkg : Pkgtypes.A_Package; newpkg : Pkgtypes.A_Package)
    is
       jmsg : ThickUCL.UclTree;
+      oldver : constant String := USS (pkg.version);
    begin
       jmsg.insert ("type", "INFO_UPGRADE_FINISHED");
       jmsg.start_object ("data");
@@ -319,7 +320,7 @@ package body Raven.Event is
       jmsg.insert ("variant", USS (pkg.variant));
       jmsg.insert ("version", USS (pkg.version));
       jmsg.insert ("newversion", USS (newpkg.version));
-      jmsg.insert ("message", Pkgtypes.combined_messages (newpkg, Pkgtypes.upgrade));
+      jmsg.insert ("message", Pkgtypes.combined_messages (newpkg, Pkgtypes.upgrade, oldver));
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_upgrade_end;

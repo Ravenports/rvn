@@ -189,6 +189,7 @@ package body Raven.Cmd.Install is
                be_silent       => comline.common_options.quiet,
                dry_run_only    => comline.common_options.dry_run,
                upgrading       => False,
+               old_version     => "",
                rootdir         => USS (comline.pre_command.install_rootdir),
                package_data    => dummy_pkg,
                post_report     => dummy_file);
