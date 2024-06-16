@@ -190,4 +190,8 @@ private
       num_directories  : Natural;
       extract_location : String);
 
+   procedure show_installation_messages
+     (the_package : Pkgtypes.A_Package;
+      post_report : Ada.Text_IO.File_Type);
+
 end Raven.Install;

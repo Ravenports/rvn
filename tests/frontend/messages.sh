@@ -3,12 +3,10 @@
 . $(atf_get_srcdir)/test_environment.sh
 
 tests_init \
-	messages
+	messages \
+	messages_install
 
-messages_body() {
-	touch dummy.plist
-	mkdir ${TMPDIR}/target
-
+test_setup () {
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "5.20_3" "/"
 	cat <<EOF >> test.ucl 
 messages: [
@@ -21,6 +19,21 @@ messages: [
 ]
 EOF
 
+	mkdir reposconf
+	cat <<EOF >> reposconf/repo.conf
+local: {
+	url: file:///${TMPDIR},
+	enabled: true
+}
+EOF
+}
+
+messages_body() {
+	touch dummy.plist
+	mkdir ${TMPDIR}/target
+
+	test_setup
+
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
 	atf_check -o inline:"package being installed\n" \
 		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-5.20_3.rvn
@@ -31,15 +44,28 @@ EOF
 		rvn -r ${TMPDIR}/target remove -qy test
 }
 
+messages_install_body() {
+	touch dummy.plist
+	mkdir target
+	mkdir files
+
+	test_setup
+
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m test.ucl -w dummy.plist
+
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
+	atf_check \
+		-o match:"^test-single-standard installation messages" \
+		-o match:"^package being installed$" \
+		-e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . install -qy test
+
+
+}
+
 dummy() {
-	atf_check \
-		-o match:".*Installing.*" \
-		-o match:"^Always print.*" \
-		-o match:"^package being installed.*" \
-		pkg register -M test.ucl
-	atf_check \
-		-o match:"^package being removed.*" \
-		pkg delete -y test
+
 
 	mkdir reposconf
 	cat << EOF > reposconf/repo1.conf

@@ -252,6 +252,7 @@ package body Raven.Install is
          end;
       end if;
       operation.close_rvn_archive;
+      show_installation_messages (package_data, post_report);
 
       Event.emit_extract_end (package_data);
 
@@ -1702,5 +1703,36 @@ package body Raven.Install is
          end;
       end loop;
    end create_standalone_directories;
+
+
+   ----------------------------------
+   --  show_installation_messages  --
+   ----------------------------------
+   procedure show_installation_messages
+     (the_package : Pkgtypes.A_Package;
+      post_report : TIO.File_Type)
+   is
+      redirected : constant Boolean := TIO.Is_Open (post_report);
+      msg : constant String := Pkgtypes.combined_messages (the_package, Pkgtypes.install);
+      divlength : constant Natural := 75;
+      partone : constant String := Pkgtypes.nsv_identifier (the_package) &
+        " installation messages  ";
+      divider : String (1 .. divlength) := (others => '-');
+   begin
+      if IsBlank (msg) then
+         return;
+      end if;
+      if redirected then
+         if partone'Length > divlength then
+            divider := partone (partone'First .. partone'First + divlength - 1);
+         else
+            divider (divider'First .. divider'First + partone'Length - 1) := partone;
+         end if;
+         TIO.Put_Line (post_report, divider);
+         TIO.Put_Line (post_report, msg);
+      else
+         Event.emit_message (msg);
+      end if;
+   end show_installation_messages;
 
 end Raven.Install;
