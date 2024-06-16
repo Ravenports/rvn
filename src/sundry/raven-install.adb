@@ -776,7 +776,8 @@ package body Raven.Install is
    is
       procedure calc (Position : Pkgtypes.Package_Map.Cursor)
       is
-         catpkg : Pkgtypes.A_Package renames Pkgtypes.Package_Map.Element (Position);
+         nsv_key : Text renames Pkgtypes.Package_Map.Key (Position);
+         catpkg : Pkgtypes.A_Package renames cache_map.Element (nsv_key);
          myrec : Descendant_Type;
 
          procedure check_single_dep (innerpos : Pkgtypes.NV_Pairs.Cursor)
@@ -784,6 +785,7 @@ package body Raven.Install is
             dep_nsv : Text renames Pkgtypes.NV_Pairs.Key (innerpos);
             local_set : Pkgtypes.Package_Set.Vector;
          begin
+            Event.emit_debug (moderate, "check_single_dep (" & USS (dep_nsv) & ")");
             myrec.descendents := myrec.descendents + 1;
             if cache_map.Contains (dep_nsv) then
                Event.emit_debug (moderate, "cached " & USS (dep_nsv));
