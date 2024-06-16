@@ -1058,7 +1058,7 @@ package body Raven.Cmd.Line is
             set_error (self, "Unexpected file pattern with --all option: " & datum);
          elsif not IsBlank (self.common_options.name_pattern) then
             set_error (self, "Attempt to redefine file name pattern from "
-                       & SQ (USS (self.common_options.name_pattern)) & " to " & DQ (datum));
+                       & SQ (USS (self.common_options.name_pattern)) & " to " & SQ (datum));
          else
             self.common_options.name_pattern := datumtxt;
          end if;
