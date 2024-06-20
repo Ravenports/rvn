@@ -1,11 +1,54 @@
-.Dd June 2, 2024
+.Dd June 20, 2024
 .Dt RVN-TRIGGERS 5
 .Os
 .Sh NAME
 .Nm "rvn triggers"
 .Nd trigger file format
-.Sh SYNOPSIS
-Not yet implemented.
+.Sh DESCRIPTION
+.Nm
+are executed at the end of installation, removal, and upgrade operations.
+The associated script is only executed once even if the trigger was hit multiple
+times, although the arguments to the script might increase with multiple hits.
+.Pp
+The scripts are triggered when files and directories matching the pattern
+definitions are installed or upgraded.
+The trigger scripts are exclusively written in Lua.
+.Pp
+The format is the following:
+.Bl -tag -width file_regexp
+.It Cm dir_path
+An array of strings exactly matching the full path of a directory.
+Each time a package creates a directory in this array, or installs a file
+within that directory's tree, the script is triggered.
+.It Cm dir_glob
+An array of glob patterns matching the full path of a directory.
+Each time a package creates a directory matching a pattern in this array, or
+installs a file within that directory's tree, the script is triggered.
+.It Cm dir_regexp
+An array of regular expressions matching the full path of a directory.
+Each time a package creates a directory matching a pattern in this array, or
+installs a file within that directory's tree, the script is triggered.
+.It Cm file_path
+An array of strings exactly matching the full path of a file.
+Each time a package installs or upgrades a file in this array, the script is
+triggered.
+.It Cm file_glob
+An array of glob patterns matching the full path of a file.
+Each time a package installs or upgrades a file matching a pattern in this
+array, the script is triggered.
+.It Cm file_regexp
+An array of regular expressions matching the full path of a file.
+Each time a package installs or upgrades a file matching a pattern in this
+array, the script is triggered.
+.It Cm cleanup
+This is a string which contains an entire Lua script which is run when the
+package that created the trigger is removed.
+.It Cm trigger
+This is a string that contains the entire Lua script that is run at the end
+of the install or upgrade operation.
+Every directory or file that triggered the script is passed as an argument to
+the script.
+.El
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
