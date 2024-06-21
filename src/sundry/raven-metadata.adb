@@ -861,6 +861,12 @@ package body Raven.Metadata is
             begin
                isla.path := SUS (path);
             end;
+         elsif this_key = "prefix" then
+            declare
+               prefix : constant String := metatree.get_object_value (ondx, this_key);
+            begin
+               isla.prefix := SUS (path);
+            end;
          elsif this_key = "owner" then
             case metatree.get_object_data_type (ondx, this_key) is
                when ThickUCL.data_boolean => null;   -- reset_owner already false
@@ -934,5 +940,18 @@ package body Raven.Metadata is
       return isla;
    end free_directory_characteristics;
 
+
+   ---------------------------
+   --  free_directory_path  --
+   ---------------------------
+   function free_directory_path
+     (prefix      : String;
+      plist_path  : String) return String is
+   begin
+      if plist_path (plist_path'First) = '/' then
+         return plist_path;
+      end if;
+      return prefix & '/' & plist_path;
+   end free_directory_path;
 
 end Raven.Metadata;

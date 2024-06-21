@@ -106,6 +106,7 @@ package Raven.Metadata is
          new_gid     : Archive.owngrp_id := 0;
          new_perms   : Archive.permissions := 0;
          path        : Text;
+         prefix      : Text;
       end record;
 
    --  Returns the ownership and permissions of the directory at the index
@@ -113,6 +114,11 @@ package Raven.Metadata is
    function free_directory_characteristics
      (metatree : ThickUCL.UclTree;
       dirindex : Natural) return Directory_Island;
+
+   --  Returns prefix + / + plist_path if plist_path doesn't start with /
+   function free_directory_path
+     (prefix      : String;
+      plist_path  : String) return String;
 
 private
 

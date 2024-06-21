@@ -31,6 +31,12 @@ package Raven.Triggers is
    procedure execute
      (trigger_set  : in out A_Trigger_Set);
 
+   --  Iterates through files to assemble the directory map
+   --  Package-owned directories are also added
+   procedure gather_directories
+     (trigger_set   : in out A_Trigger_Set;
+      installed_pkg : Pkgtypes.A_Package);
+
 private
 
    type TScript is
@@ -55,8 +61,9 @@ private
 
    type A_Trigger_Set is tagged
       record
-         trigger_map : A_Trigger_Map.Map;
-         rootdir_txt : Text;
+         trigger_map   : A_Trigger_Map.Map;
+         directory_map : Pkgtypes.NV_Pairs.Map;
+         rootdir_txt   : Text;
       end record;
 
 

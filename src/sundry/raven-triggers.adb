@@ -6,6 +6,7 @@ with Ada.Directories;
 with Raven.Pkgtypes;
 with Raven.Strings;
 with Raven.Context;
+with Raven.Metadata;
 with Lua;
 
 use Raven.Strings;
@@ -147,6 +148,39 @@ package body Raven.Triggers is
          display_and_delete_file (msg_outfile);
       end if;
    end execute;
+
+
+   --------------------------
+   --  gather_directories  --
+   --------------------------
+   procedure gather_directories
+     (trigger_set   : in out A_Trigger_Set;
+      installed_pkg : Pkgtypes.A_Package)
+   is
+      procedure analyze_filename (Position : Pkgtypes.File_List.Cursor)
+      is
+         myitem : Pkgtypes.File_Item renames Pkgtypes.File_List.Element (Position);
+         mydir  : constant Text := head (myitem.path, SUS ("/"));
+      begin
+         if not trigger_set.directory_map.Contains (mydir) then
+            trigger_set.directory_map.Insert (mydir, SU.Null_Unbounded_String);
+         end if;
+      end analyze_filename;
+
+      procedure analyze_directory (Position : Pkgtypes.Text_List.Cursor)
+      is
+         raw_dir : constant String := USS (Pkgtypes.Text_List.Element (Position));
+         full_path : constant Text := SUS (Metadata.free_directory_path
+                                           (USS (installed_pkg.prefix), raw_dir));
+      begin
+         if not trigger_set.directory_map.Contains (full_path) then
+            trigger_set.directory_map.Insert (full_path, SU.Null_Unbounded_String);
+         end if;
+      end analyze_directory;
+   begin
+      installed_pkg.directories.Iterate (analyze_directory'Access);
+      installed_pkg.files.Iterate (analyze_filename'Access);
+   end gather_directories;
 
 
 end Raven.Triggers;
