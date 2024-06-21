@@ -20,14 +20,11 @@ The format is the following:
 An array of strings exactly matching the full path of a directory.
 Each time a package creates a directory in this array, or installs a file
 within that directory's tree, the script is triggered.
-.It Cm dir_glob
-An array of glob patterns matching the full path of a directory.
-Each time a package creates a directory matching a pattern in this array, or
-installs a file within that directory's tree, the script is triggered.
-.It Cm dir_regexp
-An array of regular expressions matching the full path of a directory.
-Each time a package creates a directory matching a pattern in this array, or
-installs a file within that directory's tree, the script is triggered.
+If glob or regular expression matching of directories is desired, use the
+.Cm file_glob
+or
+.Cm file_regexp
+definitions to accomplish that.
 .It Cm file_path
 An array of strings exactly matching the full path of a file.
 Each time a package installs or upgrades a file in this array, the script is

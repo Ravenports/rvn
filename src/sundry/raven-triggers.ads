@@ -37,6 +37,12 @@ package Raven.Triggers is
      (trigger_set   : in out A_Trigger_Set;
       installed_pkg : Pkgtypes.A_Package);
 
+   --  Given the dir_path of a trigger definition, returns True if any of the installed
+   --  packages created this directory or installed files in that directory.
+   function dir_path_matches
+     (trigger_set   : in out A_Trigger_Set;
+      dir_path      : String) return Boolean;
+
 private
 
    type TScript is

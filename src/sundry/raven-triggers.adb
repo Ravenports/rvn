@@ -183,4 +183,14 @@ package body Raven.Triggers is
    end gather_directories;
 
 
+   ------------------------
+   --  dir_path_matches  --
+   ------------------------
+   function dir_path_matches
+     (trigger_set   : in out A_Trigger_Set;
+      dir_path      : String) return Boolean is
+   begin
+      return trigger_set.directory_map.Contains (SUS (dir_path));
+   end dir_path_matches;
+
 end Raven.Triggers;
