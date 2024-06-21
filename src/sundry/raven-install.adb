@@ -49,7 +49,8 @@ package body Raven.Install is
                                 updated_pkg : String;
                                 no_scripts  : Boolean;
                                 rootdir     : String;
-                                post_report : TIO.File_Type) return Boolean
+                                post_report : TIO.File_Type;
+                                trigger_set : in out Triggers.A_Trigger_Set) return Boolean
    is
       features  : Archive.Unix.File_Characteristics;
       file_list : Archive.Unpack.file_records.Vector;
@@ -170,6 +171,12 @@ package body Raven.Install is
          when reset_auto =>
             success := PKGS.rdb_reset_automatic (rdb, shiny_pkg);
             Event.emit_override_auto (shiny_pkg, success);
+      end case;
+
+      case action is
+         when reset_auto => null;
+         when new_install | reinstall | upgrade =>
+            trigger_set.gather_directories (shiny_pkg);
       end case;
 
       return success;
@@ -1464,6 +1471,7 @@ package body Raven.Install is
       this_step     : Natural := 0;
       install_log   : TIO.File_Type;
       problem_found : Boolean := False;
+      trigger_set   : Triggers.A_Trigger_Set;
 
       procedure execute_upgrade_removal (Position : Install_Order_Set.Cursor)
       is
@@ -1516,7 +1524,8 @@ package body Raven.Install is
                                                 updated_pkg => rvn_path,
                                                 no_scripts  => skip_scripts,
                                                 rootdir     => rootdir,
-                                                post_report => install_log);
+                                                post_report => install_log,
+                                                trigger_set => trigger_set);
             when new_install =>
                dummy_pkg.automatic := myrec.automatic;
                succeeded := install_or_upgrade (rdb         => rdb,
@@ -1525,7 +1534,8 @@ package body Raven.Install is
                                                 updated_pkg => rvn_path,
                                                 no_scripts  => skip_scripts,
                                                 rootdir     => rootdir,
-                                                post_report => install_log);
+                                                post_report => install_log,
+                                                trigger_set => trigger_set);
          end case;
          if succeeded then
             if not behave_quiet then
@@ -1540,6 +1550,7 @@ package body Raven.Install is
          end if;
       end execute_step;
    begin
+      trigger_set.set_rootdir (rootdir);
       TIO.Create (install_log, TIO.Out_File, tmp_filename);
       queue.Iterate (execute_upgrade_removal'Access);
       queue.Iterate (execute_step'Access);

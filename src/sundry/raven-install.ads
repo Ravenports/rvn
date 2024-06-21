@@ -4,6 +4,7 @@
 with Ada.Text_IO;
 with Raven.Pkgtypes;
 with Raven.Database;
+with Raven.Triggers;
 with ThickUCL;
 
 private with Ada.Containers.Vectors;
@@ -106,7 +107,8 @@ private
       updated_pkg : String;
       no_scripts  : Boolean;
       rootdir     : String;
-      post_report : Ada.Text_IO.File_Type) return Boolean;
+      post_report : Ada.Text_IO.File_Type;
+      trigger_set : in out Triggers.A_Trigger_Set) return Boolean;
 
    function assemble_work_queue
      (rdb             : in out Database.RDB_Connection;

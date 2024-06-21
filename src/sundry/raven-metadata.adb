@@ -865,7 +865,7 @@ package body Raven.Metadata is
             declare
                prefix : constant String := metatree.get_object_value (ondx, this_key);
             begin
-               isla.prefix := SUS (path);
+               isla.prefix := SUS (prefix);
             end;
          elsif this_key = "owner" then
             case metatree.get_object_data_type (ondx, this_key) is
