@@ -34,6 +34,7 @@ package body Raven.Database.Schema is
          when pkg_libs_required  => return table_pkg_libs_required;
          when pkg_libs_adacent   => return table_pkg_libs_adjacent;
          when pkg_files          => return table_pkg_files;
+         when pkg_triggers       => return table_pkg_triggers;
          when index_dep1         => return index_dependencies_1;
          when index_dep2         => return index_dependencies_2;
          when index_dep3         => return index_dependencies_3;
@@ -43,6 +44,7 @@ package body Raven.Database.Schema is
          when version            => return pragma_version;
          when lock_state         => return table_lock_state;
          when lock_process       => return table_lock_process;
+         when trigger_paths      => return table_trigger_paths;
       end case;
    end component_definition;
 
@@ -201,6 +203,39 @@ package body Raven.Database.Schema is
       multi_primekey2 (def, package_id, category_id);
       return close_table (def);
    end table_pkg_categories;
+
+
+   --------------------------
+   --  table_pkg_triggers  --
+   --------------------------
+   function table_pkg_triggers return String
+   is
+      def : Text := start_table ("pkg_triggers");
+   begin
+      prime_key (def, trigger_id);
+      cascade (def, package_id, "packages", "id");
+      col_int (def, "trigger_type", True);
+      col_text (def, "code", True);
+      return close_table (def);
+   end table_pkg_triggers;
+
+
+   ---------------------------
+   --  table_trigger_paths  --
+   ---------------------------
+   function table_trigger_paths return String
+   is
+      def : Text := start_table ("trigger_paths");
+      path_type : constant String := "path_type";
+      type_index  : constant String := "type_index";
+   begin
+      cascade  (def, trigger_id, "pkg_triggers", trigger_id);
+      col_int (def, path_type, True);
+      col_int (def, type_index, True);
+      col_text (def, "path_value", True);
+      multi_primekey3 (def, trigger_id, path_type, type_index);
+      return close_table (def);
+   end table_trigger_paths;
 
 
    --------------------------

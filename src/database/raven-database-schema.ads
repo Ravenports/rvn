@@ -11,7 +11,8 @@ package Raven.Database.Schema is
       directories, annotations, dependencies, libraries,
       pkg_users, pkg_groups, pkg_scripts, pkg_options, pkg_licences, pkg_categories,
       pkg_directories, pkg_annotations, pkg_dependencies, pkg_messages, pkg_libs_provided,
-      pkg_libs_required, pkg_libs_adacent, pkg_files, lock_state, lock_process,
+      pkg_libs_required, pkg_libs_adacent, pkg_files, pkg_triggers, trigger_paths,
+      lock_state, lock_process,
       index_dep1, index_dep2, index_dep3, index_files, index_pkg_namebase, index_pkg_nsv
      );
 
@@ -34,6 +35,7 @@ private
    package_id    : constant String := "package_id";
    license_id    : constant String := "license_id";
    library_id    : constant String := "library_id";
+   trigger_id    : constant String := "trigger_id";
    category_id   : constant String := "category_id";
    directory_id  : constant String := "directory_id";
    annotation_id : constant String := "annotation_id";
@@ -50,6 +52,7 @@ private
    function table_annotations       return String;
    function table_dependencies      return String;
    function table_libraries         return String;
+   function table_trigger_paths     return String;
 
    function table_pkg_files         return String;
    function pragma_version          return String;
@@ -67,6 +70,7 @@ private
    function table_pkg_libs_provided return String;
    function table_pkg_libs_required return String;
    function table_pkg_libs_adjacent return String;
+   function table_pkg_triggers      return String;
    function table_lock_state        return String;
    function table_lock_process      return String;
 
