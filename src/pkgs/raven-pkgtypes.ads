@@ -85,6 +85,7 @@ package Raven.Pkgtypes is
 
    type A_Trigger is
       record
+         trigger_id     : Natural := 0;
          cleanup_script : Text;
          install_script : Text;
          set_dir_path   : Text_List.Vector;

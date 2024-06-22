@@ -8,6 +8,7 @@ with Bourne;
 with Blake_3;
 with Raven.Event;
 with Raven.Strings;
+with Raven.Triggers;
 with Raven.Cmd.Unset;
 with Raven.Database.Remove;
 with Raven.Miscellaneous;
@@ -522,6 +523,7 @@ package body Raven.Deinstall is
       total_pkgs    : constant Natural := Natural (purge_order.Length);
       deinstall_log : TIO.File_Type;
       pkg_counter   : Natural := 0;
+      trigger_set   : Triggers.A_Trigger_Set;
 
       function progress return String is
       begin
@@ -558,6 +560,25 @@ package body Raven.Deinstall is
       is
          purge_index : constant Natural := Purge_Order_Crate.Element (Position);
          mypackage   : Pkgtypes.A_Package renames purge_list.Element (purge_index);
+
+         procedure activate_cleanup (Position : Pkgtypes.Trigger_List.Cursor)
+         is
+            this_trigger : Pkgtypes.A_Trigger renames Pkgtypes.Trigger_List.Element (Position);
+         begin
+            if not IsBlank (this_trigger.cleanup_script) then
+               trigger_set.insert
+                 (trigger_id      => this_trigger.trigger_id,
+                  trigger_type    => Triggers.cleanup,
+                  script_code     => USS (this_trigger.cleanup_script),
+                  entity_path     => "",
+                  origin_namebase => USS (mypackage.namebase),
+                  origin_subpkg   => USS (mypackage.subpackage),
+                  origin_variant  => USS (mypackage.variant),
+                  origin_prefix   => USS (mypackage.prefix),
+                  upgrading       => False);
+            end if;
+         end activate_cleanup;
+
       begin
          pkg_counter := pkg_counter + 1;
          if not quiet then
@@ -571,8 +592,10 @@ package body Raven.Deinstall is
             rootdir             => rootdir,
             post_report         => deinstall_log);
          DEL.drop_package_with_cascade (rdb, mypackage.id);
+         mypackage.triggers.Iterate (activate_cleanup'Access);
       end remove_installed_package;
    begin
+      trigger_set.set_rootdir (rootdir);
       TIO.Create (deinstall_log, TIO.Out_File, tmp_filename);
       purge_order.Iterate (remove_installed_package'Access);
       TIO.Close (deinstall_log);
@@ -591,6 +614,7 @@ package body Raven.Deinstall is
             Event.emit_debug (moderate, "Failed to unlink temporary file " & tmp_filename);
          end if;
       end if;
+      trigger_set.execute;
    end remove_packages_in_order;
 
    ------------------------------------
