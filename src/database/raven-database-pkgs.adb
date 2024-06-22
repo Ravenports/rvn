@@ -92,6 +92,9 @@ package body Raven.Database.Pkgs is
                   onward := delete_satellite (db, pkgid, "pkg_files");
                end if;
                if onward then
+                  onward := delete_satellite (db, pkgid, "pkg_triggers");
+               end if;
+               if onward then
                   onward := overwrite_main_pkg (db, pkgid, pkg);
                end if;
          end case;
@@ -144,6 +147,9 @@ package body Raven.Database.Pkgs is
       end if;
       if onward then
          onward := run_prstmt_file (db, pkg);
+      end if;
+      if onward then
+         onward := run_prstmt_trigger (db, pkg);
       end if;
 
       if onward then
@@ -933,6 +939,107 @@ package body Raven.Database.Pkgs is
 
       return keep_going;
    end run_prstmt_note;
+
+
+   --------------------------
+   --  run_prstmt_trigger  --
+   --------------------------
+   function run_prstmt_trigger (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   is
+      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_trigger);
+      path_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.trig_paths);
+
+      func       : constant String := "run_prstmt_trigger";
+      keep_going : Boolean := True;
+      path_type  : SQLite.sql_int64 := 0;
+      type_index : SQLite.sql_int64 := 0;
+
+      procedure bump
+      is
+         use type SQLite.sql_int64;
+      begin
+         path_type := path_type + 1;
+         type_index := 0;
+      end bump;
+
+      procedure insert_trigger_path (Position : Pkgtypes.Text_List.Cursor)
+      is
+         trigger_path : constant String := USS (Pkgtypes.Text_List.Element (Position));
+      begin
+         if not keep_going then
+            return;
+         end if;
+         if SQLite.reset_statement (path_stmt) then
+            SQLite.bind_integer (path_stmt, 1, SQLite.sql_int64 (pkg.id));
+            SQLite.bind_integer (path_stmt, 2, path_type);
+            SQLite.bind_integer (path_stmt, 3, type_index);
+            SQLite.bind_string (path_stmt, 4, trigger_path);
+
+            debug_running_stmt (path_stmt);
+            case SQLite.step (path_stmt) is
+               when SQLite.no_more_data => null;
+               when SQLite.row_present | SQLite.something_else =>
+                  CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                               SQLite.get_expanded_sql (path_stmt));
+                  keep_going := False;
+            end case;
+         else
+            squawk_reset_error (SCH.trig_paths);
+            keep_going := False;
+         end if;
+         type_index := SQLite."+" (type_index, 1);
+      end insert_trigger_path;
+
+      procedure inject_code (code : String; trig_type : SQLite.sql_int64) is
+      begin
+         if not keep_going then
+            return;
+         end if;
+          if SQLite.reset_statement (pack_stmt) then
+            SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
+            SQLite.bind_integer (pack_stmt, 2, trig_type);
+            SQLite.bind_string (pack_stmt, 3, code);
+
+            debug_running_stmt (pack_stmt);
+            case SQLite.step (pack_stmt) is
+               when SQLite.no_more_data => null;
+               when SQLite.row_present | SQLite.something_else =>
+                  CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                               SQLite.get_expanded_sql (pack_stmt));
+                  keep_going := False;
+            end case;
+         else
+            squawk_reset_error (SCH.pkg_trigger);
+            keep_going := False;
+         end if;
+      end inject_code;
+
+      procedure insert_into_package (Position : Pkgtypes.Trigger_List.Cursor)
+      is
+         trig : Pkgtypes.A_Trigger renames Pkgtypes.Trigger_List.Element (Position);
+      begin
+         if not IsBlank (trig.cleanup_script) then
+            inject_code (USS (trig.cleanup_script), 0);
+         end if;
+
+         if not IsBlank (trig.install_script) then
+            --  Paths only used for triggers, not cleanup.
+            --  Enforce validity checks at ravenadm
+            inject_code (USS (trig.install_script), 1);
+
+            trig.set_dir_path.Iterate (insert_trigger_path'Access);
+            bump;
+            trig.set_file_path.Iterate (insert_trigger_path'Access);
+            bump;
+            trig.set_file_glob.Iterate (insert_trigger_path'Access);
+            bump;
+            trig.set_file_regex.Iterate (insert_trigger_path'Access);
+         end if;
+      end insert_into_package;
+   begin
+      pkg.triggers.Iterate (insert_into_package'Access);
+      return keep_going;
+   end run_prstmt_trigger;
 
 
    -------------------------
