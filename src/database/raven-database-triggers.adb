@@ -44,7 +44,7 @@ package body Raven.Database.Triggers is
                   myrec.variant  := SUS (SQLite.retrieve_string (new_stmt, 2));
                   myrec.prefix   := SUS (SQLite.retrieve_string (new_stmt, 3));
                   myrec.script   := SUS (SQLite.retrieve_string (new_stmt, 4));
-                  myrec.dir_path := SUS (SQLite.retrieve_string (new_stmt, 5));
+                  myrec.ent_path := SUS (SQLite.retrieve_string (new_stmt, 5));
                   myrec.trig_id  := Natural (SQLite.retrieve_integer (new_stmt, 6));
                   myrec.pkg_id   := Pkgtypes.Package_ID (SQLite.retrieve_integer (new_stmt, 7));
                   dir_list.Append (myrec);
@@ -160,7 +160,7 @@ package body Raven.Database.Triggers is
                            declare
                               myrec : A_Directory_Trigger;
                            begin
-                              myrec.dir_path := SUS (SQLite.retrieve_string (new_stmt, 1));
+                              myrec.ent_path := SUS (SQLite.retrieve_string (new_stmt, 1));
                               myrec.namebase := SUS (SQLite.retrieve_string (new_stmt, 2));
                               myrec.subpkg   := SUS (SQLite.retrieve_string (new_stmt, 3));
                               myrec.variant  := SUS (SQLite.retrieve_string (new_stmt, 4));

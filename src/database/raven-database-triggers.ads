@@ -14,7 +14,7 @@ package Raven.Database.Triggers is
          variant  : Text;
          prefix   : Text;
          script   : Text;
-         dir_path : Text;
+         ent_path : Text;
          trig_id  : Natural;
          pkg_id   : Pkgtypes.Package_ID;
       end record;

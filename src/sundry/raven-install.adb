@@ -1578,6 +1578,8 @@ package body Raven.Install is
          end if;
       end if;
 
+      execute_triggers (rdb, trigger_set);
+
       return not problem_found;
    end execute_installation_queue;
 
@@ -1781,12 +1783,15 @@ package body Raven.Install is
      (rdb         : in out Database.RDB_Connection;
       trigger_set : in out Triggers.A_Trigger_Set)
    is
-      dir_list : TRG.Directory_Triggers.Vector;
+      dir_list    : TRG.Directory_Triggers.Vector;
+      check_exact : Boolean;
+      check_glob  : Boolean;
+      check_regex : Boolean;
 
       procedure check_dirpath (Position : TRG.Directory_Triggers.Cursor)
       is
          myrec : TRG.A_Directory_Trigger renames TRG.Directory_Triggers.Element (Position);
-         dir_path : constant String := USS (myrec.dir_path);
+         dir_path : constant String := USS (myrec.ent_path);
       begin
          if trigger_set.dir_path_matches (dir_path) then
             trigger_set.insert (trigger_id      => myrec.trig_id,
@@ -1800,9 +1805,45 @@ package body Raven.Install is
                                 upgrading       => trigger_set.dir_path_upgrade (dir_path));
          end if;
       end check_dirpath;
+
+      procedure check_filepath (Position : TRG.Directory_Triggers.Cursor)
+      is
+         myrec : TRG.A_Directory_Trigger renames TRG.Directory_Triggers.Element (Position);
+      begin
+         trigger_set.insert (trigger_id      => myrec.trig_id,
+                             trigger_type    => Triggers.installation,
+                             script_code     => USS (myrec.script),
+                             entity_path     => USS (myrec.ent_path),
+                             origin_namebase => USS (myrec.namebase),
+                             origin_subpkg   => USS (myrec.subpkg),
+                             origin_variant  => USS (myrec.variant),
+                             origin_prefix   => USS (myrec.prefix),
+                             upgrading       => trigger_set.package_upgrade (myrec.pkg_id));
+      end check_filepath;
    begin
       TRG.get_directory_triggers (rdb, dir_list);
       dir_list.Iterate (check_dirpath'Access);
+
+      TRG.file_triggers_present (rdb, check_exact, check_glob, check_regex);
+      declare
+         pkgid_set : constant String := trigger_set.id_selection;
+         file_list : TRG.Directory_Triggers.Vector;
+      begin
+         if check_exact then
+            TRG.get_file_exact_triggers (rdb, pkgid_set, file_list);
+            file_list.Iterate (check_filepath'Access);
+         end if;
+         if check_glob then
+            TRG.get_file_glob_triggers (rdb, pkgid_set, file_list);
+            file_list.Iterate (check_filepath'Access);
+         end if;
+         if check_regex then
+            TRG.get_file_regexp_triggers (rdb, pkgid_set, file_list);
+            file_list.Iterate (check_filepath'Access);
+         end if;
+      end;
+
+      trigger_set.execute;
    end execute_triggers;
 
 end Raven.Install;

@@ -617,6 +617,7 @@ package body Raven.Deinstall is
       trigger_set.execute;
    end remove_packages_in_order;
 
+
    ------------------------------------
    --  show_deinstallation_messages  --
    ------------------------------------
