@@ -31,6 +31,7 @@ package SQLite is
 
    type sql_int64 is range -(2**63) .. +(2**63 - 1);
    type Step_Result is (row_present, no_more_data, something_else);
+   type Data_Type is (SQL_INTEGER, SQL_FLOAT, SQL_TEXT, SQL_BLOB, SQL_NULL);
    type thick_stmt is private;
 
    primary_db_identity : constant String := "main";
@@ -87,6 +88,10 @@ package SQLite is
    function retrieve_boolean
      (stmt   : thick_stmt;
       column : Natural) return Boolean;
+
+   function column_data_type
+     (stmt   : thick_stmt;
+      column : Natural) return Data_Type;
 
    --  Close statement after use, don't return result
    procedure finalize_statement (stmt : in out thick_stmt);
@@ -228,6 +233,7 @@ package SQLite is
    function in_transaction (db : db3) return Boolean;
 
    do_not_use_this : exception;
+   unrecognized_column_type : exception;
 
 private
 

@@ -1122,6 +1122,103 @@ package body Raven.Database.Query is
    end finish_package_files;
 
 
+   -------------------------------
+   --  finish_package_triggers  --
+   -------------------------------
+   procedure finish_package_triggers
+     (db         : RDB_Connection;
+      incomplete : in out Pkgtypes.A_Package)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "finish_package_triggers";
+      sql : constant String :=
+        "SELECT t.trigger_id, t.trigger_type, t.code, p.path_type, p.path_value " &
+        "FROM pkg_triggers t " &
+        "LEFT JOIN trigger_paths p ON t.trigger_id = p.trigger_id " &
+        "WHERE t.package_id = ? " &
+        "ORDER BY t.trigger_id, t.trigger_type, p.path_type, p.type_index";
+      results : array (1 .. 10) of Pkgtypes.A_Trigger;
+      result_index    : Natural := 0;
+      last_trigger_id : SQLite.sql_int64 := SQLite.sql_int64'Last;
+      this_trigger_id : SQLite.sql_int64;
+      ttype           : SQLite.sql_int64;
+
+      use type SQLite.sql_int64;
+   begin
+      incomplete.triggers.Clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      SQLite.bind_integer (new_stmt, 1, SQLite.sql_int64 (incomplete.id));
+      debug_running_stmt (new_stmt);
+
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               this_trigger_id := SQLite.retrieve_integer (new_stmt, 0);
+               if this_trigger_id /= last_trigger_id then
+                  result_index := result_index + 1;
+                  last_trigger_id := this_trigger_id;
+               end if;
+               if result_index > results'Last then
+                  --  We've got more triggers defined than space allocated
+                  Event.emit_debug (high_level, "truncating triggers, more than " &
+                                      results'Last'Img & " defined.");
+                  exit;
+               end if;
+               ttype := SQLite.retrieve_integer (new_stmt, 1);
+
+               results (result_index).trigger_id := Natural (this_trigger_id);
+               case ttype is
+                  when 0 =>
+                     results (result_index).cleanup_script :=
+                       SUS (SQLite.retrieve_string (new_stmt, 2));
+                  when 1 =>
+                     results (result_index).install_script :=
+                       SUS (SQLite.retrieve_string (new_stmt, 2));
+                  when others =>
+                     null;
+               end case;
+               begin
+                  case SQLite.column_data_type (new_stmt, 3) is
+                     when SQLite.SQL_NULL => null;
+                     when others =>
+                        declare
+                           ptype : SQLite.sql_int64;
+                           path  : constant String := SQLite.retrieve_string (new_stmt, 4);
+                        begin
+                           ptype := SQLite.retrieve_integer (new_stmt, 3);
+                           case ptype is
+                              when 0 => results (result_index).set_dir_path.Append (SUS (path));
+                              when 1 => results (result_index).set_file_path.Append (SUS (path));
+                              when 2 => results (result_index).set_file_glob.Append (SUS (path));
+                              when 3 => results (result_index).set_file_regex.Append (SUS (path));
+                              when others => null;
+                           end case;
+                        end;
+                  end case;
+               exception
+                  when SQLite.unrecognized_column_type =>
+                     Event.emit_error (func & ": wrong data type, " &
+                                         SQLite.get_expanded_sql (new_stmt));
+               end;
+
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+
+      for x in 1 .. result_index loop
+         incomplete.triggers.Append (results (x));
+      end loop;
+
+   end finish_package_triggers;
+
+
    ----------------------
    --  finish_package  --
    ----------------------
@@ -1145,6 +1242,7 @@ package body Raven.Database.Query is
       finish_package_messages      (db, incomplete);
       finish_package_scripts       (db, incomplete);
       finish_package_files         (db, incomplete);
+      finish_package_triggers      (db, incomplete);
    end finish_package;
 
 end Raven.Database.Query;

@@ -104,6 +104,7 @@ package body Raven.Database.Remove is
                   QRY.finish_package_messages (db, myrec);
                   QRY.finish_package_directories (db, myrec);
                   QRY.finish_package_files (db, myrec);
+                  QRY.finish_package_triggers (db, myrec);
                   packages.Append (myrec);
                   Event.emit_debug (high_level, "Added to top-level match for removal: " &
                                       Pkgtypes.nsv_identifier (myrec));
@@ -333,6 +334,7 @@ package body Raven.Database.Remove is
                   QRY.finish_package_messages (db, myrec);
                   QRY.finish_package_directories (db, myrec);
                   QRY.finish_package_files (db, myrec);
+                  QRY.finish_package_triggers (db, myrec);
                   packages.Append (myrec);
                   Event.emit_debug (high_level, "Added to autoremoval list: " &
                                       Pkgtypes.nsv_identifier (myrec));

@@ -237,6 +237,28 @@ package body SQLite is
 
 
    --------------------------------------------------------------------
+   --  column_data_type
+   --------------------------------------------------------------------
+   function column_data_type
+     (stmt   : thick_stmt;
+      column : Natural) return Data_Type
+   is
+      result : IC.int;
+   begin
+      result := sqlite_h.sqlite3_column_type (stmt.pStmt, IC.int (column));
+      case result is
+         when 1 => return SQL_INTEGER;
+         when 2 => return SQL_FLOAT;
+         when 3 => return SQL_TEXT;
+         when 4 => return SQL_BLOB;
+         when 5 => return SQL_NULL;
+         when others =>
+            raise unrecognized_column_type with result'Img;
+      end case;
+   end column_data_type;
+
+
+   --------------------------------------------------------------------
    --  finalize_statement
    --------------------------------------------------------------------
    procedure finalize_statement (stmt : in out thick_stmt)
