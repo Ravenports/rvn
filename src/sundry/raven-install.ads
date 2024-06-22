@@ -199,4 +199,8 @@ private
       upgrading   : Boolean;
       old_version : String);
 
+   procedure execute_triggers
+     (rdb         : in out Database.RDB_Connection;
+      trigger_set : in out Triggers.A_Trigger_Set);
+
 end Raven.Install;

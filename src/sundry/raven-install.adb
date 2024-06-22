@@ -16,7 +16,9 @@ with Raven.Database.Lock;
 with Raven.Database.Fetch;
 with Raven.Database.Query;
 with Raven.Database.Remove;
+with Raven.Database.Triggers;
 with Raven.Database.Operations;
+with Raven.Triggers;
 with Raven.Strings;
 with Archive.Unpack;
 with Archive.Unix;
@@ -37,6 +39,7 @@ package body Raven.Install is
    package FET  renames Raven.Database.Fetch;
    package QRY  renames Raven.Database.Query;
    package DEL  renames Raven.Database.Remove;
+   package TRG  renames Raven.Database.Triggers;
    package OPS  renames Raven.Database.Operations;
    package RCU  renames Raven.Cmd.Unset;
 
@@ -175,8 +178,10 @@ package body Raven.Install is
 
       case action is
          when reset_auto => null;
-         when new_install | reinstall | upgrade =>
-            trigger_set.gather_directories (shiny_pkg);
+         when upgrade =>
+            trigger_set.gather_directories (shiny_pkg, True);
+         when new_install | reinstall =>
+            trigger_set.gather_directories (shiny_pkg, False);
       end case;
 
       return success;
@@ -1767,5 +1772,37 @@ package body Raven.Install is
          Event.emit_message (msg);
       end if;
    end show_installation_messages;
+
+
+   ------------------------
+   --  execute_triggers  --
+   ------------------------
+   procedure execute_triggers
+     (rdb         : in out Database.RDB_Connection;
+      trigger_set : in out Triggers.A_Trigger_Set)
+   is
+      dir_list : TRG.Directory_Triggers.Vector;
+
+      procedure check_dirpath (Position : TRG.Directory_Triggers.Cursor)
+      is
+         myrec : TRG.A_Directory_Trigger renames TRG.Directory_Triggers.Element (Position);
+         dir_path : constant String := USS (myrec.dir_path);
+      begin
+         if trigger_set.dir_path_matches (dir_path) then
+            trigger_set.insert (trigger_id      => myrec.trig_id,
+                                trigger_type    => Triggers.installation,
+                                script_code     => USS (myrec.script),
+                                entity_path     => dir_path,
+                                origin_namebase => USS (myrec.namebase),
+                                origin_subpkg   => USS (myrec.subpkg),
+                                origin_variant  => USS (myrec.variant),
+                                origin_prefix   => USS (myrec.prefix),
+                                upgrading       => trigger_set.dir_path_upgrade (dir_path));
+         end if;
+      end check_dirpath;
+   begin
+      TRG.get_directory_triggers (rdb, dir_list);
+      dir_list.Iterate (check_dirpath'Access);
+   end execute_triggers;
 
 end Raven.Install;

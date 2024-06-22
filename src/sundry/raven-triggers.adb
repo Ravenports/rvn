@@ -25,6 +25,15 @@ package body Raven.Triggers is
    end trigger_hash;
 
 
+   -----------------------
+   --  package_id_hash  --
+   -----------------------
+   function package_id_hash (pkg_id : Pkgtypes.Package_ID) return Ada.Containers.Hash_Type is
+   begin
+      return Ada.Containers.Hash_Type (pkg_id);
+   end package_id_hash;
+
+
    -------------------
    --  set_rootdir  --
    -------------------
@@ -155,15 +164,18 @@ package body Raven.Triggers is
    --------------------------
    procedure gather_directories
      (trigger_set   : in out A_Trigger_Set;
-      installed_pkg : Pkgtypes.A_Package)
+      installed_pkg : Pkgtypes.A_Package;
+      upgrading     : Boolean)
    is
+      payload : Text := SU.Null_Unbounded_String;
+
       procedure analyze_filename (Position : Pkgtypes.File_List.Cursor)
       is
          myitem : Pkgtypes.File_Item renames Pkgtypes.File_List.Element (Position);
          mydir  : constant Text := head (myitem.path, SUS ("/"));
       begin
          if not trigger_set.directory_map.Contains (mydir) then
-            trigger_set.directory_map.Insert (mydir, SU.Null_Unbounded_String);
+            trigger_set.directory_map.Insert (mydir, payload);
          end if;
       end analyze_filename;
 
@@ -174,10 +186,16 @@ package body Raven.Triggers is
                                            (USS (installed_pkg.prefix), raw_dir));
       begin
          if not trigger_set.directory_map.Contains (full_path) then
-            trigger_set.directory_map.Insert (full_path, SU.Null_Unbounded_String);
+            trigger_set.directory_map.Insert (full_path, payload);
          end if;
       end analyze_directory;
    begin
+      if upgrading then
+         payload := SUS ("upgrade");
+      end if;
+      if not trigger_set.relevant_pkgs.Contains (installed_pkg.id) then
+         trigger_set.relevant_pkgs.Insert (installed_pkg.id, upgrading);
+      end if;
       installed_pkg.directories.Iterate (analyze_directory'Access);
       installed_pkg.files.Iterate (analyze_filename'Access);
    end gather_directories;
@@ -187,10 +205,64 @@ package body Raven.Triggers is
    --  dir_path_matches  --
    ------------------------
    function dir_path_matches
-     (trigger_set   : in out A_Trigger_Set;
+     (trigger_set   : A_Trigger_Set;
       dir_path      : String) return Boolean is
    begin
       return trigger_set.directory_map.Contains (SUS (dir_path));
    end dir_path_matches;
+
+
+   ------------------------
+   --  dir_path_upgrade  --
+   ------------------------
+   function dir_path_upgrade
+     (trigger_set   : A_Trigger_Set;
+      dir_path      : String) return Boolean
+   is
+      key : constant Text := SUS (dir_path);
+   begin
+      if trigger_set.directory_map.Contains (key) then
+         return equivalent (trigger_set.directory_map.Element (key), "upgrade");
+      end if;
+      return False;
+   end dir_path_upgrade;
+
+
+   -----------------------
+   --  package_upgrade  --
+   -----------------------
+   function package_upgrade
+     (trigger_set   : A_Trigger_Set;
+      pkg_id        : Pkgtypes.Package_ID) return Boolean is
+   begin
+      if trigger_set.relevant_pkgs.Contains (pkg_id) then
+         return trigger_set.relevant_pkgs.Element (pkg_id);
+      end if;
+      return False;
+   end package_upgrade;
+
+   --------------------`
+   --  id_selection  --
+   --------------------
+   function id_selection (trigger_set : A_Trigger_Set) return String
+   is
+      myset : Text := SUS ("(");
+      virgin : Boolean := True;
+
+      procedure construct (Position : A_Pkg_Upgrade_Set.Cursor)
+      is
+         pkg_id : constant Pkgtypes.Package_ID := A_Pkg_Upgrade_Set.Key (Position);
+      begin
+         if virgin then
+            SU.Append (myset, pkg_id'Img);
+            virgin := False;
+         else
+            SU.Append (myset, ',' & pkg_id'Img);
+         end if;
+      end construct;
+   begin
+      trigger_set.relevant_pkgs.Iterate (construct'Access);
+      return USS (myset);
+   end id_selection;
 
 end Raven.Triggers;
