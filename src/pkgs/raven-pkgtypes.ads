@@ -83,6 +83,20 @@ package Raven.Pkgtypes is
       Hash            => Raven.Miscellaneous.map_hash,
       Equivalent_Keys => Strings.equivalent);
 
+   type A_Trigger is
+      record
+         cleanup_script : Text;
+         install_script : Text;
+         set_dir_path   : Text_List.Vector;
+         set_file_path  : Text_List.Vector;
+         set_file_glob  : Text_List.Vector;
+         set_file_regex : Text_List.Vector;
+      end record;
+
+   package Trigger_List is new CON.Vectors
+     (Element_Type => A_Trigger,
+      Index_Type   => Natural);
+
    type A_Package is
       record
          id            : Package_ID := 0;
@@ -116,6 +130,7 @@ package Raven.Pkgtypes is
          messages      : Message_Set;
          scripts       : Script_Set;
          files         : File_List.Vector;
+         triggers      : Trigger_List.Vector;
       end record;
 
    package Package_Set is new CON.Vectors

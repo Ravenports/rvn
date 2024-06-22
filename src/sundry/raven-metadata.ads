@@ -36,7 +36,8 @@ package Raven.Metadata is
       shlibs_adjacent,
       scripts,
       directories,
-      messages
+      messages,
+      triggers
      );
 
    --  convert field to key string
@@ -159,6 +160,10 @@ private
    procedure set_messages
      (metatree : ThickUCL.UclTree;
       new_list : in out Pkgtypes.Message_Set);
+
+   procedure set_triggers
+     (metatree : ThickUCL.UclTree;
+      new_list : in out Pkgtypes.Trigger_List.Vector);
 
    function convert_to_phase (S : String; phase : out WL.package_phase) return Boolean;
    function convert_to_mtype (S : String; mtype : out Pkgtypes.Message_Type) return boolean;

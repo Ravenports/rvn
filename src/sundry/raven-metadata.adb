@@ -48,6 +48,7 @@ package body Raven.Metadata is
          when messages        => return "messages";
          when rvndigest       => return "rvndigest";
          when rvnsize         => return "rvnsize";
+         when triggers        => return "triggers";
       end case;
    end metadata_field_label;
 
@@ -757,6 +758,7 @@ package body Raven.Metadata is
       set_nvpair (metatree, options, new_pkg.options);
       set_scripts (metatree, new_pkg.scripts);
       set_messages (metatree, new_pkg.messages);
+      set_triggers (metatree, new_pkg.triggers);
 
       declare
          given_license : constant String := get_string_data (metatree, license_logic, "none");
@@ -953,5 +955,113 @@ package body Raven.Metadata is
       end if;
       return prefix & '/' & plist_path;
    end free_directory_path;
+
+
+   --------------------
+   --  set_triggers  --
+   --------------------
+   procedure set_triggers
+     (metatree : ThickUCL.UclTree;
+      new_list : in out Pkgtypes.Trigger_List.Vector)
+   is
+      key   : constant String := metadata_field_label (triggers);
+      dtype : ThickUCL.Leaf_type;
+      andx  : ThickUCL.array_index;
+      ondx  : ThickUCL.object_index;
+
+      num_elements : Natural;
+
+      procedure define_trigger
+      is
+         jar   : ThickUCL.jar_string.Vector;
+         ktype : ThickUCL.Leaf_type;
+         myrec : Pkgtypes.A_Trigger;
+
+         procedure process_string (key : String; this_text : in out Text) is
+         begin
+            case ktype is
+               when ThickUCL.data_string =>
+                  declare
+                     mystr : constant String := metatree.get_object_value (ondx, key);
+                  begin
+                     this_text := SUS (mystr);
+                  end;
+               when others => null;
+            end case;
+         end process_string;
+
+         procedure process_path_array (this_array : in out Pkgtypes.Text_List.Vector)
+         is
+            pandx : ThickUCL.array_index;
+            pnum  : Natural;
+            pathtype : ThickUCL.Leaf_type;
+         begin
+            case ktype is
+               when ThickUCL.data_array =>
+                  pandx := metatree.get_object_array (ondx, key);
+                  pnum := metatree.get_number_of_array_elements (pandx);
+                  for pindex in 0 .. pnum - 1 loop
+                     pathtype := metatree.get_array_element_type (pandx, pindex);
+                     case pathtype is
+                        when ThickUCL.data_string =>
+                           declare
+                              mypath : constant String :=
+                                metatree.get_array_element_value (pandx, pindex);
+                           begin
+                              this_array.Append (SUS (mypath));
+                           end;
+                        when others => null;
+                     end case;
+                  end loop;
+               when others => null;
+            end case;
+         end process_path_array;
+
+         procedure process_trigger (Position : ThickUCL.jar_string.Cursor)
+         is
+            this_key : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+         begin
+            ktype := metatree.get_object_data_type (ondx, this_key);
+            if this_key = "dir_path" then
+               process_path_array (myrec.set_dir_path);
+            elsif this_key = "file_path" then
+               process_path_array (myrec.set_file_path);
+            elsif this_key = "file_glob" then
+               process_path_array (myrec.set_file_glob);
+            elsif this_key = "file_regexp" then
+               process_path_array (myrec.set_file_regex);
+            elsif this_key = "cleanup" then
+               process_string (this_key, myrec.cleanup_script);
+            elsif this_key = "trigger" then
+               process_string (this_key, myrec.install_script);
+            end if;
+         end process_trigger;
+      begin
+         metatree.get_object_object_keys (ondx, jar);
+         jar.Iterate (process_trigger'Access);
+         new_list.Append (myrec);
+      end define_trigger;
+
+   begin
+      new_list.Clear;
+      dtype := ThickUCL.get_data_type (metatree, key);
+      case dtype is
+         when ThickUCL.data_array =>
+            andx := metatree.get_index_of_base_array (key);
+         when others => return;
+      end case;
+
+      num_elements := metatree.get_number_of_array_elements (andx);
+      for index in 0 .. num_elements - 1 loop
+         dtype := metatree.get_array_element_type (andx, index);
+         case dtype is
+            when ThickUCL.data_object =>
+               ondx := metatree.get_array_element_object (andx, index);
+               define_trigger;
+            when others => null;  --  something is wrong if we get here.
+         end case;
+      end loop;
+   end set_triggers;
+
 
 end Raven.Metadata;
