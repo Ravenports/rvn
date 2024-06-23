@@ -953,6 +953,9 @@ package body Raven.Metadata is
       if plist_path (plist_path'First) = '/' then
          return plist_path;
       end if;
+      if prefix = "/" then
+         return "/" & plist_path;
+      end if;
       return prefix & '/' & plist_path;
    end free_directory_path;
 
@@ -977,12 +980,12 @@ package body Raven.Metadata is
          ktype : ThickUCL.Leaf_type;
          myrec : Pkgtypes.A_Trigger;
 
-         procedure process_string (key : String; this_text : in out Text) is
+         procedure process_string (path_key : String; this_text : in out Text) is
          begin
             case ktype is
                when ThickUCL.data_string =>
                   declare
-                     mystr : constant String := metatree.get_object_value (ondx, key);
+                     mystr : constant String := metatree.get_object_value (ondx, path_key);
                   begin
                      this_text := SUS (mystr);
                   end;
@@ -990,7 +993,8 @@ package body Raven.Metadata is
             end case;
          end process_string;
 
-         procedure process_path_array (this_array : in out Pkgtypes.Text_List.Vector)
+         procedure process_path_array (path_key : String;
+                                       this_array : in out Pkgtypes.Text_List.Vector)
          is
             pandx : ThickUCL.array_index;
             pnum  : Natural;
@@ -998,7 +1002,7 @@ package body Raven.Metadata is
          begin
             case ktype is
                when ThickUCL.data_array =>
-                  pandx := metatree.get_object_array (ondx, key);
+                  pandx := metatree.get_object_array (ondx, path_key);
                   pnum := metatree.get_number_of_array_elements (pandx);
                   for pindex in 0 .. pnum - 1 loop
                      pathtype := metatree.get_array_element_type (pandx, pindex);
@@ -1023,13 +1027,13 @@ package body Raven.Metadata is
          begin
             ktype := metatree.get_object_data_type (ondx, this_key);
             if this_key = "dir_path" then
-               process_path_array (myrec.set_dir_path);
+               process_path_array (this_key, myrec.set_dir_path);
             elsif this_key = "file_path" then
-               process_path_array (myrec.set_file_path);
+               process_path_array (this_key, myrec.set_file_path);
             elsif this_key = "file_glob" then
-               process_path_array (myrec.set_file_glob);
+               process_path_array (this_key, myrec.set_file_glob);
             elsif this_key = "file_regexp" then
-               process_path_array (myrec.set_file_regex);
+               process_path_array (this_key, myrec.set_file_regex);
             elsif this_key = "cleanup" then
                process_string (this_key, myrec.cleanup_script);
             elsif this_key = "trigger" then

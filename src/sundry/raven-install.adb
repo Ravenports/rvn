@@ -101,7 +101,9 @@ package body Raven.Install is
             return False;
       end case;
 
-      if not operation.extract_manifest (file_list, rootdir) then
+      --  Do not pass rootdir to extract_manifest.
+      --  We want the database to reflect the paths as if they were installed at "/"
+      if not operation.extract_manifest (file_list, "/") then
          Event.emit_error ("Failed to extract manifest of packaged files.");
       end if;
       operation.populate_metadata_tree (metatree);

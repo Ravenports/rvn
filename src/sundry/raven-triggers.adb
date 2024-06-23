@@ -102,19 +102,7 @@ package body Raven.Triggers is
    procedure execute (trigger_set  : in out A_Trigger_Set)
    is
       msg_outfile  : constant String := Lua.unique_msgfile_path;
-
-      procedure display_and_delete_file (filename : String)
-      is
-         handle : TIO.File_Type;
-      begin
-         TIO.Open (File => handle, Mode => TIO.In_File, Name => msg_outfile);
-         while not TIO.End_Of_File (handle) loop
-            TIO.Put_Line (TIO.Get_Line (handle));
-         end loop;
-         Ada.Directories.Delete_File (filename);
-      exception
-         when others => null;
-      end display_and_delete_file;
+      dummy_handle : TIO.File_Type;
 
       procedure run_lua_script (Position : A_Trigger_Map.Cursor)
       is
@@ -153,9 +141,8 @@ package body Raven.Triggers is
       end run_lua_script;
    begin
       trigger_set.trigger_map.Iterate (run_lua_script'Access);
-      if Ada.Directories.Exists (msg_outfile) then
-         display_and_delete_file (msg_outfile);
-      end if;
+      Lua.show_post_run_messages (msg_outfile, "N","S","V", dummy_handle);
+
    end execute;
 
 
@@ -169,11 +156,27 @@ package body Raven.Triggers is
    is
       payload : Text := SU.Null_Unbounded_String;
 
+      function construct_dir (path : Text) return Text
+      is
+         result : Text := SU.Null_Unbounded_String;
+         path_str : constant String := USS (path);
+      begin
+         if path_str (path_str'First) /= '/' then
+            SU.Append (result, installed_pkg.prefix);
+            SU.Append (result, '/');
+         end if;
+         SU.Append (result, head (path, SUS ("/")));
+         return result;
+      end construct_dir;
+
       procedure analyze_filename (Position : Pkgtypes.File_List.Cursor)
       is
          myitem : Pkgtypes.File_Item renames Pkgtypes.File_List.Element (Position);
-         mydir  : constant Text := head (myitem.path, SUS ("/"));
+         mydir  : constant Text := construct_dir (myitem.path);
       begin
+         if IsBlank (mydir) then
+            return;
+         end if;
          if not trigger_set.directory_map.Contains (mydir) then
             trigger_set.directory_map.Insert (mydir, payload);
          end if;
@@ -182,8 +185,9 @@ package body Raven.Triggers is
       procedure analyze_directory (Position : Pkgtypes.Text_List.Cursor)
       is
          raw_dir : constant String := USS (Pkgtypes.Text_List.Element (Position));
-         full_path : constant Text := SUS (Metadata.free_directory_path
-                                           (USS (installed_pkg.prefix), raw_dir));
+         prefixed_path : constant String := Metadata.free_directory_path
+           (USS (installed_pkg.prefix), raw_dir);
+         full_path : constant Text := SUS (prefixed_path);
       begin
          if not trigger_set.directory_map.Contains (full_path) then
             trigger_set.directory_map.Insert (full_path, payload);
@@ -263,6 +267,7 @@ package body Raven.Triggers is
       end construct;
    begin
       trigger_set.relevant_pkgs.Iterate (construct'Access);
+      SU.Append (myset, ")");
       return USS (myset);
    end id_selection;
 

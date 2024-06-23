@@ -71,9 +71,9 @@ package body Raven.Database.Triggers is
       new_stmt : SQLite.thick_stmt;
       func     : constant String := "file_triggers_present";
       sql : constant String := "SELECT " &
-        "(SELECT count(trigger_id) FROM pkg_triggers WHERE trigger_type = 1), " &
-        "(SELECT count(trigger_id) FROM pkg_triggers WHERE trigger_type = 2), " &
-        "(SELECT count(trigger_id) FROM pkg_triggers WHERE trigger_type = 3)";
+        "(SELECT count(*) FROM trigger_paths WHERE path_type = 1), " &
+        "(SELECT count(*) FROM trigger_paths WHERE path_type = 2), " &
+        "(SELECT count(*) FROM trigger_paths WHERE path_type = 3)";
 
       use type SQLite.sql_int64;
    begin
@@ -105,6 +105,9 @@ package body Raven.Database.Triggers is
          end case;
       end loop;
       SQLite.finalize_statement (new_stmt);
+      Event.emit_debug (high_level, "exact=" & pattern_exact'Img &
+                          " glob=" & pattern_glob'Img &
+                          " regex=" & pattern_regex'Img);
    end file_triggers_present;
 
 
