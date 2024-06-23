@@ -25,6 +25,7 @@ atf_test_program{name='rootdir.sh'}
 atf_test_program{name='search.sh'}
 atf_test_program{name='set.sh'}
 atf_test_program{name='shellscript.sh'}
+atf_test_program{name='triggers.sh'}
 atf_test_program{name='version.sh'}
 atf_test_program{name='update.sh'}
 atf_test_program{name='upgrade.sh'}
@@ -33,7 +34,6 @@ atf_test_program{name='upgrade.sh'}
 --  atf_test_program{name='fingerprint'}
 --  atf_test_program{name='http'}
 --  atf_test_program{name='requires'}
---  atf_test_program{name='triggers'}
 
 -----------------------
 --  purpose unclear  --
