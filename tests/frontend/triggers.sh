@@ -10,7 +10,8 @@ tests_init \
 	path_trigger \
 	no_trigger \
 	swap_order \
-	upgrade
+	upgrade \
+	dir_island
 
 
 #################
@@ -405,4 +406,41 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 	atf_check -o inline:"bin directory hit, upgraded\n" -e empty -s exit:0 \
 		rvn -r ${TMPDIR}/target -o REPOS_DIR="${TMPDIR}/reposconf" upgrade -qy test
+}
+
+
+################
+#  dir_island  #
+################
+dir_island_body() {
+mkdir files
+	mkdir target
+	mkdir share
+	echo "hello" > share/hello.txt
+	echo "@dir byteme"     >> test.plist
+	mkdir reposconf
+	cat <<EOF >> reposconf/repo.conf
+local: {
+	url: file:///${TMPDIR},
+	enabled: true
+}
+EOF
+
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
+	cat <<EOF >> test.ucl
+triggers: [
+  {
+    dir_path: ["/byteme"]
+    trigger: <<EOS
+pkg.print_msg("island-test")
+EOS
+  }
+]
+EOF
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m test.ucl -w test.plist
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
+	atf_check -o inline:"island-test\n" -e empty -s exit:0 rvn -r ${TMPDIR}/target \
+		-o REPOS_DIR="${TMPDIR}/reposconf" install -qy test
 }
