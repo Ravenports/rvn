@@ -12,7 +12,7 @@ package Raven.Cmd.Usage is
    --  Usually the command line has to be parsed twice.
    --  This function analyzes how the first parse went.
    --  On error_found and nothing_to_do results, notices/errors are emitted.
-   function precheck_command_line (comline : Cldata) return precheck_result;
+   function precheck_command_line (comline : in out Cldata) return precheck_result;
 
    --  Prints the pending command with an unrecognized error message
    procedure alert_command_unrecognized (comline : Cldata);

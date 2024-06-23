@@ -12,7 +12,7 @@ package body Raven.Cmd.Usage is
    -----------------------------
    --  precheck_command_line  --
    -----------------------------
-   function precheck_command_line (comline : Cldata) return precheck_result
+   function precheck_command_line (comline : in out Cldata) return precheck_result
    is
       procedure alert (error_msg : String)
       is
@@ -58,6 +58,12 @@ package body Raven.Cmd.Usage is
                   alert ("rootdir exists, but is not a directory");
                   return error_found;
             end case;
+         end;
+         declare
+            resolved_path : constant String :=
+              UNX.real_path (USS (comline.pre_command.install_rootdir));
+         begin
+            comline.pre_command.install_rootdir := SUS (resolved_path);
          end;
       end if;
 

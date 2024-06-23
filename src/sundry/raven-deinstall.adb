@@ -60,9 +60,17 @@ package body Raven.Deinstall is
       z_variant         : constant String := USS (installed_package.variant);
       nsv               : constant String := z_namebase & '-' & z_subpackage & '-' & z_variant;
 
+      function assembly_path (saved_path : Text) return String is
+      begin
+         if rootdir = "/" then
+            return USS (saved_path);
+         end if;
+         return rootdir & USS (saved_path);
+      end assembly_path;
+
       procedure eradicate_file (Position : Pkgtypes.File_List.Cursor)
       is
-         path : constant String := USS (Pkgtypes.File_List.Element (Position).path);
+         path : constant String := assembly_path (Pkgtypes.File_List.Element (Position).path);
          features : Archive.Unix.File_Characteristics;
       begin
          features := Archive.Unix.get_charactistics (path);
@@ -304,10 +312,17 @@ package body Raven.Deinstall is
 
       procedure add_dirs (Position : Pkgtypes.Text_List.Cursor)
       is
-         owned_dir : constant String := extract_loc & "/" &
-           USS (Pkgtypes.Text_List.Element (Position));
+         --  two options
+         --  @dir relative
+         --  @dir /abs/path
+
+         owned_dir : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         add_head (owned_dir);
+         if owned_dir (owned_dir'First) = '/' then
+            add_head (owned_dir);
+         else
+            add_head (USS (the_package.prefix) & "/" & owned_dir);
+         end if;
       end add_dirs;
 
       procedure check_file (Position : Pkgtypes.File_List.Cursor)
@@ -348,7 +363,8 @@ package body Raven.Deinstall is
 
       procedure drop_if_empty (Position : Pkgtypes.Text_List.Cursor)
       is
-         dirpath  : constant String := USS (Pkgtypes.Text_List.Element (Position));
+         dirpath  : constant String :=
+           extract_loc & "/" & USS (Pkgtypes.Text_List.Element (Position));
          contents : SCN.dscan_crate.Vector;
          features : Archive.Unix.File_Characteristics;
       begin

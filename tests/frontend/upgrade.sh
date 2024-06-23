@@ -180,11 +180,11 @@ EOF
 
 	atf_check \
 		-o inline:'package pkg-2-single-standard-2\n' \
-		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/file-pkg-1
+		rvn -r ${TMPDIR}/target which -q /file-pkg-1
 
 	atf_check \
 		-o inline:'package pkg-1-single-standard-2\n' \
-		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/file-pkg-2
+		rvn -r ${TMPDIR}/target which -q /file-pkg-2
 }
 
 file_become_dir_body() {
@@ -226,7 +226,7 @@ EOF
 
 	atf_check \
 		-o inline:'package pkg-single-standard-2\n' \
-		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/file-pkg-1/newfile
+		rvn -r ${TMPDIR}/target which -q /file-pkg-1/newfile
 }
 
 
@@ -268,7 +268,7 @@ EOF
 
 	atf_check \
 		-o inline:'package pkg-single-standard-2\n' \
-		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/file-pkg-1
+		rvn -r ${TMPDIR}/target which -q /file-pkg-1
 }
 
 
@@ -314,5 +314,5 @@ EOF
 
 	atf_check \
 		-o inline:'package pkg-single-standard-2\n' \
-		rvn -r ${TMPDIR}/target which -q ${TMPDIR}/target/share/something/file
+		rvn -r ${TMPDIR}/target which -q /share/something/file
 }
