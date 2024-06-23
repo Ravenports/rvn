@@ -1,4 +1,4 @@
-.Dd June 2, 2024
+.Dd June 23, 2024
 .Dt RVN-CREATE 8
 .Os
 .\" ---------------------------------------------------------------------------
@@ -269,6 +269,11 @@ The space-delimited args are treated as arguments by both the shell and lua
 scripts defined by the code field.
 The code is executed at the indicated package phase and there is no limit to
 phase limits on the number of script objects.
+.It Cm triggers Ar Array
+This field is an array of ucl-objects.
+Each object describes a trigger installed by the package.
+The format of the object is described by
+.Xr rvn-triggers 5 .
 .It Cm directories Ar Array
 This field is of type array.
 Each element of the array is a ucl-object to describe empty directories
