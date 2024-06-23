@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Containers.Vectors;
 with Raven.Event;
 with Raven.Strings;
 with Raven.Database.CommonSQL;
@@ -124,68 +125,92 @@ package body Raven.Database.Triggers is
       new_stmt : SQLite.thick_stmt;
       trg_stmt : SQLite.thick_stmt;
       func     : constant String := "get_file_triggers_core";
+
+      type tmprec is
+         record
+            trig_id : Natural;
+            script  : Text;
+            pattern : Text;
+         end record;
+
+      package trig_jar is new Ada.Containers.Vectors
+        (Element_Type => tmprec,
+         Index_Type   => Natural);
+
+      myjar : trig_jar.Vector;
    begin
       file_list.Clear;
-      if not SQLite.prepare_sql (db.handle, sql_file, new_stmt) then
-         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql_file);
-         return;
-      end if;
       if not SQLite.prepare_sql (db.handle, sql_patt, trg_stmt) then
          CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql_patt);
          return;
       end if;
       debug_running_stmt (trg_stmt);
 
+
       loop
-         if not SQLite.reset_statement (trg_stmt) then
-            Event.emit_error ("Failed to reset outer query of " & func);
-            exit;
-         end if;
          case SQLite.step (trg_stmt) is
             when SQLite.row_present =>
                declare
-                  trig_id : constant Natural := Natural (SQLite.retrieve_integer (trg_stmt, 0));
-                  script  : constant String := SQLite.retrieve_string (trg_stmt, 1);
-                  pattern : constant String := SQLite.retrieve_string (trg_stmt, 2);
+                  myrec : tmprec;
                begin
-                  if not SQLite.reset_statement (new_stmt) then
-                     Event.emit_error ("Failed to reset inner query of " & func);
-                     exit;
-                  end if;
-                  SQLite.bind_string (new_stmt, 1, pattern);
-                  debug_running_stmt (new_stmt);
-                  loop
-                     case SQLite.step (new_stmt) is
-                        when SQLite.something_else =>
-                           CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
-                                                        SQLite.get_expanded_sql (new_stmt));
-                        when SQLite.row_present =>
-                           declare
-                              myrec : A_Directory_Trigger;
-                           begin
-                              myrec.ent_path := SUS (SQLite.retrieve_string (new_stmt, 1));
-                              myrec.namebase := SUS (SQLite.retrieve_string (new_stmt, 2));
-                              myrec.subpkg   := SUS (SQLite.retrieve_string (new_stmt, 3));
-                              myrec.variant  := SUS (SQLite.retrieve_string (new_stmt, 4));
-                              myrec.prefix   := SUS (SQLite.retrieve_string (new_stmt, 5));
-                              myrec.script   := SUS (script);
-                              myrec.trig_id  := trig_id;
-                              myrec.pkg_id   := Pkgtypes.Package_ID (SQLite.retrieve_integer
-                                                                     (new_stmt, 0));
-                              file_list.Append (myrec);
-                           end;
-                        when SQLite.no_more_data => exit;
-                     end case;
-                  end loop;
+                  myrec.trig_id := Natural (SQLite.retrieve_integer (trg_stmt, 0));
+                  myrec.script  := SUS (SQLite.retrieve_string (trg_stmt, 1));
+                  myrec.pattern := SUS (SQLite.retrieve_string (trg_stmt, 2));
+                  myjar.Append (myrec);
                end;
             when SQLite.something_else =>
                CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
                                             SQLite.get_expanded_sql (trg_stmt));
+               exit;
             when SQLite.no_more_data => exit;
          end case;
       end loop;
-
       SQLite.finalize_statement (trg_stmt);
+
+      if not SQLite.prepare_sql (db.handle, sql_file, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql_file);
+         return;
+      end if;
+
+      declare
+         procedure assemble_trigger (Position : trig_jar.Cursor)
+         is
+            trigrec : tmprec renames trig_jar.Element (Position);
+         begin
+            if SQLite.reset_statement (new_stmt) then
+               SQLite.bind_string (new_stmt, 1, USS (trigrec.pattern));
+               debug_running_stmt (new_stmt);
+               loop
+                  case SQLite.step (new_stmt) is
+                     when SQLite.something_else =>
+                        CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                                  SQLite.get_expanded_sql (new_stmt));
+                        exit;
+                     when SQLite.no_more_data => exit;
+                     when SQLite.row_present =>
+                        declare
+                           myrec : A_Directory_Trigger;
+                        begin
+                           myrec.ent_path := SUS (SQLite.retrieve_string (new_stmt, 1));
+                           myrec.namebase := SUS (SQLite.retrieve_string (new_stmt, 2));
+                           myrec.subpkg   := SUS (SQLite.retrieve_string (new_stmt, 3));
+                           myrec.variant  := SUS (SQLite.retrieve_string (new_stmt, 4));
+                           myrec.prefix   := SUS (SQLite.retrieve_string (new_stmt, 5));
+                           myrec.script   := trigrec.script;
+                           myrec.trig_id  := trigrec.trig_id;
+                           myrec.pkg_id   := Pkgtypes.Package_ID (SQLite.retrieve_integer
+                                                                  (new_stmt, 0));
+                           file_list.Append (myrec);
+                        end;
+                  end case;
+               end loop;
+            else
+               Event.emit_error ("Failed to reset inner query of " & func);
+            end if;
+         end assemble_trigger;
+      begin
+         myjar.Iterate (assemble_trigger'Access);
+      end;
       SQLite.finalize_statement (new_stmt);
    end get_file_triggers_core;
 

@@ -116,9 +116,8 @@ package body Raven.Triggers is
          begin
             if SU.Length (script_args) > 0 then
                SU.Append (script_args, Character'Val (0));
-            else
-               SU.Append (script_args, this_arg);
             end if;
+            SU.Append (script_args, this_arg);
          end process_arg;
       begin
          case myscript.trigger_type is
