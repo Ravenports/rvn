@@ -1,4 +1,4 @@
-.Dd June 12, 2024
+.Dd June 24, 2024
 .Dt RVN-LUA-SCRIPT 5
 .Os
 .Sh NAME
@@ -25,9 +25,9 @@ sequentally inside its own Lua VM.
 In the case of a package upgrade, the scripts are run in this order:
 .Bl -enum -compact
 .It
-new pre-install
-.It
 old pre-deinstall
+.It
+new pre-install
 .It
 replace binaries
 .It

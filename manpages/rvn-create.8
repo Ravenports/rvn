@@ -1,4 +1,4 @@
-.Dd June 23, 2024
+.Dd June 24, 2024
 .Dt RVN-CREATE 8
 .Os
 .\" ---------------------------------------------------------------------------
@@ -282,11 +282,11 @@ at various package operations.
 The supported phases are install, remove, and upgrade.
 .Bd -literal -offset xx
 messages: [
-  {message: "This package is being removed", type: "remove"},
-  {message: "This package is being installed", type: "install"},
-  {message: "This package is being upgraded", type: "upgrade"},
+  {message: "This package is being removed", type: "remove"}
+  {message: "This package is being installed", type: "install"}
+  {message: "This package is being upgraded", type: "upgrade"}
   {message: "Upgrading from lower than 1.0", type: "upgrade",
-   max_version: "1.0"},
+   max_version: "1.0"}
   {message: "Upgrading from higher than 1.0", type: "upgrade",
    min_version: "1.0"},
   {message: "Upgrading from >= 1.0 <= 3.0", type: "upgrade",
