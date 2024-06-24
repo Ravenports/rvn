@@ -270,10 +270,35 @@ scripts defined by the code field.
 The code is executed at the indicated package phase and there is no limit to
 phase limits on the number of script objects.
 .It Cm triggers Ar Array
-This field is an array of ucl-objects.
-Each object describes a trigger installed by the package.
+This field is of type array.
+Each element of the array is a ucl-object that describes a trigger
+installed by the package.
 The format of the object is described by
 .Xr rvn-triggers 5 .
+.It Cm messages Ar Array
+This field is of type array.
+Each element of the array is a ucl-object that provides messages
+at various package operations.
+The supported phases are install, remove, and upgrade.
+.Bd -literal -offset xx
+messages: [
+  {message: "This package is being removed", type: "remove"},
+  {message: "This package is being installed", type: "install"},
+  {message: "This package is being upgraded", type: "upgrade"},
+  {message: "Upgrading from lower than 1.0", type: "upgrade",
+   max_version: "1.0"},
+  {message: "Upgrading from higher than 1.0", type: "upgrade",
+   min_version: "1.0"},
+  {message: "Upgrading from >= 1.0 <= 3.0", type: "upgrade",
+   max_version: "3.0", min_version: "1.0"}
+]
+.Ed
+The valid keys for the message objects are "message", "type",
+"min_version", and "max_version".
+There are no restrictions to the number of messages per phase, although the
+display order of messages are random.
+The upgrade messages can be tailored depending on the current and new
+version of the package being upgraded.
 .It Cm directories Ar Array
 This field is of type array.
 Each element of the array is a ucl-object to describe empty directories
