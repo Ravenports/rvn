@@ -62,6 +62,7 @@ package body Raven.Cmd.Info is
       increment (cmd.subpackage);
       increment (cmd.total_size);
       increment (cmd.variant);
+      increment (cmd.abi);
 
       if IsBlank (comline.cmd_info.path_archive_file) then
          return execute_installed_info_command (comline, num_attr_selected);
@@ -134,6 +135,7 @@ package body Raven.Cmd.Info is
       display_string (metatree, info.namebase, single, Q, MET.namebase);
       display_string (metatree, info.subpackage, single, Q, MET.subpackage);
       display_string (metatree, info.variant, single, Q, MET.variant);
+      display_string (metatree, info.abi, single, Q, MET.abi);
       display_string (metatree, info.comment, single, Q, MET.comment);
       display_string (metatree, info.install_prefix, single, Q, MET.prefix);
       display_string (metatree, info.description, single, Q, MET.description);
@@ -166,6 +168,7 @@ package body Raven.Cmd.Info is
       display_string (USS (mpkg.namebase), info.namebase, single, Q, MET.namebase);
       display_string (USS (mpkg.subpackage), info.subpackage, single, Q, MET.subpackage);
       display_string (USS (mpkg.variant), info.variant, single, Q, MET.variant);
+      display_string (USS (mpkg.abi), info.abi, single, Q, MET.abi);
       display_string (USS (mpkg.comment), info.comment, single, Q, MET.comment);
       display_string (USS (mpkg.prefix), info.install_prefix, single, Q, MET.prefix);
       display_string (USS (mpkg.desc), info.description, single, Q, MET.description);

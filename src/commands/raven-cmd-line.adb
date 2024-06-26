@@ -381,6 +381,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.rev_deps := True;
                   elsif datum = "-s" or else datum = "--size" then
                      data.cmd_info.total_size := True;
+                  elsif datum = "-w" or else datum = "--abi" then
+                     data.cmd_info.abi := True;
                   elsif datum = "-N" or else datum = "--namebase" then
                      data.cmd_info.namebase := True;
                   elsif datum = "-S" or else datum = "--subpackage" then

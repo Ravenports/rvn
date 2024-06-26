@@ -146,6 +146,7 @@ private
          raw_manifest       : Boolean := False;  --  -R, --raw
          rev_deps           : Boolean := False;  --  -r, --required-by (list pkgs that require it)
          total_size         : Boolean := False;  --  -s, --size
+         abi                : Boolean := False;  --  -w, --abi
          namebase           : Boolean := False;  --  -N, --namebase
          subpackage         : Boolean := False;  --  -S, --subpackage
          variant            : Boolean := False;  --  -V, --variant
