@@ -967,6 +967,7 @@ package body Raven.Cmd.Info is
       display_string (metatree, True, False, quiet, MET.prefix);
 
       display_dependencies (metatree, True, False, quiet);
+      display_options      (metatree, True, False, quiet);
 
       display_array (metatree, True, False, quiet, MET.shlibs_required);
       display_array (metatree, True, False, quiet, MET.shlibs_provided);
@@ -1003,6 +1004,7 @@ package body Raven.Cmd.Info is
       display_string (USS (mpkg.prefix), True, False, quiet, MET.prefix);
 
       display_dependencies (mpkg.dependencies, True, False, quiet);
+      display_options      (mpkg.options, True, False, quiet);
 
       display_array (mpkg.libs_required, True, False, quiet, MET.shlibs_required);
       display_array (mpkg.libs_provided, True, False, quiet, MET.shlibs_provided);
