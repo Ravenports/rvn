@@ -20,6 +20,7 @@ use Raven.Strings;
 
 package body Raven.Deinstall is
 
+   package MSC renames Archive.Misc;
    package SCN renames Archive.Dirent.Scan;
    package LAT renames Ada.Characters.Latin_1;
    package DEL renames Raven.Database.Remove;
@@ -55,10 +56,14 @@ package body Raven.Deinstall is
       upgrading         : constant Boolean := False;
       tmp_message_shell : constant String := Bourne.unique_msgfile_path;
       tmp_message_lua   : constant String := Lua.unique_msgfile_path;
+      shell_outfile     : constant String := MSC.new_filename (tmp_message_shell, MSC.ft_stdout);
+      lua_outfile       : constant String := MSC.new_filename (tmp_message_lua, MSC.ft_stdout);
       z_namebase        : constant String := USS (installed_package.namebase);
       z_subpackage      : constant String := USS (installed_package.subpackage);
       z_variant         : constant String := USS (installed_package.variant);
       nsv               : constant String := z_namebase & '-' & z_subpackage & '-' & z_variant;
+      shell_out_handle  : Ada.Text_IO.File_Type;
+      lua_out_handle    : Ada.Text_IO.File_Type;
 
       function assembly_path (saved_path : Text) return String is
       begin
@@ -112,12 +117,19 @@ package body Raven.Deinstall is
       Event.emit_remove_begin (installed_package);
       Event.emit_debug (moderate, "Deinstalling " & Pkgtypes.nsv_identifier (installed_package));
       if not inhibit_scripts then
+         begin
+            Ada.Text_IO.Create (File => shell_out_handle, Name => shell_outfile);
+            Ada.Text_IO.Create (File => lua_out_handle, Name => lua_outfile);
+         exception
+            when others =>
+               Event.emit_error ("failed to open standard output file");
+         end;
          Event.emit_debug (moderate, "Running pre-deinstall Bourne shell scripts");
          run_shell_scripts (ARW.pre_deinstall, installed_package, upgrading, rootdir,
-                            tmp_message_shell);
+                            tmp_message_shell, shell_out_handle);
          Event.emit_debug (moderate, "Running pre-deinstall Lua scripts");
          run_lua_scripts (ARW.pre_deinstall_lua, installed_package, upgrading, rootdir,
-                          tmp_message_lua);
+                          tmp_message_lua, lua_out_handle);
       end if;
 
       Event.emit_debug (moderate, "Removing files");
@@ -127,11 +139,13 @@ package body Raven.Deinstall is
       if not inhibit_scripts then
          Event.emit_debug (moderate, "Running post-deinstall Bourne shell scripts");
          run_shell_scripts (ARW.post_deinstall, installed_package, upgrading, rootdir,
-                            tmp_message_shell);
+                            tmp_message_shell, shell_out_handle);
          Event.emit_debug (moderate, "Running post-deinstall Lua scripts");
          run_lua_scripts (ARW.post_deinstall_lua, installed_package, upgrading, rootdir,
-                          tmp_message_lua);
+                          tmp_message_lua, lua_out_handle);
 
+         Ada.Text_IO.Close (shell_out_handle);
+         Ada.Text_IO.Close (lua_out_handle);
          Bourne.show_post_run_messages (tmp_message_shell, z_namebase, z_subpackage, z_variant,
                                         post_report);
          Lua.show_post_run_messages (tmp_message_lua, z_namebase, z_subpackage, z_variant,
@@ -160,7 +174,8 @@ package body Raven.Deinstall is
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
       rootdir     : String;
-      msg_outfile : String)
+      msg_outfile : String;
+      out_handle  : Ada.Text_IO.File_Type)
    is
       num_scripts : Natural;
       interpreter : constant String := Archive.Misc.get_interpreter;
@@ -191,6 +206,7 @@ package body Raven.Deinstall is
                script      => USS (the_package.scripts (phase)(script_index).code),
                arguments   => USS (the_package.scripts (phase)(script_index).args),
                msg_outfile => msg_outfile,
+               out_handle  => out_handle,
                success     => success);
             if not success then
                case phase is
@@ -213,7 +229,8 @@ package body Raven.Deinstall is
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
       rootdir     : String;
-      msg_outfile : String)
+      msg_outfile : String;
+      out_handle  : Ada.Text_IO.File_Type)
    is
       num_scripts : Natural;
    begin
@@ -242,6 +259,7 @@ package body Raven.Deinstall is
                script      => USS (the_package.scripts (phase)(script_index).code),
                arg_chain   => USS (the_package.scripts (phase)(script_index).args),
                msg_outfile => msg_outfile,
+               out_handle  => out_handle,
                success     => success);
             if not success then
                case phase is

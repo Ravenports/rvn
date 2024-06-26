@@ -7,6 +7,7 @@ with Raven.Pkgtypes;
 with Raven.Strings;
 with Raven.Context;
 with Raven.Metadata;
+with Archive.Misc;
 with Lua;
 
 use Raven.Strings;
@@ -14,6 +15,7 @@ use Raven.Strings;
 package body Raven.Triggers is
 
    package TIO renames Ada.Text_IO;
+   package MSC renames Archive.Misc;
 
 
    --------------------
@@ -102,6 +104,8 @@ package body Raven.Triggers is
    procedure execute (trigger_set  : in out A_Trigger_Set)
    is
       msg_outfile  : constant String := Lua.unique_msgfile_path;
+      std_outfile  : constant String := MSC.new_filename (msg_outfile, MSC.ft_stdout);
+      out_handle   : TIO.File_Type;
       dummy_handle : TIO.File_Type;
 
       procedure run_lua_script (Position : A_Trigger_Map.Cursor)
@@ -135,11 +139,19 @@ package body Raven.Triggers is
             script      => USS (myscript.script_code),
             arg_chain   => USS (script_args),
             msg_outfile => msg_outfile,
+            out_handle  => out_handle,
             success     => success);
 
       end run_lua_script;
    begin
+      begin
+         TIO.Create (File => out_handle, Name => std_outfile);
+      exception
+         when others =>
+            null;
+      end;
       trigger_set.trigger_map.Iterate (run_lua_script'Access);
+      TIO.Close (out_handle);
       Lua.show_post_run_messages (msg_outfile, "N","S","V", dummy_handle);
 
    end execute;

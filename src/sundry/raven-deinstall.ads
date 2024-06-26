@@ -55,14 +55,16 @@ private
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
       rootdir     : String;
-      msg_outfile : String);
+      msg_outfile : String;
+      out_handle  : Ada.Text_IO.File_Type);
 
    procedure run_lua_scripts
      (phase       : ARW.package_phase;
       the_package : Pkgtypes.A_Package;
       upgrading   : Boolean;
       rootdir     : String;
-      msg_outfile : String);
+      msg_outfile : String;
+      out_handle  : Ada.Text_IO.File_Type);
 
    procedure prune_empty_directories
      (the_package : Pkgtypes.A_Package;
