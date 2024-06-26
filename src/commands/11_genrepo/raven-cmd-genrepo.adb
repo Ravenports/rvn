@@ -373,7 +373,7 @@ package body Raven.Cmd.Genrepo is
       exception
          when others =>
             Event.emit_error ("Failed to create catalog file " & catalog);
-            return False;
+            combined_well := False;
       end;
 
       for z in Scanner_Range loop
