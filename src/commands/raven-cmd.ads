@@ -142,6 +142,7 @@ private
          list_digests       : Boolean := False;  --  -L, --list-digests
          list_files         : Boolean := False;  --  -l, --list-files
          list_attributes    : Boolean := False;  --  -X, --list-extended
+         options            : Boolean := False;  --  -o, --options
          install_prefix     : Boolean := False;  --  -p, --prefix
          raw_manifest       : Boolean := False;  --  -R, --raw
          rev_deps           : Boolean := False;  --  -r, --required-by (list pkgs that require it)

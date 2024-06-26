@@ -71,6 +71,12 @@ private
       single   : Boolean;
       quiet    : Boolean);
 
+   procedure display_options
+     (metatree : ThickUCL.UclTree;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean);
+
    procedure display_annotations
      (metatree : ThickUCL.UclTree;
       active   : Boolean;
@@ -119,6 +125,12 @@ private
       quiet    : Boolean);
 
    procedure display_dependencies
+     (dmap     : Pkgtypes.NV_Pairs.Map;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean);
+
+   procedure display_options
      (dmap     : Pkgtypes.NV_Pairs.Map;
       active   : Boolean;
       single   : Boolean;

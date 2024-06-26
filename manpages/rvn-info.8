@@ -10,12 +10,12 @@
 .Nm
 .Fl a
 .Nm
-.Op Fl ABbMDZdefIjpqrswNSV
+.Op Fl ABbMDZdefIjopqrswNSV
 .Op Fl L | Fl l
 .Op Fl CEg
 .Ar pkg-name
 .Nm
-.Op Fl ABbMDZdfIjLlpqRswNSV
+.Op Fl ABbMDZdfIjLlopqRswNSV
 .Op Fl L | Fl l | Fl X
 .Fl F Ar pkg-file
 .Pp
@@ -26,7 +26,7 @@
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
 .Op Cm --{install-message,description,dependencies,remove-message}
-.Op Cm --{exists,full,comment,adjacent-shlibs,prefix}
+.Op Cm --{exists,full,comment,adjacent-shlibs,options,prefix}
 .Op Cm --{quiet,required-by,size,abi,namebase,subpackage,variant}
 .Op Cm --list-digests | --list-files
 .Op Cm --{case-sensitive,exact-match,glob}
@@ -34,7 +34,7 @@
 .Nm
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
 .Op Cm --{install-message,description,dependencies,remove-message}
-.Op Cm --{full,comment,adjacent-shlibs,prefix}
+.Op Cm --{full,comment,adjacent-shlibs,options,prefix}
 .Op Cm --{quiet,raw,size,abi,namebase,subpackage,variant}
 .Op Cm --list-digests | --list-files | --list-extended
 .Cm --file Ar pkg-file
@@ -107,6 +107,8 @@ Show the installation-time message for matching packages.
 Show the removal-time message for matching packages.
 .It Fl N , Cm --namebase
 Display the namebase (the first part of the package name triplet).
+.It Fl o , Cm --options
+Display option names and their settings, one line per option.
 .It Fl p , Cm --prefix
 Display the installation prefix for each package matching
 .Ar pkg-name .

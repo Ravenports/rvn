@@ -63,6 +63,7 @@ package body Raven.Cmd.Info is
       increment (cmd.total_size);
       increment (cmd.variant);
       increment (cmd.abi);
+      increment (cmd.options);
 
       if IsBlank (comline.cmd_info.path_archive_file) then
          return execute_installed_info_command (comline, num_attr_selected);
@@ -145,6 +146,7 @@ package body Raven.Cmd.Info is
       display_array  (metatree, info.shlibs_adjacent, single, Q, MET.shlibs_adjacent);
       display_dependencies (metatree, info.dependencies, single, Q);
       display_annotations  (metatree, info.annotations, single, Q);
+      display_options  (metatree, info.options, single, Q);
       display_message  (metatree, info.install_message, single, Q, Pkgtypes.install);
       display_message  (metatree, info.remove_message, single, Q, Pkgtypes.deinstall);
       list_files       (rvn_path, info.list_files, single, Q, False, False);
@@ -176,8 +178,9 @@ package body Raven.Cmd.Info is
       display_array  (mpkg.libs_required, info.shlibs_used, single, Q, MET.shlibs_required);
       display_array  (mpkg.libs_provided, info.shlibs_provided, single, Q, MET.shlibs_provided);
       display_array  (mpkg.libs_adjacent, info.shlibs_adjacent, single, Q, MET.shlibs_adjacent);
-      display_dependencies    (mpkg.dependencies, comline.cmd_info.dependencies, single, Q);
-      display_annotations     (mpkg.annotations, comline.cmd_info.annotations, single, Q);
+      display_dependencies    (mpkg.dependencies, info.dependencies, single, Q);
+      display_annotations     (mpkg.annotations, info.annotations, single, Q);
+      display_options  (mpkg.options, info.options, single, Q);
       display_message  (mpkg, info.install_message, single, Q, Pkgtypes.install);
       display_message  (mpkg, info.remove_message, single, Q, Pkgtypes.deinstall);
       list_files       (mpkg, info.list_files, single, Q, False);
@@ -657,6 +660,106 @@ package body Raven.Cmd.Info is
       end if;
       dmap.Iterate (Print'Access);
    end display_dependencies;
+
+
+   --------------------------
+   --  display_options #1  --
+   --------------------------
+   procedure display_options
+     (metatree : ThickUCL.UclTree;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean)
+   is
+      procedure print (Position : ThickUCL.jar_string.Cursor);
+
+      key        : constant String := MET.metadata_field_label (MET.annotations);
+      data_label : constant String := MET.metadata_field_formal_label (MET.annotations);
+      this_label : constant attr_label := format_label (data_label);
+      opt_keys   : ThickUCL.jar_string.Vector;
+      dtype      : ThickUCL.Leaf_type;
+      vndx       : ThickUCL.object_index;
+      counter    : Natural := 0;
+
+      procedure print (Position : ThickUCL.jar_string.Cursor)
+      is
+         optname : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+         ntype   : ThickUCL.Leaf_type;
+      begin
+         ntype := metatree.get_object_data_type (vndx, optname);
+         case ntype is
+            when ThickUCL.data_string =>
+               declare
+                  optvalue : constant String := metatree.get_object_value (vndx, optname);
+               begin
+                  if single and then quiet then
+                     TIO.Put_Line (optname & " = " & optvalue);
+                  else
+                     if counter = 0 then
+                        TIO.Put_Line (this_label & ": " & optname & " => " & optvalue);
+                     else
+                        TIO.Put_Line (no_label & ": " & optname & " => " & optvalue);
+                     end if;
+                  end if;
+               end;
+               counter := counter + 1;
+            when others =>
+               null;
+         end case;
+      end print;
+   begin
+      if not active then
+         return;
+      end if;
+      dtype := metatree.get_data_type (key);
+      case dtype is
+         when ThickUCL.data_object =>
+            vndx := metatree.get_index_of_base_ucl_object (key);
+            MET.obtain_options_keys (metatree, opt_keys);
+            opt_keys.Iterate (print'Access);
+         when others =>
+            null;
+      end case;
+   end display_options;
+
+
+   --------------------------
+   --  display_options #2  --
+   --------------------------
+   procedure display_options
+     (dmap     : Pkgtypes.NV_Pairs.Map;
+      active   : Boolean;
+      single   : Boolean;
+      quiet    : Boolean)
+   is
+      data_label : constant String := MET.metadata_field_formal_label (MET.options);
+      this_label : constant attr_label := format_label (data_label);
+      counter    : Natural := 0;
+
+      procedure print (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         key   : Text renames Pkgtypes.NV_Pairs.Key (Position);
+         value : Text renames Pkgtypes.NV_Pairs.Element (Position);
+         line  : constant String := USS (key) & " => " & USS (value);
+      begin
+         if single and then quiet
+         then
+            TIO.Put_Line (line);
+         else
+            if counter = 0 then
+               TIO.Put_Line (this_label & ": " & line);
+            else
+               TIO.Put_Line (no_label & ": " & line);
+            end if;
+         end if;
+         counter := counter + 1;
+      end print;
+   begin
+      if not active then
+         return;
+      end if;
+      dmap.Iterate (Print'Access);
+   end display_options;
 
 
    ------------------------------

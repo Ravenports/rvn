@@ -66,7 +66,13 @@ package Raven.Metadata is
      (metatree : ThickUCL.UclTree;
       dep_keys : in out ThickUCL.jar_string.Vector);
 
+   --  The annotations are stored in an object, and this procedure retrieves the sorted keys
    procedure obtain_annotations_keys
+     (metatree  : ThickUCL.UclTree;
+      note_keys : in out ThickUCL.jar_string.Vector);
+
+   --  The options are stored in an object, and this procedure retrieves the sorted keys
+   procedure obtain_options_keys
      (metatree  : ThickUCL.UclTree;
       note_keys : in out ThickUCL.jar_string.Vector);
 

@@ -373,6 +373,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.list_files := True;
                   elsif datum = "-X" or else datum = "--list-extended" then
                      data.cmd_info.list_attributes := True;
+                  elsif datum = "-o" or else datum = "--options" then
+                     data.cmd_info.options := True;
                   elsif datum = "-p" or else datum = "--prefix" then
                      data.cmd_info.install_prefix := True;
                   elsif datum = "-R" or else datum = "--raw" then
