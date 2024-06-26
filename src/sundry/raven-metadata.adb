@@ -254,8 +254,8 @@ package body Raven.Metadata is
    --  obtain_options_keys  --
    ---------------------------
    procedure obtain_options_keys
-     (metatree  : ThickUCL.UclTree;
-      note_keys : in out ThickUCL.jar_string.Vector)
+     (metatree : ThickUCL.UclTree;
+      opt_keys : in out ThickUCL.jar_string.Vector)
    is
       key   : constant String := metadata_field_label (options);
       dtype : ThickUCL.Leaf_type;
@@ -265,7 +265,7 @@ package body Raven.Metadata is
       case dtype is
          when ThickUCL.data_object =>
             vndx := metatree.get_index_of_base_ucl_object (key);
-            metatree.get_object_object_keys (vndx, note_keys);
+            metatree.get_object_object_keys (vndx, opt_keys);
          when others =>
             null;
       end case;

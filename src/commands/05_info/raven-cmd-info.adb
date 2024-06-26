@@ -673,8 +673,8 @@ package body Raven.Cmd.Info is
    is
       procedure print (Position : ThickUCL.jar_string.Cursor);
 
-      key        : constant String := MET.metadata_field_label (MET.annotations);
-      data_label : constant String := MET.metadata_field_formal_label (MET.annotations);
+      key        : constant String := MET.metadata_field_label (MET.options);
+      data_label : constant String := MET.metadata_field_formal_label (MET.options);
       this_label : constant attr_label := format_label (data_label);
       opt_keys   : ThickUCL.jar_string.Vector;
       dtype      : ThickUCL.Leaf_type;
