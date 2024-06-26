@@ -691,14 +691,15 @@ package body Raven.Cmd.Info is
             when ThickUCL.data_string =>
                declare
                   optvalue : constant String := metatree.get_object_value (vndx, optname);
+                  line     : constant String := optname & " => " & optvalue;
                begin
                   if single and then quiet then
-                     TIO.Put_Line (optname & " = " & optvalue);
+                     TIO.Put_Line (line);
                   else
                      if counter = 0 then
-                        TIO.Put_Line (this_label & ": " & optname & " => " & optvalue);
+                        TIO.Put_Line (this_label & ": " & line);
                      else
-                        TIO.Put_Line (no_label & ": " & optname & " => " & optvalue);
+                        TIO.Put_Line (no_label & ": " & line);
                      end if;
                   end if;
                end;
