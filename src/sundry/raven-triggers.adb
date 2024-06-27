@@ -104,7 +104,7 @@ package body Raven.Triggers is
    procedure execute (trigger_set  : in out A_Trigger_Set)
    is
       msg_outfile  : constant String := Lua.unique_msgfile_path;
-      std_outfile  : constant String := MSC.new_filename (msg_outfile, MSC.ft_stdout);
+      std_outfile  : constant String := MSC.new_filename (msg_outfile, MSC.ft_lua);
       out_handle   : TIO.File_Type;
       dummy_handle : TIO.File_Type;
 

@@ -57,7 +57,7 @@ package body Raven.Deinstall is
       tmp_message_shell : constant String := Bourne.unique_msgfile_path;
       tmp_message_lua   : constant String := Lua.unique_msgfile_path;
       shell_outfile     : constant String := MSC.new_filename (tmp_message_shell, MSC.ft_stdout);
-      lua_outfile       : constant String := MSC.new_filename (tmp_message_lua, MSC.ft_stdout);
+      lua_outfile       : constant String := MSC.new_filename (tmp_message_lua, MSC.ft_lua);
       z_namebase        : constant String := USS (installed_package.namebase);
       z_subpackage      : constant String := USS (installed_package.subpackage);
       z_variant         : constant String := USS (installed_package.variant);
