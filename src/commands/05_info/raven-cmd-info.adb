@@ -596,22 +596,26 @@ package body Raven.Cmd.Info is
       quiet    : Boolean)
    is
       procedure print (Position : ThickUCL.jar_string.Cursor);
+      tree_key   : constant String := MET.metadata_field_label (MET.dependencies);
       data_label : constant String := MET.metadata_field_formal_label (MET.dependencies);
       this_label : constant attr_label := format_label (data_label);
       dep_keys   : ThickUCL.jar_string.Vector;
+      ondx       : ThickUCL.object_index;
       counter    : Natural := 0;
 
       procedure print (Position : ThickUCL.jar_string.Cursor)
       is
          dependency : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
+         version    : constant String := metatree.get_object_value (ondx, dependency);
+         line       : constant String := dependency & "-" & version;
       begin
          if single and then quiet then
-            TIO.Put_Line (dependency);
+            TIO.Put_Line (line);
          else
             if counter = 0 then
-               TIO.Put_Line (this_label & ": " & dependency);
+               TIO.Put_Line (this_label & ": " & line);
             else
-               TIO.Put_Line (no_label & ": " & dependency);
+               TIO.Put_Line (no_label & ": " & line);
             end if;
          end if;
          counter := counter + 1;
@@ -621,6 +625,7 @@ package body Raven.Cmd.Info is
          return;
       end if;
       MET.obtain_dependencies_keys (metatree, dep_keys);
+      ondx := metatree.get_index_of_base_ucl_object (tree_key);
       dep_keys.Iterate (print'Access);
    end display_dependencies;
 
