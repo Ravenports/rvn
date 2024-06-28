@@ -234,7 +234,7 @@ package body Raven.Cmd.Info is
       if not active then
          return;
       end if;
-      if single and then quiet then
+      if single or else quiet then
          print_string;
       else
          case mfield is
@@ -266,7 +266,7 @@ package body Raven.Cmd.Info is
       if not active then
          return;
       end if;
-      if single and then quiet then
+      if single or else quiet then
          TIO.Put_Line (line);
       else
          case mfield is
@@ -311,7 +311,7 @@ package body Raven.Cmd.Info is
                      declare
                         val : constant String := metatree.get_array_element_value (vndx, index);
                      begin
-                        if single and then quiet
+                        if single or else quiet
                         then
                            TIO.Put_Line (val);
                         else
@@ -349,7 +349,7 @@ package body Raven.Cmd.Info is
       is
          value : constant String := USS (Pkgtypes.Text_List.Element (Position));
       begin
-         if single and then quiet
+         if single or else quiet
          then
             TIO.Put_Line (value);
          else
@@ -444,7 +444,7 @@ package body Raven.Cmd.Info is
          return;
       end if;
       tarray.Iterate (print'Access);
-      if single and then quiet then
+      if single or else quiet then
          TIO.Put_Line (USS (line));
       else
          TIO.Put_Line (this_label & ": " & USS (line));
@@ -471,7 +471,7 @@ package body Raven.Cmd.Info is
          size_value : constant String :=
            MET.human_readable_size (MET.get_size (metatree, MET.flatsize));
       begin
-         if single and then quiet then
+         if single or else quiet then
             TIO.Put_Line (size_value);
          else
             TIO.Put_Line (this_label & ": " & size_value);
@@ -496,7 +496,7 @@ package body Raven.Cmd.Info is
       if not active then
          return;
       end if;
-      if single and then quiet then
+      if single or else quiet then
          TIO.Put_Line (size_value);
       else
          TIO.Put_Line (this_label & ": " & size_value);
@@ -609,7 +609,7 @@ package body Raven.Cmd.Info is
          version    : constant String := metatree.get_object_value (ondx, dependency);
          line       : constant String := dependency & "-" & version;
       begin
-         if single and then quiet then
+         if single or else quiet then
             TIO.Put_Line (line);
          else
             if counter = 0 then
@@ -647,7 +647,7 @@ package body Raven.Cmd.Info is
       is
          line : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
       begin
-         if single and then quiet
+         if single or else quiet
          then
             TIO.Put_Line (line);
          else
@@ -690,15 +690,41 @@ package body Raven.Cmd.Info is
       is
          optname : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
          ntype   : ThickUCL.Leaf_type;
+
+         function interpret_optvalue return String
+         is
+            answer : Boolean;
+            option_is_set : constant String := "true";
+         begin
+            case metatree.get_object_data_type (vndx, optname) is
+               when ThickUCL.data_boolean =>
+                  answer := metatree.get_object_value (vndx, optname);
+                  if answer then
+                     return option_is_set;
+                  end if;
+               when ThickUCL.data_string =>
+                  declare
+                     answerstr : constant String :=
+                       lowercase (metatree.get_object_value (vndx, optname));
+                  begin
+                     if answerstr = "on" or else answerstr = "true" then
+                        return option_is_set;
+                     end if;
+                  end;
+               when others => null;
+            end case;
+            return "false";
+         end interpret_optvalue;
       begin
          ntype := metatree.get_object_data_type (vndx, optname);
          case ntype is
-            when ThickUCL.data_string =>
+            when ThickUCL.data_string |
+                 ThickUCL.data_boolean =>
                declare
-                  optvalue : constant String := metatree.get_object_value (vndx, optname);
+                  optvalue : constant String := interpret_optvalue;
                   line     : constant String := optname & " => " & optvalue;
                begin
-                  if single and then quiet then
+                  if single or else quiet then
                      TIO.Put_Line (line);
                   else
                      if counter = 0 then
@@ -748,7 +774,7 @@ package body Raven.Cmd.Info is
          value : Text renames Pkgtypes.NV_Pairs.Element (Position);
          line  : constant String := USS (key) & " => " & USS (value);
       begin
-         if single and then quiet
+         if single or else quiet
          then
             TIO.Put_Line (line);
          else
@@ -798,7 +824,7 @@ package body Raven.Cmd.Info is
                declare
                   note : constant String := metatree.get_object_value (vndx, note_id);
                begin
-                  if single and then quiet then
+                  if single or else quiet then
                      TIO.Put_Line (note_id & " = " & note);
                   else
                      if counter = 0 then
@@ -849,7 +875,7 @@ package body Raven.Cmd.Info is
          value : constant String := USS (mynote.note);
          line  : constant String := key & " => " & value;
       begin
-         if single and then quiet
+         if single or else quiet
          then
             TIO.Put_Line (line);
          else
@@ -926,7 +952,7 @@ package body Raven.Cmd.Info is
             return USS (myrec.path);
          end line;
       begin
-         if single and then quiet
+         if single or else quiet
          then
             TIO.Put_Line (line);
          else
