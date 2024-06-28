@@ -885,12 +885,6 @@ package body Raven.Metadata is
             begin
                isla.path := SUS (path);
             end;
-         elsif this_key = "prefix" then
-            declare
-               prefix : constant String := metatree.get_object_value (ondx, this_key);
-            begin
-               isla.prefix := SUS (prefix);
-            end;
          elsif this_key = "owner" then
             case metatree.get_object_data_type (ondx, this_key) is
                when ThickUCL.data_boolean => null;   -- reset_owner already false
