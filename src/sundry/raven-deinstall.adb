@@ -579,15 +579,15 @@ package body Raven.Deinstall is
       begin
          case total_pkgs is
             when 0 .. 9 =>
-               return "[" & int2str (pkg_counter) & "/" & int2str (pkg_counter) & "] ";
+               return "[" & int2str (pkg_counter) & "/" & int2str (total_pkgs) & "] ";
             when 10 .. 99 =>
-               return "[" & zeropad (pkg_counter, 2) & "/" & int2str (pkg_counter) & "] ";
+               return "[" & zeropad (pkg_counter, 2) & "/" & int2str (total_pkgs) & "] ";
             when 100 .. 999 =>
-               return "[" & zeropad (pkg_counter, 3) & "/" & int2str (pkg_counter) & "] ";
+               return "[" & zeropad (pkg_counter, 3) & "/" & int2str (total_pkgs) & "] ";
             when 1000 .. 9999 =>
-               return "[" & zeropad (pkg_counter, 4) & "/" & int2str (pkg_counter) & "] ";
+               return "[" & zeropad (pkg_counter, 4) & "/" & int2str (total_pkgs) & "] ";
             when others =>
-               return "[" & zeropad (pkg_counter, 5) & "/" & int2str (pkg_counter) & "] ";
+               return "[" & zeropad (pkg_counter, 5) & "/" & int2str (total_pkgs) & "] ";
          end case;
       end progress;
 
