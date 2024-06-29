@@ -81,12 +81,14 @@ package body Raven.Deinstall is
          features := Archive.Unix.get_charactistics (path);
          case features.ftype is
             when Archive.unsupported =>
-               if not quiet then
+               if not quiet and then verify_digest_first then
                   Event.emit_error (nsv & ": absent file slated for deletion: " & path);
                end if;
                return;
             when Archive.directory =>
-               Event.emit_error (nsv & ": directory expected to be a file: " & path);
+               if verify_digest_first then
+                  Event.emit_error (nsv & ": directory expected to be a file: " & path);
+               end if;
             when Archive.regular | Archive.symlink | Archive.hardlink | Archive.fifo =>
                null;
          end case;
