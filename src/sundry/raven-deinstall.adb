@@ -233,6 +233,20 @@ package body Raven.Deinstall is
       out_handle  : Ada.Text_IO.File_Type)
    is
       num_scripts : Natural;
+
+      function null_separated (arg_spaces : String) return String
+      is
+         canvas : String (arg_spaces'Range);
+      begin
+         for x in arg_spaces'Range loop
+            if arg_spaces (x) = ' ' then
+               canvas (x) := Character'Val (0);
+            else
+               canvas (x) := arg_spaces (x);
+            end if;
+         end loop;
+         return canvas;
+      end null_separated;
    begin
       case phase is
          when ARW.pre_deinstall_lua => null;
@@ -248,6 +262,8 @@ package body Raven.Deinstall is
       for script_index in 0 .. num_scripts - 1 loop
          declare
             success : Boolean;
+            null_args : constant String :=
+              null_separated (USS (the_package.scripts (phase)(script_index).args));
          begin
             Lua.run_lua_script
               (namebase    => USS (the_package.namebase),
@@ -257,7 +273,7 @@ package body Raven.Deinstall is
                root_dir    => rootdir,
                upgrading   => upgrading,
                script      => USS (the_package.scripts (phase)(script_index).code),
-               arg_chain   => USS (the_package.scripts (phase)(script_index).args),
+               arg_chain   => null_args,
                msg_outfile => msg_outfile,
                out_handle  => out_handle,
                success     => success);
