@@ -95,6 +95,10 @@ package body Raven.Triggers is
             trigger_set.trigger_map.Insert (trigger_id, myrec);
          end;
       end if;
+      case trigger_type is
+         when cleanup => trigger_set.hit_cleanup := True;
+         when installation => null;
+      end case;
    end insert;
 
 
@@ -281,5 +285,14 @@ package body Raven.Triggers is
       SU.Append (myset, ")");
       return USS (myset);
    end id_selection;
+
+
+   --------------------
+   --  will_cleanup  --
+   --------------------
+   function will_cleanup (trigger_set : A_Trigger_Set) return Boolean is
+   begin
+      return trigger_set.hit_cleanup;
+   end will_cleanup;
 
 end Raven.Triggers;

@@ -59,6 +59,11 @@ package Raven.Triggers is
    function id_selection
      (trigger_set   : A_Trigger_Set) return String;
 
+   --  Returns true if cleanup script will be run (meaning directory prune needs to be
+   --  performed on rootdir after triggers are run)
+   function will_cleanup
+      (trigger_set   : A_Trigger_Set) return Boolean;
+
 private
 
    type TScript is
@@ -70,7 +75,7 @@ private
          origin_subpkg   : Text;
          origin_variant  : Text;
          origin_prefix   : Text;
-         upgrading       : Boolean;
+         upgrading       : Boolean := False;
       end record;
 
    function trigger_hash (trigger_id : Natural) return Ada.Containers.Hash_Type;
@@ -94,6 +99,7 @@ private
          directory_map : Pkgtypes.NV_Pairs.Map;
          relevant_pkgs : A_Pkg_Upgrade_Set.Map;
          rootdir_txt   : Text;
+         hit_cleanup   : Boolean := False;
       end record;
 
 

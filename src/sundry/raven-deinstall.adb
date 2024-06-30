@@ -434,6 +434,106 @@ package body Raven.Deinstall is
    end prune_empty_directories;
 
 
+   -----------------------------------------
+   --  post_trigger_root_directory_prune  --
+   -----------------------------------------
+   procedure post_trigger_root_directory_prune
+   is
+      --  use install location as the top level, "/raven" by default.
+      --  We've never used a different root, so while in theory this is bad, in practice
+      --  it's fine.  The worse case scenario is that non-standard roots fail leftover tests
+
+      features  : Archive.Unix.File_Characteristics;
+      dirmap    : Pkgtypes.NV_Pairs.Map;
+      queue     : Pkgtypes.Text_List.Vector;
+      dircount  : Natural := 0;
+      dircountx : Natural;
+
+      procedure gather_directories (this_dir : String)
+      is
+         contents : SCN.dscan_crate.Vector;
+         numslash : constant Natural := count_char (this_dir, '/');
+
+         procedure add_subdir (Position : SCN.dscan_crate.Cursor)
+         is
+            Ent : Archive.Dirent.directory_entity renames SCN.dscan_crate.Element (Position);
+            entfeat : Archive.Unix.File_Characteristics;
+         begin
+            entfeat := Archive.Unix.get_charactistics (Ent.full_path);
+            case entfeat.ftype is
+               when Archive.directory => gather_directories (Ent.full_path);
+               when others => null;
+            end case;
+         end add_subdir;
+      begin
+         dirmap.Insert (SUS (this_dir), SUS (int2str (numslash)));
+         SCN.scan_directory (this_dir, contents);
+         contents.Iterate (add_subdir'Access);
+      end gather_directories;
+
+      procedure set_dircount (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         this_count : Natural;
+      begin
+         this_count := Natural'value (USS (Pkgtypes.NV_Pairs.Element (Position)));
+         if this_count > dircount then
+            dircount := this_count;
+         end if;
+      end set_dircount;
+
+      procedure select_by_dircount (Position : Pkgtypes.NV_Pairs.Cursor)
+      is
+         key : Text renames Pkgtypes.NV_Pairs.Key (Position);
+         this_count : Natural;
+      begin
+         this_count := Natural'Value (USS (dirmap.Element (key)));
+         if this_count = dircountx then
+            queue.Append (key);
+         end if;
+      end select_by_dircount;
+
+      procedure remove_from_map (Position : Pkgtypes.Text_List.Cursor)
+      is
+         key : Text renames Pkgtypes.Text_List.Element (Position);
+      begin
+         dirmap.Delete (key);
+      end;
+
+      procedure drop_if_empty (Position : Pkgtypes.Text_List.Cursor)
+      is
+         dirpath  : constant String := USS (Pkgtypes.Text_List.Element (Position));
+         contents : SCN.dscan_crate.Vector;
+         features : Archive.Unix.File_Characteristics;
+      begin
+         features := Archive.Unix.get_charactistics (dirpath);
+         case features.ftype is
+            when Archive.directory =>
+               SCN.scan_directory (dirpath, contents);
+               if contents.Is_Empty then
+                  Ada.Directories.Delete_Directory (dirpath);
+               end if;
+            when others => null;
+         end case;
+      end drop_if_empty;
+   begin
+      features := Archive.Unix.get_charactistics (install_loc);
+      case features.ftype is
+         when Archive.directory => null;
+         when others => return;
+      end case;
+
+      gather_directories (install_loc);
+      dirmap.Iterate (set_dircount'Access);
+      for x in reverse 1 .. dircount loop
+         queue.clear;
+         dircountx := x;
+         dirmap.Iterate (select_by_dircount'Access);
+         queue.Iterate (drop_if_empty'Access);
+         queue.Iterate (remove_from_map'Access);
+      end loop;
+   end post_trigger_root_directory_prune;
+
+
    -----------------------------
    --  determine_purge_order  --
    -----------------------------
@@ -667,6 +767,9 @@ package body Raven.Deinstall is
          end if;
       end if;
       trigger_set.execute;
+      if trigger_set.will_cleanup then
+         post_trigger_root_directory_prune;
+      end if;
    end remove_packages_in_order;
 
 
