@@ -226,7 +226,7 @@ package body Raven.Cmd.Genrepo is
          begin
             task_queue (worker).Append (string_crate.Element (position));
             tracker := tracker + 1;
-            if tracker >= worklimit then
+            if tracker > worklimit then
                worker := worker + 1;
                tracker := 0;
             end if;
