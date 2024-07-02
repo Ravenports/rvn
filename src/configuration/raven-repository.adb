@@ -211,7 +211,13 @@ package body Raven.Repository is
                      remote_repositories.master_repository := SUS (identifier);
                   end if;
                end if;
-               remote_repositories.repositories.Insert (SUS (identifier), rconfig);
+               if remote_repositories.repositories.Contains (SUS (identifier)) then
+                  Event.emit_error ("The repository identifier '" & identifier &
+                                      "' has already been used.  Configuration from " & file_path
+                                      & " has been ignored.");
+               else
+                  remote_repositories.repositories.Insert (SUS (identifier), rconfig);
+               end if;
             end if;
          end if;
       end process_object;
