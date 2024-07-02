@@ -306,7 +306,7 @@ package body Raven.Repository is
    ----------------------
    function expansion_keys return String
    is
-      abi     : constant String := Archive.Misc.determine_abi;
+      abi     : constant String := RCU.config_setting (RCU.CFG.abi);
       osname  : constant String := specific_field (abi, 1, ":");
       arch    : constant String := specific_field (abi, 2, ":");
       release : constant String := specific_field (abi, 3, ":");
