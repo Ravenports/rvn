@@ -454,6 +454,17 @@ package body Raven.Metadata is
                begin
                   new_dict.Insert (SUS (key2), SUS (value));
                end;
+            when ThickUCL.data_boolean =>
+               --  UCL options values get converted to boolean
+               declare
+                  value : constant Boolean := metatree.get_object_value (vndx, key2);
+               begin
+                  if value then
+                     new_dict.Insert (SUS (key2), SUS ("true"));
+                  else
+                     new_dict.Insert (SUS (key2), SUS ("false"));
+                  end if;
+               end;
             when others => null;  --problem
          end case;
       end insert_nv;
