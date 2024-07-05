@@ -384,8 +384,8 @@ package body Raven.Cmd.Usage is
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
-         msg3 : constant String := "info [-ABbMDZdefIopqrswNSVv] [-L|-l] [-CE] <pkg-name>";
-         msg4 : constant String := "info [-ABbMDZdfIopqRswNSVv] [-L|-l|-X] -F <pkg-file>";
+         msg3 : constant String := "info [-ABbMDZdfIopqrswNSVve] [-L|-l] [-UK] [-CEg] <pkg-name>";
+         msg4 : constant String := "info [-ABbMDZdfIopqRswNSVv]  [-L|-l|-X] -F <pkg-file>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -423,6 +423,14 @@ package body Raven.Cmd.Usage is
             if comline.cmd_info.list_attributes then
                return alert ("--list-extended only available from pkg-file (-F)");
             end if;
+         end if;
+
+         if comline.common_options.no_repo_update and then not comline.cmd_info.catalog then
+            return alert ("--no-repo-update is invalid without --catalog");
+         end if;
+
+         if comline.cmd_info.catalog and then comline.cmd_info.installed then
+            return alert ("--exists switch is incompatible with --catalog");
          end if;
 
          if IsBlank (comline.cmd_info.path_archive_file) then
@@ -465,6 +473,11 @@ package body Raven.Cmd.Usage is
               comline.common_options.case_sensitive
             then
                return alert ("-CE switches are invalid with pkg-file (-F)");
+            end if;
+            if comline.cmd_info.catalog or else
+              comline.common_options.no_repo_update
+            then
+               return alert ("-UK switches are invalid with pkg-file (-F)");
             end if;
          end if;
 

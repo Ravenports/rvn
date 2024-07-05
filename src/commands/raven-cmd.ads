@@ -152,6 +152,7 @@ private
          subpackage         : Boolean := False;  --  -S, --subpackage
          variant            : Boolean := False;  --  -V, --variant
          version            : Boolean := False;  --  -v, --version
+         catalog            : Boolean := False;  --  -K, --catalog
          path_archive_file  : Text;
          glob_input         : Boolean := False;  --  -g, --glob
       end record;

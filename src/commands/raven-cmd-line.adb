@@ -343,6 +343,9 @@ package body Raven.Cmd.Line is
                      data.common_options.case_sensitive := True;
                      Unset.override_setting (Unset.CFG.case_match, True);
                      context.register_case_sensitivity (True);
+                  elsif datum = sws_nocat or else datum = swl_nocat then
+                     data.common_options.no_repo_update := True;
+                     Unset.override_setting (Unset.CFG.autoupdate, False);
                   elsif datum = "-g" or else datum = "--glob" then
                      data.cmd_search.glob_input := True;
                   elsif datum = "-A" or else datum = "--annotations" then
@@ -393,6 +396,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.variant := True;
                   elsif datum = "-v" or else datum = "--version" then
                      data.cmd_info.version := True;
+                  elsif datum = "-K" or else datum = "--catalog" then
+                     data.cmd_info.catalog := True;
                   elsif datum = "-F" or else datum = "--file" then
                      last_cmd := info_archive_file;
                   elsif datum (datum'First) = '-' then

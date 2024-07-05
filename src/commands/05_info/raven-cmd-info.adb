@@ -11,6 +11,7 @@ with Raven.Cmd.Unset;
 with Raven.Event;
 with Raven.Context;
 with Raven.Strings;
+with Raven.Repository;
 with Raven.Database.Lock;
 with Raven.Database.Query;
 with Raven.Database.Search;
@@ -1081,6 +1082,7 @@ package body Raven.Cmd.Info is
       unfinished_packages : Pkgtypes.Package_Set.Vector;
       finished_packages : Pkgtypes.Package_Set.Vector;
       behave_cs : Boolean := comline.common_options.case_sensitive;
+      mirrors : Repository.A_Repo_Config_Set;
 
       procedure finish (Position : Pkgtypes.Package_Set.Cursor)
       is
@@ -1112,10 +1114,34 @@ package body Raven.Cmd.Info is
          behave_cs := True;
       end if;
 
-      case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
-         when RESULT_OK => null;
-         when others => return False;
-      end case;
+      if comline.cmd_info.catalog then
+         if Archive.Unix.user_is_root then
+            Repository.load_repository_configurations (mirrors);
+            if not Repository.create_local_catalog_database
+              (remote_repositories  => mirrors,
+               forced               => False,
+               quiet                => True)
+            then
+               Event.emit_error ("Failed to update the local catalog");
+            end if;
+         end if;
+
+         if not OPS.localdb_exists (Database.catalog) then
+            Event.emit_error
+              ("Catalog database is missing, should be here: " & OPS.localdb_path (Database.catalog));
+            return False;
+         end if;
+
+         case OPS.rdb_open_localdb (rdb, Database.catalog) is
+            when RESULT_OK => null;
+            when others => return False;
+         end case;
+      else
+         case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
+            when RESULT_OK => null;
+            when others => return False;
+         end case;
+      end if;
 
       if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
          Event.emit_error (LOK.no_read_lock);
