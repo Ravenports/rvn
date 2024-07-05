@@ -31,6 +31,10 @@ private
       num_attr  : Natural;
       rvn_path  : String);
 
+   procedure display_no_args_default
+     (mpkg      : Pkgtypes.A_Package;
+      comline   : Cldata);
+
    procedure display_string
      (metatree : ThickUCL.UclTree;
       active   : Boolean;

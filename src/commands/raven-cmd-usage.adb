@@ -429,7 +429,30 @@ package body Raven.Cmd.Usage is
             if not comline.common_options.all_installed_pkgs and then
               IsBlank (comline.common_options.name_pattern)
             then
-               return alert ("Missing <pkg-name>");
+               if comline.cmd_info.annotations or else
+                 comline.cmd_info.shlibs_provided or else
+                 comline.cmd_info.shlibs_used or else
+                 comline.cmd_info.shlibs_adjacent or else
+                 comline.cmd_info.install_message or else
+                 comline.cmd_info.remove_message or else
+                 comline.cmd_info.description or else
+                 comline.cmd_info.dependencies or else
+                 comline.cmd_info.full_information or else
+                 comline.cmd_info.comment or else
+                 comline.cmd_info.list_digests or else
+                 comline.cmd_info.list_files or else
+                 comline.cmd_info.options or else
+                 comline.cmd_info.install_prefix or else
+                 comline.cmd_info.rev_deps or else
+                 comline.cmd_info.total_size or else
+                 comline.cmd_info.abi or else
+                 comline.cmd_info.namebase or else
+                 comline.cmd_info.subpackage or else
+                 comline.cmd_info.variant or else
+                 comline.cmd_info.version
+               then
+                  return alert ("Missing <pkg-name>");
+               end if;
             end if;
          else
             if comline.cmd_info.installed then

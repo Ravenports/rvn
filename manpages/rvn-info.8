@@ -83,7 +83,6 @@ Displays information from the package archive
 .It Fl f , Cm --full
 Display full information about the packages matching
 .Ar pkg-name .
-This is the default.
 .It Fl g , Cm --glob
 This option treats the search pattern as a case-sensitive glob pattern.
 .It Fl I , Cm --comment
@@ -138,6 +137,17 @@ Display the long format of all files install by
 .Ar pkg-name .
 It is mutually exclusive with -l and -L options.
 .El
+.Pp
+If no arguments are provided,
+.Nm
+outputs the name-subpackage-variant-version identifier along with the
+package comment for all installed packages.
+If only the
+.Cm --quiet
+argument is provided, only the identifier is shown.
+With all other operational modes the
+.Ar pkg-name
+argument is required.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm .

@@ -191,6 +191,26 @@ package body Raven.Cmd.Info is
    end display_individual_attributes;
 
 
+   -------------------------------
+   --  display_no_args_default  --
+   -------------------------------
+   procedure display_no_args_default
+     (mpkg      : Pkgtypes.A_Package;
+      comline   : Cldata)
+   is
+      --  quiet  displays n-s-v-v
+      --  normal displays n-s-v-v padded to 44 + " " + comment
+      info   : Raven.Cmd.switches_info_cmd renames comline.cmd_info;
+      nsvv   : constant String := Pkgtypes.nsvv_identifier (mpkg);
+   begin
+      if comline.common_options.quiet then
+         TIO.Put_Line (nsvv);
+      else
+         TIO.Put_Line (pad_right (nsvv, 44) & " " & USS (mpkg.comment));
+      end if;
+   end display_no_args_default;
+
+
    --------------------
    --  format_label  --
    --------------------
@@ -1074,8 +1094,13 @@ package body Raven.Cmd.Info is
       is
          mypkg : Pkgtypes.A_Package renames Pkgtypes.Package_Set.Element (Position);
       begin
-         if comline.cmd_info.full_information or else num_attr_selected = 0 then
+         if comline.cmd_info.full_information then
             display_full_information (mypkg);
+            return;
+         end if;
+
+         if num_attr_selected = 0 then
+            display_no_args_default (mypkg, comline);
             return;
          end if;
 
