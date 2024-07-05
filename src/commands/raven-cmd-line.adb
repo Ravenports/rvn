@@ -391,6 +391,8 @@ package body Raven.Cmd.Line is
                      data.cmd_info.subpackage := True;
                   elsif datum = "-V" or else datum = "--variant" then
                      data.cmd_info.variant := True;
+                  elsif datum = "-v" or else datum = "--version" then
+                     data.cmd_info.version := True;
                   elsif datum = "-F" or else datum = "--file" then
                      last_cmd := info_archive_file;
                   elsif datum (datum'First) = '-' then

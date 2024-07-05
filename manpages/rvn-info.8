@@ -1,4 +1,4 @@
-.Dd June 25, 2024
+.Dd July 4, 2024
 .Dt RVN-INFO 8
 .Os
 .Sh NAME
@@ -10,12 +10,12 @@
 .Nm
 .Fl a
 .Nm
-.Op Fl ABbMDZdefIjopqrswNSV
+.Op Fl ABbMDZdefIjopqrswNSVv
 .Op Fl L | Fl l
 .Op Fl CEg
 .Ar pkg-name
 .Nm
-.Op Fl ABbMDZdfIjLlopqRswNSV
+.Op Fl ABbMDZdfIjLlopqRswNSVv
 .Op Fl L | Fl l | Fl X
 .Fl F Ar pkg-file
 .Pp
@@ -27,7 +27,7 @@
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
 .Op Cm --{install-message,description,dependencies,remove-message}
 .Op Cm --{exists,full,comment,adjacent-shlibs,options,prefix}
-.Op Cm --{quiet,required-by,size,abi,namebase,subpackage,variant}
+.Op Cm --{quiet,required-by,size,abi,namebase,subpackage,variant,version}
 .Op Cm --list-digests | --list-files
 .Op Cm --{case-sensitive,exact-match,glob}
 .Ar pkg-name
@@ -35,7 +35,7 @@
 .Op Cm --{annotations,required-shlibs,provided-shlibs}
 .Op Cm --{install-message,description,dependencies,remove-message}
 .Op Cm --{full,comment,adjacent-shlibs,options,prefix}
-.Op Cm --{quiet,raw,size,abi,namebase,subpackage,variant}
+.Op Cm --{quiet,raw,size,abi,namebase,subpackage,variant,version}
 .Op Cm --list-digests | --list-files | --list-extended
 .Cm --file Ar pkg-file
 .Sh DESCRIPTION
@@ -129,6 +129,8 @@ Display the total size of files installed by
 .Ar pkg-name .
 .It Fl V , Cm --variant
 Display the variant (the third part of the package name triplet).
+.It Fl v , Cm --version
+Display the package version.
 .It Fl w , Cm --abi
 Display the ABI (operating system / Architecture / Release triplet).
 .It Fl X , Cm --list-extended

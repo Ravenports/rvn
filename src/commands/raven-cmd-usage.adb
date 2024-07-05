@@ -384,8 +384,8 @@ package body Raven.Cmd.Usage is
       is
          msg1 : constant String := "info <pkg-name>";
          msg2 : constant String := "info -a";
-         msg3 : constant String := "info [-ABbMDZdefIopqrswNSV] [-L|-l] [-CE] <pkg-name>";
-         msg4 : constant String := "info [-ABbMDZdfIopqRswNSV] [-L|-l|-X] -F <pkg-file>";
+         msg3 : constant String := "info [-ABbMDZdefIopqrswNSVv] [-L|-l] [-CE] <pkg-name>";
+         msg4 : constant String := "info [-ABbMDZdfIopqRswNSVv] [-L|-l|-X] -F <pkg-file>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);

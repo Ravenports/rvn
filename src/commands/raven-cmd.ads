@@ -151,6 +151,7 @@ private
          namebase           : Boolean := False;  --  -N, --namebase
          subpackage         : Boolean := False;  --  -S, --subpackage
          variant            : Boolean := False;  --  -V, --variant
+         version            : Boolean := False;  --  -v, --version
          path_archive_file  : Text;
          glob_input         : Boolean := False;  --  -g, --glob
       end record;
