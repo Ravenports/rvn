@@ -669,7 +669,9 @@ package body Raven.Cmd.Info is
 
       procedure print (Position : Pkgtypes.NV_Pairs.Cursor)
       is
-         line : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
+         depnsv  : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
+         version : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
+         line    : constant String := depnsv & "-" & version;
       begin
          if single or else quiet
          then
