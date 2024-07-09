@@ -67,8 +67,8 @@ annotate_body() {
 
 	# show test TEXT? tag values for png packages with info command
 	atf_check \
-		-o match:": TEST1 => test1-modified" \
-		-o match:": TEST2 => test2" \
+		-o match:"TEST1 => test1-modified" \
+		-o match:"TEST2 => test2" \
 		-e empty \
 		-s exit:0 \
 		rvn info -A png
@@ -99,7 +99,7 @@ annotate_body() {
 	# prove png TEST1 annotation is gone
 	atf_check \
 		-o not-match:"TEST1 => test1-modified" \
-		-o match:": TEST2 => test2" \
+		-o match:"TEST2 => test2" \
 		-e empty \
 		-s exit:0 \
 		rvn info -A png

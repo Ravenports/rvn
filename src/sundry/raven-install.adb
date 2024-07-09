@@ -434,6 +434,7 @@ package body Raven.Install is
             succeeded := not dependency_missing;
 
             if succeeded then
+               load_installation_data (localdb, cache_map, install_map);
                finalize_work_queue
                  (localdb       => localdb,
                   install_map   => install_map,

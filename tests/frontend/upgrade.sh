@@ -9,7 +9,8 @@ tests_init \
 	dual_conflict \
 	file_become_dir \
 	dir_become_file \
-	dir_is_symlink_to_a_dir
+	dir_is_symlink_to_a_dir \
+	no_dep_conflicts
 
 issue1881_body() {
 	touch dummy.plist
@@ -315,4 +316,74 @@ EOF
 	atf_check \
 		-o inline:'package pkg-single-standard-2\n' \
 		rvn -r ${TMPDIR}/target which -q /share/something/file
+}
+
+
+# verifies this issue is solved
+# Proceed with fetching packages? [y/n]:
+# [1/1] ravenadm-single-standard-3.03_2                             4424 KiB [ok]
+#
+# Conflict found: ncurses-primary-standard package installs files in the same location as ncurses-primary-standard
+# Conflict found: ncurses-terminfo-standard package installs files in the same location as ncurses-terminfo-standard
+#
+no_dep_conflicts_body()
+{
+	mkdir -p ${TMPDIR}/target/var/cache/rvn
+	mkdir files
+	mkdir reposconf
+	cat <<EOF >> reposconf/repo.conf
+local: {
+	url: file:///${TMPDIR},
+	enabled: true
+}
+EOF
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "ravenadm-1" "ravenadm" "single" "standard" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "ravenadm-2" "ravenadm" "single" "standard" "2" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "ncurses" "ncurses" "primary" "standard" "1" "/"
+	cat << EOF >> ${TMPDIR}/ravenadm-1.ucl
+deps: {"ncurses-primary-standard": "1"}
+EOF
+
+	cat << EOF >> ${TMPDIR}/ravenadm-2.ucl
+deps: {"ncurses-primary-standard": "1"}
+EOF
+
+	echo "file1" > file1
+	echo "file2" > file2
+	echo "file1" >  ncurses.plist
+	echo "file2" >> ncurses.plist
+
+	echo "ravenadm" > rfile1
+	echo "rfile1" > ravenadm.plist
+
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m ncurses.ucl -w ncurses.plist
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m ravenadm-1.ucl -w ravenadm.plist
+
+	# generate first version of the repository
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
+	# install ravenadm
+	atf_check \
+		-o ignore \
+		-e empty \
+		-s exit:0 \
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -U -y ravenadm
+
+	# confirmed what it installed
+	atf_check -o inline:"ncurses-primary-standard-1\nravenadm-single-standard-1\n" \
+		-e empty -s exit:0 rvn -r . info -q
+
+	# update ravenadm
+	rm ${TMPDIR}/files/raven*
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m ravenadm-2.ucl -w ravenadm.plist
+
+	# regenerate repository and catalog
+	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+
+	# upgrade ravenadm
+	atf_check -e empty -s exit:0 \
+		-o match:"\[1\/1\]  ravenadm-single-standard-2 \[U\][ ]*\[ok\]" \
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -U -y
 }
