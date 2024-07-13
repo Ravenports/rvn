@@ -16,12 +16,6 @@ package Raven.Database.Schema is
       index_dep1, index_dep2, index_dep3, index_files, index_pkg_namebase, index_pkg_nsv
      );
 
-   type prepared_statement is
-     (main_pkg, user, pkg_user, group, pkg_group, script, pkg_script, option, pkg_option,
-      license, pkg_license, category, pkg_category, directory, pkg_directory, note, pkg_note,
-      dependency, pkg_dependency, library, pkg_provided_lib, pkg_required_lib, pkg_adjacent_lib,
-      pkg_file, pkg_message, pkg_trigger, trig_paths);
-
    function component_definition (component : schema_component) return String;
    function prstat_definition (component : prepared_statement) return String;
    function upgrade_definition (component : Local_Upgrade_Series) return String;

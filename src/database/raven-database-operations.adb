@@ -400,13 +400,13 @@ package body Raven.Database.Operations is
    is
       func : constant String := "initialize_prepared_statements()";
    begin
-      for stmt in SCH.prepared_statement loop
+      for stmt in prepared_statement loop
          declare
             sql : constant String := SCH.prstat_definition (stmt);
             key : constant String :=  pad_right (stmt'Img, 12);
          begin
             Event.emit_debug (low_level, "rdb: init " & key & " > " & SQ (sql));
-            if not SQLite.prepare_sql (db.handle, sql, prepared_statements (stmt)) then
+            if not SQLite.prepare_sql (db.handle, sql, db.prepared_statements (stmt)) then
                CommonSQL.ERROR_SQLITE (db.handle, internal_srcfile, func,
                                        SCH.prstat_definition (stmt));
                return False;
@@ -423,12 +423,12 @@ package body Raven.Database.Operations is
    procedure finalize_prepared_statements (db : in out RDB_Connection) is
    begin
       if db.prstmt_initialized then
-         for stmt in SCH.prepared_statement loop
+         for stmt in prepared_statement loop
             declare
                key : constant String :=  pad_right (stmt'Img, 12);
             begin
                Event.emit_debug (low_level, "rdb: close " & key & " statement");
-               SQLite.finalize_statement (prepared_statements (stmt));
+               SQLite.finalize_statement (db.prepared_statements (stmt));
             end;
          end loop;
       end if;

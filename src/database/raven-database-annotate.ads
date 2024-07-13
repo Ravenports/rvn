@@ -6,7 +6,7 @@ with Raven.Pkgtypes;
 package Raven.Database.Annotate is
 
    procedure annotate_packages
-     (db       : RDB_Connection;
+     (db       : in out RDB_Connection;
       tag      : String;
       note     : String;
       packages : Pkgtypes.Package_Set.Vector);
@@ -38,7 +38,7 @@ private
       del_stmt : in out SQLite.thick_stmt);
 
    procedure annotate_packages_core
-     (db       : RDB_Connection;
+     (db       : in out RDB_Connection;
       tag      : String;
       note     : String;
       packages : Pkgtypes.Package_Set.Vector;

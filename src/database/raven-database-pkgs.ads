@@ -6,6 +6,8 @@ private with Raven.Database.Schema;
 private with Archive.Unpack;
 private with SQLite;
 
+use Raven.Pkgtypes;
+
 package Raven.Database.Pkgs is
 
    --  Upon file path conflict, this will rollback unless "forced" is set.
@@ -27,23 +29,23 @@ private
 
    internal_srcfile : constant String := "raven-database-pkgs.adb";
 
-   procedure squawk_reset_error (stmt_type : SCH.prepared_statement);
+   procedure squawk_reset_error (stmt_type : prepared_statement);
 
    --  Inserts stump-level package data, returns True on success
-   function run_prstmt_main_pkg  (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_category  (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_license   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_user      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_group     (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_directory (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_script    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_library   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_note      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_option    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_depend    (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_file      (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_message   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
-   function run_prstmt_trigger   (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean;
+   function run_prstmt_main_pkg  (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_category  (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_license   (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_user      (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_group     (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_directory (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_script    (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_library   (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_note      (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_option    (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_depend    (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_file      (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_message   (db : in out RDB_Connection; pkg : A_Package) return Boolean;
+   function run_prstmt_trigger   (db : in out RDB_Connection; pkg : A_Package) return Boolean;
 
    function overwrite_main_pkg
      (db    : RDB_Connection;

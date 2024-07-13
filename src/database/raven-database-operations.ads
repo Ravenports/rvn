@@ -16,7 +16,6 @@ package Raven.Database.Operations is
    function localdb_exists (contents : RDB_Contents) return Boolean;
    function localdb_path (contents : RDB_Contents)  return String;
 
-   prepared_statements : array (Raven.Database.Schema.prepared_statement) of SQLite.thick_stmt;
    rvnindex_statement  : SQLite.thick_stmt;
 
    function rindex_db_open

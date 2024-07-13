@@ -43,7 +43,7 @@ package body Raven.Database.Annotate is
    --  annotate_packages  --
    -------------------------
    procedure annotate_packages
-     (db       : RDB_Connection;
+     (db       : in out RDB_Connection;
       tag      : String;
       note     : String;
       packages : Pkgtypes.Package_Set.Vector)
@@ -66,7 +66,7 @@ package body Raven.Database.Annotate is
    --  annotate_packages_core  --
    ------------------------------
    procedure annotate_packages_core
-     (db       : RDB_Connection;
+     (db       : in out RDB_Connection;
       tag      : String;
       note     : String;
       packages : Pkgtypes.Package_Set.Vector;
@@ -77,8 +77,8 @@ package body Raven.Database.Annotate is
       num_pkgs  : constant Natural := Natural (packages.Length);
       revert    : Boolean := False;
 
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.note);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_note);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.note);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_note);
    begin
       if not CommonSQL.transaction_begin (db.handle, internal_srcfile, func, savepoint) then
          Event.emit_error ("Failed to start transaction at " & func);

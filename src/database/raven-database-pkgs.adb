@@ -174,7 +174,7 @@ package body Raven.Database.Pkgs is
    --------------------------
    --  squawk_reset_error  --
    --------------------------
-   procedure squawk_reset_error (stmt_type : SCH.prepared_statement) is
+   procedure squawk_reset_error (stmt_type : prepared_statement) is
    begin
       Event.emit_error ("failed to reset " & stmt_type'Img & " prepared statement");
    end squawk_reset_error;
@@ -183,9 +183,9 @@ package body Raven.Database.Pkgs is
    ---------------------------
    --  run_prstmt_main_pkg  --
    ---------------------------
-   function run_prstmt_main_pkg (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_main_pkg (db : in out RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
    is
-      this_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.main_pkg);
+      this_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.main_pkg);
       automatic : SQLite.sql_int64 := 0;
       liclogic  : SQLite.sql_int64;
       func      : constant String := "run_prstmt_main_pkg";
@@ -201,7 +201,7 @@ package body Raven.Database.Pkgs is
       end case;
 
       if not SQLite.reset_statement (this_stmt) then
-         squawk_reset_error (SCH.main_pkg);
+         squawk_reset_error (Database.main_pkg);
          return False;
       end if;
       SQLite.bind_string (this_stmt, 1, USS (pkg.namebase));
@@ -296,10 +296,10 @@ package body Raven.Database.Pkgs is
    ---------------------------
    --  run_prstmt_category  --
    ---------------------------
-   function run_prstmt_category (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_category (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.category);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_category);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.category);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_category);
 
       func       : constant String := "run_prstmt_category";
       keep_going : Boolean := True;
@@ -322,7 +322,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.category);
+            squawk_reset_error (Database.category);
             keep_going := False;
          end if;
       end insert_main;
@@ -346,7 +346,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_category);
+            squawk_reset_error (Database.pkg_category);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -361,10 +361,10 @@ package body Raven.Database.Pkgs is
    --------------------------
    --  run_prstmt_license  --
    --------------------------
-   function run_prstmt_license (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_license (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.license);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_license);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.license);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_license);
 
       func       : constant String := "run_prstmt_license";
       keep_going : Boolean := True;
@@ -387,7 +387,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.license);
+            squawk_reset_error (Database.license);
             keep_going := False;
          end if;
       end insert_main;
@@ -411,7 +411,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_license);
+            squawk_reset_error (Database.pkg_license);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -426,10 +426,10 @@ package body Raven.Database.Pkgs is
    -----------------------
    --  run_prstmt_user  --
    -----------------------
-   function run_prstmt_user (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_user (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.user);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_user);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.user);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_user);
 
       func       : constant String := "run_prstmt_user";
       keep_going : Boolean := True;
@@ -452,7 +452,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.user);
+            squawk_reset_error (Database.user);
             keep_going := False;
          end if;
       end insert_main;
@@ -476,7 +476,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_user);
+            squawk_reset_error (Database.pkg_user);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -491,10 +491,10 @@ package body Raven.Database.Pkgs is
    ------------------------
    --  run_prstmt_group  --
    ------------------------
-   function run_prstmt_group (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_group (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.group);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_group);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.group);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_group);
 
       func       : constant String := "run_prstmt_group";
       keep_going : Boolean := True;
@@ -517,7 +517,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.group);
+            squawk_reset_error (Database.group);
             keep_going := False;
          end if;
       end insert_main;
@@ -541,7 +541,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_group);
+            squawk_reset_error (Database.pkg_group);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -556,10 +556,10 @@ package body Raven.Database.Pkgs is
    ----------------------------
    --  run_prstmt_directory  --
    ----------------------------
-   function run_prstmt_directory (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_directory (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.directory);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_directory);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.directory);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_directory);
 
       func       : constant String := "run_prstmt_directory";
       keep_going : Boolean := True;
@@ -582,7 +582,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.directory);
+            squawk_reset_error (Database.directory);
             keep_going := False;
          end if;
       end insert_main;
@@ -606,7 +606,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_directory);
+            squawk_reset_error (Database.pkg_directory);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -621,10 +621,10 @@ package body Raven.Database.Pkgs is
    -------------------------
    --  run_prstmt_script  --
    -------------------------
-   function run_prstmt_script (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_script (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.script);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_script);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.script);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_script);
 
       func       : constant String := "run_prstmt_script";
       keep_going : Boolean := True;
@@ -649,7 +649,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.script);
+            squawk_reset_error (Database.script);
             keep_going := False;
          end if;
       end insert_main;
@@ -679,7 +679,7 @@ package body Raven.Database.Pkgs is
             end case;
             phase_ndx := phase_ndx + 1;
          else
-            squawk_reset_error (SCH.pkg_script);
+            squawk_reset_error (Database.pkg_script);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -701,9 +701,9 @@ package body Raven.Database.Pkgs is
    --------------------------
    --  run_prstmt_message  --
    --------------------------
-   function run_prstmt_message (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_message (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_message);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_message);
 
       func       : constant String := "run_prstmt_message";
       keep_going : Boolean := True;
@@ -737,7 +737,7 @@ package body Raven.Database.Pkgs is
             end case;
             msg_ndx := msg_ndx + 1;
          else
-            squawk_reset_error (SCH.pkg_message);
+            squawk_reset_error (Database.pkg_message);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -753,12 +753,12 @@ package body Raven.Database.Pkgs is
    --------------------------
    --  run_prstmt_library  --
    --------------------------
-   function run_prstmt_library (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_library (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt  : SQLite.thick_stmt renames OPS.prepared_statements (SCH.library);
-      pack_stmt1 : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_adjacent_lib);
-      pack_stmt2 : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_provided_lib);
-      pack_stmt3 : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_required_lib);
+      main_stmt  : SQLite.thick_stmt renames db.prepared_statements (Database.library);
+      pack_stmt1 : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_adjacent_lib);
+      pack_stmt2 : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_provided_lib);
+      pack_stmt3 : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_required_lib);
 
       func       : constant String := "run_prstmt_library";
       keep_going : Boolean := True;
@@ -781,7 +781,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.library);
+            squawk_reset_error (Database.library);
             keep_going := False;
          end if;
       end insert_main;
@@ -805,7 +805,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_adjacent_lib);
+            squawk_reset_error (Database.pkg_adjacent_lib);
             keep_going := False;
          end if;
       end insert_into_package1;
@@ -829,7 +829,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_provided_lib);
+            squawk_reset_error (Database.pkg_provided_lib);
             keep_going := False;
          end if;
       end insert_into_package2;
@@ -853,7 +853,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_required_lib);
+            squawk_reset_error (Database.pkg_required_lib);
             keep_going := False;
          end if;
       end insert_into_package3;
@@ -873,10 +873,10 @@ package body Raven.Database.Pkgs is
    -----------------------
    --  run_prstmt_note  --
    -----------------------
-   function run_prstmt_note (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_note (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.note);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_note);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.note);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_note);
 
       func       : constant String := "run_prstmt_note";
       keep_going : Boolean := True;
@@ -899,7 +899,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.note);
+            squawk_reset_error (Database.note);
             keep_going := False;
          end if;
       end insert_main;
@@ -929,7 +929,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_note);
+            squawk_reset_error (Database.pkg_note);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -944,10 +944,10 @@ package body Raven.Database.Pkgs is
    --------------------------
    --  run_prstmt_trigger  --
    --------------------------
-   function run_prstmt_trigger (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_trigger (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_trigger);
-      path_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.trig_paths);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_trigger);
+      path_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.trig_paths);
 
       func       : constant String := "run_prstmt_trigger";
       keep_going : Boolean := True;
@@ -984,7 +984,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.trig_paths);
+            squawk_reset_error (Database.trig_paths);
             keep_going := False;
          end if;
          type_index := SQLite."+" (type_index, 1);
@@ -1009,7 +1009,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_trigger);
+            squawk_reset_error (Database.pkg_trigger);
             keep_going := False;
          end if;
       end inject_code;
@@ -1045,10 +1045,10 @@ package body Raven.Database.Pkgs is
    -------------------------
    --  run_prstmt_option  --
    -------------------------
-   function run_prstmt_option (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_option (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.option);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_option);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.option);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_option);
 
       func       : constant String := "run_prstmt_option";
       keep_going : Boolean := True;
@@ -1071,7 +1071,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.option);
+            squawk_reset_error (Database.option);
             keep_going := False;
          end if;
       end insert_main;
@@ -1097,7 +1097,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_option);
+            squawk_reset_error (Database.pkg_option);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -1112,10 +1112,10 @@ package body Raven.Database.Pkgs is
    -------------------------
    --  run_prstmt_depend  --
    -------------------------
-   function run_prstmt_depend (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_depend (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
-      main_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.dependency);
-      pack_stmt : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_dependency);
+      main_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.dependency);
+      pack_stmt : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_dependency);
 
       func       : constant String := "run_prstmt_depend";
       keep_going : Boolean := True;
@@ -1140,7 +1140,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.dependency);
+            squawk_reset_error (Database.dependency);
             keep_going := False;
          end if;
       end insert_main;
@@ -1166,7 +1166,7 @@ package body Raven.Database.Pkgs is
                   keep_going := False;
             end case;
          else
-            squawk_reset_error (SCH.pkg_dependency);
+            squawk_reset_error (Database.pkg_dependency);
             keep_going := False;
          end if;
       end insert_into_package;
@@ -1235,10 +1235,10 @@ package body Raven.Database.Pkgs is
    -----------------------
    --  run_prstmt_file  --
    -----------------------
-   function run_prstmt_file (db : RDB_Connection; pkg : Pkgtypes.A_Package) return Boolean
+   function run_prstmt_file (db : in out RDB_Connection; pkg : A_Package) return Boolean
    is
       permissive : Boolean := RCU.config_setting (RCU.CFG.permissive);
-      pack_stmt  : SQLite.thick_stmt renames OPS.prepared_statements (SCH.pkg_file);
+      pack_stmt  : SQLite.thick_stmt renames db.prepared_statements (Database.pkg_file);
 
       func       : constant String := "run_prstmt_file";
       keep_going : Boolean := True;
@@ -1308,7 +1308,7 @@ package body Raven.Database.Pkgs is
                   end;
             end case;
          else
-            squawk_reset_error (SCH.pkg_dependency);
+            squawk_reset_error (Database.pkg_dependency);
             keep_going := False;
          end if;
       end insert_into_package;
