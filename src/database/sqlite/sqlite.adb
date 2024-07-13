@@ -79,7 +79,6 @@ package body SQLite is
 
       c_sql     : ICS.chars_ptr;
       result    : IC.int;
-      new_stmt  : thick_stmt;
       unlimited : constant IC.int := IC.int (-1);
       pzTail    : aliased ICS.chars_ptr := ICS.Null_Ptr;
    begin
@@ -87,10 +86,9 @@ package body SQLite is
       result := sqlite_h.sqlite3_prepare_v2 (db     => pDB,
                                              zSql   => c_sql,
                                              nByte  => unlimited,
-                                             ppStmt => new_stmt.pStmt'Access,
+                                             ppStmt => stmt.pStmt'Access,
                                              pzTail => pzTail'Access);
       ICS.Free (c_sql);
-      stmt := new_stmt;
       stmt.initialized := True;
       return (result = sqlite_h.SQLITE_OK);
    end prepare_sql;
@@ -280,10 +278,10 @@ package body SQLite is
    begin
       if stmt.initialized then
          result := sqlite_h.sqlite3_finalize (stmt.pStmt);
+         stmt.char_pointers.Iterate (free_string'Access);
+         stmt.pStmt := null;
+         stmt.initialized := False;
       end if;
-      stmt.char_pointers.Iterate (free_string'Access);
-      stmt.pStmt := null;
-      stmt.initialized := False;
    end finalize_statement;
 
 
