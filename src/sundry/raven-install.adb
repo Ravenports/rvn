@@ -1429,6 +1429,14 @@ package body Raven.Install is
             total_flatsize := 0;
       end decrement;
 
+      function convert (raw : Pkgtypes.Package_Size) return int64 is
+      begin
+         return int64 (raw);
+      exception
+         when constraint_error =>
+            return int64'Last;
+      end convert;
+
       procedure display (Position : Install_Order_Set.Cursor)
       is
          myrec : Install_Order_Type renames Install_Order_Set.Element (Position);
@@ -1458,7 +1466,7 @@ package body Raven.Install is
       Event.emit_message ("The following packages will be installed:" & LAT.LF);
       queue.Iterate (display'Access);
       Event.emit_message (LAT.LF & "Disk space required to install these packages: " &
-                           Metadata.human_readable_size (int64 (total_flatsize)));
+                           Metadata.human_readable_size (convert (total_flatsize)));
    end show_proposed_queue;
 
 
