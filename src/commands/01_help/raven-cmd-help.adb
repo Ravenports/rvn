@@ -12,6 +12,7 @@ with Raven.Strings; use Raven.Strings;
 package body Raven.Cmd.Help is
 
    package LAT renames Ada.Characters.Latin_1;
+   package CLI renames Ada.Command_Line;
    package DIR renames Ada.Directories;
    package OSL renames GNAT.OS_Lib;
 
@@ -149,9 +150,6 @@ package body Raven.Cmd.Help is
    ---------------------
    function show_man_page (manpage : String; section : Character) return Boolean
    is
-      function manprog return String;
-      function manpage_location return String;
-
       mandoc     : constant String := install_loc & "/bin/man";
       sysman     : constant String := "/usr/bin/man";
       use_mandoc : Boolean := False;
@@ -169,14 +167,24 @@ package body Raven.Cmd.Help is
          --  search priority
          --  realpath (../share/man/man<section>/<manpage>.gz)
          --  realpath (../share/man/man<section>/<manpage>)
-         zero : constant String := head (Ada.Command_Line.Command_Name, "/") & "/../share/man/man";
-         base : constant String := zero & section & "/" & manpage & "." & section;
-         first_choice : constant String := Archive.Unix.real_path (base & ".gz");
+         --  If command doesn't resolve with realpath, use install location for gz version
+
+         postman : constant String := section & "/" & manpage & "." & section;
+         cmd_fullpath : constant String := Archive.Unix.real_path (CLI.Command_Name);
       begin
-         if isBlank (first_choice) then
-            return Archive.Unix.real_path (base);
+         if IsBlank (cmd_fullpath) then
+            return install_loc & "/share/man/man" & postman & ".gz";
          end if;
-         return first_choice;
+
+         declare
+            zero : constant String := head (cmd_fullpath, "/") & "/../share/man/man";
+            first_choice : constant String := Archive.Unix.real_path (zero & postman & ".gz");
+         begin
+            if isBlank (first_choice) then
+               return Archive.Unix.real_path (zero & postman);
+            end if;
+            return first_choice;
+         end;
       end manpage_location;
 
    begin
