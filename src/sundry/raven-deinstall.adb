@@ -310,7 +310,6 @@ package body Raven.Deinstall is
          topdir  : constant String := specific_field (dirstr, 2, "/");
       begin
          if topdir = "usr" or else
-           topdir = "etc" or else
            topdir = "bin" or else
            topdir = "sbin" or else
            topdir = "lib" or else
