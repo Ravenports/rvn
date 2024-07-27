@@ -146,9 +146,9 @@ package Raven.Unix is
       sig_path  : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_Verify_Digest, "verify_digest");
 
-   --  time(3) from libc
+   --  time(3) from libc (wrapped for NetBSD)
    function unix_time (tloc : access int64) return int64;
-   pragma Import (C, unix_time, "time");
+   pragma Import (C, unix_time, "rf_time");
 
    --  wrap chroot(2) from libc
    function change_root (dirname : String) return Boolean;
@@ -163,6 +163,7 @@ private
          --  sizeof(struct stat) is 128 on DragonFly
          --  sizeof(struct stat) is 224 on FreeBSD
          --  sizeof(struct stat) is 144 on Linux
+         --  sizeof(struct stat) is 156 on NetBSD
          --  Right now 256 seems to be enough to cover them all.
          block : stat_block;
       end record;
