@@ -368,7 +368,8 @@ package body Raven.Database.Remove is
          if rdeps.Is_Empty then
             purge_list.Append (Pkgtypes.Package_Set.Element (Position));
          else
-            Event.emit_message ("Skipping " & nsv & " because other packages depend on it.");
+            Event.emit_debug
+              (high_level, "Skipping " & nsv & " because other packages depend on it.");
          end if;
       end check;
    begin
