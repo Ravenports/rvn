@@ -33,7 +33,9 @@ package body Raven.Cmd.Stats is
       end if;
 
       if show_catalog then
-         if not show_catalog_stats (USS (comline.common_options.repo_name)) then
+         if not show_catalog_stats (single_repo  => USS (comline.common_options.repo_name),
+                                    option_quiet => comline.common_options.quiet)
+         then
             return False;
          end if;
       end if;
@@ -51,7 +53,7 @@ package body Raven.Cmd.Stats is
    --------------------------
    --  show_catalog_stats  --
    --------------------------
-   function show_catalog_stats (single_repo : String) return Boolean
+   function show_catalog_stats (single_repo : String; option_quiet : Boolean) return Boolean
    is
       mirrors : Repository.A_Repo_Config_Set;
       rdb     : Database.RDB_Connection;
@@ -62,7 +64,7 @@ package body Raven.Cmd.Stats is
          if not Repository.create_local_catalog_database
            (remote_repositories  => mirrors,
             forced               => False,
-            quiet                => True)
+            quiet                => option_quiet)
          then
             Event.emit_error ("Failed to update the local catalog");
          end if;

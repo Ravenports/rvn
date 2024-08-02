@@ -1,4 +1,4 @@
-.Dd June 2, 2024
+.Dd August 2, 2024
 .Dt RVN-RQUERY 8
 .Os
 .Sh NAME
@@ -12,7 +12,7 @@
 .Op Fl a
 .Ao query-format Ac
 .Nm
-.Op Fl U
+.Op Fl qU
 .Op Fl CE
 .Op Fl e Ao evaluation-condition Ac
 .Op Fl r Ar reponame
@@ -22,7 +22,7 @@
 .Op Cm --all
 .Ao query-format Ac
 .Nm
-.Op Cm --no-repo-update
+.Op Cm --{quiet,no-repo-update}
 .Op Cm --{case-sensitive,exact-match}
 .Op Cm --evaluate Ao evaluation-condition Ac
 .Op Cm --repository Ar reponame
@@ -82,7 +82,9 @@ considered the reference and only mirror to be used to download the
 catalog, regardless of the repository configuration and
 .Dq enabled
 setting of that named repository.
-.It Fl U , Fl -no-repo-update
+.It Fl q , Cm --quiet
+Inhibits messages during catalog check and update.
+.It Fl U , Cm --no-repo-update
 Suppress the automatic update of the local copy of the repository catalog
 from remote.
 Automatic repository catalog updates are only attempted when the

@@ -1,4 +1,4 @@
-.Dd June 2, 2024
+.Dd August 2, 2024
 .Dt RVN-VERSION 8
 .Os
 .Sh NAME
@@ -7,7 +7,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl SIR
-.Op Fl vU
+.Op Fl qvU
 .Op Fl r Ar reponame
 .Op Fl l Ar flag | Fl L Ar flag
 .Op Fl CE
@@ -19,7 +19,7 @@
 .Pp
 .Nm
 .Op Cm --{snapshot,index,remote}
-.Op Cm --{verbose,no-repo-update}
+.Op Cm --{quiet,verbose,no-repo-update}
 .Op Cm --repository Ar reponame
 .Op Cm --like Ar flag Cm | --not-like Ar flag
 .Op Cm --{case-sensitive,exact-match}
@@ -102,20 +102,20 @@ Disables explicit and implied wildcards so when the
 .Ar pattern .
 exactly matches the namebase-subpackage-variant
 package name is successful.
-.It Fl S , Fl -snapshot
+.It Fl S , Cm --snapshot
 Use the most current
 .Pa repology.json
 file (which may be newer than the latest Ravenports release) for
 determining if a package is out of date.
-.It Fl I , Fl -index
+.It Fl I , Cm --index
 Use the
 .Pa repology.json
 file from the latest Ravenports release for determining if a package
 is out of date.
 This is the default when the reference is unspecified.
-.It Fl R , Fl -remote
+.It Fl R , Cm --remote
 Use repository catalog as reference for determining if a package is out of date.
-.It Fl U , Fl -no-repo-update
+.It Fl U , Cm --no-repo-update
 Suppress the automatic update of the local copy of the repository catalog
 from remote.
 This only has any effect in combination with the
@@ -127,19 +127,23 @@ considered the reference and only mirror to be used to download the
 catalog, regardless of the repository configuration and
 .Dq enabled
 setting of that named repository.
-.It Fl v , Fl -verbose
+.It Fl q , Cm --quiet
+Inhibits messages during catalog check and update.
+This option coexists with the verbose option below.
+.It Fl v , Cm --verbose
 Additionally show installed and remote versions and source.
-.It Fl l Ar flag , Fl -like Ar flag
+This option coexists with the quiet option above.
+.It Fl l Ar flag , Cm --like Ar flag
 Display only the packages which status flag matches the one specified by
 .Ar flag .
-.It Fl L Ar flag , Fl -not-like Ar flag
+.It Fl L Ar flag , Cm --not-like Ar flag
 Does the opposite of
 .Fl l
 flag.
 Displays the packages which status flag does not match the one
 specified by
 .Ar flag
-.It Fl t Ar version1 Ar version2 , Fl -test-version Ar version1 Ar version2
+.It Fl t Ar version1 Ar version2 , Cm --test-version Ar version1 Ar version2
 Test a pair of version number strings and exit.
 The output consists of one of the single characters
 .Li =
@@ -149,7 +153,7 @@ The output consists of one of the single characters
 .Li \&>
 (left-hand number greater) on standard output.
 This flag is mostly useful for scripts or for testing.
-.It Fl T Ar pkgname Ar pattern , Fl -test-pattern Ar pkgname Ar pattern
+.It Fl T Ar pkgname Ar pattern , Cm --test-pattern Ar pkgname Ar pattern
 Compare
 .Ar pkgname
 against shell glob

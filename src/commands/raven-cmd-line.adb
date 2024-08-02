@@ -519,6 +519,8 @@ package body Raven.Cmd.Line is
                when cv_version =>
                   if datum = sws_verb or else datum = swl_verb then
                      data.common_options.verbose := True;
+                  elsif datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
                   elsif datum = sws_case or else datum = swl_case then
                      data.common_options.case_sensitive := True;
                      Unset.override_setting (Unset.CFG.case_match, True);
@@ -659,6 +661,8 @@ package body Raven.Cmd.Line is
                when cv_rquery =>
                   if datum = "-e" or else datum = "--evaluate" then
                      last_cmd := rquery_evaluate;
+                  elsif datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
                   elsif datum = sws_all or else datum = swl_all then
                      data.common_options.all_installed_pkgs := True;
                   elsif datum = sws_case or else datum = swl_case then
@@ -684,6 +688,8 @@ package body Raven.Cmd.Line is
                      data.cmd_stats.local_only := True;
                   elsif datum = "-c" or else datum = "--catalog" then
                      data.cmd_stats.catalog_only := True;
+                  elsif datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then
                      data.common_options.no_repo_update := True;
                      Unset.override_setting (Unset.CFG.autoupdate, False);

@@ -276,6 +276,7 @@ package body Raven.Cmd.Version is
      (single_repo         : String;
       option_match_status : Boolean;
       option_avoid_status : Boolean;
+      option_quiet        : Boolean;
       option_verbose      : Boolean;
       behave_cs           : Boolean;
       behave_exact        : Boolean;
@@ -317,7 +318,7 @@ package body Raven.Cmd.Version is
          end if;
       end print;
    begin
-      if not refresh_catalog (single_repo) then
+      if not refresh_catalog (single_repo, option_quiet) then
          return False;
       end if;
 
@@ -426,7 +427,6 @@ package body Raven.Cmd.Version is
       end if;
 
       declare
-         option_verbose      : Boolean := comline.common_options.verbose;
          option_match_status : Boolean := (comline.cmd_version.match_char /= Character'First);
          option_avoid_status : Boolean;
          option_cmp_operator : Character;
@@ -451,7 +451,7 @@ package body Raven.Cmd.Version is
                     (source              => release,
                      option_match_status => option_match_status,
                      option_avoid_status => option_avoid_status,
-                     option_verbose      => option_verbose,
+                     option_verbose      => comline.common_options.verbose,
                      behave_cs           => behave_cs,
                      behave_exact        => comline.common_options.exact_match,
                      option_cmp_operator => option_cmp_operator,
@@ -463,7 +463,7 @@ package body Raven.Cmd.Version is
                     (source              => snapshot,
                      option_match_status => option_match_status,
                      option_avoid_status => option_avoid_status,
-                     option_verbose      => option_verbose,
+                     option_verbose      => comline.common_options.verbose,
                      behave_cs           => behave_cs,
                      behave_exact        => comline.common_options.exact_match,
                      option_cmp_operator => option_cmp_operator,
@@ -475,7 +475,8 @@ package body Raven.Cmd.Version is
                  (single_repo         => USS (comline.common_options.repo_name),
                   option_match_status => option_match_status,
                   option_avoid_status => option_avoid_status,
-                  option_verbose      => option_verbose,
+                  option_quiet        => comline.common_options.quiet,
+                  option_verbose      => comline.common_options.verbose,
                   behave_cs           => behave_cs,
                   behave_exact        => comline.common_options.exact_match,
                   option_cmp_operator => option_cmp_operator,
@@ -648,7 +649,7 @@ package body Raven.Cmd.Version is
    -----------------------
    --  refresh_catalog  --
    -----------------------
-   function refresh_catalog (single_repo : String) return Boolean
+   function refresh_catalog (single_repo : String; option_quiet : Boolean) return Boolean
    is
       mirrors : Repository.A_Repo_Config_Set;
    begin
@@ -657,7 +658,7 @@ package body Raven.Cmd.Version is
          if not Repository.create_local_catalog_database
            (remote_repositories  => mirrors,
             forced               => False,
-            quiet                => True)
+            quiet                => option_quiet)
          then
             Event.emit_error ("Failed to update the local catalog");
          end if;

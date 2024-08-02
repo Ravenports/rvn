@@ -698,7 +698,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "version [-SIR] [-vU] [-r reponame] [-l flag] [-L flag] "&
+         msg1 : constant String := "version [-SIR] [-qvU] [-r reponame] [-l flag] [-L flag] "&
                                            "[CE] pattern";
          msg2 : constant String := "version -t <version1> <version2>";
          msg3 : constant String := "version -T <pkgname> <pattern>";
@@ -939,7 +939,7 @@ package body Raven.Cmd.Usage is
       function alert (error_msg : String) return Boolean
       is
          msg1 : constant String := "query [-a] <query-format>";
-         msg2 : constant String := "query [-U] [-CE] [-r reponame] [-e <eval-condition>] ";
+         msg2 : constant String := "query [-qU] [-CE] [-r reponame] [-e <eval-condition>] ";
          msg3 : constant String := "      <query-format> <pattern>";
       begin
          display_error (error_msg);
@@ -985,7 +985,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "stats [-U] [-lc] [-r reponame]";
+         msg1 : constant String := "stats [-qU] [-lc] [-r reponame]";
       begin
          display_error (error_msg);
          display_usage (msg1, True);

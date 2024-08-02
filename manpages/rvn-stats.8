@@ -1,4 +1,4 @@
-.Dd May 25, 2024
+.Dd August 2, 2024
 .Dt RVN-STATS 8
 .Os
 .Sh NAME
@@ -7,12 +7,12 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl lc
-.Op Fl U
+.Op Fl qU
 .Op Fl r Ar reponame
 .Pp
 .Nm
 .Op Cm --{local,catalog}
-.Op Cm --no-repo-update
+.Op Cm --{quiet,no-repo-update}
 .Op Cm --repository Ar reponame
 .Sh DESCRIPTION
 .Nm
@@ -45,7 +45,9 @@ considered the reference and only mirror to be used to download the
 catalog, regardless of the repository configuration and
 .Dq enabled
 setting of that named repository.
-.It Fl U , Fl -no-repo-update
+.It Fl q , Cm --quiet
+Inhibits messages during catalog check and update.
+.It Fl U , Cm --no-repo-update
 Suppress the automatic update of the local copy of the repository catalog
 from remote.
 Automatic repository catalog updates are only attempted when the

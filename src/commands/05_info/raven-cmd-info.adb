@@ -1122,7 +1122,7 @@ package body Raven.Cmd.Info is
             if not Repository.create_local_catalog_database
               (remote_repositories  => mirrors,
                forced               => False,
-               quiet                => True)
+               quiet                => comline.common_options.quiet)
             then
                Event.emit_error ("Failed to update the local catalog");
             end if;
