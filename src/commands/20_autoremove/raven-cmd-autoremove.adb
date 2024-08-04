@@ -104,6 +104,13 @@ package body Raven.Cmd.Autoremove is
       DEL.prune_candidates_with_reverse_deps (rdb, toplist, purge_list);
       Deinstall.determine_purge_order (purge_list, purge_order);
 
+      if purge_list.Is_Empty then
+         if not comline.common_options.quiet then
+            Event.emit_message ("There are no candidates for auto-removal.");
+         end if;
+         return True;
+      end if;
+
       --  Show removal list unless --quiet is set
       Deinstall.show_proposed_queue
         (purge_list   => purge_list,
