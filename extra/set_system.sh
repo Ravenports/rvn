@@ -14,6 +14,7 @@ case "${OSNAME}" in
 	OpenBSD)   platform=openbsd ;;
 	Linux)     platform=linux ;;
 	SunOS)     platform=solaris ;;   # omnios needs entry later
+	Midnight*) platform=midnightbsd ;;
 	*)         platform=generic ;;
 esac
 
