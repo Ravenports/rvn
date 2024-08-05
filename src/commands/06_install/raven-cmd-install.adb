@@ -10,6 +10,7 @@ with Raven.Repository;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
 with Raven.Database.Query;
+with Raven.Database.Remove;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
 with Archive.Unix;
@@ -21,6 +22,7 @@ package body Raven.Cmd.Install is
    package PKGS renames Raven.Database.Pkgs;
    package LOK  renames Raven.Database.Lock;
    package QRY  renames Raven.Database.Query;
+   package DEL  renames Raven.Database.Remove;
    package OPS  renames Raven.Database.Operations;
 
    -------------------------------
@@ -48,6 +50,7 @@ package body Raven.Cmd.Install is
             end if;
 
             install_success := install_single_local_package (rdb, comline);
+            DEL.prune_orphaned_rows_in_dependencies_table (rdb);
 
             if not LOK.release_lock (rdb, LOK.lock_exclusive) then
                Event.emit_error (LOK.no_exc_lock);

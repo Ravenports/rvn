@@ -170,6 +170,8 @@ package body Raven.Cmd.Remove is
          quiet        => comline.common_options.quiet,
          rootdir      => extract_location);
 
+      DEL.prune_orphaned_rows_in_dependencies_table (rdb);
+
       if not LOK.downgrade_lock (rdb, LOK.lock_exclusive, LOK.lock_advisory) then
          Event.emit_error ("Failed downgrade to advisory lock");
          return False;

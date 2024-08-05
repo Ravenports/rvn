@@ -36,6 +36,9 @@ package Raven.Database.Remove is
       top_packages   : Pkgtypes.Package_Set.Vector;
       purge_list     : in out Pkgtypes.Package_Set.Vector);
 
+   procedure prune_orphaned_rows_in_dependencies_table
+     (db : RDB_Connection);
+
 private
 
    internal_srcfile : constant String := "raven-database-remove.adb";

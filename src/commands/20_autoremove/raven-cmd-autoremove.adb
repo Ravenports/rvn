@@ -144,6 +144,8 @@ package body Raven.Cmd.Autoremove is
          quiet        => comline.common_options.quiet,
          rootdir      => extract_location);
 
+      DEL.prune_orphaned_rows_in_dependencies_table (rdb);
+
       --  Run query again to see if any new packages were orphaned and let the user know.
       if not comline.common_options.quiet then
          declare

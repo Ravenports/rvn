@@ -502,6 +502,8 @@ package body Raven.Install is
          end if;
       end if;
 
+      DEL.prune_orphaned_rows_in_dependencies_table (localdb);
+
       released2 := LOK.release_lock (localdb, LOK.lock_readonly);
       OPS.rdb_close (localdb);
 
@@ -699,6 +701,8 @@ package body Raven.Install is
             Event.emit_message ("No matches in the remote catalog were found.");
          end if;
       end if;
+
+      DEL.prune_orphaned_rows_in_dependencies_table (localdb);
 
       released2 := LOK.release_lock (localdb, LOK.lock_readonly);
       OPS.rdb_close (localdb);

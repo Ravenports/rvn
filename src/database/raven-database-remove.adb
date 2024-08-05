@@ -377,4 +377,22 @@ package body Raven.Database.Remove is
    end prune_candidates_with_reverse_deps;
 
 
+   -------------------------------------------------
+   --  prune_orphaned_rows_in_dependencies_table  --
+   -------------------------------------------------
+   procedure prune_orphaned_rows_in_dependencies_table (db : RDB_Connection)
+   is
+      func : constant String := "prune_orphaned_rows_in_dependencies_table";
+      sql  : constant String := "DELETE FROM dependencies WHERE dependency_id IN (" &
+        "SELECT d.dependency_id FROM dependencies d " &
+        "LEFT JOIN pkg_dependencies pd ON d.dependency_id = pd.dependency_id " &
+        "WHERE pd.package_id is null)";
+   begin
+      case CommonSQL.exec (db.handle, sql) is
+         when RESULT_OK => null;
+         when others =>
+            Event.emit_error (func & ": failed to prune dependencies table");
+      end case;
+   end prune_orphaned_rows_in_dependencies_table;
+
 end Raven.Database.Remove;
