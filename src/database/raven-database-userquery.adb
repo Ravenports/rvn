@@ -134,7 +134,7 @@ package body Raven.Database.UserQuery is
       rdep_subquery : constant String :=
         "(select count(xx.package_id) from pkg_dependencies xx " &
         "join dependencies dd on xx.dependency_id = dd.dependency_id " &
-        "where dd.nsv = p.namebase ||'-'|| p.subpackage ||'-'|| p.variant)";
+        "where dd.nsv = p.namebase ||'~'|| p.subpackage ||'~'|| p.variant)";
 
       function count_subquery (table_name, id_name : String) return String is
       begin
@@ -866,7 +866,7 @@ package body Raven.Database.UserQuery is
          func     : constant String := "query_package_database";
          rev_sql  : constant String :=
            "SELECT p.namebase, p.subpackage, p.variant, p.version, " &
-           "       p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as nsv " &
+           "       p.namebase ||'~'|| p.subpackage ||'~'|| p.variant as nsv " &
            "FROM packages as p JOIN pkg_dependencies x on x.package_id = p.id " &
            "WHERE x.dependency_id = (SELECT d.dependency_id FROM dependencies d WHERE nsv = ?) " &
            "ORDER by nsv";
@@ -906,16 +906,17 @@ package body Raven.Database.UserQuery is
                      is
                         component : constant String := USS (Pkgtypes.Text_List.Element (Position));
                         token     : constant A_Token := get_token (component);
+                        delim     : constant String (1 .. 1) := (1 => LAT.Tilde);
                      begin
                         case token is
                            when token_unrecognized =>
                               SU.Append (outline, component);
                            when token_ml_deps_namebase =>
-                              SU.Append (outline, specific_field (USS (result (token)), 1, "-"));
+                              SU.Append (outline, specific_field (USS (result (token)), 1, delim));
                            when token_ml_deps_spkg =>
-                              SU.Append (outline, specific_field (USS (result (token)), 2, "-"));
+                              SU.Append (outline, specific_field (USS (result (token)), 2, delim));
                            when token_ml_deps_variant =>
-                              SU.Append (outline, specific_field (USS (result (token)), 3, "-"));
+                              SU.Append (outline, specific_field (USS (result (token)), 3, delim));
                            when token_size_iec_units =>
                               SU.Append (outline, Metadata.human_readable_size
                                          (int64'Value (USS (result (token)))));

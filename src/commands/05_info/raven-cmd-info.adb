@@ -631,7 +631,7 @@ package body Raven.Cmd.Info is
       is
          dependency : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
          version    : constant String := metatree.get_object_value (ondx, dependency);
-         line       : constant String := dependency & "-" & version;
+         line       : constant String := dependency & LAT.Tilde & version;
       begin
          if single or else quiet then
             TIO.Put_Line (line);
@@ -671,7 +671,7 @@ package body Raven.Cmd.Info is
       is
          depnsv  : constant String := USS (Pkgtypes.NV_Pairs.Key (Position));
          version : constant String := USS (Pkgtypes.NV_Pairs.Element (Position));
-         line    : constant String := depnsv & "-" & version;
+         line    : constant String := depnsv & LAT.Tilde & version;
       begin
          if single or else quiet
          then

@@ -42,7 +42,7 @@ package Raven.Database.Remove is
 private
 
    internal_srcfile : constant String := "raven-database-remove.adb";
-   nsv_formula : constant String := "p.namebase ||'-'|| p.subpackage ||'-'|| p.variant";
+   nsv_formula : constant String := "p.namebase ||'~'|| p.subpackage ||'~'|| p.variant";
 
    package ID_Set is new Ada.Containers.Hashed_Maps
      (Key_Type        => Text,

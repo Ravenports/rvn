@@ -95,11 +95,11 @@ package body Raven.Database.Fetch is
       single_repo  : String) return Boolean
    is
       basesql : constant String :=
-        "SELECT namebase ||'-'|| subpackage ||'-'|| variant as nsv, " &
-        "namebase ||'-'|| subpackage ||'-'|| variant ||'-'|| version as nsvv, " &
+        "SELECT namebase ||'~'|| subpackage ||'~'|| variant as nsv, " &
+        "namebase ||'~'|| subpackage ||'~'|| variant ||'~'|| version as nsvv, " &
         "flatsize, rvnsize, rvndigest FROM packages";
       base_dep_sql : constant String :=
-        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as pnsv, d.nsv " &
+        "SELECT p.namebase ||'~'|| p.subpackage ||'~'|| p.variant as pnsv, d.nsv " &
         "FROM packages AS p " &
         "JOIN pkg_dependencies AS x ON x.package_id = p.id " &
         "JOIN dependencies AS d ON d.dependency_id = x.dependency_id";
@@ -872,7 +872,7 @@ package body Raven.Database.Fetch is
    is
       func : constant String := "map_nsv_to_version";
       sql  : constant String :=
-        "SELECT namebase ||'-'|| subpackage ||'-'|| variant as nsv, version from packages";
+        "SELECT namebase ||'~'|| subpackage ||'~'|| variant as nsv, version from packages";
       new_stmt : SQLite.thick_stmt;
    begin
       if not SQLite.prepare_sql (db.handle, sql, new_stmt) then

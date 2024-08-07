@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 
+with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Context;
 with Raven.Pkgtypes;
@@ -14,6 +15,7 @@ with Archive.Unix;
 
 package body Raven.Cmd.Search is
 
+   package LAT renames Ada.Characters.Latin_1;
    package LOK renames Raven.Database.Lock;
    package SEA renames Raven.Database.Search;
    package OPS renames Raven.Database.Operations;
@@ -50,6 +52,7 @@ package body Raven.Cmd.Search is
          pkg : Pkgtypes.A_Package renames Pkgtypes.Package_Set.Element (Position);
          quiet : Boolean renames comline.common_options.quiet;
          ident : constant String := Pkgtypes.nsvv_identifier (pkg);
+         delim : constant String (1 .. 1) := (1 => LAT.Tilde);
          topline : Text;
       begin
          if quiet or else
@@ -67,7 +70,7 @@ package body Raven.Cmd.Search is
                when comment     => SU.Append (topline, pkg.comment);
                when namebase    => SU.Append (topline, pkg.namebase);
                when description => SU.Append (topline, pkg.desc);
-               when triplet     => SU.Append (topline, head (ident, "-"));
+               when triplet     => SU.Append (topline, head (ident, delim));
             end case;
             Event.emit_message (USS (topline));
          end if;

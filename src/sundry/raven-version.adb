@@ -2,10 +2,13 @@
 --  Reference: /License.txt
 
 
+with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Strings; use Raven.Strings;
 
 package body Raven.Version is
+
+   package LAT renames Ada.Characters.Latin_1;
 
    --------------------------------------------------------------------
    --  split_version
@@ -21,14 +24,15 @@ package body Raven.Version is
       function get_versionstr return String
       is
          count : Natural;
+         delim : constant String (1 .. 1) := (1 => LAT.Tilde);
       begin
-         --  Look for the last '-' the the pkgname
-         count := count_char (pkgname, '-');
+         --  Look for the last '~' the the pkgname
+         count := count_char (pkgname, LAT.Tilde);
          if count = 0 then
             --  Cheat if we are just passed a version, not a valid package name
             return pkgname;
          else
-            return specific_field (pkgname, count + 1, "-");
+            return specific_field (pkgname, count + 1, delim);
          end if;
       end get_versionstr;
 

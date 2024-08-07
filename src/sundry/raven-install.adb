@@ -1359,7 +1359,7 @@ package body Raven.Install is
       end emit;
    begin
       if nextpkg.level = 0 then
-         emit (progress & USS (nextpkg.nsv) & "-" & version & star);
+         emit (progress & USS (nextpkg.nsv) & LAT.Tilde & version & star);
          return;
       end if;
 
@@ -1376,7 +1376,7 @@ package body Raven.Install is
             end if;
             index := index + 2;
          end loop;
-         emit (progress & verts & USS (nextpkg.nsv) & '-' & version & star);
+         emit (progress & verts & USS (nextpkg.nsv) & LAT.Tilde & version & star);
       end;
    end print_next_installation;
 

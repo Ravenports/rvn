@@ -61,7 +61,8 @@ package body Raven.Deinstall is
       z_namebase        : constant String := USS (installed_package.namebase);
       z_subpackage      : constant String := USS (installed_package.subpackage);
       z_variant         : constant String := USS (installed_package.variant);
-      nsv               : constant String := z_namebase & '-' & z_subpackage & '-' & z_variant;
+      nsv               : constant String := z_namebase & LAT.Tilde & z_subpackage & LAT.Tilde &
+                                             z_variant;
       shell_out_handle  : Ada.Text_IO.File_Type;
       lua_out_handle    : Ada.Text_IO.File_Type;
 

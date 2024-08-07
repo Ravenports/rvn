@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Characters.Latin_1;
 with SQLite;
 with Blake_3;
 with Raven.Event;
@@ -13,6 +14,7 @@ use Raven.Strings;
 package body Raven.Database.Query is
 
    package RCU renames Raven.Cmd.Unset;
+   package LAT renames Ada.Characters.Latin_1;
 
 
    ------------------------------------
@@ -406,8 +408,9 @@ package body Raven.Database.Query is
                      declare
                         digest10 : constant String (1 .. 10) :=
                           digest32 (digest32'First .. digest32'first + 9);
-                        filename : constant String := namebase & "-" & subpackage & "-" &
-                          variant & "-" & version & "~" & digest10 & extension;
+                        filename : constant String := namebase & LAT.Tilde & subpackage &
+                          LAT.Tilde & variant & LAT.Tilde & version & LAT.Tilde &
+                          digest10 & extension;
                         dkey : constant Text := SUS (digest10);
                      begin
                         if file_map.Contains (dkey) then
@@ -418,8 +421,8 @@ package body Raven.Database.Query is
                         end if;
                      end;
                   else
-                     Event.emit_debug (moderate, "digest of " & namebase & "-" & subpackage &
-                                         "-" & variant & " is not 64 chars long, ignored");
+                     Event.emit_debug (moderate, "digest of " & namebase & LAT.Tilde & subpackage &
+                                         LAT.Tilde & variant & " is not 64 chars long, ignored");
                   end if;
                end;
             when SQLite.something_else =>
@@ -443,7 +446,7 @@ package body Raven.Database.Query is
    is
       func : constant String := "all_installed_packages";
       sql  : constant String :=
-        "SELECT id, namebase ||'-'|| subpackage ||'-'|| variant as nsv FROM packages";
+        "SELECT id, namebase ||'~'|| subpackage ||'~'|| variant as nsv FROM packages";
       new_stmt : SQLite.thick_stmt;
    begin
       package_map.Clear;
@@ -858,14 +861,16 @@ package body Raven.Database.Query is
         "JOIN dependencies ml ON x.dependency_id = ml.dependency_id " &
         "WHERE x.package_id = ? ORDER BY ml.nsv";
 
-      function allow_insert (dep_nsv : String) return Boolean is
+      function allow_insert (dep_nsv : String) return Boolean
+      is
+         delim : constant String (1 .. 1) := (1 => LAT.Tilde);
       begin
          if not cfg_filter then
             return True;
          end if;
          declare
-            spkg_index : constant Natural := count_char (dep_nsv, '-');
-            subpackage : constant String := specific_field (dep_nsv, spkg_index, "-");
+            spkg_index : constant Natural := count_char (dep_nsv, LAT.Tilde);
+            subpackage : constant String := specific_field (dep_nsv, spkg_index, delim);
          begin
             return not RCU.subpackage_type_banned (subpackage);
          end;

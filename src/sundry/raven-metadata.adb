@@ -838,12 +838,13 @@ package body Raven.Metadata is
       dtype : ThickUCL.Leaf_type;
       vndx  : ThickUCL.object_index;
       jar   : ThickUCL.jar_string.Vector;
+      delim : constant String (1 .. 1) := (1 => LAT.Tilde);
 
       procedure insert_nv (Position : ThickUCL.jar_string.Cursor)
       is
          dep_nsv : constant String := USS (ThickUCL.jar_string.Element (Position).payload);
-         spkg_index : constant Natural := count_char (dep_nsv, '-');
-         subpackage : constant String := specific_field (dep_nsv, spkg_index, "-");
+         spkg_index : constant Natural := count_char (dep_nsv, LAT.Tilde);
+         subpackage : constant String := specific_field (dep_nsv, spkg_index, delim);
       begin
          if RCU.subpackage_type_banned (subpackage) then
             return;

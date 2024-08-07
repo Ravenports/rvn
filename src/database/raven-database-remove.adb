@@ -223,7 +223,7 @@ package body Raven.Database.Remove is
       new_stmt : SQLite.thick_stmt;
       func : constant String := "gather_reverse_dependencies";
       sql  : constant String :=
-        "SELECT p.id, p.namebase ||'-'|| p.subpackage ||'-'|| p.variant as nsv " &
+        "SELECT p.id, p.namebase ||'~'|| p.subpackage ||'~'|| p.variant as nsv " &
         "FROM packages as p JOIN pkg_dependencies x on x.package_id = p.id " &
         "WHERE x.dependency_id = (SELECT d.dependency_id FROM dependencies d WHERE nsv = ?)";
    begin

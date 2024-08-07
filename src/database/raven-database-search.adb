@@ -35,7 +35,7 @@ package body Raven.Database.Search is
          elsif s_desc then
             return "desc";
          elsif s_nsv then
-            return "namebase ||'-'|| subpackage ||'-'|| variant";
+            return "namebase ||'~'|| subpackage ||'~'|| variant";
          else
             return "namebase";
          end if;
@@ -397,7 +397,7 @@ package body Raven.Database.Search is
    is
       func : constant String := "print_dependencies";
       sql : constant String :=
-        "SELECT d.nsv ||'-'|| d.version as nsvv " &
+        "SELECT d.nsv ||'~'|| d.version as nsvv " &
         "FROM pkg_dependencies x " &
         "JOIN dependencies d on x.dependency_id = d.dependency_id " &
         "WHERE x.package_id = ? " &
@@ -417,9 +417,9 @@ package body Raven.Database.Search is
    is
       func : constant String := "print_reverse_dependencies";
       subquery : constant String := "(SELECT d.dependency_id FROM dependencies d WHERE nsv = " &
-        "(SELECT namebase ||'-'|| subpackage ||'-'|| variant FROM packages WHERE id = ?)) ";
+        "(SELECT namebase ||'~'|| subpackage ||'~'|| variant FROM packages WHERE id = ?)) ";
       sql : constant String :=
-        "SELECT p.namebase ||'-'|| p.subpackage ||'-'|| p.variant ||'-'|| p.version as nsvv " &
+        "SELECT p.namebase ||'~'|| p.subpackage ||'~'|| p.variant ||'~'|| p.version as nsvv " &
         "FROM packages as p " &
         "JOIN pkg_dependencies x on x.package_id = p.id " &
         "WHERE x.dependency_id = " & subquery &

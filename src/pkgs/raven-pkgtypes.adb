@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Characters.Latin_1;
 with Archive.Unix;
 with Raven.Version;
 with Raven.Strings;
@@ -8,6 +9,7 @@ use Raven.Strings;
 
 package body Raven.Pkgtypes is
 
+   package LAT renames Ada.Characters.Latin_1;
 
    -----------------------
    --  nsvv_identifier  --
@@ -19,7 +21,7 @@ package body Raven.Pkgtypes is
       V : constant String := USS (pkg.variant);
       Z : constant String := USS (pkg.version);
    begin
-      return N & '-' & S & '-' & V & '-' & Z;
+      return N & LAT.Tilde & S & LAT.Tilde & V & LAT.Tilde & Z;
    end nsvv_identifier;
 
 
@@ -32,7 +34,7 @@ package body Raven.Pkgtypes is
       S : constant String := USS (pkg.subpackage);
       V : constant String := USS (pkg.variant);
    begin
-      return N & '-' & S & '-' & V;
+      return N & LAT.Tilde & S & LAT.Tilde & V;
    end nsv_identifier;
 
 

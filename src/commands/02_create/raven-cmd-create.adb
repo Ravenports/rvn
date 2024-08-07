@@ -8,6 +8,7 @@ with Raven.Context;
 with Raven.Strings; use Raven.Strings;
 with Ada.Directories;
 with Ada.Environment_Variables;
+with Ada.Characters.Latin_1;
 with Archive.Pack;
 with Archive.Unix;
 with ThickUCL.Files;
@@ -19,6 +20,7 @@ package body Raven.Cmd.Create is
    package MET renames Raven.Metadata;
    package DIR renames Ada.Directories;
    package ENV renames Ada.Environment_Variables;
+   package LAT renames Ada.Characters.Latin_1;
 
 
    ------------------------------
@@ -94,7 +96,6 @@ package body Raven.Cmd.Create is
       function determine_basename return String
       is
          --  must be run after it's determined metadata file is valid (if provided)
-         hyphen : constant Character := '-';
       begin
          if not IsBlank (comline.common_options.name_pattern) then
             return USS (comline.common_options.name_pattern);
@@ -115,9 +116,9 @@ package body Raven.Cmd.Create is
               MET.string_data_exists (metatree, MET.version)
             then
                return
-                 MET.reveal_namebase (metatree) & hyphen &
-                 MET.reveal_subpackage (metatree) & hyphen &
-                 MET.reveal_variant (metatree) & hyphen &
+                 MET.reveal_namebase (metatree) & LAT.Tilde &
+                 MET.reveal_subpackage (metatree) & LAT.Tilde &
+                 MET.reveal_variant (metatree) & LAT.Tilde &
                  MET.reveal_version (metatree);
             else
                Raven.Event.emit_error ("pkg-name was not provided, but metadata " &

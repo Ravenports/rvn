@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Ada.Directories;
+with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Strings;
 with Raven.Context;
@@ -15,6 +16,7 @@ use Raven.Strings;
 
 package body Raven.Database.Pkgs is
 
+   package LAT renames Ada.Characters.Latin_1;
    package OPS renames Raven.Database.Operations;
    package QRY renames Raven.Database.Query;
    package RCU renames Raven.Cmd.Unset;
@@ -1288,13 +1290,13 @@ package body Raven.Database.Pkgs is
                      else
                         declare
                            NSVV : constant String := USS (these_packages.Element (0).namebase) &
-                             "-" & USS (these_packages.Element (0).subpackage) &
-                             "-" & USS (these_packages.Element (0).variant) &
-                             "-" & USS (these_packages.Element (0).version);
+                             LAT.Tilde & USS (these_packages.Element (0).subpackage) &
+                             LAT.Tilde & USS (these_packages.Element (0).variant) &
+                             LAT.Tilde & USS (these_packages.Element (0).version);
                            newpkg : constant String := USS (pkg.namebase) &
-                             "-" & USS (pkg.subpackage) &
-                             "-" & USS (pkg.variant) &
-                             "-" & USS (pkg.version);
+                             LAT.Tilde & USS (pkg.subpackage) &
+                             LAT.Tilde & USS (pkg.variant) &
+                             LAT.Tilde & USS (pkg.version);
                         begin
                            Event.emit_error
                              (newpkg & " conflicts with " & NSVV &
