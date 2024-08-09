@@ -938,9 +938,9 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "query [-a] <query-format>";
-         msg2 : constant String := "query [-qU] [-CE] [-r reponame] [-e <eval-condition>] ";
-         msg3 : constant String := "      <query-format> <pattern>";
+         msg1 : constant String := "rquery [-a] <query-format>";
+         msg2 : constant String := "rquery [-qU] [-CE] [-r reponame] [-e <eval-condition>] ";
+         msg3 : constant String := "       <query-format> <pattern>";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
