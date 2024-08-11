@@ -864,16 +864,22 @@ package body Raven.Database.Query is
       function allow_insert (dep_nsv : String) return Boolean
       is
          delim : constant String (1 .. 1) := (1 => LAT.Tilde);
+         spkg_index : constant Natural := count_char (dep_nsv, LAT.Tilde);
       begin
          if not cfg_filter then
             return True;
          end if;
-         declare
-            spkg_index : constant Natural := count_char (dep_nsv, LAT.Tilde);
-            subpackage : constant String := specific_field (dep_nsv, spkg_index, delim);
-         begin
-            return not RCU.subpackage_type_banned (subpackage);
-         end;
+         --  After tilde epoch, spkg_index should ALWAYS be two.
+         --  Pre-epoch databases which have spkg_index evaluate to zero which caused a constraint
+         --  error.
+         if spkg_index = 2 then
+            declare
+               subpackage : constant String := specific_field (dep_nsv, spkg_index, delim);
+            begin
+               return not RCU.subpackage_type_banned (subpackage);
+            end;
+         end if;
+         return True;
       end allow_insert;
    begin
       incomplete.dependencies.clear;
