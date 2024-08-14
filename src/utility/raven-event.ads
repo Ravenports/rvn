@@ -37,6 +37,8 @@ package Raven.Event is
       rvnsize : Pkgtypes.Package_Size;
       result  : String);
 
+   procedure emit_stack_trace;
+
 private
 
    --  warnx prints the message to stdout verbatim

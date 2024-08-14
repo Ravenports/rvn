@@ -287,9 +287,8 @@ package body Raven.Cmd.Genrepo is
                      created := True;
                   exception
                      when others =>
-                        just_stop := False;
-                        Event.emit_error
-                          ("Failed to create temporary file " & rvn_filename);
+                        just_stop := True;
+                        Event.emit_error ("Failed to create temporary file " & rvn_filename);
                   end;
                end if;
 
@@ -322,6 +321,11 @@ package body Raven.Cmd.Genrepo is
             end if;
             finished_task (lot) := True;
             Event.emit_debug (low_level, "Completed scan task" & lot'Img);
+         exception
+            when disaster : others =>
+               Event.emit_error
+                 ("!!!! CRASH !!!! " & Ada.Exceptions.Exception_Information (disaster));
+               Event.emit_stack_trace;
          end scan;
 
          scan_01 : scan (lot => 1);

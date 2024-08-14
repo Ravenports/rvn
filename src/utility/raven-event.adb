@@ -6,11 +6,13 @@ with Raven.Unix;
 with Raven.Context;
 with ThickUCL.Emitter;
 with Ucl;
+with GNAT.Traceback.Symbolic;
 with Raven.Strings; use Raven.Strings;
 
 package body Raven.Event is
 
    package TIO renames Ada.Text_IO;
+   package TRC renames GNAT.Traceback;
 
    ------------------
    --  pipe_event  --
@@ -381,5 +383,19 @@ package body Raven.Event is
       jmsg.close_object;
       pipe_event (ThickUCL.Emitter.emit_compact_ucl (jmsg, True));
    end emit_override_auto;
+
+
+   ------------------------
+   --  emit_stack_trace  --
+   ------------------------
+   procedure emit_stack_trace
+   is
+      trace : TRC.Tracebacks_Array (1 .. 2_000);
+      trlen : Natural;
+   begin
+      warnx ("Dump of stack:");
+      TRC.Call_Chain (trace, trlen);
+      warnx (TRC.Symbolic.Symbolic_Traceback (trace (1 .. trlen)));
+   end emit_stack_trace;
 
 end Raven.Event;
