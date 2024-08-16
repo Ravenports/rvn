@@ -289,13 +289,23 @@ package body Raven.Cmd.Genrepo is
                      when others =>
                         just_stop := True;
                         Event.emit_error ("Failed to create temporary file " & rvn_filename);
+                        return;
                   end;
                end if;
 
-               operation.open_rvn_archive
-                 (rvn_archive   => archive_path,
-                  verbosity     => Archive.silent,
-                  optional_pipe => Archive.Unix.not_connected);
+               begin
+                  operation.open_rvn_archive
+                    (rvn_archive   => archive_path,
+                     verbosity     => Archive.silent,
+                     optional_pipe => Archive.Unix.not_connected);
+               exception
+                  when failed_open : others =>
+                     just_stop := True;
+                     Event.emit_error ("Failed to open RVN archive " & archive_path);
+                     Event.emit_error
+                       ("Details: " & Ada.Exceptions.Exception_Information (failed_open));
+                     return;
+               end;
                operation.populate_metadata_tree (metatree);
                operation.close_rvn_archive;
 
