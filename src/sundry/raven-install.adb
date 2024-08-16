@@ -1277,6 +1277,7 @@ package body Raven.Install is
                                 ("Conflict found: " & USS (myrec.nsv) &
                                    " package installs files in the same location as " &
                                    USS (file_collection.Element (fpath)));
+                              Event.emit_error ("              : " & USS (fpath));
                               exit;
                            end if;
                         end;
