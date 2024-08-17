@@ -203,4 +203,7 @@ private
      (rdb         : in out Database.RDB_Connection;
       trigger_set : in out Triggers.A_Trigger_Set);
 
+   function variant_clash_detected
+     (toplevel    : Pkgtypes.Package_Map.Map) return Boolean;
+
 end Raven.Install;

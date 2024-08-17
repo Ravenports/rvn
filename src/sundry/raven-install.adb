@@ -305,6 +305,7 @@ package body Raven.Install is
       install_map : Pkgtypes.Package_Map.Map;
       queue       : Install_Order_Set.Vector;
       rev_queue   : Install_Order_Set.Vector;
+      var_clash   : Boolean;
 
       function release_active_lock (db : in out Database.RDB_Connection) return Boolean is
       begin
@@ -389,6 +390,12 @@ package body Raven.Install is
 
       --  NOTE: unlike "install_remote_packages", we query localdb first, not rdb.
       succeeded := assemble_work_queue (localdb, opt_exact_match, patterns, initial_map);
+      if succeeded then
+         var_clash := variant_clash_detected (initial_map);
+         if var_clash then
+            succeeded := False;
+         end if;
+      end if;
       if succeeded then
          install_map.clear;
          if opt_force then
@@ -497,7 +504,9 @@ package body Raven.Install is
             end if;
          end;
       else
-         if not opt_quiet then
+         if not var_clash and then
+           not opt_quiet
+         then
             Event.emit_message ("No installed packages matched.");
          end if;
       end if;
@@ -1863,5 +1872,60 @@ package body Raven.Install is
 
       trigger_set.execute;
    end execute_triggers;
+
+
+   ------------------------------
+   --  variant_clash_detected  --
+   ------------------------------
+   function variant_clash_detected (toplevel : Pkgtypes.Package_Map.Map) return Boolean
+   is
+      msg_head : constant String := "Fatal: Search patterns returned ambiguous results!";
+      msg_2    : constant String := "Multiple variants were selected, so more stringent " &
+                                    "search patterns are required.";
+      clash_detected : Boolean := false;
+      virgin         : Boolean := True;
+      result_count   : constant Natural := Natural (toplevel.Length);
+      nsvv_keys      : Pkgtypes.Text_List.Vector;
+
+      procedure push_nsvv_key (Position : Pkgtypes.Package_Map.Cursor) is
+      begin
+         nsvv_keys.Append (Pkgtypes.Package_Map.Key (Position));
+      end push_nsvv_key;
+
+      function records_clash (nsvv_key_1 : Text; nsvv_key_2 : Text) return Boolean
+      is
+         problem : Boolean := False;
+      begin
+         if equivalent (toplevel.Element (nsvv_key_1).namebase,
+                        toplevel.Element (nsvv_key_2).namebase)
+         then
+            if not equivalent (toplevel.Element (nsvv_key_1).variant,
+                               toplevel.Element (nsvv_key_2).variant)
+            then
+               problem := True;
+            end if;
+         end if;
+         return problem;
+      end records_clash;
+   begin
+      if result_count > 1 then
+         toplevel.Iterate (push_nsvv_key'Access);
+         for y in 1 .. result_count - 1 loop
+            for x in 0 .. y - 2 loop
+               if records_clash (nsvv_keys.Element (x), nsvv_keys.Element (y)) then
+                  clash_detected := True;
+                  if virgin then
+                     Event.emit_error (msg_head);
+                     Event.emit_error (msg_2);
+                  end if;
+                  virgin := False;
+                  Event.emit_error ("clash: " & USS (nsvv_keys.Element (x)) & " versus " &
+                                      USS (nsvv_keys.Element (y)));
+               end if;
+            end loop;
+         end loop;
+      end if;
+      return clash_detected;
+   end variant_clash_detected;
 
 end Raven.Install;
