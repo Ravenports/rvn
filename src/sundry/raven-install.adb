@@ -305,7 +305,6 @@ package body Raven.Install is
       install_map : Pkgtypes.Package_Map.Map;
       queue       : Install_Order_Set.Vector;
       rev_queue   : Install_Order_Set.Vector;
-      var_clash   : Boolean;
 
       function release_active_lock (db : in out Database.RDB_Connection) return Boolean is
       begin
@@ -390,12 +389,6 @@ package body Raven.Install is
 
       --  NOTE: unlike "install_remote_packages", we query localdb first, not rdb.
       succeeded := assemble_work_queue (localdb, opt_exact_match, patterns, initial_map);
-      if succeeded then
-         var_clash := variant_clash_detected (initial_map);
-         if var_clash then
-            succeeded := False;
-         end if;
-      end if;
       if succeeded then
          install_map.clear;
          if opt_force then
@@ -504,9 +497,7 @@ package body Raven.Install is
             end if;
          end;
       else
-         if not var_clash and then
-           not opt_quiet
-         then
+         if not opt_quiet then
             Event.emit_message ("No installed packages matched.");
          end if;
       end if;
@@ -554,6 +545,7 @@ package body Raven.Install is
       install_map : Pkgtypes.Package_Map.Map;
       queue       : Install_Order_Set.Vector;
       rev_queue   : Install_Order_Set.Vector;
+      var_clash   : Boolean;
 
       function release_active_lock (db : in out Database.RDB_Connection) return Boolean is
       begin
@@ -604,6 +596,12 @@ package body Raven.Install is
       end if;
 
       succeeded := assemble_work_queue (rdb, opt_exact_match, patterns, catalog_map);
+      if succeeded then
+         var_clash := variant_clash_detected (catalog_map);
+         if var_clash then
+            succeeded := False;
+         end if;
+      end if;
       if succeeded then
          declare
             priority    : Descendant_Set.Vector;
@@ -706,7 +704,9 @@ package body Raven.Install is
             end if;
          end;
       else
-         if not opt_quiet then
+         if not var_clash and then
+           not opt_quiet
+         then
             Event.emit_message ("No matches in the remote catalog were found.");
          end if;
       end if;
@@ -1889,6 +1889,7 @@ package body Raven.Install is
 
       procedure push_nsvv_key (Position : Pkgtypes.Package_Map.Cursor) is
       begin
+         Event.emit_debug (moderate, "push_nsvv_key: " & USS (Pkgtypes.Package_Map.Key (Position)));
          nsvv_keys.Append (Pkgtypes.Package_Map.Key (Position));
       end push_nsvv_key;
 
@@ -1908,10 +1909,11 @@ package body Raven.Install is
          return problem;
       end records_clash;
    begin
+      Event.emit_debug (moderate, "result_count =" & result_count'Img);
       if result_count > 1 then
          toplevel.Iterate (push_nsvv_key'Access);
          for y in 1 .. result_count - 1 loop
-            for x in 0 .. y - 2 loop
+            for x in 0 .. y - 1 loop
                if records_clash (nsvv_keys.Element (x), nsvv_keys.Element (y)) then
                   clash_detected := True;
                   if virgin then
