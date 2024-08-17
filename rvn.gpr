@@ -13,7 +13,12 @@ project Rvn is
 
    package Compiler is
       for Switches ("sqlite3_interface.c") use ("-I../sqlite");
+      for Switches ("ada") use ("-g", "-fstack-check");
    end Compiler;
+
+   package Binder is
+      for Switches ("ada") use ("-E");
+   end Binder;
 
 end Rvn;
 
