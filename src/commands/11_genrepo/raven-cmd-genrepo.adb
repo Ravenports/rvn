@@ -164,23 +164,52 @@ package body Raven.Cmd.Genrepo is
       --  Regardless of the number of CPUs, limit the number of scanners to MAX_SCANNERS (16)
       --  If number of packages is less than 240, then use a single scanner
 
-      procedure split_tasks;
-      procedure execute_scan;
-
       subtype Scanner_Range is MX.CPU_Range range 1 .. MAX_SCANNERS;
 
       type A_Task_Queue is array (Scanner_Range) of string_crate.Vector;
       type A_Task_State is array (Scanner_Range) of Boolean;
+      type A_Task_File  is array (Scanner_Range) of TIO.File_Type;
       type A_Task_Product is array (Scanner_Range) of Text;
 
       task_queue      : A_Task_Queue;
+      task_files      : A_Task_File;
       task_product    : A_Task_Product;
       finished_task   : A_Task_State := (others => False);
       number_scanners : Natural := Natural (number_cpus);
       total_num       : Natural := 0;
       must_wait       : Boolean := True;
       combined_well   : Boolean := True;
+      fragments_good  : Boolean := True;
       catalog_handle  : TIO.File_Type;
+      last_worker     : Scanner_Range := 1;
+
+      procedure create_fragment_files is
+      begin
+         for lot in 1 .. last_worker loop
+            declare
+               temp_filename : constant String := Miscellaneous.get_temporary_filename ("genrepo");
+            begin
+               begin
+                  TIO.Create (task_files (lot), TIO.Out_File, temp_filename);
+                  task_product (lot) := Strings.SUS (temp_filename);
+               exception
+                  when others =>
+                     Event.emit_error ("Failed to create temporary file " & temp_filename);
+                     fragments_good := False;
+                     exit;
+               end;
+            end;
+         end loop;
+      end create_fragment_files;
+
+      procedure close_fragment_files is
+      begin
+         for lot in 1 .. last_worker loop
+            if TIO.Is_Open (task_files (lot)) then
+               TIO.Close (task_files (lot));
+            end if;
+         end loop;
+      end close_fragment_files;
 
       procedure split_tasks
       is
@@ -192,7 +221,6 @@ package body Raven.Cmd.Genrepo is
          rvn_files : string_crate.Vector;
          tracker   : Natural := 0;
          worklimit : Natural := 0;
-         worker    : Scanner_Range := 1;
          features  : Archive.Unix.File_Characteristics;
 
          MIN_PACKAGE_COUNT : constant Positive := 240;
@@ -224,10 +252,10 @@ package body Raven.Cmd.Genrepo is
          is
             use type MX.CPU_Range;
          begin
-            task_queue (worker).Append (string_crate.Element (position));
+            task_queue (last_worker).Append (string_crate.Element (position));
             tracker := tracker + 1;
             if tracker > worklimit then
-               worker := worker + 1;
+               last_worker := last_worker + 1;
                tracker := 0;
             end if;
          end slice_rvn_files;
@@ -262,8 +290,6 @@ package body Raven.Cmd.Genrepo is
          is
             procedure scan_rvn_package (position : string_crate.Cursor);
 
-            file_handle : TIO.File_Type;
-            created     : Boolean := False;
             just_stop   : Boolean := False;
             features    : UNX.File_Characteristics;
             hash        : Blake_3.blake3_hash_hex;
@@ -281,18 +307,6 @@ package body Raven.Cmd.Genrepo is
                end if;
 
                Event.emit_debug (high_level, "Scanning " & rvn_filename);
-               if not created then
-                  begin
-                     TIO.Create (file_handle, TIO.Out_File, Strings.USS (task_product (lot)));
-                     created := True;
-                  exception
-                     when others =>
-                        just_stop := True;
-                        Event.emit_error ("Failed to create temporary file " & rvn_filename);
-                        return;
-                  end;
-               end if;
-
                begin
                   operation.open_rvn_archive
                     (rvn_archive   => archive_path,
@@ -319,16 +333,12 @@ package body Raven.Cmd.Genrepo is
 
                ThickUCL.drop_base_keypair (metatree, "directories");
                ThickUCL.drop_base_keypair (metatree, "scripts");
-               TIO.Put_Line (file_handle, ThickUCL.Emitter.emit_compact_ucl (metatree));
+               TIO.Put_Line (task_files (lot), ThickUCL.Emitter.emit_compact_ucl (metatree));
 
             end scan_rvn_package;
          begin
             Event.emit_debug (low_level, "Started scan task" & lot'Img);
-            task_product (lot) := Strings.SUS (Miscellaneous.get_temporary_filename ("genrepo"));
             task_queue (lot).Iterate (scan_rvn_package'Access);
-            if TIO.Is_Open (file_handle) then
-               TIO.Close (file_handle);
-            end if;
             finished_task (lot) := True;
             Event.emit_debug (low_level, "Completed scan task" & lot'Img);
          exception
@@ -370,6 +380,10 @@ package body Raven.Cmd.Genrepo is
          Event.emit_message ("No RVN package files have been found.");
          return False;
       end if;
+      create_fragment_files;
+      if not fragments_good then
+         return False;
+      end if;
 
       execute_scan;
       while must_wait loop
@@ -381,42 +395,41 @@ package body Raven.Cmd.Genrepo is
             end if;
          end loop;
       end loop;
+      close_fragment_files;
 
       begin
          TIO.Create (catalog_handle, TIO.Out_File, catalog);
       exception
          when others =>
             Event.emit_error ("Failed to create catalog file " & catalog);
-            combined_well := False;
+            return False;
       end;
 
-      for z in Scanner_Range loop
+      for z in 1 .. last_worker loop
          declare
             fragment : constant String := Strings.USS (task_product (z));
             fragment_handle : TIO.File_Type;
          begin
-            if DIR.Exists (fragment) then
-               begin
-                  TIO.Open (fragment_handle, TIO.In_File, fragment);
-                  while not TIO.End_Of_File (fragment_handle) loop
-                     TIO.Put_Line (catalog_handle, TIO.Get_Line (fragment_handle));
-                  end loop;
-               exception
-                  when others =>
-                     Event.emit_error ("Failed to open fragment" & z'Img & " file " & fragment);
-                     combined_well := False;
-               end;
-               if TIO.Is_Open (fragment_handle) then
-                  TIO.Close (fragment_handle);
-               end if;
-
-               begin
-                  DIR.Delete_File (fragment);
-               exception
-                  when others =>
-                     Event.emit_error ("Failed to delete fragment" & z'Img & " file " & fragment);
-               end;
+            begin
+               TIO.Open (fragment_handle, TIO.In_File, fragment);
+               while not TIO.End_Of_File (fragment_handle) loop
+                  TIO.Put_Line (catalog_handle, TIO.Get_Line (fragment_handle));
+               end loop;
+            exception
+               when others =>
+                  Event.emit_error ("Failed to open fragment" & z'Img & " file " & fragment);
+                  combined_well := False;
+            end;
+            if TIO.Is_Open (fragment_handle) then
+               TIO.Close (fragment_handle);
             end if;
+
+            begin
+               DIR.Delete_File (fragment);
+            exception
+               when others =>
+                  Event.emit_error ("Failed to delete fragment" & z'Img & " file " & fragment);
+            end;
          end;
       end loop;
 
