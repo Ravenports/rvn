@@ -165,20 +165,19 @@ package body Raven.Cmd.Help is
       function manpage_location return String
       is
          --  search priority
-         --  realpath (../share/man/man<section>/<manpage>.gz)
          --  realpath (../share/man/man<section>/<manpage>)
-         --  If command doesn't resolve with realpath, use install location for gz version
+         --  If command doesn't resolve with realpath, use install location
 
          postman : constant String := section & "/" & manpage & "." & section;
          cmd_fullpath : constant String := Archive.Unix.real_path (CLI.Command_Name);
       begin
          if IsBlank (cmd_fullpath) then
-            return install_loc & "/share/man/man" & postman & ".gz";
+            return install_loc & "/share/man/man" & postman;
          end if;
 
          declare
             zero : constant String := head (cmd_fullpath, "/") & "/../share/man/man";
-            first_choice : constant String := Archive.Unix.real_path (zero & postman & ".gz");
+            first_choice : constant String := Archive.Unix.real_path (zero & postman);
          begin
             if isBlank (first_choice) then
                return Archive.Unix.real_path (zero & postman);
