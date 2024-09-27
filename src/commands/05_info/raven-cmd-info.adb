@@ -88,6 +88,28 @@ package body Raven.Cmd.Info is
             return False;
          end if;
 
+         --  Path exists, but make sure it's a readable file
+         declare
+            features : Archive.Unix.File_Characteristics;
+         begin
+            features := Archive.Unix.get_charactistics (resolved_path);
+            case features.ftype is
+               when Archive.hardlink | Archive.regular => null;
+               when Archive.unsupported =>
+                  Raven.Event.emit_error ("Entity does not exist: " & resolved_path);
+                  return False;
+               when Archive.directory =>
+                  Raven.Event.emit_error ("--file is a directory entry.");
+                  return False;
+               when Archive.symlink =>
+                  Raven.Event.emit_error ("--file is a symlink, use the target instead");
+                  return False;
+               when Archive.fifo =>
+                  Raven.Event.emit_error ("--file is a fifo entity (invalid file type)");
+                  return False;
+            end case;
+         end;
+
          operation.open_rvn_archive (resolved_path, Archive.normal);
          begin
             ThickUCL.Files.parse_ucl_string (metatree, operation.extract_metadata, "");
