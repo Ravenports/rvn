@@ -672,12 +672,21 @@ package body Raven.Repository is
       if fetch_from_mirror (mirrors, "catalog.rvn", cached_copy, catalog_digest, quiet,
                             site_index)
       then
-         --  Retrieval of catalog.rvn was successful.  Now we need to extract it.
+         --  Retrieval of catalog.rvn was successful.
+         if not quiet then
+            Event.emit_message ("The catalog was successfully downloaded.");
+         end if;
+
          if not extract_catalog_contents then
             return False;
          end if;
          if catalog_is_authentic (mirrors, site_index, quiet) then
             return True;
+         end if;
+
+         --  The catalog was successfully extracted and authenticated, so extract it now.
+         if not quiet then
+            Event.emit_message ("The catalog was authenticated. Processing it may take a while.");
          end if;
          remove_catalog_files;
       end if;
