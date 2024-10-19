@@ -673,9 +673,6 @@ package body Raven.Repository is
                             site_index)
       then
          --  Retrieval of catalog.rvn was successful.
-         if not quiet then
-            Event.emit_message ("The catalog was successfully downloaded.");
-         end if;
 
          if not extract_catalog_contents then
             return False;
@@ -686,7 +683,7 @@ package body Raven.Repository is
 
          --  The catalog was successfully extracted and authenticated, so extract it now.
          if not quiet then
-            Event.emit_message ("The catalog was authenticated. Processing it may take a while.");
+            Event.emit_message ("Catalog processing it may take a while ...");
          end if;
          remove_catalog_files;
       end if;
