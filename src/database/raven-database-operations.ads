@@ -24,7 +24,26 @@ package Raven.Database.Operations is
       index_dbdir  : String;
       index_dbname : String) return Action_Result;
 
-   procedure rindex_db_close (db : in out RDB_Connection);
+   procedure rindex_db_close
+     (db : in out RDB_Connection);
+
+   function external_transaction_begin
+     (db         : in out RDB_Connection;
+      srcfile    : String;
+      func       : String;
+      name_point : String) return Boolean;
+
+   procedure external_transaction_commit
+     (db         : in out RDB_Connection;
+      srcfile    : String;
+      func       : String;
+      name_point : String);
+
+   procedure external_transaction_rollback
+     (db         : in out RDB_Connection;
+      srcfile    : String;
+      func       : String;
+      name_point : String);
 
 private
 

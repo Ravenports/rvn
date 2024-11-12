@@ -616,4 +616,52 @@ package body Raven.Database.Operations is
       SQLite.shutdown_sqlite;
    end rindex_db_close;
 
+
+   ----------------------------------
+   --  external_transaction_begin  --
+   ----------------------------------
+    function external_transaction_begin
+     (db         : in out RDB_Connection;
+      srcfile    : String;
+      func       : String;
+      name_point : String) return Boolean is
+   begin
+      if not CommonSQL.transaction_begin (db.handle, srcfile, func, name_point) then
+         Event.emit_error (func & ": Failed to start external transaction");
+         return False;
+      end if;
+      return True;
+   end external_transaction_begin;
+
+
+   -----------------------------------
+   --  external_transaction_commit  --
+   -----------------------------------
+   procedure external_transaction_commit
+     (db         : in out RDB_Connection;
+      srcfile    : String;
+      func       : String;
+      name_point : String) is
+   begin
+      if not CommonSQL.transaction_commit (db.handle, srcfile, func, name_point) then
+         Event.emit_error (func & ": Failed to commit external transaction");
+      end if;
+   end external_transaction_commit;
+
+
+   -------------------------------------
+   --  external_transaction_rollback  --
+   -------------------------------------
+   procedure external_transaction_rollback
+     (db         : in out RDB_Connection;
+      srcfile    : String;
+      func       : String;
+      name_point : String) is
+   begin
+      if not CommonSQL.transaction_rollback (db.handle, srcfile, func, name_point) then
+         Event.emit_error (func & ": Failed to rollback external transaction");
+      end if;
+   end external_transaction_rollback;
+
+
 end Raven.Database.Operations;

@@ -31,6 +31,8 @@ package body Raven.Catalog is
       db_path     : constant String := OPS.localdb_path (Database.catalog);
       backup_path : constant String := db_path & ".backup";
       catalog_ucl : constant String := Context.reveal_cache_directory & "/remote/catalog.ucl";
+      srcfile     : constant String := "raven-catalog.adb";
+      name_point  : constant String := "IMPORTCAT";
       backed_up   : Boolean := False;
       rvndb       : Database.RDB_Connection;
    begin
@@ -66,7 +68,12 @@ package body Raven.Catalog is
       if not LOK.obtain_lock (rvndb, LOK.lock_exclusive) then
          Event.emit_error (LOK.no_exc_lock);
          OPS.rdb_close (rvndb);
-         return False;
+         goto cleanup_failure;
+      end if;
+
+      if not OPS.external_transaction_begin (rvndb, srcfile, func, name_point) then
+         OPS.rdb_close (rvndb);
+         goto cleanup_failure;
       end if;
 
       declare
@@ -91,12 +98,14 @@ package body Raven.Catalog is
             end;
          end loop;
          TIO.Close (cat_handle);
+         OPS.external_transaction_commit (rvndb, srcfile, func, name_point);
       exception
          when others =>
             if TIO.Is_Open (cat_handle) then
                TIO.Close (cat_handle);
             end if;
             Event.emit_error (func & "Failed during read of catalog database");
+            OPS.external_transaction_rollback (rvndb, srcfile, func, name_point);
             if not LOK.release_lock (rvndb, LOK.lock_exclusive) then
                Event.emit_error (LOK.no_exclusive_unlock);
             end if;
