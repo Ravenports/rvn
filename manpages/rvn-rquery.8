@@ -1,4 +1,4 @@
-.Dd August 2, 2024
+.Dd November 29, 2024
 .Dt RVN-RQUERY 8
 .Os
 .Sh NAME
@@ -105,13 +105,13 @@ for further description.
 .Ex -std
 .Sh EXAMPLES
 List all dependencies by package name-version:
-.Dl $ rvn rquery '{xdep:n}-{xdep:v}' 'subversion-*'
+.Dl $ rvn rquery '{xdep:n}-{xdep:v}' 'subversion~*'
 .Pp
 List all reverse dependencies for a package:
-.Dl $ rvn query '{xrdep:nsv}' 'glib-primary-standard'
+.Dl $ rvn query '{xrdep:nsv}' 'glib~primary~std'
 .Pp
 List all files and their known checksums for a package:
-.Dl $ rvn rquery '{xfile:sum} {xfile:path}' 'joe-single-standard'
+.Dl $ rvn rquery '{xfile:sum} {xfile:path}' 'joe~single~std'
 .Pp
 List unmaintained packages:
 .Dl $ rvn rquery -e '{maint} = nobody' '{nsv}'
