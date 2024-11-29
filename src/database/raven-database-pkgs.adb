@@ -1027,6 +1027,10 @@ package body Raven.Database.Pkgs is
          if not IsBlank (trig.install_script) then
             --  Paths only used for triggers, not cleanup.
             --  Enforce validity checks at ravenadm
+
+            path_type := 0;
+            type_index := 0;
+
             inject_code (USS (trig.install_script), 1);
 
             trig.set_dir_path.Iterate (insert_trigger_path'Access);
