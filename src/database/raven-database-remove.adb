@@ -34,7 +34,7 @@ package body Raven.Database.Remove is
         "namebase, subpackage, variant, version, comment, desc, www, maintainer, prefix, " &
         "abi, rvndigest, rvnsize, flatsize, licenselogic, id " &
         "FROM packages as p";
-      not_rvn  : constant String := "nsv000 NOT GLOB 'rvn-*-standard'";
+      not_rvn  : constant String := "nsv000 NOT GLOB 'rvn~*~std'";
       new_stmt : SQLite.thick_stmt;
       sql : Text;
    begin
