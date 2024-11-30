@@ -5,7 +5,7 @@ private with SQLite;
 
 package Raven.Database is
 
-   LOCAL_SCHEMA_VERSION : constant Natural := 2;
+   LOCAL_SCHEMA_VERSION : constant Natural := 3;
    type Local_Upgrade_Series is range 1 .. LOCAL_SCHEMA_VERSION;
 
    type RDB_Connection is limited private;

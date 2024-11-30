@@ -955,6 +955,7 @@ package body Raven.Database.Pkgs is
       keep_going : Boolean := True;
       path_type  : SQLite.sql_int64 := 0;
       type_index : SQLite.sql_int64 := 0;
+      trig_index : SQLite.sql_int64 := 0;
 
       procedure bump
       is
@@ -975,7 +976,8 @@ package body Raven.Database.Pkgs is
             SQLite.bind_integer (path_stmt, 1, SQLite.sql_int64 (pkg.id));
             SQLite.bind_integer (path_stmt, 2, path_type);
             SQLite.bind_integer (path_stmt, 3, type_index);
-            SQLite.bind_string (path_stmt, 4, trigger_path);
+            SQLite.bind_string  (path_stmt, 4, trigger_path);
+            SQLite.bind_integer (path_stmt, 5, trig_index);
 
             debug_running_stmt (path_stmt);
             case SQLite.step (path_stmt) is
@@ -992,15 +994,17 @@ package body Raven.Database.Pkgs is
          type_index := SQLite."+" (type_index, 1);
       end insert_trigger_path;
 
-      procedure inject_code (code : String; trig_type : SQLite.sql_int64) is
+      procedure inject_code (code : String; trig_type : SQLite.sql_int64)
+      is
       begin
          if not keep_going then
             return;
          end if;
           if SQLite.reset_statement (pack_stmt) then
             SQLite.bind_integer (pack_stmt, 1, SQLite.sql_int64 (pkg.id));
-            SQLite.bind_integer (pack_stmt, 2, trig_type);
-            SQLite.bind_string (pack_stmt, 3, code);
+            SQLite.bind_integer (pack_stmt, 2, trig_index);
+            SQLite.bind_integer (pack_stmt, 3, trig_type);
+            SQLite.bind_string  (pack_stmt, 4, code);
 
             debug_running_stmt (pack_stmt);
             case SQLite.step (pack_stmt) is
@@ -1041,6 +1045,9 @@ package body Raven.Database.Pkgs is
             bump;
             trig.set_file_regex.Iterate (insert_trigger_path'Access);
          end if;
+
+         trig_index := SQLite."+" (trig_index, 1);
+
       end insert_into_package;
    begin
       pkg.triggers.Iterate (insert_into_package'Access);

@@ -733,11 +733,14 @@ package body Raven.Database.Schema is
               "VALUES(?1,(SELECT option_id FROM options WHERE option_name = ?2),?3)";  --  IIT
          when pkg_dependency   => return IORB & "pkg_dependencies(package_id,dependency_id) VALUES"
               & "(?1, (SELECT dependency_id FROM dependencies WHERE nsv = ?2 AND version = ?3))";
-         when pkg_trigger      => return IORB & "pkg_triggers(package_id,trigger_type,code) VALUES"
-              & "(?1,?2,?3)";  -- IIT
-         when trig_paths       => return IORB & "trigger_paths(trigger_id,path_type,type_index," &
-              "path_value) VALUES ((SELECT trigger_id FROM pkg_triggers WHERE package_id = ?1 " &
-              "and trigger_type = 1),?2,?3,?4)";  --  IIIIT
+         when pkg_trigger      => return IORB &
+              "pkg_triggers(package_id,trigger_index,trigger_type,code) VALUES(?1,?2,?3,?4)";
+            -- IIIT
+         when trig_paths       => return IORB &
+              "trigger_paths(trigger_id,path_type,type_index,path_value) " &
+              "VALUES ((SELECT trigger_id FROM pkg_triggers WHERE package_id = ?1 " &
+              "and trigger_type = 1 and trigger_index = ?5),?2,?3,?4)";
+            --  IIITI
          when main_pkg => return "INSERT OR REPLACE INTO packages(namebase,subpackage,variant," &
               "version,comment,desc,www,maintainer,prefix,abi,rvndigest,rvnsize,flatsize," &
               "licenselogic,automatic,installed) " &
@@ -750,11 +753,14 @@ package body Raven.Database.Schema is
    --------------------------
    --  upgrade_definition  --
    --------------------------
-   function upgrade_definition (component : Local_Upgrade_Series) return String is
+   function upgrade_definition (component : Local_Upgrade_Series) return String
+   is
+      int_column : constant String := " INTEGER NOT NULL DEFAULT (0);";
    begin
       case component is
          when 1 => return "INSERT INTO lock_state VALUES(0,0,0);";
-         when 2 => return "ALTER TABLE pkg_annotations ADD custom INTEGER NOT NULL DEFAULT (0);";
+         when 2 => return "ALTER TABLE pkg_annotations ADD custom" & int_column;
+         when 3 => return "ALTER TABLE pkg_triggers ADD trigger_index" & int_column;
       end case;
    end upgrade_definition;
 
