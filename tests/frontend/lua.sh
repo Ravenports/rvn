@@ -19,7 +19,8 @@ tests_init \
 	script_sample_exists \
 	script_stat \
 	script_arguments \
-	script_upgrade
+	script_upgrade \
+	script_pkg_execute
 
 
 script_basic_body() {
@@ -802,4 +803,41 @@ EOF
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
+}
+
+
+script_pkg_execute_body() {
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
+	cat << EOF >> test.ucl
+scripts: {
+  post-install-lua: [
+    {
+      args: ''
+      code: <<EOS
+pkg.print_msg("ALPHA")
+pkg.exec({"echo","valid-command"})
+pkg.print_msg("BRAVO")
+pkg.exec({"/usr/bin/cmd-dne"})
+pkg.print_msg("CHARLIE")
+pkg.exec({"/usr/bin/find","/dne"})
+pkg.print_msg("DELTA")
+EOS
+    }
+  ]
+}
+EOF
+
+	touch dummy.plist
+	atf_check \
+		-o empty \
+		-e empty \
+		-s exit:0 \
+		rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
+
+	mkdir ${TMPDIR}/target
+	atf_check \
+		-o inline:"ALPHA-to-be-done\n" \
+		-e empty \
+		-s exit:0 \
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
