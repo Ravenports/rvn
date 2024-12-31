@@ -33,7 +33,7 @@ EOF
 	sed -ie 's/comment: a test/comment: Nothing to see here/' plop.ucl
 	cat >> plop.ucl << EOF
 deps: {
-	test~single~standard: "1"
+	"test~single~standard": "1"
 }
 EOF
 
@@ -83,13 +83,13 @@ EOF
 		-o inline:"test: plop~single~standard  1\n" \
 		-e empty \
 		-s exit:0 \
-		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -C "[pt][le][os][pt]-*"
+		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -C "[pt][le][os][pt]~*"
 
 	atf_check \
 		-o inline:"test: plop~single~standard  1\n" \
 		-e empty \
 		-s exit:0 \
-		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -C "[pt]??[pt]-*"
+		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -C "[pt]??[pt]~*"
 
 	atf_check \
 		-o inline:"test: plop~single~standard  1\n" \

@@ -75,7 +75,7 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -R "${TMPDIR}/reposconf1" -r ${TMPDIR}/target install -y test-single
+		rvn -R "${TMPDIR}/reposconf1" -r ${TMPDIR}/target install -y test~single
 
 	# refetch catalog
 	atf_check \
@@ -89,7 +89,7 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -R "${TMPDIR}/reposconf2" -r ${TMPDIR}/target upgrade -y test-single
+		rvn -R "${TMPDIR}/reposconf2" -r ${TMPDIR}/target upgrade -y test~single
 
 	# clean
 	atf_check \

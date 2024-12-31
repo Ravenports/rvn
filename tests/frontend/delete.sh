@@ -31,9 +31,9 @@ delete_all_body() {
 delete_rvn_body() {
 	touch dummy.plist
 	mkdir files
-	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "rvn" "rvn" "single" "standard" "1" "/"
+	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "rvn" "rvn" "single" "std" "1" "/"
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m rvn.ucl -w dummy.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/rvn~single~standard~1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/rvn~single~std~1.rvn
 
 	# try removing rvn via normal LIKE% matching (expected to not match)
 	atf_check -o inline:"No installed packages were selected for removal.\n" \
@@ -41,15 +41,15 @@ delete_rvn_body() {
 
 	# try removing rvn via glob matching (expected to not match)
 	atf_check -o inline:"No installed packages were selected for removal.\n" \
-		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove -y -C rvn~single~standard
+		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove -y -C rvn~single~std
 
 	# try removing rvn via exact matching (expected to match)
 	atf_check -o match:"Dry run: The following packages will be removed:" \
-		-o match:"1. rvn[~]single[~]standard" \
-		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove --dry-run -y -E rvn~single~standard
+		-o match:"1. rvn[~]single[~]std" \
+		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove --dry-run -y -E rvn~single~std
 
 	# finally remove rvn (without the use off --all)
-	atf_check -o match:"\[1\/1\] Removing rvn[~]single[~]standard-1" \
+	atf_check -o match:"\[1\/1\] Removing rvn[~]single[~]std[~]1" \
 		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove --force -y rvn
 }
 
@@ -124,13 +124,13 @@ delete_with_directory_owned_body() {
 	test -d dir1 || atf_fail "'dir1' was not created"
 	test -d dir2 || atf_fail "'dir2' was not created"
 
-	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -y test-single
+	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -y test~single
 
 	test -f file1 && atf_fail "'file1' still present"
 	test -f dir1/file2 && atf_fail "'dir1/file2' still present"
 	test -d dir1 && atf_fail "'dir1' is still present"
 
-	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -y test2-single
+	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -y test2~single
 
 	test -d dir2 && atf_fail "'dir2' still present"
 	test -d ${TMPDIR} || atf_fail "Prefix has been removed"

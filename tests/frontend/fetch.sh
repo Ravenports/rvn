@@ -48,7 +48,7 @@ EOF
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	if ! cat << EOF >> test.ucl
 deps: {
-	b~single~standard: "1"
+	"b~single~standard": "1"
 }
 EOF
 	then

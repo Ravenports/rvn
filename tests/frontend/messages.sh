@@ -185,7 +185,7 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test301.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard-3.01.rvn
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard~3.01.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f

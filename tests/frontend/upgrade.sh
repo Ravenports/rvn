@@ -69,7 +69,7 @@ EOF
 
 	cat <<EOF >> pkg2.ucl 
 deps: {
-	pkg_b~single~standard: "1"
+	"pkg_b~single~standard": "1"
 }
 EOF
 
@@ -84,8 +84,8 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check \
-		-o match:'1[.]  [|]` pkg_b[~]single[~]standard-1' \
-		-o match:"2[.]  pkg_a[~]single[~]standard-1_1 \[U\]" \
+		-o match:'1[.]  [|]` pkg_b[~]single[~]standard[~]1' \
+		-o match:"2[.]  pkg_a[~]single[~]standard[~]1_1 \[U\]" \
 		-e ignore \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r . upgrade -y 'pkg_'
