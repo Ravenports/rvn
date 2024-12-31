@@ -25,7 +25,7 @@ EOF
 
 	cat << EOF >> master.ucl
 deps: {
-  test~single~standard: "1"
+  "test~single~standard": "1"
 }
 EOF
 
@@ -78,7 +78,7 @@ EOF
 
 	# verify that
 	atf_check \
-		-o inline:"master[~]single[~]standard\ntest[~]single[~]standard\n" \
+		-o inline:"master~single~standard\ntest~single~standard\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target query "{nsv}" -a
@@ -92,7 +92,7 @@ EOF
 
 	# verify that
 	atf_check \
-		-o inline:"test[~]single[~]standard\n" \
+		-o inline:"test~single~standard\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target query "{nsv}" -a
@@ -147,7 +147,7 @@ autoremove_dryrun_body() {
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target autoremove -ny
 
 	atf_check \
-		-o inline:"test[~]single[~]standard\n" \
+		-o inline:"test~single~standard\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target query "{nsv}" -a

@@ -124,7 +124,7 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r . upgrade -y 'pkg_'
 
 	atf_check \
-		-o inline:"pkg_a[~]single[~]standard version: 1_125\n" \
+		-o inline:"pkg_a~single~standard version: 1_125\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query --all "{nsv} version: {version}"
@@ -180,11 +180,11 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg-2[~]single[~]standard[~]2\n' \
+		-o inline:'package pkg-2~single~standard~2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-1
 
 	atf_check \
-		-o inline:'package pkg-1[~]single[~]standard[~]2\n' \
+		-o inline:'package pkg-1~single~standard~2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-2
 }
 
@@ -226,7 +226,7 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg[~]single[~]standard[~]2\n' \
+		-o inline:'package pkg~single~standard~2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-1/newfile
 }
 
@@ -268,7 +268,7 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg[~]single[~]standard[~]2\n' \
+		-o inline:'package pkg~single~standard~2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-1
 }
 
@@ -314,7 +314,7 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg[~]single[~]standard[~]2\n' \
+		-o inline:'package pkg~single~standard~2\n' \
 		rvn -r ${TMPDIR}/target which -q /share/something/file
 }
 
@@ -371,7 +371,7 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -U -y ravenadm
 
 	# confirmed what it installed
-	atf_check -o inline:"ncurses[~]primary[~]standard[~]1\nravenadm[~]single[~]standard[~]1\n" \
+	atf_check -o inline:"ncurses~primary~standard~1\nravenadm~single~standard~1\n" \
 		-e empty -s exit:0 rvn -r . info -q
 
 	# update ravenadm
