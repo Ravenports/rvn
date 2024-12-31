@@ -70,10 +70,10 @@ EOF
 		rvn -C "${CONF}/rvn.conf" genrepo --quiet ${REPO}
 
 	if [ "${variant}" = "missing-file" ]; then
-		atf_check rm -f ${REPO}/files/test-single-standard-1.rvn
+		atf_check rm -f ${REPO}/files/test~single~standard~1.rvn
 	fi
 	if [ "${variant}" = "missing-dep-file" ]; then
-		atf_check rm -f ${REPO}/files/b-single-standard-1.rvn
+		atf_check rm -f ${REPO}/files/b~single~standard~1.rvn
 	fi
 
 	atf_check -o ignore rvn -C "${CONF}/pkg.conf" -R ${CONF}/repos catalog -f
@@ -112,7 +112,7 @@ fetch_missing_file_body()
 
 	atf_check \
 		-o ignore \
-		-e inline:"\nFailed download: test-single-standard-1.rvn\n\n" \
+		-e inline:"\nFailed download: test~single~standard~1.rvn\n\n" \
 		-s exit:1 \
 		rvn -C "${CONF}/rvn.conf" -R ${CONF}/repos fetch -r testrepo -d -y test
 }
@@ -123,7 +123,7 @@ fetch_missing_dep_file_body()
 
 	atf_check \
 		-o ignore \
-		-e inline:"\nFailed download: b-single-standard-1.rvn\n\n" \
+		-e inline:"\nFailed download: b~single~standard~1.rvn\n\n" \
 		-s exit:1 \
 		rvn -C "${CONF}/rvn.conf" -R ${CONF}/repos fetch -r testrepo -d -y test
 }

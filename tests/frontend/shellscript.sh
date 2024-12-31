@@ -36,7 +36,7 @@ EOF
 		-o inline:"this is post install1\nthis is post install2\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 }
 
@@ -70,7 +70,7 @@ EOF
 		-o inline:"this is post install1\nthis is post install2\nthis is a message\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 }
 
@@ -105,7 +105,7 @@ EOF
 		-o inline:"this is post install1\nthis is post install2\nthis is a message\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 }
 
@@ -140,7 +140,7 @@ EOF
 		-e empty \
 		-o ignore \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --file ${TMPDIR}/oneoff/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --file ${TMPDIR}/oneoff/test~single~standard~1.rvn
 
 atf_check \
 		-e empty \

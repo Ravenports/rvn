@@ -50,7 +50,7 @@ EOF
 		-o inline:"this is post install1\nthis is post install2\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
 
 script_message_body() {
@@ -83,7 +83,7 @@ EOF
 		-o inline:"this is post install1\nthis is post install2\nthis is a message\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 }
 
@@ -115,7 +115,7 @@ EOF
 	atf_check \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	[ -f ${TMPDIR}/target/file.txt ] || atf_fail "File not created in the rootdir"
 	# test the mode
@@ -154,14 +154,14 @@ EOF
 	atf_check \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 	test -d ${TMPDIR}/target/file && atf_fail "directory not removed"
 
 	touch ${TMPDIR}/target/file
 	atf_check \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 	test -f ${TMPDIR}/target/file && atf_fail "file not removed"
 	return 0
 }
@@ -193,7 +193,7 @@ EOF
 	atf_check \
 		-e inline:"${ERR}" \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 	test -f ${TMPDIR}/target/file && atf_fail "File not renamed"
 	test -f ${TMPDIR}/target/plop || atf_fail "File not renamed"
 	return 0
@@ -227,7 +227,7 @@ ERR="Failed to execute Lua script:LUA_ERRRUN\n[string \"os.execute(\"echo yeah\"
 	atf_check \
 		-e inline:"${ERR}" \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
 
 script_upgrade_body() {
@@ -261,7 +261,7 @@ EOF
 		-e empty \
 		-o empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --file ${TMPDIR}/oneoff/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --file ${TMPDIR}/oneoff/test~single~standard~1.rvn
 
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "2" "/"
 	cat << EOF >> test.ucl
@@ -347,7 +347,7 @@ EOF
 		-o inline:"same\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	rm -rf ${TMPDIR}/target
 
@@ -382,7 +382,7 @@ EOF
 		-o inline:"different\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
 
 script_filecmp_symlink_body() {
@@ -423,7 +423,7 @@ EOF
 		-o inline:"same\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 
 	rm -rf ${TMPDIR}/target
@@ -462,7 +462,7 @@ EOF
 		-o inline:"different\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
 
 script_copy_body() {
@@ -493,7 +493,7 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a.sample
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a
@@ -534,7 +534,7 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a.sample
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/b
@@ -587,7 +587,7 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a.sample
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a
@@ -636,7 +636,7 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/b.sample
@@ -684,7 +684,7 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/a
 	atf_check -o inline:"sample text\n" cat ${TMPDIR}/target/b
@@ -733,7 +733,7 @@ EOF
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check \
 		-o empty \
@@ -773,7 +773,7 @@ EOF
 		-o inline:"zero\nreg\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
 
 script_arguments_body() {
@@ -800,6 +800,6 @@ EOF
 		-o inline:"plop\n" \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 }

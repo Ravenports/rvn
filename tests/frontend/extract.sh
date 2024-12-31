@@ -18,7 +18,7 @@ basic_body()
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r / -m test.ucl -w test.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 
 OUTPUT="${TMPDIR}/target/local.sqlite
@@ -35,7 +35,7 @@ ${TMPDIR}/target${TMPDIR}/a
 
 	# check no leftovers during upgrades/reinstallation
 	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --force \
-		--file ${TMPDIR}/files/test-single-standard-1.rvn
+		--file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check \
 		-o inline:"${OUTPUT}" \
@@ -54,7 +54,7 @@ basic_dirs_body()
 	echo "@dir ${TMPDIR}/plop" >  test.plist
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r / -m test.ucl -w test.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	test -d ${TMPDIR}/target${TMPDIR}/plop || atf_fail "directory not extracted"
 }
@@ -73,9 +73,9 @@ setuid_body()
 	atf_check \
 		-o match:"^-r-sr-xr-- " \
 		-e ignore \
-		rvn info -X --file ${TMPDIR}/files/test-single-standard-1.rvn
+		rvn info -X --file ${TMPDIR}/files/test~single~standard~1.rvn
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check \
 		-o match:"^-r-sr-xr-- " \
@@ -102,9 +102,9 @@ setuid_hardlinks_body()
 		-o match:"^-r-sr-xr--.*a$" \
 		-o match:"^hr-sr-xr--.*b$" \
 		-e ignore \
-		rvn info -X --file ${TMPDIR}/files/test-single-standard-1.rvn
+		rvn info -X --file ${TMPDIR}/files/test~single~standard~1.rvn
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check \
 		-o match:"^-r-sr-xr-- " \
@@ -133,9 +133,9 @@ symlinks_body()
 	atf_check \
 		-o match:"^lrwxr-xr-x.*a$" \
 		-e ignore \
-		rvn info -X --file ${TMPDIR}/files/test-single-standard-1.rvn
+		rvn info -X --file ${TMPDIR}/files/test~single~standard~1.rvn
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check \
 		-o match:"^lrwxr-xr-x.*a -> nothing$" \

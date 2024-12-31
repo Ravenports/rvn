@@ -19,7 +19,7 @@ dead_symlink_body() {
 
 	ln -s plop2 ${TMPDIR}/target/plop
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/test~single~standard~1.rvn
 	test -d ${TMPDIR}/target/plop || atf_fail "directory not created"
 }
 
@@ -34,7 +34,7 @@ good_symlink_body() {
 	mkdir ${TMPDIR}/target/plop2
 	ln -s plop2 ${TMPDIR}/target/plop
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/test~single~standard~1.rvn
 	test -h ${TMPDIR}/target/plop || atf_fail "Symlink deleted"
 }
 
@@ -48,6 +48,6 @@ nondir_symlink_body() {
 
 	ln test.plist ${TMPDIR}/target/plop
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/test~single~standard~1.rvn
 	test -d ${TMPDIR}/target/plop || atf_fail "directory not created"
 }

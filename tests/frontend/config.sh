@@ -22,13 +22,13 @@ duplicate_pkgs_notallowed_body() {
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check \
 		-o ignore \
-		-e inline:"The test-single-standard package is already installed.\n" \
+		-e inline:"The test~single~standard package is already installed.\n" \
 		-s exit:1 \
-		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 
 	atf_check \
@@ -53,7 +53,7 @@ empty_conf_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check \
 		-o ignore \

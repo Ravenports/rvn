@@ -36,7 +36,7 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg3.ucl -w dummy.plist
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg4.ucl -w dummy.plist
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a~single~standard~1.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
@@ -78,7 +78,7 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg3.ucl -w dummy.plist
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg4.ucl -w dummy.plist
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a~single~standard~1.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
@@ -209,7 +209,7 @@ EOF
 
 	# install file-pkg-1 as a file
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/      -r . -m pkg-1.ucl -w plist-1
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg~single~standard~1.rvn
 
 	# change file-pkg-1 from file to directory, and install new file
 	rm file-pkg-1
@@ -252,7 +252,7 @@ EOF
 
 	# install file-pkg-1 as a directory
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/      -r . -m pkg-1.ucl -w plist-1
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg~single~standard~1.rvn
 
 	# change file-pkg-1 from a directory to a file
 	rm -rf file-pkg-1
@@ -297,7 +297,7 @@ EOF
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "pkg-2" "pkg" "single" "standard" "2" "/"
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/      -r . -m pkg-1.ucl -w plist-1
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg~single~standard~1.rvn
 
 	rm share/something
 	mkdir share/something

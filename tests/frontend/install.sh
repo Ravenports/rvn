@@ -24,7 +24,7 @@ reinstall_body()
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/files/test-single-standard-1.rvn
+		rvn -r ${TMPDIR} install -q --only-registration --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check \
 		-o ignore \
@@ -73,7 +73,7 @@ EOF
 	atf_check -o ignore \
 		-o match:"pre-install Bourne shell script number 0 failed" \
 		-s exit:0 \
-		rvn -r ${TMPDIR} -o REPOS_DIR="/dev/null" install -y --file ${TMPDIR}/files/test-single-standard-1.rvn
+		rvn -r ${TMPDIR} -o REPOS_DIR="/dev/null" install -y --file ${TMPDIR}/files/test~single~standard~1.rvn
 }
 
 post_script_ignored_body()
@@ -96,7 +96,7 @@ EOF
 	atf_check -o ignore \
 		-o match:"post-install Bourne shell script number 0 failed" \
 		-s exit:0 \
-		rvn -r ${TMPDIR} -o REPOS_DIR="/dev/null" install -y --file ${TMPDIR}/files/test-single-standard-1.rvn
+		rvn -r ${TMPDIR} -o REPOS_DIR="/dev/null" install -y --file ${TMPDIR}/files/test~single~standard~1.rvn
 }
 
 install_missing_dep_body()

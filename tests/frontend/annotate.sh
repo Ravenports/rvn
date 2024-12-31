@@ -18,7 +18,7 @@ annotate_body() {
 			rvn create -o ${TMPDIR} -r ${TMPDIR} -m ${RESOURCEDIR}/$pkg.ucl -w dummy.plist
 	done
 
-	for pkg in "png-primary-standard-1.6.43" "sqlite-primary-standard-3.46.0" ; do
+	for pkg in "png~primary~standard~1.6.43" "sqlite~primary~standard~3.46.0" ; do
 		atf_check \
 			-o empty \
 			-e empty \
@@ -132,7 +132,7 @@ annotate_multiple_body() {
 			rvn create -o ${TMPDIR} -r ${TMPDIR} -m ${RESOURCEDIR}/$pkg.ucl -w dummy.plist
 	done
 
-	for pkg in "png-primary-standard-1.6.43" "sqlite-primary-standard-3.46.0" ; do
+	for pkg in "png~primary~standard~1.6.43" "sqlite~primary~standard~3.46.0" ; do
 		atf_check \
 			-o empty \
 			-e empty \

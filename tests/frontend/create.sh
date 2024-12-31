@@ -77,7 +77,7 @@ preparetestcredentials() {
 }
 
 basic_validation() {
-	test -f test-single-standard-1.rvn || atf_fail "Package not created"
+	test -f test~single~standard~1.rvn || atf_fail "Package not created"
 }
 
 create_with_hardlink_body() {
@@ -102,7 +102,7 @@ EOF
 		-o file:output.listing \
 		-e empty \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 
 }
 
@@ -122,7 +122,7 @@ create_from_plist_body() {
 		-o match:"-rw-r--r-- .*root[ ]+wheel.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_missing_file_body() {
@@ -152,7 +152,7 @@ create_from_plist_set_owner_body() {
 		-o match:"-rw-r--r-- .*plop[ ]+wheel.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_set_group_body() {
@@ -170,7 +170,7 @@ create_from_plist_set_group_body() {
 		-o match:"-rw-r--r-- .*root[ ]+bla.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 
@@ -189,7 +189,7 @@ create_from_plist_set_group_space_body() {
 		-o match:"-rw-r--r-- .*root[ ]+bla.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_gather_mode_body() {
@@ -209,7 +209,7 @@ create_from_plist_gather_mode_body() {
 		-o match:"-rwxrwxrwx .*plop[ ]+bla.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_set_mode_body() {
@@ -227,7 +227,7 @@ create_from_plist_set_mode_body() {
 		-o match:"-rwxr-sr-x .*root[ ]+wheel.*[ ]file1$" \
 		-e ignore \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_mini_body() {
@@ -267,7 +267,7 @@ mkdir target
 
 	atf_check \
 		-o inline:"yes\nfile1\nyes\nA\nB\nC\nD\n" \
-		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test-single-standard-1.rvn
+		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_keyword_validation_body() {
@@ -468,7 +468,7 @@ EOF
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info -R -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info -R -F ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_manifest_and_plist_body() {
@@ -515,13 +515,13 @@ EOF
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info -R -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info -R -F ${TMPDIR}/test~single~standard~1.rvn
 
 	atf_check \
 		-o match:"af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262 testfile$" \
 		-e empty \
 		-s exit:0 \
-		rvn info --list-digests -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info --list-digests -F ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_manifest_body() {
@@ -539,7 +539,7 @@ create_from_manifest_body() {
 		-o match:"-rw-r--r--     root    wheel        0 1973-03-03 15:20 testfile$" \
 		-e empty \
 		-s exit:0 \
-		rvn info --list-extended -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info --list-extended -F ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_manifest_dir_body() {
@@ -595,7 +595,7 @@ EOF
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info -R -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info -R -F ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_pkg_descr_body() {
@@ -608,7 +608,7 @@ create_from_plist_pkg_descr_body() {
 		-o match:"^Yet another test$" \
 		-e empty \
 		-s exit:0 \
-		rvn info -D -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info -D -F ${TMPDIR}/test~single~standard~1.rvn
 
 
 cat << EOF >> METADATA
@@ -624,7 +624,7 @@ EOF
 		-o match:"^This is an install message[.]$" \
 		-e empty \
 		-s exit:0 \
-		rvn info --install-message -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info --install-message -F ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_with_keyword_and_message_body() {
@@ -683,7 +683,7 @@ EOF
 		-o file:output.ucl \
 		-e empty \
 		-s exit:0 \
-		rvn info --raw -F ${TMPDIR}/test-single-standard-1.rvn
+		rvn info --raw -F ${TMPDIR}/test~single~standard~1.rvn
 
 }
 
@@ -731,7 +731,7 @@ touch A B
 		-o match:"-rw-r--r-- .*plop[ ]+wheel.*[ ]A$" \
 		-e empty \
 		-s exit:0 \
-		xrvn -la ${TMPDIR}/test-single-standard-1.rvn
+		xrvn -la ${TMPDIR}/test~single~standard~1.rvn
 }
 
 create_from_plist_keyword_deprecated_body()

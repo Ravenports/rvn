@@ -38,7 +38,7 @@ EOS
 EOF
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m test.ucl -w test.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -y --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check -o inline:"Cleaning up\ncleanup-message-test\n" \
 		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r ${TMPDIR}/target remove -qy test
@@ -384,7 +384,7 @@ EOF
 	atf_check -o inline:"bin directory hit, installed\n" -e empty -s exit:0 \
 		rvn -r ${TMPDIR}/target -o REPOS_DIR="${TMPDIR}/reposconf" install -qy test
 
-	rm ${TMPDIR}/files/test-single-standard-1.rvn
+	rm ${TMPDIR}/files/test~single~standard~1.rvn
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test2" "test" "single" "standard" "2" "/"
 	cat <<EOF >> test2.ucl
 triggers: [

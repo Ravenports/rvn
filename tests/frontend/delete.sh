@@ -21,9 +21,9 @@ delete_all_body() {
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg.ucl -w dummy.plist
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m test.ucl -w dummy.plist
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/foo-single-standard-1.rvn
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/pkg-single-standard-1.rvn
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/foo~single~standard~1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/pkg~single~standard~1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test~single~standard~1.rvn
 
 	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -ay
 }
@@ -33,7 +33,7 @@ delete_rvn_body() {
 	mkdir files
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "rvn" "rvn" "single" "standard" "1" "/"
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m rvn.ucl -w dummy.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/rvn-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/rvn~single~standard~1.rvn
 
 	# try removing rvn via normal LIKE% matching (expected to not match)
 	atf_check -o inline:"No installed packages were selected for removal.\n" \
@@ -65,7 +65,7 @@ simple_delete_body() {
 	echo "dir/file2" >> test.plist
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r ${TMPDIR} -m test.ucl -w test.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test~single~standard~1.rvn
 	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -y test
 
 	test -f file1 && atf_fail "'file1' still present"
@@ -86,7 +86,7 @@ simple_delete_prefix_ending_with_slash_body() {
 	echo "dir/file2" >> test.plist
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m test.ucl -w test.plist
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test~single~standard~1.rvn
 	atf_check -o ignore rvn -o ${TMPDIR}/files -r . remove -y test
 
 	test -f file1 && atf_fail "'file1' still present"
@@ -118,8 +118,8 @@ delete_with_directory_owned_body() {
 	rm -rf dir2
 	rm file1
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test-single-standard-1.rvn
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test2-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test~single~standard~1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -q --file ${TMPDIR}/files/test2~single~standard~1.rvn
 
 	test -d dir1 || atf_fail "'dir1' was not created"
 	test -d dir2 || atf_fail "'dir2' was not created"

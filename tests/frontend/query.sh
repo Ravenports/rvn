@@ -40,8 +40,8 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn -r . create -o ${TMPDIR} -r . -m test.ucl -w test.plist
 	atf_check -o empty -e empty -s exit:0 rvn -r . create -o ${TMPDIR} -r . -m plop.ucl -w dummy.plist
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -qy --file ${TMPDIR}/test-single-standard-1.rvn
-	atf_check -o ignore -e empty -s exit:0 rvn -r . install -qy --file ${TMPDIR}/plop-single-standard-1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -qy --file ${TMPDIR}/test~single~standard~1.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r . install -qy --file ${TMPDIR}/plop~single~standard~1.rvn
 
 	atf_check \
 		-o inline:"plop\ntest\n" \
