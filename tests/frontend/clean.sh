@@ -93,7 +93,7 @@ EOF
 
 	# clean
 	atf_check \
-		-o match:"^obsolete: test-single-standard-1[~][0123456789abcdef]{10}[.]rvn" \
+		-o match:"^obsolete: test[~]single[~]standard[~]1[~][0123456789abcdef]{10}[.]rvn" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target clean -y

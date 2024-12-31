@@ -42,10 +42,10 @@ messages_body() {
 
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test.ucl -w dummy.plist
 	atf_check -o inline:"package being installed\n" \
-		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-5.20_3.rvn
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard~5.20_3.rvn
 
 	atf_check \
-		-o match:"^test-single-standard deinstallation messages" \
+		-o match:"^test[~]single[~]standard deinstallation messages" \
 		-o match:"^package being removed$" \
 		rvn -r ${TMPDIR}/target remove -qy test
 }
@@ -63,7 +63,7 @@ messages_install_body() {
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check \
-		-o match:"^test-single-standard installation messages" \
+		-o match:"^test[~]single[~]standard installation messages" \
 		-o match:"^package being installed$" \
 		-e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . install -qy test
 }
@@ -87,14 +87,14 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test091.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-0.91.rvn
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard~0.91.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	# don't show deinstallation messages of old package when upgrading
 	atf_check \
-		-o match:"^test-single-standard upgrade messages" \
+		-o match:"^test[~]single[~]standard upgrade messages" \
 		-o match:"^package is being upgraded$" \
 		-o match:"^Upgrading from lower than 1.0$" \
 		-e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . upgrade -qy test
@@ -119,14 +119,14 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test151.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-1.51.rvn
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard~1.51.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	# don't show deinstallation messages of old package when upgrading
 	atf_check \
-		-o match:"^test-single-standard upgrade messages" \
+		-o match:"^test[~]single[~]standard upgrade messages" \
 		-o match:"^package is being upgraded$" \
 		-o match:"^Upgrading from higher than 1.0$" \
 		-o match:"^Upgrading from >= 1.0 <= 3.0$" \
@@ -159,7 +159,7 @@ EOF
 
 	# don't show deinstallation messages of old package when upgrading
 	atf_check \
-		-o match:"^test-single-standard upgrade messages" \
+		-o match:"^test[~]single[~]standard upgrade messages" \
 		-o match:"^package is being upgraded$" \
 		-o match:"^Upgrading from higher than 1.0$" \
 		-o match:"^Upgrading from >= 1.0 <= 3.0$" \
@@ -185,14 +185,14 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test301.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-3.01.rvn
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard-3.01.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	# don't show deinstallation messages of old package when upgrading
 	atf_check \
-		-o match:"^test-single-standard upgrade messages" \
+		-o match:"^test[~]single[~]standard upgrade messages" \
 		-o match:"^package is being upgraded$" \
 		-o match:"^Upgrading from higher than 1.0$" \
 		-e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . upgrade -qy test
@@ -232,14 +232,14 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR} -r . -m test301.ucl -w dummy.plist
 
 	atf_check -o ignore \
-		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test-single-standard-3.01.rvn
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/test~single~standard~3.01.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	# don't show deinstallation messages of old package when upgrading
 	atf_check \
-		-o match:"^test-single-standard upgrade messages" \
+		-o match:"^test[~]single[~]standard upgrade messages" \
 		-o match:"^package is being upgraded$" \
 		-e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . upgrade -qy test
 }

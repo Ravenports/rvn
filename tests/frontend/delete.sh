@@ -41,15 +41,15 @@ delete_rvn_body() {
 
 	# try removing rvn via glob matching (expected to not match)
 	atf_check -o inline:"No installed packages were selected for removal.\n" \
-		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove -y -C rvn-single-standard
+		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove -y -C rvn~single~standard
 
 	# try removing rvn via exact matching (expected to match)
 	atf_check -o match:"Dry run: The following packages will be removed:" \
-		-o match:"1. rvn-single-standard" \
-		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove --dry-run -y -E rvn-single-standard
+		-o match:"1. rvn[~]single[~]standard" \
+		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove --dry-run -y -E rvn~single~standard
 
 	# finally remove rvn (without the use off --all)
-	atf_check -o match:"\[1\/1\] Removing rvn-single-standard-1" \
+	atf_check -o match:"\[1\/1\] Removing rvn[~]single[~]standard-1" \
 		-e empty -s exit:0  rvn -o ${TMPDIR}/files -r . remove --force -y rvn
 }
 

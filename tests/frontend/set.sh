@@ -44,7 +44,7 @@ set_automatic_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r . install -U --automatic --exact-match --quiet test-single-standard
+		rvn -r . install -U --automatic --exact-match --quiet test~single~standard
 
 	atf_check \
 		-o inline:"1\n" \
@@ -56,7 +56,7 @@ set_automatic_body() {
 		-o empty \
 		-e empty \
 		-s exit:0 \
-		rvn -r . install -U --manual --exact-match --quiet test-single-standard
+		rvn -r . install -U --manual --exact-match --quiet test~single~standard
 
 	atf_check \
 		-o inline:"0\n" \

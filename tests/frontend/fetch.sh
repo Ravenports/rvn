@@ -48,7 +48,7 @@ EOF
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	if ! cat << EOF >> test.ucl
 deps: {
-	b-single-standard: "1"
+	b~single~standard: "1"
 }
 EOF
 	then
@@ -101,7 +101,7 @@ fetch_missing_dep_body()
 	test_setup missing-pkg
 
 	atf_check \
-		-e inline:"Repository corruption detection: b-single-standard dependency is missing from the catalog.\n" \
+		-e inline:"Repository corruption detection: b[~]single[~]standard dependency is missing from the catalog.\n" \
 		-s exit:1 \
 		rvn -C "${CONF}/rvn.conf" -R ${CONF}/repos fetch -r testrepo -d -y test
 }
@@ -112,7 +112,7 @@ fetch_missing_file_body()
 
 	atf_check \
 		-o ignore \
-		-e inline:"\nFailed download: test~single~standard~1.rvn\n\n" \
+		-e inline:"\nFailed download: test[~]single[~]standard[~]1.rvn\n\n" \
 		-s exit:1 \
 		rvn -C "${CONF}/rvn.conf" -R ${CONF}/repos fetch -r testrepo -d -y test
 }

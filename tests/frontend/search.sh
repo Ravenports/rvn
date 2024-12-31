@@ -38,19 +38,19 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r . install -U -qy test
 
 	atf_check \
-		-o match:"^test-single-standard-1[ ]+test" \
+		-o match:"^test[~]single[~]standard-1[ ]+test" \
 		-e ignore \
 		-s exit:0 \
 		rvn -r . search -U test
 
 	atf_check \
-		-o inline:"test-single-standard-1\n" \
+		-o inline:"test[~]single[~]standard-1\n" \
 		-e ignore \
 		-s exit:0 \
 		rvn -r . search -U -q test
 
 	atf_check \
-		-o inline:"test-single-standard-1\ncomment      : a test\ndescription  : \nThis is a test\n" \
+		-o inline:"test[~]single[~]standard-1\ncomment      : a test\ndescription  : \nThis is a test\n" \
 		-e ignore \
 		-s exit:0 \
 		rvn -r . search -U -Q des -Q comm test

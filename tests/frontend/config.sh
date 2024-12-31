@@ -33,7 +33,7 @@ duplicate_pkgs_notallowed_body() {
 
 	atf_check \
 		-e empty \
-		-o inline:"test-single-standard-1\n" \
+		-o inline:"test[~]single[~]standard[~]1\n" \
 		-s exit:0 \
 		rvn query "{nsv}-{version}" -a
 }

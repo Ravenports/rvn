@@ -144,7 +144,7 @@ EOF
 
 atf_check \
 		-e empty \
-		-o match:"test-single-standard 1" \
+		-o match:"test[~]single[~]standard 1" \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target query -a "{nsv} {version}"
 

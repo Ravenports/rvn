@@ -33,7 +33,7 @@ EOF
 	sed -ie 's/comment: a test/comment: Nothing to see here/' plop.ucl
 	cat >> plop.ucl << EOF
 deps: {
-	test-single-standard: "1"
+	test~single~standard: "1"
 }
 EOF
 
@@ -56,13 +56,13 @@ EOF
 		rvn -r . query --all "{name}" -e "{#opts} > 0"
 
 	atf_check \
-		-o inline:"test: plop-single-standard  1\n" \
+		-o inline:"test: plop[~]single[~]standard  1\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query --all -e "{#rdeps} > 0" "{name}: {xrdep:nsv}  {xrdep:ver}"
 
 	atf_check \
-		-o inline:"test: plop-single-standard  1\n" \
+		-o inline:"test: plop[~]single[~]standard  1\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query -e "{#rdeps}> 0" "{name}: {xrdep:nsv}  {xrdep:ver}" test
@@ -80,25 +80,25 @@ EOF
 		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" plop test
 
 	atf_check \
-		-o inline:"test: plop-single-standard  1\n" \
+		-o inline:"test: plop[~]single[~]standard  1\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -C "[pt][le][os][pt]-*"
 
 	atf_check \
-		-o inline:"test: plop-single-standard  1\n" \
+		-o inline:"test: plop[~]single[~]standard  1\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -C "[pt]??[pt]-*"
 
 	atf_check \
-		-o inline:"test: plop-single-standard  1\n" \
+		-o inline:"test: plop[~]single[~]standard  1\n" \
 		-e empty \
 		-s exit:0 \
-		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -E test-single-standard
+		rvn query -e "{#rdeps} > 0"  "{name}: {xrdep:nsv}  {xrdep:ver}" -E test~single~standard
 
 	atf_check \
-		-o inline:"plop: test-single-standard  1\n" \
+		-o inline:"plop: test[~]single[~]standard  1\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query --all -e "{#deps} > 0"  "{name}: {xdep:nsv}  {xdep:ver}"

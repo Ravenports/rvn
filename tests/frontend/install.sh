@@ -48,7 +48,7 @@ EOF
 
 	mkdir -p ${TMPDIR}/var/cache/rvn
 	atf_check \
-		-o match:"\[1\/1\]  test-single-standard-1 \[\*\][ ]+\[ok\]" \
+		-o match:"\[1\/1\]  test[~]single[~]standard[~]1 \[\*\][ ]+\[ok\]" \
 		-s exit:0 \
 		rvn -o REPOS_DIR="${TMPDIR}/reposconf" -r ${TMPDIR} install -fy test
 }
@@ -104,7 +104,7 @@ install_missing_dep_body()
 	# Create one package so we at least have a repo.
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "test" "test" "single" "standard" "1" "/"
 	cat << EOF >> ${TMPDIR}/test.ucl
-deps: {"a-primary-standard": "1"}
+deps: {"a~primary~standard": "1"}
 EOF
 
 	mkdir -p ${TMPDIR}/files
@@ -139,7 +139,7 @@ EOF
 	mkdir -p ${TMPDIR}/target/var/cache/rvn
 	atf_check \
 		-o empty \
-		-e match:"^Corruption detected[.] The a-primary-standard dependency is missing from the catalog" \
+		-e match:"^Corruption detected[.] The a[~]primary[~]standard dependency is missing from the catalog" \
 		-s exit:1 \
-		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -U -y test-single-standard
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -U -y test~single~standard
 }

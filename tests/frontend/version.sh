@@ -45,15 +45,15 @@ EOF
 
 test_patterns_stdin_body() {
     cat << EOF >> PATTERNS
-AdaSAT-dev-standard-[0-9][0-9].0.0
-AdaSAT-*-standard-24.0.0
-AdaSAT-*
-GeoIP-single-standard*
-adasat-dev-standard
-AdaSAT-dev-standard
-A?????-*
+AdaSAT[~]dev[~]standard-[0-9][0-9].0.0
+AdaSAT[~]*[~]standard-24.0.0
+AdaSAT[~]*
+GeoIP[~]single[~]standard*
+adasat[~]dev[~]standard
+AdaSAT[~]dev[~]standard
+A?????[~]*
 EOF
-    atf_check -o inline:"AdaSAT-dev-standard-[0-9][0-9].0.0 AdaSAT-*-standard-24.0.0 AdaSAT-* A?????-*\n"\
-    echo $(cat PATTERNS | rvn version -T "AdaSAT-dev-standard-24.0.0" -)
+    atf_check -o inline:"AdaSAT[~]dev[~]standard[~][0-9][0-9].0.0 AdaSAT[~]*[~]standard[~]24.0.0 AdaSAT[~]* A?????[~]*\n"\
+    echo $(cat PATTERNS | rvn version -T "AdaSAT~dev~standard~24.0.0" -)
 }
 

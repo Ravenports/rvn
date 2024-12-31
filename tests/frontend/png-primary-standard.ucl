@@ -7,7 +7,7 @@ categories: [
 ]
 comment: "Library for manipulating PNG images (primary)"
 deps: {
-  zlib-primary-standard: "1.3.1"
+  zlib~primary~standard: "1.3.1"
 }
 desc: <<EOD
 Libpng was written as a companion to the PNG specification, as a

@@ -42,7 +42,7 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check \
-		-o not-match:"[.] pkg_[bc]-single-standard-"  \
+		-o not-match:"[.] pkg_[bc][~]single[~]standard[~]"  \
 		-e ignore \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r . upgrade -y 'pkg_'
@@ -69,7 +69,7 @@ EOF
 
 	cat <<EOF >> pkg2.ucl 
 deps: {
-	pkg_b-single-standard: "1"
+	pkg_b~single~standard: "1"
 }
 EOF
 
@@ -84,8 +84,8 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check \
-		-o match:'1[.]  [|]` pkg_b-single-standard-1' \
-		-o match:"2[.]  pkg_a-single-standard-1_1 \[U\]" \
+		-o match:'1[.]  [|]` pkg_b[~]single[~]standard-1' \
+		-o match:"2[.]  pkg_a[~]single[~]standard-1_1 \[U\]" \
 		-e ignore \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r . upgrade -y 'pkg_'
@@ -112,19 +112,19 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}       -r . -m pkg1.ucl -w dummy.plist
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m pkg2.ucl -w dummy.plist
 
-	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a-single-standard-1_90.rvn
+	atf_check -o ignore -e empty -s exit:0 rvn -r ${TMPDIR}/target install -qy --file ${TMPDIR}/pkg_a~single~standard~1_90.rvn
 
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check \
-		-o match:"1[.]  pkg_a-single-standard-1_125 \[U\]" \
+		-o match:"1[.]  pkg_a[~]single[~]standard[~]1_125 \[U\]" \
 		-e ignore \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r . upgrade -y 'pkg_'
 
 	atf_check \
-		-o inline:"pkg_a-single-standard version: 1_125\n" \
+		-o inline:"pkg_a[~]single[~]standard version: 1_125\n" \
 		-e empty \
 		-s exit:0 \
 		rvn query --all "{nsv} version: {version}"
@@ -175,16 +175,16 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check -e empty -s exit:0 \
-		-o match:"\[1\/2\]  pkg-1-single-standard-2 \[U\][ ]+\[ok\]" \
-		-o match:"\[2\/2\]  pkg-2-single-standard-2 \[U\][ ]+\[ok\]" \
+		-o match:"\[1\/2\]  pkg-1[~]single[~]standard[~]2 \[U\][ ]+\[ok\]" \
+		-o match:"\[2\/2\]  pkg-2[~]single[~]standard[~]2 \[U\][ ]+\[ok\]" \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg-2-single-standard-2\n' \
+		-o inline:'package pkg-2[~]single[~]standard[~]2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-1
 
 	atf_check \
-		-o inline:'package pkg-1-single-standard-2\n' \
+		-o inline:'package pkg-1[~]single[~]standard[~]2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-2
 }
 
@@ -222,11 +222,11 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check -e empty -s exit:0 \
-		-o match:"\[1\/1\]  pkg-single-standard-2 \[U\][ ]+\[ok\]" \
+		-o match:"\[1\/1\]  pkg[~]single[~]standard[~]2 \[U\][ ]+\[ok\]" \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg-single-standard-2\n' \
+		-o inline:'package pkg[~]single[~]standard[~]2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-1/newfile
 }
 
@@ -264,11 +264,11 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check -e empty -s exit:0 \
-		-o match:"\[1\/1\]  pkg-single-standard-2 \[U\][ ]+\[ok\]" \
+		-o match:"\[1\/1\]  pkg[~]single[~]standard[~]2 \[U\][ ]+\[ok\]" \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg-single-standard-2\n' \
+		-o inline:'package pkg[~]single[~]standard[~]2\n' \
 		rvn -r ${TMPDIR}/target which -q /file-pkg-1
 }
 
@@ -310,21 +310,21 @@ EOF
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	atf_check -e empty -s exit:0 \
-		-o match:"\[1\/1\]  pkg-single-standard-2 \[U\][ ]+\[ok\]" \
+		-o match:"\[1\/1\]  pkg[~]single[~]standard[~]2 \[U\][ ]+\[ok\]" \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -y
 
 	atf_check \
-		-o inline:'package pkg-single-standard-2\n' \
+		-o inline:'package pkg[~]single[~]standard[~]2\n' \
 		rvn -r ${TMPDIR}/target which -q /share/something/file
 }
 
 
 # verifies this issue is solved
 # Proceed with fetching packages? [y/n]:
-# [1/1] ravenadm-single-standard-3.03_2                             4424 KiB [ok]
+# [1/1] ravenadm~single~standard-3.03_2                             4424 KiB [ok]
 #
-# Conflict found: ncurses-primary-standard package installs files in the same location as ncurses-primary-standard
-# Conflict found: ncurses-terminfo-standard package installs files in the same location as ncurses-terminfo-standard
+# Conflict found: ncurses~primary~standard package installs files in the same location as ncurses~primary~standard
+# Conflict found: ncurses~terminfo~standard package installs files in the same location as ncurses~terminfo~standard
 #
 no_dep_conflicts_body()
 {
@@ -341,11 +341,11 @@ EOF
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "ravenadm-2" "ravenadm" "single" "standard" "2" "/"
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "ncurses" "ncurses" "primary" "standard" "1" "/"
 	cat << EOF >> ${TMPDIR}/ravenadm-1.ucl
-deps: {"ncurses-primary-standard": "1"}
+deps: {"ncurses~primary~standard": "1"}
 EOF
 
 	cat << EOF >> ${TMPDIR}/ravenadm-2.ucl
-deps: {"ncurses-primary-standard": "1"}
+deps: {"ncurses~primary~standard": "1"}
 EOF
 
 	echo "file1" > file1
@@ -371,7 +371,7 @@ EOF
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -U -y ravenadm
 
 	# confirmed what it installed
-	atf_check -o inline:"ncurses-primary-standard-1\nravenadm-single-standard-1\n" \
+	atf_check -o inline:"ncurses[~]primary[~]standard[~]1\nravenadm[~]single[~]standard[~]1\n" \
 		-e empty -s exit:0 rvn -r . info -q
 
 	# update ravenadm
@@ -384,6 +384,6 @@ EOF
 
 	# upgrade ravenadm
 	atf_check -e empty -s exit:0 \
-		-o match:"\[1\/1\]  ravenadm-single-standard-2 \[U\][ ]*\[ok\]" \
+		-o match:"\[1\/1\]  ravenadm[~]single[~]standard[~]2 \[U\][ ]*\[ok\]" \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -U -y
 }

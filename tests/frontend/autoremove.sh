@@ -25,7 +25,7 @@ EOF
 
 	cat << EOF >> master.ucl
 deps: {
-  test-single-standard: "1"
+  test~single~standard: "1"
 }
 EOF
 
@@ -74,11 +74,11 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -y master-single-standard
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target install -y master~single~standard
 
 	# verify that
 	atf_check \
-		-o inline:"master-single-standard\ntest-single-standard\n" \
+		-o inline:"master[~]single[~]standard\ntest[~]single[~]standard\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target query "{nsv}" -a
@@ -88,11 +88,11 @@ EOF
 		-o ignore \
 		-e empty \
 		-s exit:0 \
-		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target remove -y master-single-standard
+		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target remove -y master~single~standard
 
 	# verify that
 	atf_check \
-		-o inline:"test-single-standard\n" \
+		-o inline:"test[~]single[~]standard\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target query "{nsv}" -a
@@ -102,7 +102,7 @@ autoremove_body() {
 	autoremove_prep
 
 	atf_check \
-		-o match:"\[1\/1\] Removing test-single-standard-1" \
+		-o match:"\[1\/1\] Removing test[~]single[~]standard[~]1" \
 		-o match:"POST-DEINSTALL: Bourne script 0 failed" \
 		-e empty \
 		-s exit:0 \
@@ -141,13 +141,13 @@ autoremove_dryrun_body() {
 
 	atf_check \
 		-o match:"Dry run: The following packages will be removed:" \
-		-o match:"1. test-single-standard" \
+		-o match:"1. test[~]single[~]standard" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target autoremove -ny
 
 	atf_check \
-		-o inline:"test-single-standard\n" \
+		-o inline:"test[~]single[~]standard\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target query "{nsv}" -a
