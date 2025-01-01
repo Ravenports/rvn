@@ -815,11 +815,11 @@ scripts: {
       args: ''
       code: <<EOS
 pkg.print_msg("ALPHA")
-pkg.exec({"echo","valid-command"})
+pkg.exec({"/bin/echo", "valid-command"})
 pkg.print_msg("BRAVO")
-pkg.exec({"/usr/bin/cmd-dne"})
+pkg.exec({"/usr/bin/false"})
 pkg.print_msg("CHARLIE")
-pkg.exec({"/usr/bin/find","/dne"})
+pkg.exec({"/usr/bin/find", "/dne"})
 pkg.print_msg("DELTA")
 EOS
     }
@@ -836,7 +836,7 @@ EOF
 
 	mkdir ${TMPDIR}/target
 	atf_check \
-		-o inline:"ALPHA-to-be-done\n" \
+		-o inline:"ALPHA\nvalid-command\nBRAVO\nCHARLIE\nfind: '/dne': No such file or directory\nDELTA\n" \
 		-e empty \
 		-s exit:0 \
 		rvn -r ${TMPDIR}/target install -q --no-registration --file ${TMPDIR}/test~single~standard~1.rvn
