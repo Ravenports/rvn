@@ -388,14 +388,10 @@ package body Raven.Event is
    ------------------------
    --  emit_stack_trace  --
    ------------------------
-   procedure emit_stack_trace
-   is
-      trace : TRC.Tracebacks_Array (1 .. 2_000);
-      trlen : Natural;
+   procedure emit_stack_trace (X : Ada.Exceptions.Exception_Occurrence) is
    begin
       warnx ("Dump of stack:");
-      TRC.Call_Chain (trace, trlen);
-      warnx (TRC.Symbolic.Symbolic_Traceback (trace (1 .. trlen)));
+      warnx (TRC.Symbolic.Symbolic_Traceback (X));
    end emit_stack_trace;
 
 end Raven.Event;

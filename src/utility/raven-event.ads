@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Raven.Pkgtypes;
+with Ada.Exceptions;
 
 package Raven.Event is
 
@@ -37,7 +38,7 @@ package Raven.Event is
       rvnsize : Pkgtypes.Package_Size;
       result  : String);
 
-   procedure emit_stack_trace;
+   procedure emit_stack_trace (X : Ada.Exceptions.Exception_Occurrence);
 
 private
 

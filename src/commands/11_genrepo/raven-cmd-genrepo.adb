@@ -345,7 +345,7 @@ package body Raven.Cmd.Genrepo is
             when disaster : others =>
                Event.emit_error
                  ("!!!! CRASH !!!! " & Ada.Exceptions.Exception_Information (disaster));
-               Event.emit_stack_trace;
+               Event.emit_stack_trace (disaster);
          end scan;
 
          scan_01 : scan (lot => 1);
