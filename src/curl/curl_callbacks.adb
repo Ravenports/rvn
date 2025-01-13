@@ -23,7 +23,7 @@ package body curl_callbacks is
                         nmemb    : IC.size_t;
                         userdata : System.Address) return IC.size_t
    is
-      bytes_passed : constant Natural := Natural (nmemb);
+      bytes_passed : constant Transfer_Size := Transfer_Size (nmemb);
       zdata : curldata;
       for zdata'Address use userdata;
       pragma Import (Ada, zdata);

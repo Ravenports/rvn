@@ -13,10 +13,11 @@ package curl_callbacks is
    package SIO renames Ada.Streams.Stream_IO;
    package ASU renames Ada.Strings.Unbounded;
 
+   type Transfer_Size is mod 2**64;
    type curldata is
       record
          file_handle : SIO.File_Type;
-         totalsize   : Natural := 0;
+         totalsize   : Transfer_Size := 0;
          max_age     : Natural := 0;
          etag_file   : ASU.Unbounded_String;
          curlobj     : curl_header.CURLX;
