@@ -592,6 +592,16 @@ package body Raven.Deinstall is
       behave_quiet   : Boolean;
       dryrun         : Boolean)
    is
+      function max_line_width return Natural
+      is
+         width : constant Natural := Context.reveal_terminal_width;
+      begin
+         if width > 100 then
+            return 100;
+         end if;
+         return width;
+      end max_line_width;
+
       --  Display format
       --   6 chars: right-padded 5 spaces counter, plus + space
       --  73 chars: display nsv + version (right just).
@@ -599,10 +609,10 @@ package body Raven.Deinstall is
       --  --------------
       --  79 chars
       --
-      --  If terminal width > 80, the second field is expanded accordingly
+      --  If terminal width > 80, the second field is expanded accordingly (up to 100 chars)
 
       counter : Natural := 0;
-      twidth  : constant Natural := Context.reveal_terminal_width;
+      twidth  : constant Natural := max_line_width;
 
       procedure display_line (Position : Purge_Order_Crate.Cursor)
       is
