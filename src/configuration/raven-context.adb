@@ -164,6 +164,15 @@ package body Raven.Context is
    end reveal_protocol_restriction;
 
 
+   -----------------------------
+   --  reveal_terminal_width  --
+   -----------------------------
+   function reveal_terminal_width return Natural is
+   begin
+      return context.display_width;
+   end reveal_terminal_width;
+
+
    ----------------------------
    --  register_debug_level  --
    ----------------------------
@@ -234,6 +243,15 @@ package body Raven.Context is
    begin
       context.internet_proto := setting;
    end register_protocol_restriction;
+
+
+   -------------------------------
+   --  register_terminal_width  --
+   -------------------------------
+   procedure register_terminal_width (width : Natural) is
+   begin
+      context.display_width := width;
+   end register_terminal_width;
 
 
 end Raven.Context;
