@@ -154,7 +154,7 @@ package Raven.Unix is
    function change_root (dirname : String) return Boolean;
 
    --  Returns number of column of terminal
-   function terminal_width return Natural;
+   function terminal_width (min80 : Boolean := False) return Natural;
 
 private
 
