@@ -1316,7 +1316,8 @@ package body Raven.Install is
    procedure print_next_installation (nextpkg  : Install_Order_Type;
                                       version  : String;
                                       counter  : Natural;
-                                      total    : Natural)
+                                      total    : Natural;
+                                      width    : Natural)
    is
       function progress return String is
       begin
@@ -1362,7 +1363,7 @@ package body Raven.Install is
             return;
          end if;
          declare
-            canvas : String (1 .. 75) := pad_right (msg, 75);
+            canvas : String (1 .. width) := pad_right (msg, width);
          begin
             Event.emit_premessage (canvas);
          end;
@@ -1423,6 +1424,7 @@ package body Raven.Install is
    is
       counter : Natural := 0;
       total_flatsize : Pkgtypes.Package_Size := 0;
+      term_width : constant Natural := Context.reveal_terminal_width - 5;  --  75 for 80-col term
 
       procedure increment (flatsize : Pkgtypes.Package_Size)
       is
@@ -1458,7 +1460,7 @@ package body Raven.Install is
          already_installed : constant Boolean := install_map.Contains (myrec.nsv);
       begin
          counter := counter + 1;
-         print_next_installation (myrec, version, counter, 0);
+         print_next_installation (myrec, version, counter, 0, term_width);
          case myrec.action is
             when new_install =>
                increment (cache_map.Element (myrec.nsv).flatsize);
@@ -1498,6 +1500,7 @@ package body Raven.Install is
    is
       tmp_filename  : constant String := Miscellaneous.get_temporary_filename ("install");
       total_steps   : constant Natural := Natural (queue.Length);
+      term_width    : constant Natural := Context.reveal_terminal_width - 5;  --  75 for 80-col term
       this_step     : Natural := 0;
       install_log   : TIO.File_Type;
       problem_found : Boolean := False;
@@ -1542,7 +1545,7 @@ package body Raven.Install is
 
          this_step := this_step + 1;
          if not behave_quiet then
-            print_next_installation (myrec, version, this_step, total_steps);
+            print_next_installation (myrec, version, this_step, total_steps, term_width);
          end if;
          case myrec.action is
             when reinstall | upgrade | reset_auto =>

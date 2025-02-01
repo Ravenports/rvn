@@ -157,7 +157,8 @@ private
      (nextpkg  : Install_Order_Type;
       version  : String;
       counter  : Natural;
-      total    : Natural);
+      total    : Natural;
+      width    : Natural);
 
    function granted_permission_to_proceed
      (quiet : Boolean) return Boolean;
