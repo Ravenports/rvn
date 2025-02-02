@@ -5,6 +5,7 @@ with Ada.Text_IO;
 with Ada.Characters.Latin_1;
 with Raven.Event;
 with Raven.Fetch;
+with Raven.Context;
 with Raven.Version;
 with Raven.Metadata;
 with Raven.Cmd.Unset;
@@ -337,10 +338,20 @@ package body Raven.Database.Fetch is
       --   6 chars: left-pad, "  0.0%" .. "100.0%"
       --  --------------
       --  79 chars
+      --
+      --  If terminal width > 80, the second field is expanded accordingly
 
       total_flatsize : Package_Size := 0;
       total_rvn_size : Package_Size := 0;
       counter        : Natural := 0;
+
+      twidth     : constant Natural := Context.reveal_terminal_width;
+      max_bname  : constant Natural := twidth - 23;  --  57 on 80-col terminal
+      bname_tail : constant Natural := twidth - 17;  --  63 on 80-col terminal
+      fsize_head : constant Natural := twidth - 15;  --  65 on 80-col terminal
+      fsize_tail : constant Natural := twidth - 8;   --  72 on 80-col terminal
+      pc_head    : constant Natural := twidth - 6;   --  74 on 80-col terminal
+      pc_tail    : constant Natural := twidth - 1;   --  79 on 80-col terminal
 
       procedure combine_sizes (Position : Remote_Files_Set.Cursor) is
       begin
@@ -352,15 +363,15 @@ package body Raven.Database.Fetch is
       is
          digkey : constant short_digest := USS (Text_List.Element (Position));
          myrec  : A_Remote_File renames remote_files.Element (digkey);
-         full_line : String (1 .. 79) := (others => ' ');
-         IEC   : constant String := Metadata.human_readable_size (int64 (myrec.rvnsize));
-         bname : constant String := USS (myrec.nsvv);
+         IEC    : constant String := Metadata.human_readable_size (int64 (myrec.rvnsize));
+         bname  : constant String := USS (myrec.nsvv);
+         full_line : String (1 .. pc_tail) := (others => ' ');
       begin
          counter := counter + 1;
          full_line (1 .. 5) := format_download_order (counter);
-         if bname'Length > 57 then
-            full_line (7 .. 62) := bname (bname'First .. bname'First + 55);
-            full_line (63) := '*';
+         if bname'Length > max_bname then
+            full_line (7 .. bname_tail - 1) := bname (bname'First .. bname'First + max_bname - 2);
+            full_line (bname_tail) := '*';
          else
             full_line (7 .. 6 + bname'Length) := bname;
          end if;
@@ -368,12 +379,12 @@ package body Raven.Database.Fetch is
             declare
                bytes : constant String := int2str (Natural (myrec.rvnsize)) & " B  ";
             begin
-               full_line (65 .. 72) := pad_left (bytes, 8);
+               full_line (fsize_head .. fsize_tail) := pad_left (bytes, 8);
             end;
          else
-            full_line (65 .. 72) := pad_left (IEC, 8);
+            full_line (fsize_head .. fsize_tail) := pad_left (IEC, 8);
          end if;
-         full_line (74 .. 79) := pad_left (percentage (myrec.rvnsize, total_rvn_size), 6);
+         full_line (pc_head .. pc_tail) := pad_left (percentage (myrec.rvnsize, total_rvn_size), 6);
          Event.emit_message (full_line);
       end display_line;
 

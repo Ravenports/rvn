@@ -6,6 +6,7 @@ with Ada.Direct_IO;
 with Ada.Exceptions;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
+with Ada.Characters.Latin_1;
 with GNAT.OS_Lib;
 
 with Archive.Dirent.Scan;
@@ -25,6 +26,7 @@ package body Raven.Cmd.Genrepo is
    package TIO renames Ada.Text_IO;
    package DIR renames Ada.Directories;
    package SIO renames Ada.Streams.Stream_IO;
+   package LAT renames Ada.Characters.Latin_1;
    package OSL renames GNAT.OS_Lib;
    package SCN renames Archive.Dirent.Scan;
    package UNX renames Archive.Unix;
@@ -169,19 +171,25 @@ package body Raven.Cmd.Genrepo is
       type A_Task_Queue is array (Scanner_Range) of string_crate.Vector;
       type A_Task_State is array (Scanner_Range) of Boolean;
       type A_Task_File  is array (Scanner_Range) of TIO.File_Type;
+      type A_Task_Count is array (Scanner_Range) of Natural;
       type A_Task_Product is array (Scanner_Range) of Text;
+      type progress_increments is (ten, five, one, tenth);
 
       task_queue      : A_Task_Queue;
       task_files      : A_Task_File;
       task_product    : A_Task_Product;
+      task_count      : A_Task_Count := (others => 0);
       finished_task   : A_Task_State := (others => False);
       number_scanners : Natural := Natural (number_cpus);
       total_num       : Natural := 0;
       must_wait       : Boolean := True;
       combined_well   : Boolean := True;
       fragments_good  : Boolean := True;
+      show_info       : Boolean := False;
       catalog_handle  : TIO.File_Type;
       last_worker     : Scanner_Range := 1;
+      pincrement      : progress_increments := tenth;
+      PROGRESS_MIN    : constant Natural := 100;
 
       procedure create_fragment_files is
       begin
@@ -210,6 +218,47 @@ package body Raven.Cmd.Genrepo is
             end if;
          end loop;
       end close_fragment_files;
+
+      procedure show_progress
+      is
+         completed : Natural := 0;
+         resint    : Natural;
+
+         procedure print (num_image : String) is
+         begin
+            Event.emit_premessage (" progress: " & num_image & "%" & LAT.CR);
+         end print;
+      begin
+         for z in Scanner_Range loop
+            completed := completed + task_count (z);
+         end loop;
+         case pincrement is
+            when ten =>
+               resint := ((completed * 10) / total_num) * 10;
+            when five =>
+               resint := ((completed * 20) / total_num) * 5;
+            when one =>
+               resint := (completed * 100) / total_num;
+            when tenth =>
+               resint := ((total_num + completed) * 1000) / total_num;
+         end case;
+         declare
+            raw : constant String := Strings.int2str (resint);
+         begin
+            case pincrement is
+               when ten | five | one =>
+                  print (raw);
+               when tenth =>
+                  --  minimum value is "1000", 4 cols guaranteed.  always drop first column
+                  --  if completed = total num, resint = 2000
+                  if resint = 2000 then
+                     print("100.0");
+                  else
+                     print (raw (raw'First + 1 .. raw'First + 2) & '.' & raw (raw'Last));
+                  end if;
+            end case;
+         end;
+      end show_progress;
 
       procedure split_tasks
       is
@@ -334,6 +383,7 @@ package body Raven.Cmd.Genrepo is
                ThickUCL.drop_base_keypair (metatree, "directories");
                ThickUCL.drop_base_keypair (metatree, "scripts");
                TIO.Put_Line (task_files (lot), ThickUCL.Emitter.emit_compact_ucl (metatree));
+               task_count (lot) := task_count (lot) + 1;
 
             end scan_rvn_package;
          begin
@@ -367,7 +417,23 @@ package body Raven.Cmd.Genrepo is
       begin
          Event.emit_debug (moderate, "All tasks spawned");
          if not quiet then
-            Event.emit_message ("Scanning packages for catalog generation...");
+            Event.emit_message ("Scanning" & total_num'Img & " packages for catalog generation...");
+            if total_num >= PROGRESS_MIN then
+               show_info := True;
+               Event.emit_premessage (" progress: 0%" & LAT.CR);
+            end if;
+            while must_wait loop
+               delay 0.25;
+               must_wait := False;
+               for z in Scanner_Range loop
+                  if not finished_task (z) then
+                     must_wait := True;
+                  end if;
+               end loop;
+               if show_info then
+                  show_progress;
+               end if;
+            end loop;
          end if;
       end execute_scan;
 
@@ -384,17 +450,15 @@ package body Raven.Cmd.Genrepo is
       if not fragments_good then
          return False;
       end if;
+      if total_num < 240 then
+         pincrement := ten;
+      elsif total_num < 800 then
+         pincrement := five;
+      elsif total_num < 4000 then
+         pincrement := one;
+      end if;
 
       execute_scan;
-      while must_wait loop
-         delay 0.25;
-         must_wait := False;
-         for z in Scanner_Range loop
-            if not finished_task (z) then
-               must_wait := True;
-            end if;
-         end loop;
-      end loop;
       close_fragment_files;
 
       begin
@@ -435,6 +499,10 @@ package body Raven.Cmd.Genrepo is
 
       if TIO.Is_Open (catalog_handle) then
          TIO.Close (catalog_handle);
+      end if;
+      if show_info then
+         --  Clear progress (we're done)
+         Event.emit_message ("                   ");
       end if;
 
       return combined_well;

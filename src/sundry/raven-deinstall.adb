@@ -7,6 +7,7 @@ with Lua;
 with Bourne;
 with Blake_3;
 with Raven.Event;
+with Raven.Context;
 with Raven.Strings;
 with Raven.Triggers;
 with Raven.Cmd.Unset;
@@ -591,20 +592,33 @@ package body Raven.Deinstall is
       behave_quiet   : Boolean;
       dryrun         : Boolean)
    is
+      function max_line_width return Natural
+      is
+         width : constant Natural := Context.reveal_terminal_width;
+      begin
+         if width > 100 then
+            return 100;
+         end if;
+         return width;
+      end max_line_width;
+
       --  Display format
       --   6 chars: right-padded 5 spaces counter, plus + space
       --  73 chars: display nsv + version (right just).
       --            If nsv too long, replace last char with *
       --  --------------
       --  79 chars
+      --
+      --  If terminal width > 80, the second field is expanded accordingly (up to 100 chars)
 
       counter : Natural := 0;
+      twidth  : constant Natural := max_line_width;
 
       procedure display_line (Position : Purge_Order_Crate.Cursor)
       is
          plndx     : constant Natural := Purge_Order_Crate.Element (Position);
          myrec     : Pkgtypes.A_Package renames purge_list.Element (plndx);
-         full_line : String (1 .. 79) := (others => ' ');
+         full_line : String (1 .. twidth - 1) := (others => ' ');
          max_nsv   : Natural;
       begin
          counter := counter + 1;
@@ -615,7 +629,7 @@ package body Raven.Deinstall is
             vstart : constant Natural := full_line'Last - ver'Length + 1;
          begin
             full_line (vstart .. full_line'Last) := ver;
-            max_nsv := 73 - (ver'Length + 1);
+            max_nsv := twidth - 7 - (ver'Length + 1);
             if nsv'Length > max_nsv then
                full_line (7 .. 6 + max_nsv - 1) := nsv (nsv'First .. nsv'First + max_nsv - 2);
                full_line (6 + max_nsv) := '*';

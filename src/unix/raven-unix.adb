@@ -317,4 +317,31 @@ package body Raven.Unix is
       return success (result);
    end change_root;
 
+
+   ----------------------
+   --  terminal_width  --
+   ----------------------
+   function terminal_width
+     (min80 : Boolean := False;
+      dumb  : Boolean := False) return Natural
+   is
+      res : IC.short;
+   begin
+      if dumb then
+         return 132;
+      end if;
+      res := c_term_columns;
+      if min80 then
+         case res is
+            when 81 .. IC.short'Last => return Natural (res);
+            when others => return 80;
+         end case;
+      else
+         case res is
+            when 0 .. IC.short'Last => return Natural (res);
+            when others => return 0;
+         end case;
+      end if;
+   end terminal_width;
+
 end Raven.Unix;

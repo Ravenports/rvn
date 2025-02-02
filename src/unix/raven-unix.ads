@@ -153,6 +153,15 @@ package Raven.Unix is
    --  wrap chroot(2) from libc
    function change_root (dirname : String) return Boolean;
 
+   --  Returns number of column of terminal
+   --  If "dumb", always returns 132
+   --  Otherwise:
+   --     if "min80" returns 80 if <=80
+   --     return True width
+   function terminal_width
+     (min80 : Boolean := False;
+      dumb  : Boolean := False) return Natural;
+
 private
 
    last_errno : Integer;
@@ -226,5 +235,8 @@ private
 
    function C_chroot (dirname : IC.Strings.chars_ptr) return IC.int;
    pragma Import (C, C_chroot, "chroot");
+
+   function c_term_columns return IC.short;
+   pragma Import (C, c_term_columns, "get_columns");
 
 end Raven.Unix;
