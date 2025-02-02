@@ -379,7 +379,7 @@ package body Raven.Cmd.Genrepo is
             Event.emit_message ("Scanning" & total_num'Img & " packages for catalog generation...");
             if total_num >= PROGRESS_MIN then
                show_info := True;
-               Event.emit_premessage ("Progress: ");
+               Event.emit_premessage ("  Progress: 0%" & LAT.CR);
             end if;
          end if;
       end execute_scan;
@@ -389,12 +389,9 @@ package body Raven.Cmd.Genrepo is
          completed : Natural := 0;
          resint    : Natural;
 
-         procedure print (num_image : String)
-         is
-            canvas : String (1 .. (num_image'Length + 1) * 2) := (others => LAT.BS);
+         procedure print (num_image : String) is
          begin
-            canvas (canvas'First .. canvas'First + num_image'Length) := num_image & '%';
-            Event.emit_premessage (canvas);
+            Event.emit_premessage ("  Progress: " & num_image & "%" & LAT.CR);
          end print;
       begin
          for z in Scanner_Range loop
@@ -498,7 +495,8 @@ package body Raven.Cmd.Genrepo is
          TIO.Close (catalog_handle);
       end if;
       if show_info then
-         Event.emit_message ("complete");
+         --  Clear progress (we're done)
+         Event.emit_message ("                   ");
       end if;
 
       return combined_well;
