@@ -422,18 +422,18 @@ package body Raven.Cmd.Genrepo is
                show_info := True;
                Event.emit_premessage (" progress: 0%" & LAT.CR);
             end if;
-            while must_wait loop
-               delay 0.25;
-               must_wait := False;
-               for z in Scanner_Range loop
-                  if not finished_task (z) then
-                     must_wait := True;
-                  end if;
-               end loop;
-               if show_info then
+            if show_info then
+               while must_wait loop
+                  delay 0.25;
+                  must_wait := False;
+                  for z in Scanner_Range loop
+                     if not finished_task (z) then
+                        must_wait := True;
+                     end if;
+                  end loop;
                   show_progress;
-               end if;
-            end loop;
+               end loop;
+            end if;
          end if;
       end execute_scan;
 
