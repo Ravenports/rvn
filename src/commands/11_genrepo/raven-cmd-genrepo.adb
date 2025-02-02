@@ -379,7 +379,7 @@ package body Raven.Cmd.Genrepo is
             Event.emit_message ("Scanning" & total_num'Img & " packages for catalog generation...");
             if total_num >= PROGRESS_MIN then
                show_info := True;
-               Event.emit_premessage ("  Progress: 0%" & LAT.CR);
+               Event.emit_premessage (" progress: 0%" & LAT.CR);
             end if;
          end if;
       end execute_scan;
@@ -391,7 +391,8 @@ package body Raven.Cmd.Genrepo is
 
          procedure print (num_image : String) is
          begin
-            Event.emit_premessage ("  Progress: " & num_image & "%" & LAT.CR);
+            Event.emit_premessage (" progress: " & num_image & "%" & LAT.CR);
+            TIO.Flush;
          end print;
       begin
          for z in Scanner_Range loop
