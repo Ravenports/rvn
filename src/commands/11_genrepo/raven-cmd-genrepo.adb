@@ -219,6 +219,47 @@ package body Raven.Cmd.Genrepo is
          end loop;
       end close_fragment_files;
 
+      procedure show_progress
+      is
+         completed : Natural := 0;
+         resint    : Natural;
+
+         procedure print (num_image : String) is
+         begin
+            Event.emit_premessage (" progress: " & num_image & "%" & LAT.CR);
+         end print;
+      begin
+         for z in Scanner_Range loop
+            completed := completed + task_count (z);
+         end loop;
+         case pincrement is
+            when ten =>
+               resint := ((completed * 10) / total_num) * 10;
+            when five =>
+               resint := ((completed * 20) / total_num) * 5;
+            when one =>
+               resint := (completed * 100) / total_num;
+            when tenth =>
+               resint := ((total_num + completed) * 1000) / total_num;
+         end case;
+         declare
+            raw : constant String := Strings.int2str (resint);
+         begin
+            case pincrement is
+               when ten | five | one =>
+                  print (raw);
+               when tenth =>
+                  --  minimum value is "1000", 4 cols guaranteed.  always drop first column
+                  --  if completed = total num, resint = 2000
+                  if resint = 2000 then
+                     print("100.0");
+                  else
+                     print (raw (raw'First + 1 .. raw'First + 2) & '.' & raw (raw'Last));
+                  end if;
+            end case;
+         end;
+      end show_progress;
+
       procedure split_tasks
       is
          procedure filter_rvn_files (position : SCN.dscan_crate.Cursor);
@@ -381,50 +422,20 @@ package body Raven.Cmd.Genrepo is
                show_info := True;
                Event.emit_premessage (" progress: 0%" & LAT.CR);
             end if;
+            while must_wait loop
+               delay 0.25;
+               must_wait := False;
+               for z in Scanner_Range loop
+                  if not finished_task (z) then
+                     must_wait := True;
+                  end if;
+               end loop;
+               if show_info then
+                  show_progress;
+               end if;
+            end loop;
          end if;
       end execute_scan;
-
-      procedure show_progress
-      is
-         completed : Natural := 0;
-         resint    : Natural;
-
-         procedure print (num_image : String) is
-         begin
-            Event.emit_premessage (" progress: " & num_image & "%" & LAT.CR);
-            TIO.Flush;
-         end print;
-      begin
-         for z in Scanner_Range loop
-            completed := completed + task_count (z);
-         end loop;
-         case pincrement is
-            when ten =>
-               resint := ((completed * 10) / total_num) * 10;
-            when five =>
-               resint := ((completed * 20) / total_num) * 5;
-            when one =>
-               resint := (completed * 100) / total_num;
-            when tenth =>
-               resint := ((total_num + completed) * 1000) / total_num;
-         end case;
-         declare
-            raw : constant String := Strings.int2str (resint);
-         begin
-            case pincrement is
-               when ten | five | one =>
-                  print (raw);
-               when tenth =>
-                  --  minimum value is "1000", 4 cols guaranteed.  always drop first column
-                  --  if completed = total num, resint = 2000
-                  if resint = 2000 then
-                     print("100.0");
-                  else
-                     print (raw (raw'First + 1 .. raw'First + 2) & '.' & raw (raw'Last));
-                  end if;
-            end case;
-         end;
-      end show_progress;
 
    begin
       if number_scanners > Natural (Scanner_Range'Last) then
@@ -448,18 +459,6 @@ package body Raven.Cmd.Genrepo is
       end if;
 
       execute_scan;
-      while must_wait loop
-         delay 0.25;
-         must_wait := False;
-         for z in Scanner_Range loop
-            if not finished_task (z) then
-               must_wait := True;
-            end if;
-         end loop;
-         if show_info then
-            show_progress;
-         end if;
-      end loop;
       close_fragment_files;
 
       begin
