@@ -403,20 +403,26 @@ package body Raven.Cmd.Genrepo is
             when five =>
                resint := ((completed * 20) / total_num) * 5;
             when one =>
-               resint := ((completed * 100) / total_num);
+               resint := (completed * 100) / total_num;
             when tenth =>
-               resint := ((completed * 1000) / total_num);
+               resint := ((total_num + completed) * 1000) / total_num;
          end case;
-         case pincrement is
-            when ten | five | one =>
-               print (Strings.int2str (resint));
-            when tenth =>
-               declare
-                  raw : constant String := Strings.int2str (resint);
-               begin
-                  print (raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last));
-               end;
-         end case;
+         declare
+            raw : constant String := Strings.int2str (resint);
+         begin
+            case pincrement is
+               when ten | five | one =>
+                  print (raw);
+               when tenth =>
+                  --  minimum value is "1000", 4 cols guaranteed.  always drop first column
+                  --  if completed = total num, resint = 2000
+                  if resint = 2000 then
+                     print("100.0");
+                  else
+                     print (raw (raw'First + 1 .. raw'First + 2) & '.' & raw (raw'Last));
+                  end if;
+            end case;
+         end;
       end show_progress;
 
    begin
