@@ -6,11 +6,14 @@ THIS_OS=$(uname -s)
 
 export RESOURCEDIR="${TESTSDIR}/frontend"
 export OS="${THIS_OS}"
-export PATH="${RVNOUT}:${XRVNOUT}:${PATH}"
 export INSTALL_AS_USER=yes
 export RVN_DBDIR=.
 export NO_TICK=yes
 export PROGNAME="rvn"
+
+if [ -n "${RAVENADM}" ]; then
+export PATH="${RVNOUT}:${XRVNOUT}:${PATH}"
+fi
 
 tests_init()
 {
