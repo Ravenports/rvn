@@ -546,7 +546,8 @@ package body Raven.Database.Fetch is
       file_counter   : Natural;
       total_files    : Natural) return download_result
    is
-      full_line : String (1 .. 75) := (others => ' ');
+      lastc  : constant Natural := Context.reveal_terminal_width - 5;
+      full_line : String (1 .. lastc) := (others => ' ');
       rf_url : constant String := USS (remote_url) & "/files/" & USS (remote_file.nsvv) & extension;
       dnlink : constant String := destination & "/" & USS (remote_file.nsvv) & extension;
       dnfile : constant String := destination & "/" & USS (remote_file.nsvv) & "~"& digest10 &
@@ -576,32 +577,36 @@ package body Raven.Database.Fetch is
 
       procedure populate_filename (prefix_size : Natural)
       is
-         max_size : constant Natural := 66 - prefix_size - 2;
+         --  For 80 cols (full_line'length = 75), maxsize = 66 - prefix_size - 2 (fnconst = 64)
+         fnconst  : constant Natural := lastc - 11;
+         max_size : constant Natural := fnconst - prefix_size;
          filename : constant String := USS (remote_file.nsvv);
          offset   : constant Natural := prefix_size + 1;
          start    : constant Natural := full_line'First + offset;
-         max_fn   : constant Natural := filename'first + 63 - offset;
+         max_fn   : constant Natural := filename'first + (fnconst - 1) - offset;
       begin
          if filename'Length < max_size then
             full_line (start .. start + filename'Length - 1) := filename;
          else
-            full_line (start .. 64) := filename (filename'First .. max_fn);
-            full_line (65) := '*';
+            full_line (start .. fnconst) := filename (filename'First .. max_fn);
+            full_line (fnconst + 1) := '*';
          end if;
       end populate_filename;
 
       procedure populate_filesize
       is
          IEC : constant String := Metadata.human_readable_size (int64 (remote_file.rvnsize));
+         chead : constant Natural := lastc - 8;  --  67 on 80-col
+         ctail : constant Natural := lastc - 1;  --  74 on 80-col
       begin
          if remote_file.rvnsize < 5_121 then
             declare
                bytes : constant String := int2str (Natural (remote_file.rvnsize)) & " B  ";
             begin
-               full_line (67 .. 74) := pad_left (bytes, 8);
+               full_line (chead .. ctail) := pad_left (bytes, 8);
             end;
          else
-            full_line (67 .. 74) := pad_left (IEC, 8);
+            full_line (chead .. ctail) := pad_left (IEC, 8);
          end if;
       end populate_filesize;
 
