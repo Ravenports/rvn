@@ -1,11 +1,103 @@
-.Dd June 2, 2024
+.Dd March 8, 2025
 .Dt RVN-AUDIT 8
 .Os
 .Sh NAME
 .Nm "rvn audit"
 .Nd lists active cybersecurity vulnerabilities
 .Sh SYNOPSIS
-Not yet implemented.
+.Nm
+.Op Fl rq
+.Op Fl l Ar s | c | f
+.Op Fl f Ar s | v | n
+.Op Fl F Ar j | u | s
+.Pp
+.Nm
+.Op Cm --{refresh,quiet}
+.Op Cm --level Ar summary | concise | full
+.Op Cm --filter Ar secure | vulnerable | none
+.Op Cm --format Ar json | ucl | standard
+.Sh DESCRIPTION
+.Nm
+checks installed packages for known vulnerabilities and generates reports
+including references to the National Vulnerability Database (NVD)
+Common Vulnerabilities and Exposures (CVE) entries.
+Only packages annotated with Common Platform Enumeration (CPE) strings are
+evalulated for vulnerabilities.
+.Pp
+There are three levels of report verbosity.
+The summary report lists the vulnerability status using one line per package.
+The concise report builds on the summary by listing every CVE that affects
+the installed version of the package, along with it's vulnerability score
+and patched status.
+The full report lists full exploitation vector scores and a description of
+the vulnerability for each CVE along with a link to the NVD report.
+.Pp
+By default only vulnerable packages are listed, but optionally packages that
+include patches for their listed vulnerabilities can be displayed in
+addition or instead.
+.Sh OPTIONS
+The following options are supported by
+.Nm :
+.Bl -tag -width quiet
+.It Fl q , Cm --quiet
+If the filter is set to
+.Dq vulnerable ,
+the
+.Dq is vulnerable
+clause is suppressed.
+If the filter is set to
+.Dq secure ,
+the
+.Dq is secure
+clause is suppressed.
+This switch cannot be used on unfiltered reports.
+.It Fl r , Cm --refresh
+Downloads from the Ravenports vulnerability server are cached for
+eight hours.
+Use this switch to force the cached information to be replaced by
+the results of a fresh query to the server.
+.It Fl l , Cm --level
+This switch requires one of three arguments:
+.Dq summary ,
+.Dq concise ,
+or
+.Dq full .
+A leading subset is accepted, e.g.
+.Dq c
+or
+.Dq con
+would be accepted for the concise setting.
+This switch sets the verbosity level of the report.
+If the setting is omitted, the summary level is selected.
+.It Fl f , Cm --filter
+This switch requires one of three arguments:
+.Dq secure ,
+.Dq vulnerable ,
+or
+.Dq none .
+A leading subset is also accepted for this switch.
+This switch filters the report to only list installed packages that
+have had their vulnerabilities fixed, or only list vulnerable
+packages, or list all installed packages tracked by the NVD.
+If the setting is omitted, only installed packages that are currently
+vulnerable are shown.
+.It Fl F , Cm --format
+This switch requires one of three arguments:
+.Dq json ,
+.Dq ucl ,
+or
+.Dq standard .
+A leading subset is also accepted for this switch.
+This switch can format the output as a JSON object or the UCL format.
+Terminal users typically do not provide this setting as the standard
+setting is the default and the most appropriate for the console.
+.El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm .
+.Bl -tag -width ".Ev NO_DESCRIPTIONS"
+.It Ev RVN_DBDIR
+.El
 .Sh SEE ALSO
 .Xr rvn-keywords 5 ,
 .Xr rvn-lua-scripts 5 ,
