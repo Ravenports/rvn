@@ -42,6 +42,9 @@ private
    type Clswitch is
         (nothing_pending,
          generic_repo_name,
+         audit_filter,
+         audit_format,
+         audit_level,
          annotate_tag,
          annotate_note,
          create_metadata,

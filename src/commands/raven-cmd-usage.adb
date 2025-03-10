@@ -113,6 +113,7 @@ package body Raven.Cmd.Usage is
          when cv_unset      => return True;  -- already verified
          when cv_alias      => return verb_alias (comline);
          when cv_annotate   => return verb_note (comline);
+         when cv_audit      => return verb_audit (comline);
          when cv_autoremove => return verb_autorem (comline);
          when cv_catalog    => return verb_catalog (comline);
          when cv_check      => return verb_check (comline);
@@ -1340,5 +1341,27 @@ package body Raven.Cmd.Usage is
 
       return True;
    end verb_note;
+
+
+   ------------------
+   --  verb_audit  --
+   ------------------
+   function verb_audit (comline : Cldata) return Boolean
+   is
+      function alert (error_msg : String) return Boolean
+      is
+         msg : constant String := "audit [-rq] [-l s|c|f] [-f s|v|n] [-F j|u|s]";
+      begin
+         display_error (error_msg);
+         display_usage (msg, True);
+         return False;
+      end alert;
+   begin
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
+      end if;
+      return True;
+   end verb_audit;
+
 
 end Raven.Cmd.Usage;

@@ -22,6 +22,7 @@ private
    --  Keep this in alphabetical order after cv_unset
    type Command_verb is
      (cv_unset,
+      cv_audit,
       cv_alias,
       cv_annotate,
       cv_autoremove,
@@ -280,6 +281,18 @@ private
          glob_input         : Boolean := False;
       end record;
 
+   type audit_filter is (vulnerable, secure, none);
+   type audit_level  is (summary, concise, full);
+   type audit_format is (fmt_report, fmt_json, fmt_ucl);
+
+   type switches_audit_cmd is
+      record
+         refresh            : Boolean      := False;
+         filter             : audit_filter := vulnerable;
+         level              : audit_level  := summary;
+         format             : audit_format := fmt_report;
+      end record;
+
    type pre_command_switches is
       record
          debug_setting      : A_Debug_Level := silent;
@@ -329,6 +342,7 @@ private
          cmd_upgrade            : switches_upgrade_cmd;
          cmd_version            : switches_version_cmd;
          cmd_which              : switches_which_cmd;
+         cmd_audit              : switches_audit_cmd;
       end record;
 
    --  Provide string equivalent to given command enumeration

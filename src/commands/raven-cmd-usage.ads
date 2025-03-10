@@ -59,5 +59,6 @@ private
    function verb_check   (comline : Cldata) return Boolean;
    function verb_note    (comline : Cldata) return Boolean;
    function verb_upgrade (comline : Cldata) return Boolean;
+   function verb_audit   (comline : Cldata) return Boolean;
 
 end Raven.Cmd.Usage;

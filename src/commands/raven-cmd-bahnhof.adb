@@ -25,6 +25,7 @@ with Raven.Cmd.Autoremove;
 with Raven.Cmd.Check;
 with Raven.Cmd.Annotate;
 with Raven.Cmd.Upgrade;
+with Raven.Cmd.Audit;
 
 package body Raven.Cmd.Bahnhof is
 
@@ -52,6 +53,7 @@ package body Raven.Cmd.Bahnhof is
    package C21 renames Raven.Cmd.Check;
    package C22 renames Raven.Cmd.annotate;
    package C23 renames Raven.Cmd.Upgrade;
+   package C24 renames Raven.Cmd.Audit;
 
 
    --------------------------------------------------------------------
@@ -84,6 +86,7 @@ package body Raven.Cmd.Bahnhof is
          when cv_check      => return (C21.execute_check_command (comline));
          when cv_annotate   => return (C22.execute_annotate_command (comline));
          when cv_upgrade    => return (C23.execute_upgrade_command (comline));
+         when cv_audit      => return (C24.execute_audit_command (comline));
       end case;
    end execute_command;
 

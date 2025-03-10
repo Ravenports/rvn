@@ -855,6 +855,22 @@ package body Raven.Cmd.Line is
                   else
                      handle_trailing_pkgname (data, datum, datumtxt);
                   end if;
+               when cv_audit =>
+                  if datum = sws_quiet or else datum = swl_quiet then
+                     data.common_options.quiet := True;
+                  elsif datum = "-r" or else datum = "--refresh" then
+                     data.cmd_audit.refresh := True;
+                  elsif datum = "-f" or else datum = "--filter" then
+                     last_cmd := audit_filter;
+                  elsif datum = "-l" or else datum = "--level" then
+                     last_cmd := audit_level;
+                  elsif datum = "-F" or else datum = "--format" then
+                     last_cmd := audit_format;
+                  elsif datum (datum'First) = '-' then
+                     set_illegal_command (datum);
+                  else
+                     set_error (data, "Not a switch: " & datum);
+                  end if;
             end case;
          else
             --  insert second part of last seen command
@@ -902,6 +918,36 @@ package body Raven.Cmd.Line is
                      else
                         set_error (data, SQ (datum) & " is not a recognized command");
                      end if;
+                  end if;
+               when audit_filter =>
+                  if leads ("secure", datum) then
+                     data.cmd_audit.filter := secure;
+                  elsif leads ("vulnerable", datum) then
+                     data.cmd_audit.filter := vulnerable;
+                  elsif leads ("none", datum) then
+                     data.cmd_audit.filter := none;
+                  else
+                     set_error (data, SQ (datum) & " is not a valid filter setting");
+                  end if;
+               when audit_level =>
+                  if leads ("summary", datum) then
+                     data.cmd_audit.level := summary;
+                  elsif leads ("concise", datum) then
+                     data.cmd_audit.level := concise;
+                  elsif leads ("full", datum) then
+                     data.cmd_audit.level := full;
+                  else
+                     set_error (data, SQ (datum) & " is not a valid level setting");
+                  end if;
+               when audit_format =>
+                  if leads ("json", datum) then
+                     data.cmd_audit.format := fmt_json;
+                  elsif leads ("ucl", datum) then
+                     data.cmd_audit.format := fmt_ucl;
+                  elsif leads ("standard", datum) then
+                     data.cmd_audit.format := fmt_report;
+                  else
+                     set_error (data, SQ (datum) & " is not a valid format setting");
                   end if;
             end case;
             last_cmd := nothing_pending;
@@ -997,6 +1043,7 @@ package body Raven.Cmd.Line is
          ("NOTFOUND  ", cv_unset),
          ("alias     ", cv_alias),
          ("annotate  ", cv_annotate),
+         ("audit     ", cv_audit),
          ("autoremove", cv_autoremove),
          ("catalog   ", cv_catalog),
          ("check     ", cv_check),

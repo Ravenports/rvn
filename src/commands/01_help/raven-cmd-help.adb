@@ -100,6 +100,7 @@ package body Raven.Cmd.Help is
             case command is
                when cv_unset   => null;
                when cv_alias   => PL (C, "Lists the command line aliases");
+               when cv_audit   => PL (C, "Lists active cybersecurity vulnerabilities");
                when cv_autoremove => PL (C, "Removes orphan packages");
                when cv_annotate   => PL (C, "Manipulate installed package annotations");
                when cv_catalog => PL (C, "Ensures local package catalog is up to date");
