@@ -66,6 +66,7 @@ package body Raven.Configuration is
          when skip_info      => return "SKIP_INFO_SUBPKG";
          when skip_examples  => return "SKIP_EXAM_SUBPKG";
          when version_source => return "VERSION_SOURCE";
+         when vuln_server    => return "VULN_SERVER_URL";
          when ip_version     => return "IP_VERSION";
       end case;
    end get_ci_key;
@@ -116,6 +117,7 @@ package body Raven.Configuration is
               event_pipe     |
               restrict_dir   |
               version_source |
+              vuln_server    |
               ssh_args       => return ThickUCL.data_string;
          when
               repos_dir      |
@@ -204,6 +206,7 @@ package body Raven.Configuration is
          when keywords_dir   => return "/var/ravenports/conspiracy/Mk/Keywords";
          when abi            => return Archive.Misc.determine_abi;
          when user_agent     => return progname & "/" & progversion;
+         when vuln_server    => return "http://www.ravenports.com:8008";
          when event_pipe     => return "";
          when restrict_dir   => return "";
          when ssh_args       => return "";

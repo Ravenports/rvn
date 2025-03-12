@@ -66,6 +66,7 @@ package Raven.Configuration is
       base_shlibs,    --  ALLOW_BASE_SHLIBS (false)
       ip_version,     --  IP_VERSION (0=None, 4=IPv4-only, 6=IPv6-only)
       version_source, --  VERSION_SOURCE("") ('S'|'I'|'R')
+      vuln_server,    --  VULN_SERVER_URL (http://www.ravenports.com:8008)
       size_limit      --  WARN_SIZE_LIMIT (1048576)
      );
       

@@ -22,6 +22,12 @@ package Raven.Fetch is
       remote_prv_key  : String := "";
       remote_pub_key  : String := "") return fetch_result;
 
+   function download_post_response
+     (remote_file_url : String;
+      etag_file       : String;
+      downloaded_file : String;
+      post_body       : String) return fetch_result;
+
 private
 
    --  Returns true if url starts with "file://"

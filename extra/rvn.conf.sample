@@ -74,4 +74,5 @@ ALIAS: {
 #SYSLOG: true
 #VALID_URL_SCHEME: ["https", "http", "file", "scp"]
 #VERSION_SOURCE: ""
+#VULN_SERVER_URL: "http://www.ravenports.com:8008"
 #WARN_SIZE_LIMIT: 1048576
