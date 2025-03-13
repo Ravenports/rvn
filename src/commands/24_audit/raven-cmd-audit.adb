@@ -112,7 +112,8 @@ package body Raven.Cmd.Audit is
         (remote_file_url => vuln_url,
          etag_file       => etag_file,
          downloaded_file => json_file,
-         post_body       => json_input)
+         post_body       => json_input,
+         post_body_type  => "application/json")
       is
          when Fetch.cache_valid | Fetch.file_downloaded =>
             begin

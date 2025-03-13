@@ -26,7 +26,8 @@ package Raven.Fetch is
      (remote_file_url : String;
       etag_file       : String;
       downloaded_file : String;
-      post_body       : String) return fetch_result;
+      post_body       : String;
+      post_body_type  : String) return fetch_result;
 
 private
 

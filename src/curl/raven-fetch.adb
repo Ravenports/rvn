@@ -237,7 +237,8 @@ package body Raven.Fetch is
      (remote_file_url : String;
       etag_file       : String;
       downloaded_file : String;
-      post_body       : String) return fetch_result
+      post_body       : String;
+      post_body_type  : String) return fetch_result
    is
       temporary_file  : constant String := CAL.randomized_download_target (downloaded_file);
 
@@ -279,6 +280,7 @@ package body Raven.Fetch is
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDSIZE, post_body'Length);
       curl_header.set_write_callback (curlobj, CAL.write_file'Access);
       curl_header.set_header_callback (curlobj, CAL.process_header'Access);
+      curl_header.build_header (header_list, "Content-Type: " & post_body_type);
 
       declare
          verbose        : Boolean;
