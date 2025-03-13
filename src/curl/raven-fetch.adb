@@ -247,6 +247,8 @@ package body Raven.Fetch is
       response_code : Long_Integer;
       header_list : curl_header.access_curl_slist := null;
       successful_execution : Boolean;
+      post_length  : constant Long_Integer := post_body'Length;
+      post_address : constant curl_header.Void_Ptr := post_body'Address;
    begin
       if CAL.target_file_cached (downloaded_file, etag_file) then
          Event.emit_debug (high_level, "Latest " & downloaded_file & " is already cached.");
@@ -343,8 +345,8 @@ package body Raven.Fetch is
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_HTTPHEADER, header_list);
 
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POST, True);
-      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDS, post_body);
-      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDSIZE, post_body'Length);
+      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDS, post_address);
+      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDSIZE, post_length);
 
       successful_execution := curl_header.execute_curl (curlobj);
       CAL.SIO.Close (data.file_handle);
