@@ -3,6 +3,7 @@
 
 
 private with ThickUCL;
+private with Raven.Pkgtypes;
 
 package Raven.Cmd.Audit is
 
@@ -18,5 +19,12 @@ private
      (refresh       : Boolean;
       json_input    : String;
       response_tree : in out ThickUCL.UclTree) return Boolean;
+
+   procedure set_patched_cves (patchset : in out Pkgtypes.Text_List.Vector);
+
+   function display_report
+     (comline       : Cldata;
+      response_tree : ThickUCL.UclTree;
+      patchset      : Pkgtypes.Text_List.Vector) return Boolean;
 
 end Raven.Cmd.Audit;

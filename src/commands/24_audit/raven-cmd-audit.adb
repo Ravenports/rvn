@@ -7,9 +7,14 @@ with Ada.Direct_IO;
 with Ada.Environment_Variables;
 with Archive.Unix;
 with Raven.Fetch;
+with Raven.Strings;
 with Raven.Context;
 with Raven.Cmd.Unset;
 with ThickUCL.Files;
+with ThickUCL.Emitter;
+with Ucl;
+
+use Raven.Strings;
 
 package body Raven.Cmd.Audit is
 
@@ -29,7 +34,6 @@ package body Raven.Cmd.Audit is
       --                one CVE id per line.  These represents future annotations for patched CVEs
 
       ev1 : constant String := "TESTAUDIT";
-      ev2 : constant String := "CVEFIXES";
    begin
       if ENV.Exists (ev1) then
          return external_test_input (comline, ENV.Value (ev1));
@@ -45,6 +49,7 @@ package body Raven.Cmd.Audit is
    function external_test_input (comline : Cldata; testfile : String) return Boolean
    is
       features : Archive.Unix.File_Characteristics;
+      patchset : Pkgtypes.Text_List.Vector;
    begin
       features := Archive.Unix.get_charactistics (testfile);
       case features.ftype is
@@ -59,6 +64,7 @@ package body Raven.Cmd.Audit is
          response : ThickUCL.UclTree;
       begin
          if contact_vulnerability_server (comline.cmd_audit.refresh, contents, response) then
+            set_patched_cves (patchset);
             TIO.Put_Line ("Successful response, rest TBW");
             return True;
          end if;
@@ -131,5 +137,103 @@ package body Raven.Cmd.Audit is
       end case;
       return False;
    end contact_vulnerability_server;
+
+
+   ------------------------
+   --  set_patched_cves  --
+   ------------------------
+   procedure set_patched_cves (patchset : in out Pkgtypes.Text_List.Vector)
+   is
+      ev2 : constant String := "CVEFIXES";
+      features : Archive.Unix.File_Characteristics;
+      handle   : TIO.File_Type;
+   begin
+      patchset.Clear;
+      if ENV.Exists (ev2) then
+         features := Archive.Unix.get_charactistics (ENV.Value (ev2));
+         case features.ftype is
+            when Archive.regular =>
+               begin
+                  TIO.Open (handle, TIO.In_File, ENV.Value (ev2));
+                  while not TIO.End_Of_File (handle) loop
+                     patchset.Append (SUS (TIO.Get_Line (handle)));
+                  end loop;
+                  TIO.Close (handle);
+               exception
+                  when others =>
+                     if TIO.Is_Open (handle) then
+                        TIO.Close (handle);
+                     end if;
+               end;
+            when others =>
+               TIO.Put_Line (ev2 & " is not set to the path of a regular file.");
+               TIO.Put_Line ("Patched CVEs not set.");
+         end case;
+      else
+         --  TBW: query rvn_pkgdb for annotations
+         null;
+      end if;
+   end set_patched_cves;
+
+
+   ----------------------
+   --  display_report  --
+   ----------------------
+   function display_report
+     (comline       : Cldata;
+      response_tree : ThickUCL.UclTree;
+      patchset      : Pkgtypes.Text_List.Vector) return Boolean
+   is
+      key_success : constant String := "success";
+      key_records : constant String := "records";
+      res_success : Boolean := False;
+      res_records : Ucl.ucl_integer := 0;
+      total_shown : Integer := 0;
+      structured  : ThickUCL.UclTree;
+      keys        : ThickUCL.jar_string.Vector;
+
+      procedure print (position : ThickUCL.jar_string.Cursor)
+      is
+         key : constant String := USS (ThickUCL.jar_string.Element (position).payload);
+      begin
+         if key = key_success or else key = key_records then
+            return;
+         end if;
+
+
+      end print;
+
+      use type Ucl.ucl_integer;
+   begin
+      if response_tree.boolean_field_exists (key_success) then
+         res_success := response_tree.get_base_value (key_success);
+         if not res_success then
+            return False;
+         end if;
+      end if;
+      if response_tree.integer_field_exists (key_records) then
+         res_records := response_tree.get_base_value (key_records);
+      end if;
+      if res_records > 0 then
+         response_tree.get_base_object_keys (keys);
+         keys.Iterate (print'Access);
+      end if;
+
+      if total_shown = 0 then
+         if not comline.common_options.quiet then
+            TIO.Put_Line ("There is no vulnerability data to display.");
+         end if;
+      else
+         case comline.cmd_audit.format is
+            when fmt_report => null;
+            when fmt_json =>
+               TIO.Put_Line (ThickUCL.Emitter.emit_compact_ucl (structured, True));
+            when fmt_ucl =>
+               TIO.Put_Line (ThickUCL.Emitter.emit_ucl (structured));
+         end case;
+      end if;
+
+      return True;
+   end display_report;
 
 end Raven.Cmd.Audit;
