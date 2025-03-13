@@ -275,9 +275,6 @@ package body Raven.Fetch is
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_URL, remote_file_url);
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_WRITEDATA, data'Address);
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_HEADERDATA, data'Address);
-      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POST, True);
-      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDS, post_body);
-      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDSIZE, post_body'Length);
       curl_header.set_write_callback (curlobj, CAL.write_file'Access);
       curl_header.set_header_callback (curlobj, CAL.process_header'Access);
       curl_header.build_header (header_list, "Content-Type: " & post_body_type);
@@ -344,6 +341,10 @@ package body Raven.Fetch is
             curl_header.set_curl_option (curlobj, curl_header.CURLOPT_HTTPHEADER, header_list);
          end;
       end if;
+
+      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POST, True);
+      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDS, post_body);
+      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDSIZE, post_body'Length);
 
       successful_execution := curl_header.execute_curl (curlobj);
       CAL.SIO.Close (data.file_handle);
