@@ -338,9 +338,9 @@ package body Raven.Fetch is
               LAT.Quotation & CAL.file_to_string (etag_file) & LAT.Quotation;
          begin
             curl_header.build_header (header_list, set_etag);
-            curl_header.set_curl_option (curlobj, curl_header.CURLOPT_HTTPHEADER, header_list);
          end;
       end if;
+      curl_header.set_curl_option (curlobj, curl_header.CURLOPT_HTTPHEADER, header_list);
 
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POST, True);
       curl_header.set_curl_option (curlobj, curl_header.CURLOPT_POSTFIELDS, post_body);
