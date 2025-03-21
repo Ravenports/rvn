@@ -28,9 +28,17 @@ package body Raven.Cmd.Audit is
    -----------------------------
    function execute_audit_command (comline : Cldata) return Boolean
    is
-      --  Undocumented: environ variable TESTAUDIT which contains path to text file of json object
-      --                to send to vuln server.  format: {"cpe": [ list of CPE strings ]}
-      --                environ variable CVEFIXES which contains path to text file that lists
+      --  Undocumented: environ variable TESTAUDIT which contains path to text file of ucl/json
+      --                object to send to vuln server.  format:
+      --                | notes {
+      --                |    cpe = "<cpestring>"
+      --                |    nvv = "<namebase 1>:<variant 1>:<version 1>"
+      --                |    nvv = "<namebase 2>:<variant 2>:<version 2>"  # only 1 nvv required
+      --                | }
+      --                | notes { ... }
+      --  json format equivalent:
+      --                { "notes": [ {"cpe": "cpe string #1", "nvv": [ "nvv#1" (,"nvv#2") ]}, .. ]}
+      --  Undocumented: environ variable CVEFIXES which contains path to text file that lists
       --                one CVE id per line.  These represents future annotations for patched CVEs
 
       ev1 : constant String := "TESTAUDIT";
@@ -48,8 +56,9 @@ package body Raven.Cmd.Audit is
    ---------------------------
    function external_test_input (comline : Cldata; testfile : String) return Boolean
    is
-      features : Archive.Unix.File_Characteristics;
-      patchset : Pkgtypes.Text_List.Vector;
+      features  : Archive.Unix.File_Characteristics;
+      patchset  : Pkgtypes.Text_List.Vector;
+      test_tree : ThickUCL.UclTree;
    begin
       features := Archive.Unix.get_charactistics (testfile);
       case features.ftype is
@@ -59,11 +68,19 @@ package body Raven.Cmd.Audit is
             TIO.Put_Line ("Audit test failed.");
             return False;
       end case;
-      declare
-         contents : constant String := file_contents (testfile, Natural (features.size));
-         response : ThickUCL.UclTree;
       begin
-         if contact_vulnerability_server (comline.cmd_audit.refresh, contents, response) then
+         ThickUCL.Files.parse_ucl_file (test_tree, testfile, "");
+      exception
+         when ThickUCL.Files.ucl_file_unparseable =>
+            TIO.Put_Line ("FATAL: Failed to parse " & testfile);
+            return False;
+      end;
+
+      declare
+         json_contents : constant String := ThickUCL.Emitter.emit_compact_ucl (test_tree, True);
+         response      : ThickUCL.UclTree;
+      begin
+         if contact_vulnerability_server (comline.cmd_audit.refresh, json_contents, response) then
             set_patched_cves (patchset);
             TIO.Put_Line ("Successful response, rest TBW");
             return True;
