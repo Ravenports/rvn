@@ -53,8 +53,27 @@ private
      (Element_Type => cpe_entry,
       Index_Type   => Natural);
 
+   type vector_breakdown is record
+      attack_vector       : Text;
+      attack_complexity   : Text;
+      privileges_required : Text;
+      user_interaction    : Text;
+      scope               : Text;
+      confidentiality     : Text;
+      integrity           : Text;
+      availability        : Text;
+      authentication_20   : Text;
+      attack_reqments_40  : Text;
+      vsys_confident_40   : Text;
+      ssys_confident_40   : Text;
+      vsys_integrity_40   : Text;
+      ssys_integrity_40   : Text;
+      vsys_avail_40       : Text;
+      ssys_avail_40       : Text;
+   end record;
+
    function external_test_input (comline : Cldata; testfile : String) return Boolean;
-   function file_contents (filename : String; filesize : Natural) return String;
+   function expand_vector_string (cvss_version : Integer; vstring: String) return vector_breakdown;
 
    function contact_vulnerability_server
      (refresh       : Boolean;

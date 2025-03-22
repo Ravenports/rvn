@@ -3,7 +3,6 @@
 
 
 with Ada.Text_IO;
-with Ada.Direct_IO;
 with Ada.Environment_Variables;
 with Archive.Unix;
 with Raven.Fetch;
@@ -99,32 +98,6 @@ package body Raven.Cmd.Audit is
       end;
       return False;
    end external_test_input;
-
-
-   ---------------------
-   --  file_contents  --
-   ---------------------
-   function file_contents (filename : String; filesize : Natural) return String
-   is
-      subtype File_String    is String (1 .. filesize);
-      package File_String_IO is new Ada.Direct_IO (File_String);
-      File     : File_String_IO.File_Type;
-      Contents : File_String;
-   begin
-      File_String_IO.Open (File => File,
-                           Mode => File_String_IO.In_File,
-                           Name => filename);
-      File_String_IO.Read (File => File,
-                           Item => Contents);
-      File_String_IO.Close (File);
-      return Contents;
-   exception
-      when others =>
-         if File_String_IO.Is_Open (File) then
-            File_String_IO.Close (File);
-         end if;
-         return "";
-   end file_contents;
 
 
    ------------------------------------
@@ -396,6 +369,137 @@ package body Raven.Cmd.Audit is
 
       return True;
    end assemble_data;
+
+
+   ----------------------------
+   --  expand_vector_string  --
+   ----------------------------
+   function expand_vector_string (cvss_version : Integer; vstring: String) return vector_breakdown
+   is
+      res : vector_breakdown;
+      que : constant String := "Unrecognized:";
+
+      function nalp (code : Character) return String is
+      begin
+         case code is
+            when 'N' | 'n' => return "Network";
+            when 'A' | 'a' => return "Adjacent";
+            when 'L' | 'l' => return "Local";
+            when 'P' | 'p' => return "Physical";
+            when others    => return que & code;
+         end case;
+      end nalp;
+
+      function level (code : Character) return String is
+      begin
+         case code is
+            when 'N' | 'n' => return "None";
+            when 'L' | 'l' => return "Low";
+            when 'M' | 'm' => return "Medium";
+            when 'H' | 'h' => return "High";
+            when others    => return que & code;
+         end case;
+      end level;
+
+      function npc (code : Character) return String is
+      begin
+         case code is
+            when 'N' | 'n' => return "None";
+            when 'P' | 'p' => return "Partial";
+            when 'C' | 'c' => return "Complete";
+            when others    => return que & code;
+         end case;
+      end npc;
+
+      function userint (code : Character) return String is
+      begin
+         case code is
+            when 'N' | 'n' => return "None";     --  4.0 and 2.0
+            when 'P' | 'p' => return "Passive";  --  4.0
+            when 'A' | 'a' => return "Active";   --  4.0
+            when 'R' | 'r' => return "Required"; --  2.0
+            when others    => return que & code;
+         end case;
+      end userint;
+
+      function scope (code : Character) return String is
+      begin
+         case code is
+            when 'C' | 'c' => return "Changed";
+            when 'U' | 'u' => return "Unchanged";
+            when others    => return que & code;
+         end case;
+      end scope;
+
+      function authentication (code : Character) return String is
+      begin
+         case code is
+            when 'N' | 'n' => return "None";
+            when 'M' | 'm' => return "Multiple";
+            when 'S' | 's' => return "Single";
+            when others    => return que & code;
+         end case;
+      end authentication;
+
+      function attreq (code : Character) return String is
+      begin
+         case code is
+            when 'N' | 'n' => return "None";
+            when 'P' | 'p' => return "Present";
+            when others    => return que & code;
+         end case;
+      end attreq;
+
+      function letter (index : Integer) return Character is
+      begin
+         if index > 0 and then index < vstring'Length then
+            return vstring (vstring'First + index);
+         end if;
+         return '^';
+      end letter;
+   begin
+      case cvss_version is
+         when 20 =>
+            --              0000000001111111111222222
+            --             F  3    8    3   7   1   5
+            --  cvss 2.0: "AV:L/AC:M/Au:N/C:N/I:P/A:C"
+            res.attack_vector     := SUS (nalp (letter (3)));
+            res.attack_complexity := SUS (level (letter (8)));
+            res.authentication_20 := SUS (authentication (letter (13)));
+            res.confidentiality   := SUS (npc (letter (17)));
+            res.integrity         := SUS (npc (letter (21)));
+            res.availability      := SUS (npc (letter (25)));
+         when 30 | 31 =>
+            --              00000000011111111112222222222333333333344444
+            --             F           2    7    2    7   1   5   9   3
+            --  cvss 3.x: "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:L/I:L/A:N"
+            res.attack_vector       := SUS (nalp (letter (12)));
+            res.attack_complexity   := SUS (level (letter (17)));
+            res.privileges_required := SUS (level (letter (22)));
+            res.user_interaction    := SUS (userint (letter (27)));
+            res.scope               := SUS (scope (letter (31)));
+            res.confidentiality     := SUS (level (letter (35)));
+            res.integrity           := SUS (level (letter (39)));
+            res.availability        := SUS (level (letter (43)));
+         when 40 =>
+            --              0000000001111111111222222222233333333334444444444555555555566666
+            --             F           2    7    2    7    2    7    2    7    2    7    2
+            --  cvss 4.0: "CVSS:4.0/AV:N/AC:L/AT:N/PR:H/UI:N/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N"
+            res.attack_vector       := SUS (nalp (letter (12)));
+            res.attack_complexity   := SUS (level (letter (17)));
+            res.attack_reqments_40  := SUS (attreq (letter (22)));
+            res.privileges_required := SUS (level (letter (27)));
+            res.user_interaction    := SUS (userint (letter (32)));
+            res.vsys_confident_40   := SUS (level (letter (37)));
+            res.vsys_integrity_40   := SUS (level (letter (42)));
+            res.vsys_avail_40       := SUS (level (letter (47)));
+            res.ssys_confident_40   := SUS (level (letter (52)));
+            res.ssys_integrity_40   := SUS (level (letter (57)));
+            res.ssys_avail_40       := SUS (level (letter (62)));
+         when others => null;
+      end case;
+      return res;
+   end expand_vector_string;
 
 
    ----------------------
