@@ -57,7 +57,6 @@ package body Raven.Cmd.Audit is
    function external_test_input (comline : Cldata; testfile : String) return Boolean
    is
       features  : Archive.Unix.File_Characteristics;
-      patchset  : Pkgtypes.Text_List.Vector;
       test_tree : ThickUCL.UclTree;
    begin
       features := Archive.Unix.get_charactistics (testfile);
@@ -78,10 +77,22 @@ package body Raven.Cmd.Audit is
 
       declare
          json_contents : constant String := ThickUCL.Emitter.emit_compact_ucl (test_tree, True);
+         cached_file   : constant String := Context.reveal_cache_directory &
+                                            "/version/vulninfo.json";
          response      : ThickUCL.UclTree;
+         patchset      : Pkgtypes.Text_List.Vector;
+         cpe_entries   : set_cpe_entries.Vector;
       begin
          if contact_vulnerability_server (comline.cmd_audit.refresh, json_contents, response) then
             set_patched_cves (patchset);
+            if not assemble_data (response, patchset, cpe_entries) then
+               if not comline.common_options.quiet then
+                  TIO.Put_Line
+                    ("Contact Ravenports developers: Vulnerability server rejected the input.");
+                  TIO.Put_Line ("Provide the " & cached_file & " file with the report.");
+               end if;
+               return False;
+            end if;
             TIO.Put_Line ("Successful response, rest TBW");
             return True;
          end if;
@@ -193,11 +204,206 @@ package body Raven.Cmd.Audit is
    end set_patched_cves;
 
 
+   ---------------------
+   --  assemble_data  --
+   ---------------------
+   function assemble_data
+     (response_tree : ThickUCL.UclTree;
+      patchset      : Pkgtypes.Text_List.Vector;
+      cpe_entries   : in out set_cpe_entries.Vector) return Boolean
+   is
+      key_success : constant String := "success";
+      key_records : constant String := "records";
+      res_success : Boolean := False;
+      keys        : ThickUCL.jar_string.Vector;
+
+      function get_cve_string (ondx : ThickUCL.object_index; name, default : String) return String
+      is
+      begin
+         declare
+            value : constant String := response_tree.get_object_value (ondx, name);
+         begin
+            return value;
+         end;
+      exception
+         when ThickUCL.ucl_key_not_found =>
+            return default;
+         when ThickUCL.ucl_type_mismatch =>
+            return "TYPEFAIL:" & name;
+      end get_cve_string;
+
+      function get_cve_int (ondx : ThickUCL.object_index; name : String; default : Integer)
+                            return Integer
+      is
+      begin
+         declare
+            value : constant Ucl.ucl_integer := response_tree.get_object_value (ondx, name);
+         begin
+            return Integer (value);
+         end;
+      exception
+         when ThickUCL.ucl_key_not_found | ThickUCL.ucl_type_mismatch =>
+            return default;
+      end get_cve_int;
+
+      function get_csvv_version (version : Integer) return String is
+      begin
+         case version is
+            when 20 => return "v2.0";
+            when 30 => return "v3.0";
+            when 31 => return "v3.1";
+            when 40 => return "v4.0";
+            when others => return "UNKNOWN " & int2str (version);
+         end case;
+      end get_csvv_version;
+
+      function get_threat_level (base_score : Integer) return String is
+      begin
+         case base_score is
+            when  0        => return "None";
+            when  1 ..  39 => return "Low";
+            when 40 ..  69 => return "Medium";
+            when 70 ..  89 => return "High";
+            when 90 .. 100 => return "Critical";
+            when others    => return "ERROR:" & int2str (base_score);
+         end case;
+      end get_threat_level;
+
+      procedure process_cpe_result (position : ThickUCL.jar_string.Cursor)
+      is
+         key       : constant String := USS (ThickUCL.jar_string.Element (position).payload);
+         rec       : cpe_entry;
+         secure    : Boolean := True;
+         baseobj   : ThickUCL.object_index;
+         dtype     : ThickUCL.Leaf_type;
+         vndx      : ThickUCL.array_index;
+         narr      : Natural;
+         index_nvv : constant String := "nvv";
+         index_cve : constant String := "cve";
+      begin
+         if key = key_success or else key = key_records then
+            return;
+         end if;
+
+         baseobj := response_tree.get_index_of_base_ucl_object (key);
+         dtype := response_tree.get_object_data_type (baseobj, index_nvv);
+         case dtype is
+            when ThickUCL.data_array =>
+               vndx := response_tree.get_object_array (baseobj, index_nvv);
+               narr := response_tree.get_number_of_array_elements (vndx);
+               for x in 1 .. narr loop
+                  case response_tree.get_array_element_type (vndx, x - 1) is
+                     when ThickUCL.data_string =>
+                        declare
+                           value : constant String :=
+                             response_tree.get_array_element_value (vndx, x - 1);
+                           num_fields : constant Natural := count_char (value, ':') + 1;
+                           nrec : nvv_rec;
+                        begin
+                           if num_fields = 3 then
+                              nrec.namebase := SUS (specific_field (value, 1, ":"));
+                              nrec.variant  := SUS (specific_field (value, 2, ":"));
+                              nrec.version  := SUS (specific_field (value, 3, ":"));
+                              rec.installed_packages.Append (nrec);
+                           end if;
+                        end;
+                     when others => null;
+                  end case;
+               end loop;
+            when others => null;
+         end case;
+
+         dtype := response_tree.get_object_data_type (baseobj, index_cve);
+         case dtype is
+            when ThickUCL.data_array =>
+               vndx := response_tree.get_object_array (baseobj, index_cve);
+               narr := response_tree.get_number_of_array_elements (vndx);
+               for x in 1 .. narr loop
+                  case response_tree.get_array_element_type (vndx, x - 1) is
+                     when ThickUCL.data_object =>
+                        declare
+                           crec : cve_rec;
+                           ondx : ThickUCL.object_index :=
+                             response_tree.get_array_element_object (vndx, x - 1);
+                        begin
+                           declare
+                              f01 : constant String :=
+                                get_cve_string (ondx, "cve_id", "CVE-1970-XXXX");
+                              f02 : constant String :=
+                                get_cve_string (ondx, "published", "1970-01-01 00:00:00");
+                              f03 : constant String :=
+                                get_cve_string (ondx, "modified", "1970-01-01 00:00:00");
+                              f04 : constant String :=
+                                get_cve_string (ondx, "description", "Description was missing.");
+                              f09 : constant String :=
+                                get_cve_string (ondx, "csvv_vector", "VECTOR_MIA");
+                              f05 : constant Integer := get_cve_int (ondx, "csvv_version", 0);
+                              f06 : constant Integer := get_cve_int (ondx, "csvv_basescore", 0);
+                              f07 : constant Integer := get_cve_int (ondx, "csvv_exploit", 0);
+                              f08 : constant Integer := get_cve_int (ondx, "csvv_impact", 0);
+                           begin
+                              crec.cve_id         := SUS (f01);
+                              crec.published      := SUS (f02);
+                              crec.modified       := SUS (f03);
+                              crec.description    := SUS (f04);
+                              crec.cvss_vector    := SUS (f09);
+                              crec.cvss_version   := f05;
+                              crec.base_score     := Float (f06) / 10.0;
+                              crec.exploitability := Float (f07) / 10.0;
+                              crec.impact         := Float (f08) / 10.0;
+                              crec.threat_level   := SUS (get_threat_level (F06));
+                              crec.patched        := patchset.Contains (crec.cve_id);
+                              rec.vulnerabilities.Append (crec);
+
+                              if not crec.patched then
+                                 secure := False;
+                              end if;
+                           end;
+                        end;
+                     when others => null;
+                  end case;
+               end loop;
+            when others => null;
+         end case;
+
+         rec.secure  := secure;
+         rec.vendor  := SUS (specific_field (key, 4, ":"));
+         rec.product := SUS (specific_field (key, 5, ":"));
+         cpe_entries.Append (rec);
+      end process_cpe_result;
+   begin
+      if response_tree.boolean_field_exists (key_success) then
+         res_success := response_tree.get_base_value (key_success);
+         if not res_success then
+            return False;
+         end if;
+      end if;
+
+      if not response_tree.integer_field_exists (key_records) then
+         return False;
+      end if;
+
+      declare
+         res_records : Ucl.ucl_integer := 0;
+         use type Ucl.ucl_integer;
+      begin
+         res_records := response_tree.get_base_value (key_records);
+         if res_records > 0 then
+            response_tree.get_base_object_keys (keys);
+            keys.Iterate (process_cpe_result'Access);
+         end if;
+      end;
+
+      return True;
+   end assemble_data;
+
+
    ----------------------
    --  display_report  --
    ----------------------
    function display_report
      (comline       : Cldata;
+      cached_file   : String;
       response_tree : ThickUCL.UclTree;
       patchset      : Pkgtypes.Text_List.Vector) return Boolean
    is
@@ -206,25 +412,20 @@ package body Raven.Cmd.Audit is
       res_success : Boolean := False;
       res_records : Ucl.ucl_integer := 0;
       total_shown : Integer := 0;
+      cpe_entries : set_cpe_entries.Vector;
       structured  : ThickUCL.UclTree;
       keys        : ThickUCL.jar_string.Vector;
-
-      procedure print (position : ThickUCL.jar_string.Cursor)
-      is
-         key : constant String := USS (ThickUCL.jar_string.Element (position).payload);
-      begin
-         if key = key_success or else key = key_records then
-            return;
-         end if;
-
-
-      end print;
 
       use type Ucl.ucl_integer;
    begin
       if response_tree.boolean_field_exists (key_success) then
          res_success := response_tree.get_base_value (key_success);
          if not res_success then
+            if not comline.common_options.quiet then
+               TIO.Put_Line
+                 ("Contact Ravenports developers: Vulnerability server rejected the input");
+               TIO.Put_Line ("Provide the " & cached_file & " file with the report.");
+            end if;
             return False;
          end if;
       end if;
@@ -233,7 +434,7 @@ package body Raven.Cmd.Audit is
       end if;
       if res_records > 0 then
          response_tree.get_base_object_keys (keys);
-         keys.Iterate (print'Access);
+         --  keys.Iterate (process_cpe_result'Access);
       end if;
 
       if total_shown = 0 then

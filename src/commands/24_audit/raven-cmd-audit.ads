@@ -4,6 +4,7 @@
 
 private with ThickUCL;
 private with Raven.Pkgtypes;
+private with Ada.Containers.Vectors;
 
 package Raven.Cmd.Audit is
 
@@ -11,6 +12,46 @@ package Raven.Cmd.Audit is
    function execute_audit_command (comline : Cldata) return Boolean;
 
 private
+
+   type nvv_rec is record
+      namebase : Text;
+      variant  : Text;
+      version  : Text;
+   end record;
+
+   type cve_rec is record
+      cve_id         : Text;
+      patched        : Boolean;
+      base_score     : Float;
+      threat_level   : Text;
+      exploitability : Float;
+      impact         : Float;
+      description    : Text;
+      published      : Text;
+      modified       : Text;
+      cvss_version   : Integer;  --  0/20/30/31/40
+      cvss_vector    : Text;     --  vector string (decode depends on cvss version)
+   end record;
+
+   package set_cve is new Ada.Containers.Vectors
+     (Element_Type => cve_rec,
+      Index_Type   => Natural);
+
+   package set_nvv is new Ada.Containers.Vectors
+     (Element_Type => nvv_rec,
+      Index_Type   => Natural);
+
+   type cpe_entry is record
+      secure             : Boolean;
+      vendor             : Text;
+      product            : Text;
+      installed_packages : set_nvv.Vector;
+      vulnerabilities    : set_cve.Vector;
+   end record;
+
+   package set_cpe_entries is new Ada.Containers.Vectors
+     (Element_Type => cpe_entry,
+      Index_Type   => Natural);
 
    function external_test_input (comline : Cldata; testfile : String) return Boolean;
    function file_contents (filename : String; filesize : Natural) return String;
@@ -22,8 +63,14 @@ private
 
    procedure set_patched_cves (patchset : in out Pkgtypes.Text_List.Vector);
 
+   function assemble_data
+     (response_tree : ThickUCL.UclTree;
+      patchset      : Pkgtypes.Text_List.Vector;
+      cpe_entries   : in out set_cpe_entries.Vector) return Boolean;
+
    function display_report
      (comline       : Cldata;
+      cached_file   : String;
       response_tree : ThickUCL.UclTree;
       patchset      : Pkgtypes.Text_List.Vector) return Boolean;
 
