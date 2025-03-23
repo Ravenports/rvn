@@ -22,10 +22,10 @@ private
    type cve_rec is record
       cve_id         : Text;
       patched        : Boolean;
-      base_score     : Float;
+      base_score     : Integer;
       threat_level   : Text;
-      exploitability : Float;
-      impact         : Float;
+      exploitability : Integer;
+      impact         : Integer;
       description    : Text;
       published      : Text;
       modified       : Text;
@@ -87,10 +87,13 @@ private
       patchset      : Pkgtypes.Text_List.Vector;
       cpe_entries   : in out set_cpe_entries.Vector) return Boolean;
 
-   function display_report
+   procedure display_report
      (comline       : Cldata;
-      cached_file   : String;
-      response_tree : ThickUCL.UclTree;
-      patchset      : Pkgtypes.Text_List.Vector) return Boolean;
+      cpe_entries   : set_cpe_entries.Vector);
+
+   procedure display_single_record
+     (comline       : Cldata;
+      cpe_entries   : set_cpe_entries.Vector;
+      index         : Natural);
 
 end Raven.Cmd.Audit;

@@ -92,7 +92,7 @@ package body Raven.Cmd.Audit is
                end if;
                return False;
             end if;
-            TIO.Put_Line ("Successful response, rest TBW");
+            display_report (comline, cpe_entries);
             return True;
          end if;
       end;
@@ -321,9 +321,9 @@ package body Raven.Cmd.Audit is
                               crec.description    := SUS (f04);
                               crec.cvss_vector    := SUS (f09);
                               crec.cvss_version   := f05;
-                              crec.base_score     := Float (f06) / 10.0;
-                              crec.exploitability := Float (f07) / 10.0;
-                              crec.impact         := Float (f08) / 10.0;
+                              crec.base_score     := f06;
+                              crec.exploitability := f07;
+                              crec.impact         := f08;
                               crec.threat_level   := SUS (get_threat_level (F06));
                               crec.patched        := patchset.Contains (crec.cve_id);
                               rec.vulnerabilities.Append (crec);
@@ -502,60 +502,208 @@ package body Raven.Cmd.Audit is
    end expand_vector_string;
 
 
+   -----------------------------
+   --  display_single_record  --
+   -----------------------------
+   procedure display_single_record
+     (comline       : Cldata;
+      cpe_entries   : set_cpe_entries.Vector;
+      index         : Natural)
+   is
+      rec : cpe_entry renames cpe_entries (index);
+
+      function make_decimal (score : Integer) return String
+      is
+         --  4 columns (breaks at impossible score 1000)
+         raw : constant String := int2str (score);
+      begin
+         if score < 10 then
+            return " 0." & raw;
+         end if;
+         if score >= 100 then
+            return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
+         end if;
+         return " " & raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
+      end make_decimal;
+
+      procedure print_package (position : set_nvv.Cursor)
+      is
+         nvv : nvv_rec renames set_nvv.Element (position);
+         basic : constant String :=
+           USS (nvv.namebase) & " (" & USS (nvv.variant) & ") " & USS (nvv.version);
+      begin
+         if comline.common_options.quiet then
+            TIO.Put_Line (basic);
+         else
+            if rec.secure then
+               TIO.Put_Line (basic & " is secure");
+            else
+               TIO.Put_Line (basic & " is vulnerable");
+            end if;
+         end if;
+      end print_package;
+
+      procedure print_cve (position : set_cve.Cursor)
+      is
+         cve : cve_rec renames set_cve.Element (position);
+         fixed : string := "  PATCHED  ";
+      begin
+         if not cve.patched then
+            fixed := (others => ' ');
+         end if;
+         TIO.Put_Line ("    " & USS (cve.cve_id) & fixed & "Score: " &
+                         make_decimal (cve.base_score) & " " & USS (cve.threat_level));
+      end print_cve;
+
+      procedure print_full_cve (position : set_cve.Cursor)
+      is
+         cve      : cve_rec renames set_cve.Element (position);
+
+         origin   : constant String := USS (rec.vendor) & ":" & USS (rec.product);
+         column   : constant Natural := 28;
+         vectors  : constant vector_breakdown :=
+                    expand_vector_string (cve.cvss_version, USS (cve.cvss_vector));
+
+         label_av : constant String := "    Attack Vector";
+         label_ac : constant String := "    Attack Complexity";
+         label_ar : constant String := "    Attack Requirements";
+         label_au : constant String := "    Authentication";
+         label_co : constant String := "    Confidentiality";
+         label_in : constant String := "    Integrity";
+         label_ay : constant String := "    Availability";
+         label_pr : constant String := "    Privileges Required";
+         label_ui : constant String := "    User Interaction";
+         label_sc : constant String := "    Scope";
+
+         procedure print (left_side : String; right_side : String) is
+         begin
+            TIO.Put_Line (pad_right (left_side, column) & right_side);
+         end print;
+
+         fixed  : string := " (PATCHED)";
+      begin
+         if not cve.patched then
+            fixed := (others => ' ');
+         end if;
+         print (USS(cve.cve_id), "     " & origin & fixed);
+         print ("    Base score:", make_decimal (cve.base_score) & " " & USS (cve.threat_level));
+         print ("    Exploitability Score:", make_decimal (cve.exploitability));
+         print ("    Impact Score:", make_decimal (cve.impact));
+         print ("    CVSS Version:", make_decimal (cve.cvss_version));
+         case cve.cvss_version is
+            when 20 =>
+               print (label_av, USS (vectors.attack_vector));
+               print (label_ac, USS (vectors.attack_complexity));
+               print (label_au, USS (vectors.authentication_20));
+               print (label_co, USS (vectors.confidentiality));
+               print (label_in, USS (vectors.integrity));
+               print (label_ay, USS (vectors.availability));
+            when 30 | 31 =>
+               print (label_av, USS (vectors.attack_vector));
+               print (label_ac, USS (vectors.attack_complexity));
+               print (label_pr, USS (vectors.privileges_required));
+               print (label_ui, USS (vectors.user_interaction));
+               print (label_sc, USS (vectors.scope));
+               print (label_co, USS (vectors.confidentiality));
+               print (label_in, USS (vectors.integrity));
+               print (label_ay, USS (vectors.availability));
+            when 40 =>
+               print (label_av, USS (vectors.attack_vector));
+               print (label_ac, USS (vectors.attack_complexity));
+               print (label_ar, USS (vectors.attack_reqments_40));
+               print (label_pr, USS (vectors.privileges_required));
+               print (label_ui, USS (vectors.user_interaction));
+               print ("    VS Confidentiality", USS (vectors.vsys_confident_40));
+               print ("    VS Integrity", USS (vectors.vsys_integrity_40));
+               print ("    VS Availability", USS (vectors.vsys_avail_40));
+               print ("    SS Confidentiality", USS (vectors.ssys_confident_40));
+               print ("    SS Integrity", USS (vectors.ssys_integrity_40));
+               print ("    SS Availability", USS (vectors.ssys_avail_40));
+            when others =>
+               null;
+         end case;
+         print ("    NVD Published:", USS (cve.published));
+         print ("    NVD Last Modified:", USS (cve.modified));
+         print ("    Link", "https://nvd.nist.gov/vuln/detail/" & USS (cve.cve_id));
+         TIO.Put_Line (USS (cve.description));
+      end print_full_cve;
+   begin
+      case comline.cmd_audit.filter is
+         when vulnerable =>
+            if rec.secure then
+               return;
+            end if;
+         when secure =>
+            if not rec.secure then
+               return;
+            end if;
+         when none => null;
+      end case;
+
+      rec.installed_packages.Iterate (print_package'Access);
+      case comline.cmd_audit.level is
+         when summary => return;
+         when concise =>
+            rec.vulnerabilities.Iterate (print_cve'Access);
+         when full =>
+            rec.vulnerabilities.Iterate (print_full_cve'Access);
+      end case;
+      TIO.Put_Line ("");
+
+   end display_single_record;
+
+
    ----------------------
    --  display_report  --
    ----------------------
-   function display_report
+   procedure display_report
      (comline       : Cldata;
-      cached_file   : String;
-      response_tree : ThickUCL.UclTree;
-      patchset      : Pkgtypes.Text_List.Vector) return Boolean
+      cpe_entries   : set_cpe_entries.Vector)
    is
-      key_success : constant String := "success";
-      key_records : constant String := "records";
-      res_success : Boolean := False;
-      res_records : Ucl.ucl_integer := 0;
-      total_shown : Integer := 0;
-      cpe_entries : set_cpe_entries.Vector;
-      structured  : ThickUCL.UclTree;
-      keys        : ThickUCL.jar_string.Vector;
-
-      use type Ucl.ucl_integer;
+      total_shown   : Natural := 0;
+      total_records : constant Natural := Natural (cpe_entries.Length);
+      structured    : ThickUCL.UclTree;
    begin
-      if response_tree.boolean_field_exists (key_success) then
-         res_success := response_tree.get_base_value (key_success);
-         if not res_success then
-            if not comline.common_options.quiet then
-               TIO.Put_Line
-                 ("Contact Ravenports developers: Vulnerability server rejected the input");
-               TIO.Put_Line ("Provide the " & cached_file & " file with the report.");
-            end if;
-            return False;
-         end if;
-      end if;
-      if response_tree.integer_field_exists (key_records) then
-         res_records := response_tree.get_base_value (key_records);
-      end if;
-      if res_records > 0 then
-         response_tree.get_base_object_keys (keys);
-         --  keys.Iterate (process_cpe_result'Access);
-      end if;
+      for x in 1 .. total_records loop
+         case comline.cmd_audit.filter is
+            when vulnerable =>
+               if not cpe_entries.Element(x - 1).secure then
+                  total_shown := total_shown + 1;
+               end if;
+            when secure =>
+               if cpe_entries.Element(x - 1).secure then
+                  total_shown := total_shown + 1;
+               end if;
+            when none =>
+               total_shown := total_shown + 1;
+         end case;
+      end loop;
 
       if total_shown = 0 then
          if not comline.common_options.quiet then
             TIO.Put_Line ("There is no vulnerability data to display.");
          end if;
-      else
-         case comline.cmd_audit.format is
-            when fmt_report => null;
-            when fmt_json =>
-               TIO.Put_Line (ThickUCL.Emitter.emit_compact_ucl (structured, True));
-            when fmt_ucl =>
-               TIO.Put_Line (ThickUCL.Emitter.emit_ucl (structured));
-         end case;
+         return;
       end if;
 
-      return True;
+      for x in 1 .. total_records loop
+         case comline.cmd_audit.format is
+            when fmt_report =>
+               display_single_record (comline, cpe_entries, x - 1);
+               return;
+            when fmt_json | fmt_ucl =>
+               null;
+         end case;
+      end loop;
+
+      case comline.cmd_audit.format is
+         when fmt_report => null;
+         when fmt_json =>
+            TIO.Put_Line (ThickUCL.Emitter.emit_compact_ucl (structured, True));
+         when fmt_ucl =>
+            TIO.Put_Line (ThickUCL.Emitter.emit_ucl (structured));
+      end case;
+
    end display_report;
 
 end Raven.Cmd.Audit;
