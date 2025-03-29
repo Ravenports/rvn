@@ -5,6 +5,7 @@
 with Ada.Text_IO;
 with Ada.Environment_Variables;
 with Archive.Unix;
+with Raven.Event;
 with Raven.Fetch;
 with Raven.Strings;
 with Raven.Context;
@@ -258,6 +259,7 @@ package body Raven.Cmd.Audit is
             return;
          end if;
 
+         Event.emit_debug (high_level, "processing " & key & " string");
          baseobj := response_tree.get_index_of_base_ucl_object (key);
          dtype := response_tree.get_object_data_type (baseobj, index_nvv);
          case dtype is
@@ -514,16 +516,17 @@ package body Raven.Cmd.Audit is
 
       function make_decimal (score : Integer) return String
       is
-         --  4 columns (breaks at impossible score 1000)
+         --  3 columns for 9.9 and below
+         --  4 columns for 10.0 (to 99.9, but nothing over 10.0 should be possible)
          raw : constant String := int2str (score);
       begin
          if score < 10 then
-            return " 0." & raw;
+            return "0." & raw;
          end if;
          if score >= 100 then
             return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
          end if;
-         return " " & raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
+         return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
       end make_decimal;
 
       procedure print_package (position : set_nvv.Cursor)
@@ -585,7 +588,7 @@ package body Raven.Cmd.Audit is
          if not cve.patched then
             fixed := (others => ' ');
          end if;
-         print (USS(cve.cve_id), "     " & origin & fixed);
+         print (USS(cve.cve_id), origin & fixed);
          print ("    Base score:", make_decimal (cve.base_score) & " " & USS (cve.threat_level));
          print ("    Exploitability Score:", make_decimal (cve.exploitability));
          print ("    Impact Score:", make_decimal (cve.impact));
@@ -626,6 +629,7 @@ package body Raven.Cmd.Audit is
          print ("    NVD Last Modified:", USS (cve.modified));
          print ("    Link", "https://nvd.nist.gov/vuln/detail/" & USS (cve.cve_id));
          TIO.Put_Line (USS (cve.description));
+         TIO.Put_Line ("");
       end print_full_cve;
    begin
       case comline.cmd_audit.filter is
