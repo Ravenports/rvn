@@ -513,6 +513,7 @@ package body Raven.Cmd.Audit is
       index         : Natural)
    is
       rec : cpe_entry renames cpe_entries (index);
+      first_cve : Boolean := True;
 
       function make_decimal (score : Integer) return String
       is
@@ -590,6 +591,10 @@ package body Raven.Cmd.Audit is
          if not cve.patched then
             fixed := (others => ' ');
          end if;
+         if not first_cve then
+            TIO.Put_Line ("");
+         end if;
+         first_cve := False;
          print (USS(cve.cve_id), origin & fixed);
          print ("    Base score:", make_decimal (cve.base_score) & " " & USS (cve.threat_level));
          print ("    Exploitability Score:", make_decimal (cve.exploitability));
@@ -631,7 +636,6 @@ package body Raven.Cmd.Audit is
          print ("    NVD Last Modified:", USS (cve.modified));
          print ("    Link", "https://nvd.nist.gov/vuln/detail/" & USS (cve.cve_id));
          print_description (USS (cve.description));
-         TIO.Put_Line ("");
       end print_full_cve;
    begin
       case comline.cmd_audit.filter is
