@@ -535,7 +535,9 @@ package body Raven.Cmd.Audit is
          basic : constant String :=
            USS (nvv.namebase) & " (" & USS (nvv.variant) & ") " & USS (nvv.version);
       begin
-         if comline.common_options.quiet then
+         if comline.common_options.quiet and
+           comline.cmd_audit.filter /= Cmd.none
+         then
             TIO.Put_Line (basic);
          else
             if rec.secure then
