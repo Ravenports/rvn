@@ -694,7 +694,6 @@ package body Raven.Cmd.Audit is
          case comline.cmd_audit.format is
             when fmt_report =>
                display_single_record (comline, cpe_entries, x - 1);
-               return;
             when fmt_json | fmt_ucl =>
                null;
          end case;
