@@ -504,6 +504,25 @@ package body Raven.Cmd.Audit is
    end expand_vector_string;
 
 
+   --------------------
+   --  make_decimal  --
+   --------------------
+   function make_decimal (score : Integer) return String
+   is
+      --  3 columns for 9.9 and below
+      --  4 columns for 10.0 (to 99.9, but nothing over 10.0 should be possible)
+      raw : constant String := int2str (score);
+   begin
+      if score < 10 then
+         return "0." & raw;
+      end if;
+      if score >= 100 then
+         return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
+      end if;
+      return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
+   end make_decimal;
+
+
    -----------------------------
    --  display_single_record  --
    -----------------------------
@@ -514,21 +533,6 @@ package body Raven.Cmd.Audit is
    is
       rec : cpe_entry renames cpe_entries (index);
       first_cve : Boolean := True;
-
-      function make_decimal (score : Integer) return String
-      is
-         --  3 columns for 9.9 and below
-         --  4 columns for 10.0 (to 99.9, but nothing over 10.0 should be possible)
-         raw : constant String := int2str (score);
-      begin
-         if score < 10 then
-            return "0." & raw;
-         end if;
-         if score >= 100 then
-            return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
-         end if;
-         return raw (raw'First .. raw'Last - 1) & '.' & raw (raw'Last);
-      end make_decimal;
 
       procedure print_package (position : set_nvv.Cursor)
       is
@@ -663,6 +667,115 @@ package body Raven.Cmd.Audit is
    end display_single_record;
 
 
+   ----------------------------
+   --  encode_single_record  --
+   ----------------------------
+   procedure encode_single_record
+     (tree          : in out ThickUCL.UclTree;
+      comline       : Cldata;
+      cpe_entries   : set_cpe_entries.Vector;
+      index         : Natural)
+   is
+      rec : cpe_entry renames cpe_entries (index);
+
+      procedure save_package (position : set_nvv.Cursor)
+      is
+         nvv : nvv_rec renames set_nvv.Element (position);
+      begin
+         tree.start_object ("");
+         tree.insert ("namebase", USS (nvv.namebase));
+         tree.insert ("variant", USS (nvv.variant));
+         tree.insert ("version", USS (nvv.version));
+         tree.close_object;
+      end save_package;
+
+      procedure save_cve (position : set_cve.Cursor)
+      is
+         cve : cve_rec renames set_cve.Element (position);
+         vectors  : constant vector_breakdown :=
+           expand_vector_string (cve.cvss_version, USS (cve.cvss_vector));
+      begin
+         tree.start_object ("");
+         tree.insert ("cve_id", USS (cve.cve_id));
+         tree.insert ("patched", cve.patched);
+         tree.insert ("base_score", make_decimal (cve.base_score));
+         tree.insert ("threat_level", USS (cve.threat_level));
+         case comline.cmd_audit.level is
+            when summary | concise => null;
+            when full =>
+               tree.insert ("exploit_score", make_decimal (cve.exploitability));
+               tree.insert ("impact_score", make_decimal (cve.impact));
+               tree.insert ("published", USS (cve.published));
+               tree.insert ("modified", USS (cve.modified));
+               tree.insert ("link", "https://nvd.nist.gov/vuln/detail/" & USS (cve.cve_id));
+               tree.insert ("description", USS (cve.description));
+               tree.insert ("cvss_version", make_decimal (cve.cvss_version));
+               tree.insert ("attack_vector", USS (vectors.attack_vector));
+               tree.insert ("attack_complexity", USS (vectors.attack_complexity));
+               case cve.cvss_version is
+                  when 20 =>
+                     tree.insert ("authentication", USS (vectors.authentication_20));
+                     tree.insert ("confidentiality", USS (vectors.confidentiality));
+                     tree.insert ("integrity", USS (vectors.integrity));
+                     tree.insert ("availability", USS (vectors.availability));
+                  when 30 | 31 =>
+                     tree.insert ("privileges_req", USS (vectors.privileges_required));
+                     tree.insert ("scope", USS (vectors.scope));
+                     tree.insert ("confidentiality", USS (vectors.confidentiality));
+                     tree.insert ("integrity", USS (vectors.integrity));
+                     tree.insert ("availability", USS (vectors.availability));
+                  when 40 =>
+                     tree.insert ("attack_req", USS (vectors.attack_reqments_40));
+                     tree.insert ("privileges_req", USS (vectors.privileges_required));
+                     tree.insert ("user_interaction",  USS (vectors.user_interaction));
+                     tree.insert ("vs_confidentiality", USS (vectors.vsys_confident_40));
+                     tree.insert ("ss_confidentiality", USS (vectors.ssys_confident_40));
+                     tree.insert ("vs_integrity", USS (vectors.vsys_integrity_40));
+                     tree.insert ("ss_integrity", USS (vectors.ssys_integrity_40));
+                     tree.insert ("vs_availability", USS (vectors.vsys_integrity_40));
+                     tree.insert ("ss_availability", USS (vectors.ssys_avail_40));
+                  when others =>
+                     null;
+               end case;
+         end case;
+         tree.close_object;
+      end save_cve;
+   begin
+      case comline.cmd_audit.filter is
+         when vulnerable =>
+            if rec.secure then
+               return;
+            end if;
+         when secure =>
+            if not rec.secure then
+               return;
+            end if;
+         when none => null;
+      end case;
+
+      if rec.secure then
+         tree.reopen_array ("secure");
+      else
+         tree.reopen_array ("vulnerable");
+      end if;
+
+      tree.start_object ("");
+      tree.insert ("vendor", USS (rec.vendor));
+      tree.insert ("product", USS (rec.product));
+
+      tree.start_array ("installed");
+      rec.installed_packages.Iterate (save_package'Access);
+      tree.close_array;
+
+      tree.start_array ("cve");
+      rec.vulnerabilities.Iterate (save_cve'Access);
+      tree.close_array;
+
+      tree.close_object;
+      tree.close_array;
+   end encode_single_record;
+
+
    ----------------------
    --  display_report  --
    ----------------------
@@ -696,12 +809,17 @@ package body Raven.Cmd.Audit is
          return;
       end if;
 
+      structured.start_array ("secure");
+      structured.close_array;
+      structured.start_array ("vulnerable");
+      structured.close_array;
+
       for x in 1 .. total_records loop
          case comline.cmd_audit.format is
             when fmt_report =>
                display_single_record (comline, cpe_entries, x - 1);
             when fmt_json | fmt_ucl =>
-               null;
+               encode_single_record (structured, comline, cpe_entries, x - 1);
          end case;
       end loop;
 

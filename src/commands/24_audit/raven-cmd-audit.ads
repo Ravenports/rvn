@@ -96,6 +96,13 @@ private
       cpe_entries   : set_cpe_entries.Vector;
       index         : Natural);
 
+   procedure encode_single_record
+     (tree          : in out ThickUCL.UclTree;
+      comline       : Cldata;
+      cpe_entries   : set_cpe_entries.Vector;
+      index         : Natural);
+
+   function make_decimal (score : Integer) return String;
    procedure print_description (description : String);
 
 end Raven.Cmd.Audit;
