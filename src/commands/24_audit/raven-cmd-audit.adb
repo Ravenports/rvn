@@ -630,7 +630,7 @@ package body Raven.Cmd.Audit is
          print ("    NVD Published:", USS (cve.published));
          print ("    NVD Last Modified:", USS (cve.modified));
          print ("    Link", "https://nvd.nist.gov/vuln/detail/" & USS (cve.cve_id));
-         TIO.Put_Line (USS (cve.description));
+         print_description (USS (cve.description));
          TIO.Put_Line ("");
       end print_full_cve;
    begin
@@ -710,5 +710,39 @@ package body Raven.Cmd.Audit is
       end case;
 
    end display_report;
+
+
+   -------------------------
+   --  print_description  --
+   -------------------------
+   procedure print_description (description : String)
+   is
+      maxwidth : constant Natural := raven.Context.reveal_terminal_width - 5;
+      final    : constant Integer := description'Last;
+      marker   : Integer := description'First;
+      index    : Integer;
+   begin
+      loop
+         if final - marker + 1 <= maxwidth then
+            TIO.Put_Line (description (marker .. description'Last));
+            exit;
+         end if;
+         index := marker + maxwidth;
+         loop
+            if description (index) = ' ' then
+               exit;
+            end if;
+            index := index - 1;
+            if index = marker then
+               --  no breaks found.   (Not normal description, just break string after full width)
+               index := marker + maxwidth;
+               exit;
+            end if;
+         end loop;
+         TIO.Put_Line (description (marker .. index - 1));
+         marker := index + 1;  -- essentially space at "index" is converted to line feed
+      end loop;
+   end print_description;
+
 
 end Raven.Cmd.Audit;

@@ -96,4 +96,6 @@ private
       cpe_entries   : set_cpe_entries.Vector;
       index         : Natural);
 
+   procedure print_description (description : String);
+
 end Raven.Cmd.Audit;
