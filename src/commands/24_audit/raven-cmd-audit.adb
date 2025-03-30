@@ -8,8 +8,10 @@ with Archive.Unix;
 with Raven.Event;
 with Raven.Fetch;
 with Raven.Strings;
-with Raven.Context;
 with Raven.Cmd.Unset;
+with Raven.Database.Lock;
+with Raven.Database.Annotate;
+with Raven.Database.Operations;
 with ThickUCL.Files;
 with ThickUCL.Emitter;
 with Ucl;
@@ -21,6 +23,9 @@ package body Raven.Cmd.Audit is
    package ENV renames Ada.Environment_Variables;
    package TIO renames Ada.Text_IO;
    package RCU renames Raven.Cmd.Unset;
+   package LOK renames Raven.Database.Lock;
+   package ANN renames Raven.Database.Annotate;
+   package OPS renames Raven.Database.Operations;
 
 
    -----------------------------
@@ -46,8 +51,7 @@ package body Raven.Cmd.Audit is
       if ENV.Exists (ev1) then
          return external_test_input (comline, ENV.Value (ev1));
       end if;
-      TIO.Put_Line ("To be implemented.");
-      return False;
+      return internal_input (comline);
    end execute_audit_command;
 
 
@@ -77,19 +81,18 @@ package body Raven.Cmd.Audit is
 
       declare
          json_contents : constant String := ThickUCL.Emitter.emit_compact_ucl (test_tree, True);
-         cached_file   : constant String := Context.reveal_cache_directory &
-                                            "/version/vulninfo.json";
          response      : ThickUCL.UclTree;
          patchset      : Pkgtypes.Text_List.Vector;
          cpe_entries   : set_cpe_entries.Vector;
       begin
+         Event.emit_debug (high_level, "test input: " & json_contents);
          if contact_vulnerability_server (comline.cmd_audit.refresh, json_contents, response) then
             set_patched_cves (patchset);
             if not assemble_data (response, patchset, cpe_entries) then
                if not comline.common_options.quiet then
                   TIO.Put_Line
                     ("Contact Ravenports developers: Vulnerability server rejected the input.");
-                  TIO.Put_Line ("Provide the " & cached_file & " file with the report.");
+                  TIO.Put_Line ("Provide the " & cached_vinfo & " file with the report.");
                end if;
                return False;
             end if;
@@ -101,6 +104,100 @@ package body Raven.Cmd.Audit is
    end external_test_input;
 
 
+   ----------------------
+   --  internal_input  --
+   ----------------------
+   function internal_input (comline : Cldata) return Boolean
+   is
+      input_tree  : ThickUCL.UclTree;
+      notes       : ANN.base_note_set.Vector;
+      patchset    : Pkgtypes.Text_List.Vector;
+      rdb         : Database.RDB_Connection;
+      active_lock : constant LOK.lock_type := LOK.lock_readonly;
+      open_cpe    : Boolean := False;
+      last_cpe    : Text;
+
+      procedure sift (Position : ANN.base_note_set.Cursor)
+      is
+         note : ANN.base_note renames ANN.base_note_set.Element (Position);
+         nvv  : constant String := USS (note.namebase) & ":" & USS (note.variant) & ":" &
+                                   USS (note.version);
+      begin
+         if equivalent (note.note_key, "cpe") then
+            if open_cpe then
+               if equivalent (note.note_val, last_cpe) then
+                  input_tree.insert ("", nvv);
+               else
+                  input_tree.close_array;   --  nvv
+                  input_tree.close_object;  --  note object
+                  open_cpe := False;
+               end if;
+            end if;
+            if not open_cpe then
+               input_tree.start_object ("");
+               input_tree.insert ("cpe", USS (note.note_val));
+               input_tree.start_array ("nvv");
+               input_tree.insert ("", nvv);
+            end if;
+         elsif equivalent (note.note_val, "vulnerability_patched") then
+            patchset.Append (note.note_key);
+         end if;
+      end sift;
+   begin
+      patchset.Clear;
+      case OPS.rdb_open_localdb (rdb, Database.installed_packages) is
+         when RESULT_OK => null;
+         when others => return False;
+      end case;
+
+      if not LOK.obtain_lock (rdb, active_lock) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
+      ANN.acquire_base_annotations (rdb, notes);
+
+      if not LOK.release_lock (rdb, active_lock) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return False;
+      end if;
+
+      OPS.rdb_close (rdb);
+      input_tree.start_array ("notes");
+      notes.Iterate (sift'Access);
+      if open_cpe then
+         input_tree.close_array;   --  nvv
+         input_tree.close_object;  --  note object
+         open_cpe := False;
+      end if;
+      input_tree.close_array;
+
+      declare
+         json_contents : constant String := ThickUCL.Emitter.emit_compact_ucl (input_tree, True);
+         response      : ThickUCL.UclTree;
+         cpe_entries   : set_cpe_entries.Vector;
+      begin
+         Event.emit_debug (high_level, "test input: " & json_contents);
+         if contact_vulnerability_server (comline.cmd_audit.refresh, json_contents, response) then
+            if not assemble_data (response, patchset, cpe_entries) then
+               if not comline.common_options.quiet then
+                  TIO.Put_Line
+                    ("Contact Ravenports developers: Vulnerability server rejected the input.");
+                  TIO.Put_Line ("Provide the " & cached_vinfo & " file with the report.");
+               end if;
+               return False;
+            end if;
+            display_report (comline, cpe_entries);
+            return True;
+         end if;
+      end;
+      return False;
+
+   end internal_input;
+
+
    ------------------------------------
    --  contact_vulnerability_server  --
    ------------------------------------
@@ -110,16 +207,15 @@ package body Raven.Cmd.Audit is
    is
       cache_dir : constant String := Context.reveal_cache_directory & "/version";
       etag_file : constant String := cache_dir & "/vulninfo.etag";
-      json_file : constant String := cache_dir & "/vulninfo.json";
       vuln_url  : constant String := RCU.config_setting (RCU.CFG.vuln_server);
    begin
       if refresh then
-         Archive.Unix.delete_file_if_it_exists (json_file);
+         Archive.Unix.delete_file_if_it_exists (cached_vinfo);
       end if;
       case Fetch.download_post_response
         (remote_file_url => vuln_url,
          etag_file       => etag_file,
-         downloaded_file => json_file,
+         downloaded_file => cached_vinfo,
          post_body       => json_input,
          post_body_type  => "application/json")
       is
@@ -127,12 +223,12 @@ package body Raven.Cmd.Audit is
             begin
                ThickUCL.Files.parse_ucl_file
                  (tree    => response_tree,
-                  path    => json_file,
+                  path    => cached_vinfo,
                   nvpairs => "");
                return True;
             exception
                when ThickUCL.Files.ucl_file_unparseable =>
-                  TIO.Put_Line ("FATAL: Failed to parse " & json_file);
+                  TIO.Put_Line ("FATAL: Failed to parse " & cached_vinfo);
             end;
          when Fetch.retrieval_failed =>
             TIO.Put_Line ("FATAL: Failed to get response from " & vuln_url);

@@ -6,7 +6,10 @@ with Raven.Database.Operations;
 with Raven.Database.CommonSQL;
 with Raven.Database.Schema;
 with Raven.Database.Pkgs;
+with Raven.Strings;
 with SQLite;
+
+use Raven.Strings;
 
 package body Raven.Database.Annotate is
 
@@ -212,6 +215,52 @@ package body Raven.Database.Annotate is
       commit_or_rollback (db, revert, func, savepoint);
    end remove_annotations_core;
 
+
+   --------------------------------
+   --  acquire_base_annotations  --
+   --------------------------------
+   procedure acquire_base_annotations
+     (db       : RDB_Connection;
+      notes    : in out base_note_set.Vector)
+   is
+      new_stmt : SQLite.thick_stmt;
+      func : constant String := "acquire_base_annotations";
+      sql : constant String :=
+        "SELECT p.namebase, p.variant, p.version, k.note_key, n.annotation " &
+        "FROM packages p " &
+        "JOIN pkg_annotations n ON p.id = n.package_id " &
+        "JOIN annotations k ON k.annotation_id = n.annotation_id " &
+        "WHERE n.custom = 0 " &
+        "GROUP BY p.namebase, p.variant " &
+        "ORDER by k.note_key, n.annotation, p.namebase";
+   begin
+      notes.Clear;
+      if not SQLite.prepare_sql (db.handle, sql, new_stmt) then
+         CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func, sql);
+         return;
+      end if;
+      debug_running_stmt (new_stmt);
+      loop
+         case SQLite.step (new_stmt) is
+            when SQLite.no_more_data => exit;
+            when SQLite.row_present =>
+               declare
+                  rec : base_note;
+               begin
+                  rec.namebase := SUS (SQLite.retrieve_string (new_stmt, 0));
+                  rec.variant  := SUS (SQLite.retrieve_string (new_stmt, 1));
+                  rec.version  := SUS (SQLite.retrieve_string (new_stmt, 2));
+                  rec.note_key := SUS (SQLite.retrieve_string (new_stmt, 3));
+                  rec.note_val := SUS (SQLite.retrieve_string (new_stmt, 4));
+                  notes.Append (rec);
+               end;
+            when SQLite.something_else =>
+               CommonSQL.ERROR_STMT_SQLITE (db.handle, internal_srcfile, func,
+                                            SQLite.get_expanded_sql (new_stmt));
+         end case;
+      end loop;
+      SQLite.finalize_statement (new_stmt);
+   end acquire_base_annotations;
 
 
 end Raven.Database.Annotate;

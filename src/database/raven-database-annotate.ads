@@ -2,8 +2,22 @@
 --  Reference: /License.txt
 
 with Raven.Pkgtypes;
+with Ada.Containers.Vectors;
 
 package Raven.Database.Annotate is
+
+   type base_note is
+      record
+         namebase : Text;
+         variant  : Text;
+         version  : Text;
+         note_key : Text;
+         note_val : Text;
+      end record;
+
+   package base_note_set is new Pkgtypes.CON.Vectors
+     (Element_Type => base_note,
+      Index_Type   => Natural);
 
    procedure annotate_packages
      (db       : in out RDB_Connection;
@@ -15,6 +29,10 @@ package Raven.Database.Annotate is
      (db       : RDB_Connection;
       tag      : String;
       packages : Pkgtypes.Package_Set.Vector);
+
+   procedure acquire_base_annotations
+     (db       : RDB_Connection;
+      notes    : in out base_note_set.Vector);
 
 private
 

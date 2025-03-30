@@ -3,6 +3,7 @@
 
 
 private with ThickUCL;
+private with Raven.Context;
 private with Raven.Pkgtypes;
 private with Ada.Containers.Vectors;
 
@@ -12,6 +13,8 @@ package Raven.Cmd.Audit is
    function execute_audit_command (comline : Cldata) return Boolean;
 
 private
+
+   cached_vinfo : constant String := Context.reveal_cache_directory & "/version/vulninfo.json";
 
    type nvv_rec is record
       namebase : Text;
@@ -73,6 +76,7 @@ private
    end record;
 
    function external_test_input (comline : Cldata; testfile : String) return Boolean;
+   function internal_input (comline : Cldata) return Boolean;
    function expand_vector_string (cvss_version : Integer; vstring: String) return vector_breakdown;
 
    function contact_vulnerability_server
