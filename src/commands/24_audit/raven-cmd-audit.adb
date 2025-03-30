@@ -7,6 +7,7 @@ with Ada.Environment_Variables;
 with Archive.Unix;
 with Raven.Event;
 with Raven.Fetch;
+with Raven.Context;
 with Raven.Strings;
 with Raven.Cmd.Unset;
 with Raven.Database.Lock;
@@ -47,18 +48,19 @@ package body Raven.Cmd.Audit is
       --                one CVE id per line.  These represents future annotations for patched CVEs
 
       ev1 : constant String := "TESTAUDIT";
+      cached_vinfo : constant String := Context.reveal_cache_directory & "/version/vulninfo.json";
    begin
       if ENV.Exists (ev1) then
-         return external_test_input (comline, ENV.Value (ev1));
+         return external_test_input (comline, cached_vinfo, ENV.Value (ev1));
       end if;
-      return internal_input (comline);
+      return internal_input (comline, cached_vinfo);
    end execute_audit_command;
 
 
    ---------------------------
    --  external_test_input  --
    ---------------------------
-   function external_test_input (comline : Cldata; testfile : String) return Boolean
+   function external_test_input (comline : Cldata; json_file, testfile : String) return Boolean
    is
       features  : Archive.Unix.File_Characteristics;
       test_tree : ThickUCL.UclTree;
@@ -86,13 +88,14 @@ package body Raven.Cmd.Audit is
          cpe_entries   : set_cpe_entries.Vector;
       begin
          Event.emit_debug (high_level, "test input: " & json_contents);
-         if contact_vulnerability_server (comline.cmd_audit.refresh, json_contents, response) then
+         if contact_vulnerability_server (comline.cmd_audit.refresh,
+                                          json_contents, json_file, response) then
             set_patched_cves (patchset);
             if not assemble_data (response, patchset, cpe_entries) then
                if not comline.common_options.quiet then
                   TIO.Put_Line
                     ("Contact Ravenports developers: Vulnerability server rejected the input.");
-                  TIO.Put_Line ("Provide the " & cached_vinfo & " file with the report.");
+                  TIO.Put_Line ("Provide the " & json_file & " file with the report.");
                end if;
                return False;
             end if;
@@ -107,7 +110,7 @@ package body Raven.Cmd.Audit is
    ----------------------
    --  internal_input  --
    ----------------------
-   function internal_input (comline : Cldata) return Boolean
+   function internal_input (comline : Cldata; json_file : String) return Boolean
    is
       input_tree  : ThickUCL.UclTree;
       notes       : ANN.base_note_set.Vector;
@@ -180,12 +183,13 @@ package body Raven.Cmd.Audit is
          cpe_entries   : set_cpe_entries.Vector;
       begin
          Event.emit_debug (high_level, "test input: " & json_contents);
-         if contact_vulnerability_server (comline.cmd_audit.refresh, json_contents, response) then
+         if contact_vulnerability_server (comline.cmd_audit.refresh,
+                                          json_contents, json_file, response) then
             if not assemble_data (response, patchset, cpe_entries) then
                if not comline.common_options.quiet then
                   TIO.Put_Line
                     ("Contact Ravenports developers: Vulnerability server rejected the input.");
-                  TIO.Put_Line ("Provide the " & cached_vinfo & " file with the report.");
+                  TIO.Put_Line ("Provide the " & json_file & " file with the report.");
                end if;
                return False;
             end if;
@@ -203,6 +207,7 @@ package body Raven.Cmd.Audit is
    ------------------------------------
    function contact_vulnerability_server (refresh       : Boolean;
                                           json_input    : String;
+                                          json_file     : String;
                                           response_tree : in out ThickUCL.UclTree) return Boolean
    is
       cache_dir : constant String := Context.reveal_cache_directory & "/version";
@@ -210,12 +215,12 @@ package body Raven.Cmd.Audit is
       vuln_url  : constant String := RCU.config_setting (RCU.CFG.vuln_server);
    begin
       if refresh then
-         Archive.Unix.delete_file_if_it_exists (cached_vinfo);
+         Archive.Unix.delete_file_if_it_exists (json_file);
       end if;
       case Fetch.download_post_response
         (remote_file_url => vuln_url,
          etag_file       => etag_file,
-         downloaded_file => cached_vinfo,
+         downloaded_file => json_file,
          post_body       => json_input,
          post_body_type  => "application/json")
       is
@@ -223,12 +228,12 @@ package body Raven.Cmd.Audit is
             begin
                ThickUCL.Files.parse_ucl_file
                  (tree    => response_tree,
-                  path    => cached_vinfo,
+                  path    => json_file,
                   nvpairs => "");
                return True;
             exception
                when ThickUCL.Files.ucl_file_unparseable =>
-                  TIO.Put_Line ("FATAL: Failed to parse " & cached_vinfo);
+                  TIO.Put_Line ("FATAL: Failed to parse " & json_file);
             end;
          when Fetch.retrieval_failed =>
             TIO.Put_Line ("FATAL: Failed to get response from " & vuln_url);
