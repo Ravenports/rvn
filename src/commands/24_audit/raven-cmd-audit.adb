@@ -657,13 +657,18 @@ package body Raven.Cmd.Audit is
 
       procedure print_cve (position : set_cve.Cursor)
       is
+         --    CVE-2011-3599           Score: 5.8 Medium
+         --    CVE-2016-1246  PATCHED  Score: 7.5 High
+         --    CVE-2017-361   PATCHED  Score: 7.0 High
+         --    CVE-2016-12             Score: 7.5 High
+         --    CVE-2018-20225 PATCHED  Score: 7.8 High
          cve : cve_rec renames set_cve.Element (position);
-         fixed : string := "  PATCHED  ";
+         fixed : string := " PATCHED  ";
       begin
          if not cve.patched then
             fixed := (others => ' ');
          end if;
-         TIO.Put_Line ("    " & USS (cve.cve_id) & fixed & "Score: " &
+         TIO.Put_Line (strings.pad_right ("    " & USS (cve.cve_id), 18) & fixed & "Score: " &
                          make_decimal (cve.base_score) & " " & USS (cve.threat_level));
       end print_cve;
 
