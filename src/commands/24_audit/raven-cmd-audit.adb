@@ -273,9 +273,6 @@ package body Raven.Cmd.Audit is
                TIO.Put_Line (ev2 & " is not set to the path of a regular file.");
                TIO.Put_Line ("Patched CVEs not set.");
          end case;
-      else
-         --  TBW: query rvn_pkgdb for annotations
-         null;
       end if;
    end set_patched_cves;
 
