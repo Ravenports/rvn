@@ -141,6 +141,7 @@ package body Raven.Cmd.Audit is
                input_tree.insert ("cpe", USS (note.note_val));
                input_tree.start_array ("nvv");
                input_tree.insert ("", nvv);
+               open_cpe := True;
             end if;
          elsif equivalent (note.note_val, "vulnerability_patched") then
             patchset.Append (note.note_key);
