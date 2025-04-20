@@ -3,6 +3,7 @@
 
 
 with Ada.Text_IO;
+with Ada.Directories;
 with Ada.Environment_Variables;
 with Archive.Unix;
 with Raven.Event;
@@ -48,8 +49,10 @@ package body Raven.Cmd.Audit is
       --                one CVE id per line.  These represents future annotations for patched CVEs
 
       ev1 : constant String := "TESTAUDIT";
-      cached_vinfo : constant String := Context.reveal_cache_directory & "/version/vulninfo.json";
+      version_dir  : constant String := Context.reveal_cache_directory & "/version";
+      cached_vinfo : constant String := version_dir & "/vulninfo.json";
    begin
+      Ada.Directories.Create_Path (version_dir);
       if ENV.Exists (ev1) then
          return external_test_input (comline, cached_vinfo, ENV.Value (ev1));
       end if;
