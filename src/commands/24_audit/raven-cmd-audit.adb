@@ -875,7 +875,11 @@ package body Raven.Cmd.Audit is
       tree.close_array;
 
       tree.start_array ("cve");
-      rec.vulnerabilities.Iterate (save_cve'Access);
+      case comline.cmd_audit.level is
+         when summary => null;
+         when concise | full =>
+            rec.vulnerabilities.Iterate (save_cve'Access);
+      end case;
       tree.close_array;
 
       tree.close_object;
