@@ -49,7 +49,7 @@ package body Raven.Fetch is
          return cache_valid;
       end if;
 
-      data.totalsize := 0;
+      data.progress := 0;
       data.etag_file := CAL.ASU.To_Unbounded_String (etag_file);
       begin
          CAL.SIO.Create (data.file_handle, CAL.SIO.Out_File, temporary_file);
@@ -259,7 +259,7 @@ package body Raven.Fetch is
          Event.emit_debug (high_level, "Protocol does not support POST data: " & remote_file_url);
       end if;
 
-      data.totalsize := 0;
+      data.progress := 0;
       data.etag_file := CAL.ASU.To_Unbounded_String (etag_file);
       begin
          CAL.SIO.Create (data.file_handle, CAL.SIO.Out_File, temporary_file);

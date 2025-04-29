@@ -17,7 +17,7 @@ package curl_callbacks is
    type curldata is
       record
          file_handle : SIO.File_Type;
-         totalsize   : Transfer_Size := 0;
+         progress    : Transfer_Size := 0;
          max_age     : Natural := 0;
          etag_file   : ASU.Unbounded_String;
          curlobj     : curl_header.CURLX;

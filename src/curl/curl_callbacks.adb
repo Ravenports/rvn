@@ -48,7 +48,7 @@ package body curl_callbacks is
          SIO.Write (zdata.file_handle, adata);
       end;
 
-      zdata.totalsize := zdata.totalsize + bytes_passed;
+      zdata.progress := zdata.progress + bytes_passed;
       return nmemb;
 
    end write_file;
