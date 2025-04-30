@@ -7,6 +7,8 @@ with Ada.Strings.Fixed;
 with Ada.Real_Time;
 with Ada.Direct_IO;
 with Ada.Directories;
+with Ada.Characters.Latin_1;
+with Raven.Strings;
 with Archive.Unix;
 
 package body curl_callbacks is
@@ -14,6 +16,8 @@ package body curl_callbacks is
    package RT  renames Ada.Real_Time;
    package STM renames Ada.Streams;
    package FIX renames Ada.Strings.Fixed;
+   package LAT renames Ada.Characters.Latin_1;
+   package STR renames Raven.Strings;
 
    ------------------
    --  write_file  --
@@ -23,6 +27,7 @@ package body curl_callbacks is
                         nmemb    : IC.size_t;
                         userdata : System.Address) return IC.size_t
    is
+      backfour : constant String (1 .. 4) := LAT.BS & LAT.BS & LAT.BS & LAT.BS;
       bytes_passed : constant Transfer_Size := Transfer_Size (nmemb);
       zdata : curldata;
       for zdata'Address use userdata;
@@ -49,6 +54,28 @@ package body curl_callbacks is
       end;
 
       zdata.progress := zdata.progress + bytes_passed;
+
+      if zdata.display_pc then
+         if zdata.file_size = 0 then
+            Ada.Text_IO.Put (backfour & "----");
+         else
+            declare
+               k : constant Transfer_Size := zdata.progress * 10005;
+               p : Transfer_Size := k / zdata.file_size;
+            begin
+               if p >= 10000 then
+                  Ada.Text_IO.Put (backfour & "100%");
+               else
+                  declare
+                     z4 : constant String := STR.zeropad (Natural (p), 4);
+                  begin
+                     Ada.Text_IO.Put (backfour & z4 (z4'First .. z4'First + 1) & LAT.Full_Stop &
+                                        z4 (z4'First + 2));
+                  end;
+               end if;
+            end;
+         end if;
+      end if;
       return nmemb;
 
    end write_file;

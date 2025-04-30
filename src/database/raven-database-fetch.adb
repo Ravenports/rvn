@@ -628,7 +628,9 @@ package body Raven.Database.Fetch is
                                          etag_file       => "",
                                          downloaded_file => dnfile,
                                          remote_repo     => True,
-                                         remote_protocol => remote_proto);
+                                         remote_protocol => remote_proto,
+                                         download_size   => remote_file.rvnsize,
+                                         show_progress   => not behave_quiet);
             case fetres is
                when DLF.cache_valid | DLF.file_downloaded  =>
                   if not behave_quiet then
@@ -669,7 +671,9 @@ package body Raven.Database.Fetch is
                                          etag_file       => "",
                                          downloaded_file => dnlink,
                                          remote_repo     => True,
-                                         remote_protocol => remote_proto);
+                                         remote_protocol => remote_proto,
+                                         download_size   => remote_file.rvnsize,
+                                         show_progress   => not behave_quiet);
             case fetres is
                when DLF.cache_valid | DLF.file_downloaded  =>
                   if not behave_quiet then

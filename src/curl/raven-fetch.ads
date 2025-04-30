@@ -1,10 +1,12 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+
+with Raven.Pkgtypes;
+
 package Raven.Fetch is
 
    type fetch_result is (cache_valid, file_downloaded, retrieval_failed);
-
 
    --  remote_file_url : e.g. https://raw.githubusercontent.com/Ravenports/Ravenports/ ..
    --                                master/Mk/Misc/rvnindex.txt
@@ -20,7 +22,9 @@ package Raven.Fetch is
       remote_repo     : Boolean := False;
       remote_protocol : IP_support := no_restriction;
       remote_prv_key  : String := "";
-      remote_pub_key  : String := "") return fetch_result;
+      remote_pub_key  : String := "";
+      show_progress   : Boolean := False;
+      download_size   : Pkgtypes.Package_Size := 0) return fetch_result;
 
    function download_post_response
      (remote_file_url : String;

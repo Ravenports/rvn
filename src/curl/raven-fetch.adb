@@ -30,7 +30,9 @@ package body Raven.Fetch is
       remote_repo     : Boolean := False;
       remote_protocol : IP_support := no_restriction;
       remote_prv_key  : String := "";
-      remote_pub_key  : String := "") return fetch_result
+      remote_pub_key  : String := "";
+      show_progress   : Boolean := False;
+      download_size   : Pkgtypes.Package_Size := 0) return fetch_result
    is
       temporary_file  : constant String := CAL.randomized_download_target (downloaded_file);
 
@@ -50,6 +52,8 @@ package body Raven.Fetch is
       end if;
 
       data.progress := 0;
+      data.file_size := CAL.Transfer_Size (download_size);
+      data.display_pc := show_progress;
       data.etag_file := CAL.ASU.To_Unbounded_String (etag_file);
       begin
          CAL.SIO.Create (data.file_handle, CAL.SIO.Out_File, temporary_file);
@@ -260,6 +264,8 @@ package body Raven.Fetch is
       end if;
 
       data.progress := 0;
+      data.file_size := 0;
+      data.display_pc := False;
       data.etag_file := CAL.ASU.To_Unbounded_String (etag_file);
       begin
          CAL.SIO.Create (data.file_handle, CAL.SIO.Out_File, temporary_file);
