@@ -7,7 +7,7 @@ package Raven is
 
    package SU renames Ada.Strings.Unbounded;
    
-   progversion    : constant String := "0.4.5";
+   progversion    : constant String := "0.4.6";
    progname       : constant String := "rvn";
    extension      : constant String := ".rvn";
    install_loc    : constant String := "/raven";
