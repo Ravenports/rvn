@@ -17,6 +17,7 @@ atf_test_program{name='delete.sh'}
 atf_test_program{name='extract.sh'}
 atf_test_program{name='fetch.sh'}
 atf_test_program{name='install.sh'}
+atf_test_program{name='issue12.sh'}
 atf_test_program{name='issue1445.sh'}
 atf_test_program{name='lua.sh'}
 atf_test_program{name='messages.sh'}
