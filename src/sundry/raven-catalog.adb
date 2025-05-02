@@ -5,12 +5,15 @@ with Ada.Text_IO;
 with Ada.Directories;
 with Raven.Event;
 with Raven.Context;
+with Raven.Strings;
 with Raven.Pkgtypes;
 with Raven.Metadata;
 with Raven.Database.Pkgs;
 with Raven.Database.Lock;
+with Raven.Database.Query;
 with Raven.Database.Operations;
 with ThickUCL.Files;
+with Archive.Dirent.Scan;
 with Archive.Unpack;
 with Archive.Unix;
 
@@ -21,6 +24,8 @@ package body Raven.Catalog is
    package LOK renames Raven.Database.Lock;
    package PAC renames Raven.Database.Pkgs;
    package OPS renames Raven.Database.Operations;
+   package QRY renames Raven.Database.Query;
+   package SCN renames Archive.Dirent.Scan;
 
    -------------------------
    --  generate_database  --
@@ -146,5 +151,84 @@ package body Raven.Catalog is
       return False;
 
    end generate_database;
+
+
+   -----------------------------------
+   --  remove_obsolete_cache_links  --
+   -----------------------------------
+   procedure remove_obsolete_cache_links
+   is
+      cachedir       : constant String := Context.reveal_cache_directory;
+      funcname       : constant String := "remove_obsolete_cache_links: ";
+      catalog_map    : Pkgtypes.NV_Pairs.Map;
+      cache_contents : SCN.dscan_crate.Vector;
+      fileattr       : Archive.Unix.File_Characteristics;
+      rdb            : Database.RDB_Connection;
+
+      procedure prune_old_symlinks (Position : SCN.dscan_crate.Cursor)
+      is
+         --  ignore all types except symbolic links
+         path : constant String := Archive.Dirent.full_path (SCN.dscan_crate.Element (Position));
+         fileattr2 : Archive.Unix.File_Characteristics;
+      begin
+         fileattr2 := Archive.Unix.get_charactistics (path);
+         case fileattr2.ftype is
+            when Archive.symlink => null;
+            when others => return;
+         end case;
+         declare
+            target   : constant String := Archive.Unix.link_target (path);
+            D10      : constant Text := Strings.SUS (path (path'Last - 13 .. path'Last - 4));
+            filename : constant String := Strings.tail (target, "/");
+         begin
+            if not catalog_map.Contains (D10) or else
+              not Strings.equivalent (catalog_map.Element (D10), filename)
+            then
+               Event.emit_debug
+                 (high_level, funcname & "removing link to obsolete package (" & filename & ")");
+               -- if not Archive.Unix.unlink_file (path) then
+               --   Event.emit_debug (high_level, funcname & "Failed to delete " & path);
+               -- end if;
+            end if;
+         end;
+      end prune_old_symlinks;
+   begin
+      fileattr := Archive.Unix.get_charactistics (cachedir);
+      case fileattr.ftype is
+         when Archive.directory => null;
+         when others =>
+            Event.emit_debug (high_level, funcname & cachedir & " DNE or is not a directory.");
+            return;
+      end case;
+
+      if not OPS.localdb_exists (Database.catalog) then
+         Event.emit_debug (high_level, funcname & "catalog database is missing");
+         return;
+      end if;
+      case OPS.rdb_open_localdb (rdb, Database.catalog) is
+         when RESULT_OK => null;
+         when others => return;
+      end case;
+
+      if not LOK.obtain_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_lock);
+         OPS.rdb_close (rdb);
+         return;
+      end if;
+
+      QRY.all_remote_packages (rdb, catalog_map);
+
+      if not LOK.release_lock (rdb, LOK.lock_readonly) then
+         Event.emit_error (LOK.no_read_unlock);
+         OPS.rdb_close (rdb);
+         return;
+      end if;
+
+      OPS.rdb_close (rdb);
+      SCN.scan_directory (cachedir, cache_contents);
+      cache_contents.Iterate (prune_old_symlinks'Access);
+
+   end remove_obsolete_cache_links;
+
 
 end Raven.Catalog;

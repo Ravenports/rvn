@@ -19,4 +19,11 @@ package Raven.Catalog is
 
    function generate_database (tracker : out Natural) return Boolean;
 
+
+   --  To be run after downloading a new catalog
+   --  This procedure removes links to cached packages that are obsolete (which is
+   --  defined as not matching the checksums in the latest catalog)
+   --  No packages are deleted though.
+   procedure remove_obsolete_cache_links;
+
 end Raven.Catalog;

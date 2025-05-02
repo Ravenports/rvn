@@ -808,6 +808,7 @@ package body Raven.Repository is
                Event.emit_message ("Catalog update completed. " &
                                      Strings.int2str (num_records) & " packages processed.");
             end if;
+            Catalog.remove_obsolete_cache_links;
             return True;
          else
             --  Delete the cached version to force a download
