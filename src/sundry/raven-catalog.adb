@@ -194,9 +194,9 @@ package body Raven.Catalog is
             then
                Event.emit_debug
                  (high_level, funcname & "removing link to obsolete package (" & filename & ")");
-               -- if not Archive.Unix.unlink_file (path) then
-               --   Event.emit_debug (high_level, funcname & "Failed to delete " & path);
-               -- end if;
+               if not Archive.Unix.unlink_file (path) then
+                  Event.emit_debug (high_level, funcname & "Failed to delete " & path);
+               end if;
             end if;
          end;
       end prune_old_symlinks;
