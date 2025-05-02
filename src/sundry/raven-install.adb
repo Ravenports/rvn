@@ -335,21 +335,41 @@ package body Raven.Install is
       begin
          declare
             catalog_version : constant String := QRY.get_package_version (rdb, N, S, V);
+            catalog_pkg     : Pkgtypes.A_Package;
+            libs_match      : Boolean := True;
+            use type Pkgtypes.CON.Count_Type;
          begin
             case Version.pkg_version_cmp (installed_version, catalog_version) is
-               when 0 => return;  --  equal
-               when 1 => return;  --  downgrade
-               when -1 =>
-                  install_map.Insert (Pkgtypes.Package_Map.Key (Position),
-                                      Pkgtypes.Package_Map.Element (Position));
+               when -1 => null;   --  definitively upgrade (fall through)
+               when  1 => return;  --  downgrade, so skip
+               when  0 =>
+                  --  versions are equal.
+                  --  The libraries-required must also be equal to skip upgrade.
+                  catalog_pkg.id := QRY.package_installed (rdb, N, S, V);
+                  QRY.finish_package_libs_required (rdb, catalog_pkg);
+                  if catalog_pkg.libs_required.Length = myrec.libs_required.Length then
+                     for lib_index in 1 .. Natural (myrec.libs_required.Length) loop
+                        if not equivalent (catalog_pkg.libs_required.Element (lib_index),
+                                           myrec.libs_required.Element (lib_index))
+                        then
+                           libs_match := False;
+                        end if;
+                     end loop;
+                     if libs_match then
+                        return;
+                     end if;
+                  end if;
+                  Event.emit_debug (moderate, "upgrade: " & N &
+                                      " versions equal but required libraries don't match");
             end case;
+            install_map.Insert (Pkgtypes.Package_Map.Key (Position),
+                                Pkgtypes.Package_Map.Element (Position));
          end;
       exception
          when QRY.package_not_found =>
             if not opt_quiet then
                Event.emit_message (Pkgtypes.nsv_identifier (myrec) & " is not installed.");
             end if;
-            return;
       end select_outdated;
    begin
       if opt_dry_run then
