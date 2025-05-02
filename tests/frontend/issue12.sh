@@ -80,6 +80,11 @@ libadd.so
 libadd.so.1
 EOF
 
+	cat << EOF >> lib2.plist
+libadd.so
+libadd.so.2
+EOF
+
 	cat << EOF >> bin.plist
 helloworld
 EOF
@@ -107,6 +112,9 @@ EOF
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m lib1.ucl -w lib.plist
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m binary.ucl -w bin.plist
 
+	# remove built files
+	rm libadd.so libadd.so.1 helloworld
+
 	# generate first version of the repository
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
@@ -125,18 +133,30 @@ EOF
 
 	# replace library package and rebuild helloworld
 	rm ${TMPDIR}/files/mylib~single~standard~1.rvn
-	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m lib2.ucl -w lib.plist
+
+	cc -fPIC -c mylibrary2.c -o mylibrary2.o
+	cc -shared -Wl,-soname,libadd.so.2 -o libadd.so.2 mylibrary2.o
+	ln -s libadd.so.2 libadd.so
+	atf_check \
+		-o match:".*Library soname: \[libadd.so.2\]$" \
+		-s exit:0 /bin/sh get_soname.sh "libadd.so.2"
+	cc main.c -L${TMPDIR} -Wl,-rpath,${TMPDIR} -ladd -o ${TMPDIR}/helloworld
+	atf_check -o inline:"Hello from mylibrary version 2.0!\nResult: 8\n" -s exit:5 ${TMPDIR}/helloworld
+	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m lib2.ucl -w lib2.plist
 
 	sed -i'' -e '/mylib/ s|1|2|' ${TMPDIR}/binary.ucl
-	cat ${TMPDIR}/binary.ucl
 
 	# regenerate helloworld package
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m binary.ucl -w bin.plist
+
+	# remove built files
+	rm libadd.so libadd.so.2 helloworld
 
 	# regen repository
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
 	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
 	rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -U -y
+	./target/helloworld
 	false
 }
