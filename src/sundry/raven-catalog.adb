@@ -169,19 +169,27 @@ package body Raven.Catalog is
       is
          --  ignore all types except symbolic links
          path : constant String := Archive.Dirent.full_path (SCN.dscan_crate.Element (Position));
-         fileattr2 : Archive.Unix.File_Characteristics;
+         fileattr : Archive.Unix.File_Characteristics;
       begin
-         fileattr2 := Archive.Unix.get_charactistics (path);
-         case fileattr2.ftype is
+         fileattr := Archive.Unix.get_charactistics (path);
+         case fileattr.ftype is
             when Archive.symlink => null;
             when others => return;
          end case;
          declare
             target   : constant String := Archive.Unix.link_target (path);
-            D10      : constant Text := Strings.SUS (path (path'Last - 13 .. path'Last - 4));
             filename : constant String := Strings.tail (target, "/");
+            D10      : constant Text :=
+                       Strings.SUS (filename (filename'Last - 13 .. filename'Last - 4));
+            dangling : Boolean := False;
          begin
-            if not catalog_map.Contains (D10) or else
+            fileattr := Archive.Unix.get_charactistics (target);
+            case fileattr.ftype is
+               when Archive.regular => null;
+               when others => dangling := True;
+            end case;
+            if dangling or else
+              not catalog_map.Contains (D10) or else
               not Strings.equivalent (catalog_map.Element (D10), filename)
             then
                Event.emit_debug
