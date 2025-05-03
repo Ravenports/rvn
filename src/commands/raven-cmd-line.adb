@@ -688,6 +688,8 @@ package body Raven.Cmd.Line is
                      data.cmd_stats.local_only := True;
                   elsif datum = "-c" or else datum = "--catalog" then
                      data.cmd_stats.catalog_only := True;
+                  elsif datum = "-d" or else datum = "--downloads" then
+                     data.cmd_stats.cache_only := True;
                   elsif datum = sws_quiet or else datum = swl_quiet then
                      data.common_options.quiet := True;
                   elsif datum = sws_nocat or else datum = swl_nocat then

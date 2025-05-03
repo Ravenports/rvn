@@ -2,6 +2,7 @@
 --  Reference: /License.txt
 
 with Raven.Event;
+with Raven.Context;
 with Raven.Metadata;
 with Raven.Repository;
 with Raven.Database.Lock;
@@ -9,27 +10,31 @@ with Raven.Database.Query;
 with Raven.Database.Operations;
 with Raven.Strings; use Raven.Strings;
 with Archive.Unix;
+with Archive.Dirent.Scan;
 
 package body Raven.Cmd.Stats is
 
    package LOK renames Raven.Database.Lock;
    package QRY renames Raven.Database.Query;
    package OPS renames Raven.Database.Operations;
+   package SCN renames Archive.Dirent.Scan;
 
    -----------------------------
    --  execute_stats_command  --
    -----------------------------
    function execute_stats_command (comline : Cldata) return Boolean
    is
-      show_catalog : Boolean := True;
-      show_localdb : Boolean := True;
+      show_catalog : Boolean := comline.cmd_stats.local_only;
+      show_localdb : Boolean := comline.cmd_stats.catalog_only;
+      show_cached  : Boolean := comline.cmd_stats.cache_only;
    begin
-      if comline.cmd_stats.local_only then
-         show_catalog := False;
-      end if;
-
-      if comline.cmd_stats.catalog_only then
-         show_localdb := False;
+      if not show_catalog and then
+        not show_localdb and then
+        not show_cached
+      then
+         show_catalog := True;
+         show_localdb := True;
+         show_cached := True;
       end if;
 
       if show_catalog then
@@ -41,9 +46,13 @@ package body Raven.Cmd.Stats is
       end if;
 
       if show_localdb then
-         if not show_installation_stat then
+         if not show_installation_stats then
             return False;
          end if;
+      end if;
+
+      if show_cached then
+         show_cache_stats;
       end if;
 
       return True;
@@ -113,10 +122,10 @@ package body Raven.Cmd.Stats is
    end show_catalog_stats;
 
 
-   ------------------------------
-   --  show_installation_stat  --
-   ------------------------------
-   function show_installation_stat return Boolean
+   -------------------------------
+   --  show_installation_stats  --
+   -------------------------------
+   function show_installation_stats return Boolean
    is
       ldb : Database.RDB_Connection;
       LF  : constant Character := Character'Val (10);
@@ -161,7 +170,73 @@ package body Raven.Cmd.Stats is
       OPS.rdb_close (ldb);
       return True;
 
-   end show_installation_stat;
+   end show_installation_stats;
 
+
+   ------------------------
+   --  show_cache_stats  --
+   ------------------------
+   procedure show_cache_stats
+   is
+      cachedir       : constant String := Context.reveal_cache_directory;
+      LF             : constant Character := Character'Val (10);
+      cache_contents : SCN.dscan_crate.Vector;
+      num_current    : Natural := 0;
+      num_obsolete   : Natural := 0;
+      size_current   : int64 := 0;
+      size_obsolete  : int64 := 0;
+      files_tallied  : Pkgtypes.Text_List.Vector;
+
+      procedure tally_symlink_targets (Position : SCN.dscan_crate.Cursor)
+      is
+         path : constant String := Archive.Dirent.full_path (SCN.dscan_crate.Element (Position));
+         fileattr : Archive.Unix.File_Characteristics;
+      begin
+         fileattr := Archive.Unix.get_charactistics (path);
+         case fileattr.ftype is
+            when Archive.symlink => null;
+            when others => return;
+         end case;
+         declare
+            target : constant String := Archive.Unix.link_target (path);
+         begin
+            fileattr := Archive.Unix.get_charactistics (target);
+            case fileattr.ftype is
+               when Archive.regular => null;
+               when others => return;
+            end case;
+            num_current := num_current + 1;
+            size_current := size_current + int64 (fileattr.size);
+            files_tallied.Append (Strings.SUS (target));
+         end;
+      end tally_symlink_targets;
+
+      procedure tally_orphans (Position : SCN.dscan_crate.Cursor)
+      is
+         path : constant String := Archive.Dirent.full_path (SCN.dscan_crate.Element (Position));
+         fileattr : Archive.Unix.File_Characteristics;
+      begin
+         fileattr := Archive.Unix.get_charactistics (path);
+         case fileattr.ftype is
+            when Archive.regular => null;
+            when others => return;
+         end case;
+         if not files_tallied.Contains (Strings.SUS (path)) then
+            num_obsolete := num_obsolete + 1;
+            size_obsolete := size_obsolete + int64 (fileattr.size);
+         end if;
+      end tally_orphans;
+   begin
+      SCN.scan_directory (cachedir, cache_contents);
+      cache_contents.Iterate (tally_symlink_targets'Access);
+      cache_contents.Iterate (tally_orphans'Access);
+      Event.emit_message (LF & "Cache of downloaded packages:");
+      Event.emit_message ("  Current packages        : " & int2str (num_current));
+      Event.emit_message ("  Disk space occupied     : " &
+                            Metadata.human_readable_size (size_current));
+      Event.emit_message ("  Obsolete packages       : " & int2str (num_obsolete));
+      Event.emit_message ("  Disk space occupied     : " &
+                            Metadata.human_readable_size (size_obsolete));
+   end show_cache_stats;
 
 end Raven.Cmd.Stats;

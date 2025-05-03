@@ -118,6 +118,7 @@ private
       record
          catalog_only : Boolean := False;
          local_only   : Boolean := False;
+         cache_only   : Boolean := False;
       end record;
 
    type switches_which_cmd is

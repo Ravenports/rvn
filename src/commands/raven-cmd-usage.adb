@@ -986,7 +986,7 @@ package body Raven.Cmd.Usage is
    is
       function alert (error_msg : String) return Boolean
       is
-         msg1 : constant String := "stats [-qU] [-lc] [-r reponame]";
+         msg1 : constant String := "stats [-qU] [-lcd] [-r reponame]";
       begin
          display_error (error_msg);
          display_usage (msg1, True);
@@ -994,12 +994,9 @@ package body Raven.Cmd.Usage is
          return False;
       end alert;
    begin
-      if comline.cmd_stats.catalog_only and then
-        comline.cmd_stats.local_only
-      then
-         return alert ("--local and --catalog are mutually exclusive.");
+      if comline.parse_error then
+         return alert (USS (comline.error_message));
       end if;
-
       return True;
    end verb_stats;
 

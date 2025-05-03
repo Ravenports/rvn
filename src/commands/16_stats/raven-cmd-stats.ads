@@ -11,6 +11,6 @@ package Raven.Cmd.Stats is
 private
 
    function show_catalog_stats (single_repo : String; option_quiet : Boolean) return Boolean;
-   function show_installation_stat return Boolean;
-
+   function show_installation_stats return Boolean;
+   procedure show_cache_stats;
 end Raven.Cmd.Stats;

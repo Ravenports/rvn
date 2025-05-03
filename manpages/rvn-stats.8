@@ -1,4 +1,4 @@
-.Dd August 2, 2024
+.Dd May 3, 2025
 .Dt RVN-STATS 8
 .Os
 .Sh NAME
@@ -6,12 +6,12 @@
 .Nd display package database statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl lc
+.Op Fl lcd
 .Op Fl qU
 .Op Fl r Ar reponame
 .Pp
 .Nm
-.Op Cm --{local,catalog}
+.Op Cm --{local,catalog,downloads}
 .Op Cm --{quiet,no-repo-update}
 .Op Cm --repository Ar reponame
 .Sh DESCRIPTION
@@ -31,14 +31,26 @@ the number of packages in the variant subset,
 the number of packages in the port subset,
 the disk space occupied by the installed packages in bytes,
 and the disk space occupied by the installed packages in IEC units.
+.Pp
+The report on the local cache of downloaded packages displays
+the number of current cached package files, the number of
+obsolete cached package files (which can be removed with the
+.Cm rvn clean
+command),
+and the disk space occupied by each type in IEC units. 
 .Sh OPTIONS
 The following options are supported by
 .Nm :
 .Bl -tag -width remote
 .It Fl c , Cm --catalog
-Display statistics only for the remote catalog database.
+Display statistics for the remote catalog database.
+Assumed true if no sections are specified.
 .It Fl l , Cm --local
-Display statistics only for the installed package database.
+Display statistics for the installed package database.
+Assumed true if no sections are specified.
+.It Fl d , Cm --downloads
+Display statistics for the cached downloaded package files.
+Assumed true if no sections are specified.
 .It Fl r Ar reponame , Cm --repository Ar reponame
 This switch specifies that the given named repository shall be
 considered the reference and only mirror to be used to download the
