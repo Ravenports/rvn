@@ -92,6 +92,7 @@ package body Raven.Database.Add is
 
                      QRY.finish_package_dependencies (db, myrec, True);
                      QRY.finish_package_libs_provided (db, myrec);
+                     QRY.finish_package_libs_required (db, myrec);
                      QRY.finish_package_files (db, myrec);
                      packages.Append (myrec);
                      Event.emit_debug (high_level, "Added to top-level match for addition: " &
