@@ -350,7 +350,7 @@ package body Raven.Install is
                   catalog_pkg.id := QRY.package_installed (rdb, N, S, V);
                   QRY.finish_package_libs_required (rdb, catalog_pkg);
                   if catalog_pkg.libs_required.Length = myrec.libs_required.Length then
-                     for lib_index in 1 .. Natural (myrec.libs_required.Length) loop
+                     for lib_index in 0 .. Natural (myrec.libs_required.Length) - 1 loop
                         if not equivalent (catalog_pkg.libs_required.Element (lib_index),
                                            myrec.libs_required.Element (lib_index))
                         then
