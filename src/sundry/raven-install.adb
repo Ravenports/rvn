@@ -362,7 +362,7 @@ package body Raven.Install is
                      end if;
                   end if;
                   Event.emit_debug (moderate, "upgrade: " & N &
-                                      " versions equal but required libraries don't match");
+                                      " versions equal but required libraries do not match");
             end case;
             install_map.Insert (Pkgtypes.Package_Map.Key (Position),
                                 Pkgtypes.Package_Map.Element (Position));
@@ -1029,7 +1029,12 @@ package body Raven.Install is
                change_detected := True;
             end if;
          end check;
+
+         use type Pkgtypes.CON.Count_Type;
       begin
+         if ins_libs.Length /= cat_libs.Length then
+            return True;
+         end if;
          ins_libs.Iterate (check'Access);
 
          return change_detected;
@@ -1084,7 +1089,16 @@ package body Raven.Install is
                               myrec.automatic := False;
                               myrec.action := reset_auto;
                            else
-                              return;
+                              --  Check for case when required libraries change but the package
+                              --  version didn't.  This is extremely common.
+                              if libraries_changed (cache_map.Element (myrec.nsv).libs_required,
+                                                    install_map.Element (myrec.nsv).libs_required)
+                              then
+                                 myrec.action := reinstall;
+                                 myrec.prov_lib_change := False;
+                              else
+                                 return;
+                              end if;
                            end if;
                         end if;
 
@@ -1169,7 +1183,16 @@ package body Raven.Install is
                            myrec.automatic := False;
                            myrec.action := reset_auto;
                         else
-                           return;
+                           --  Check for case when required libraries change but the package
+                           --  version didn't.  This is extremely common.
+                           if libraries_changed (cache_map.Element (myrec.nsv).libs_required,
+                                                 install_map.Element (myrec.nsv).libs_required)
+                           then
+                              myrec.action := reinstall;
+                              myrec.prov_lib_change := False;
+                           else
+                              return;
+                           end if;
                         end if;
                      end if;
 
