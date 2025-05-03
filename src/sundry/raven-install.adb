@@ -339,6 +339,8 @@ package body Raven.Install is
             libs_match      : Boolean := True;
             use type Pkgtypes.CON.Count_Type;
          begin
+            Event.emit_debug (moderate, "UIP Outdated: installed version: " & installed_version &
+                                "   catalog version: " & catalog_version);
             case Version.pkg_version_cmp (installed_version, catalog_version) is
                when -1 => null;   --  definitively upgrade (fall through)
                when  1 => return;  --  downgrade, so skip
@@ -410,6 +412,7 @@ package body Raven.Install is
       --  NOTE: unlike "install_remote_packages", we query localdb first, not rdb.
       succeeded := assemble_work_queue (localdb, opt_exact_match, patterns, initial_map);
       if succeeded then
+         Event.emit_debug (moderate, "UIP: acquired initial_map");
          install_map.clear;
          if opt_force then
             initial_map.iterate (clone'Access);
@@ -517,6 +520,7 @@ package body Raven.Install is
             end if;
          end;
       else
+         Event.emit_debug (moderate, "UIP: No installed packages matched");
          if not opt_quiet then
             Event.emit_message ("No installed packages matched.");
          end if;
