@@ -66,7 +66,6 @@ replace_library_body() {
 	touch dummy.plist
 	mkdir -p ${TMPDIR}/target/var/cache/rvn
 	mkdir files
-	mkdir target
 	mkdir reposconf
 	cat <<EOF >> reposconf/repo.conf
 local: {
@@ -98,7 +97,7 @@ EOF
 		-o match:".*Library soname: \[libadd.so.1\]$" \
 		-s exit:0 /bin/sh get_soname.sh "libadd.so.1"
 
-	cc main.c -L${TMPDIR} -Wl,-rpath,${TMPDIR} -ladd -o ${TMPDIR}/helloworld
+	cc main.c -L${TMPDIR} -Wl,-z,origin -Wl,-rpath,\$ORIGIN -ladd -o ${TMPDIR}/helloworld
 	atf_check -o inline:"Hello from mylibrary!\nResult: 8\n" -s exit:5 ${TMPDIR}/helloworld
 
 	atf_check -s exit:0 sh ${RESOURCEDIR}/test_subr.sh new_pkg "lib1" "mylib" "single" "standard" "1" "/"
@@ -117,7 +116,7 @@ EOF
 
 	# generate first version of the repository
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
-	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target catalog -f
 
 	# install helloworld
 	atf_check \
@@ -129,7 +128,7 @@ EOF
 	# ./target/helloworld
 	# confirmed what it installed
 	atf_check -o inline:"mylib~single~standard~1\nhelloworld~single~standard~1\n" \
-		-e empty -s exit:0 rvn -r . info -q
+		-e empty -s exit:0 rvn -r ${TMPDIR}/target info -q
 
 	# replace library package and rebuild helloworld
 	rm ${TMPDIR}/files/mylib~single~standard~1.rvn
@@ -140,7 +139,7 @@ EOF
 	atf_check \
 		-o match:".*Library soname: \[libadd.so.2\]$" \
 		-s exit:0 /bin/sh get_soname.sh "libadd.so.2"
-	cc main.c -L${TMPDIR} -Wl,-rpath,${TMPDIR} -ladd -o ${TMPDIR}/helloworld
+	cc main.c -L${TMPDIR} -Wl,-z,origin -Wl,-rpath,\$ORIGIN -ladd -o ${TMPDIR}/helloworld
 	atf_check -o inline:"Hello from mylibrary version 2.0!\nResult: 8\n" -s exit:5 ${TMPDIR}/helloworld
 	atf_check -o empty -e empty -s exit:0 rvn create -o ${TMPDIR}/files -r . -m lib2.ucl -w lib2.plist
 
@@ -154,9 +153,12 @@ EOF
 
 	# regen repository
 	atf_check -o empty -e empty -s exit:0 rvn -r . genrepo --quiet ${TMPDIR}
-	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r . catalog -f
 
+	atf_check -o ignore -e empty -s exit:0 rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target catalog -f
+
+	find .
 	rvn -R "${TMPDIR}/reposconf" -r ${TMPDIR}/target upgrade -U -y
-	./target/helloworld
-	false
+
+	readelf -d ./target/helloworld
+	atf_check -o inline:"Hello from mylibrary version 2.0!\nResult: 8\n" -s exit:5 target/helloworld
 }
