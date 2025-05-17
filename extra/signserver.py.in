@@ -17,10 +17,10 @@ and run as root or rvnsign user.
 The port and host are configurable, default (127.0.0.1:8085)
 
 How to sign with curl internally:
-curl -s 127.0.0.1:8080 --data digest=<64-character-hex-string>
+curl -s 127.0.0.1:8085 --data digest=<64-character-hex-string>
 
 How to sign with curl externally:
-ssh <host> curl -s 127.0.0.1:8080 --data digest=<64-character-hex-string>
+ssh <host> curl -s 127.0.0.1:8085 --data digest=<64-character-hex-string>
 
 The signature and public key passes through standard out
 """
