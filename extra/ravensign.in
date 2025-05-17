@@ -35,7 +35,7 @@ rcvar=ravensign_enable
 procname="%%PYTHON_CMD%%"
 command="%%PREFIX%%/sbin/signserver.py"
 command_args="${ravensign_port} \"${ravensign_host}\" ${ravensign_location} &"
-pidfile="/var/run/signserver.pid"
+pidfile="/var/run/ravensign/signserver.pid"
 
 load_rc_config "$name"
 run_rc_command "$1"

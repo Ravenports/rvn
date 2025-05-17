@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     pid = os.getpid()
     try:
-        with open("/var/run/signserver.pid", "w") as fout:
+        with open("/var/run/ravensign/signserver.pid", "w") as fout:
             fout.write(str(pid))
     except IOError:
         """Not superuser, just skip"""
