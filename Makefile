@@ -36,9 +36,6 @@ install:
 		${WRKSRC}/extra/ravensign.in > ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
 	chmod 755 ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
 
-	# update ownership of pid storage directory
-	chown rvnsign:rvnsign ${DESTDIR}/var/run/ravensign
-
 manpage-footers:
 	@(cd ${.CURDIR}/manpages && perl fix-xrefs rvn*.[58]) && echo "done"
 
