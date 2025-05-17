@@ -18,6 +18,7 @@ install:
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
 	mkdir -p ${DESTDIR}${PREFIX}/etc/rvn/repos
 	mkdir -p ${DESTDIR}${PREFIX}/etc/ravensign
+	mkdir -p ${DESTDIR}/var/run/ravensign
 
 	# generate signserver.py from template
 	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
@@ -34,6 +35,9 @@ install:
 		-e "s|%%PREFIX%%|${PREFIX}|g" \
 		${WRKSRC}/extra/ravensign.in > ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
 	chmod 755 ${DESTDIR}${PREFIX}/etc/rc.d/ravensign
+
+	# update ownership of pid storage directory
+	chown rvnsign:rvnsign ${DESTDIR}/var/run/ravensign
 
 manpage-footers:
 	@(cd ${.CURDIR}/manpages && perl fix-xrefs rvn*.[58]) && echo "done"
