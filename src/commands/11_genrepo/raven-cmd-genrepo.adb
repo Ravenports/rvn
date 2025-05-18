@@ -724,20 +724,33 @@ package body Raven.Cmd.Genrepo is
      (template  : String;
       digest    : String) return String
    is
-      braces : constant String := "{}";
-      braces_found : Boolean := Strings.contains (template, braces);
-      result : Text;
-
       function pass_result (new_command : String) return String is
       begin
          Event.emit_debug (high_level, "Remote signing command: " & new_command);
          return new_command;
       end pass_result;
+
+      function stripped_template return String is
+      begin
+         --  If template is wrapped in double quote marks, remove them
+         if template'Length > 3 and then
+           template (template'First) = LAT.Quotation and then
+           template (template'Last) = LAT.Quotation
+         then
+            return template (template'First + 1 .. template'Last - 1);
+         end if;
+         return template;
+      end stripped_template;
+
+      braces       : constant String := "{}";
+      stemplate    : constant String := stripped_template;
+      braces_found : Boolean := Strings.contains (stemplate, braces);
+      result       : Text;
    begin
       if not braces_found then
-         return pass_result (template & " " & digest);
+         return pass_result (stemplate & " " & digest);
       end if;
-      result := Strings.SUS (template);
+      result := Strings.SUS (stemplate);
       loop
          exit when not braces_found;
          result := Strings.replace_substring (result, braces, digest);
