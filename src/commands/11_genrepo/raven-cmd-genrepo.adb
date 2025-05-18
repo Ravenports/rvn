@@ -727,9 +727,15 @@ package body Raven.Cmd.Genrepo is
       braces : constant String := "{}";
       braces_found : Boolean := Strings.contains (template, braces);
       result : Text;
+
+      function pass_result (new_command : String) return String is
+      begin
+         Event.emit_debug (low_level, "Remote signing command: " & new_command);
+         return new_command;
+      end pass_result;
    begin
       if not braces_found then
-         return template & " " & digest;
+         return pass_result (template & " " & digest);
       end if;
       result := Strings.SUS (template);
       loop
@@ -737,7 +743,7 @@ package body Raven.Cmd.Genrepo is
          result := Strings.replace_substring (result, braces, digest);
          braces_found := Strings.contains (result, braces);
       end loop;
-      return Strings.USS (result);
+      return pass_result (Strings.USS (result));
    end construct_remote_command;
 
 
@@ -773,6 +779,12 @@ package body Raven.Cmd.Genrepo is
       if retcode /= 0 then
          Event.emit_debug (high_level, "remote sign command spawn return code:" & retcode'Img);
          if DIR.Exists (signout) then
+            declare
+               sign_output : constant String := slurp_sign_output (signout);
+            begin
+               Event.emit_debug (low_level, "Failed remote sign command response:");
+               Event.emit_debug (low_level, sign_output);
+            end;
             DIR.Delete_File (signout);
          end if;
          return False;
