@@ -780,10 +780,21 @@ package body Raven.Cmd.Genrepo is
          Event.emit_debug (high_level, "remote sign command spawn return code:" & retcode'Img);
          if DIR.Exists (signout) then
             declare
-               sign_output : constant String := slurp_sign_output (signout);
+               handle : TIO.File_Type;
             begin
                Event.emit_debug (high_level, "Failed remote sign command response:");
-               Event.emit_debug (high_level, sign_output);
+               begin
+                  TIO.Open (handle, TIO.In_File, signout);
+                  while not TIO.End_Of_File (handle) loop
+                     Event.emit_debug (high_level, TIO.Get_Line (handle));
+                  end loop;
+               exception
+                  when others =>
+                     Event.emit_debug (high_level, "Failed to read " & signout);
+               end;
+               if TIO.Is_Open (handle) then
+                  TIO.Close (handle);
+               end if;
             end;
             DIR.Delete_File (signout);
          end if;
