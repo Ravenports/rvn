@@ -730,7 +730,7 @@ package body Raven.Cmd.Genrepo is
 
       function pass_result (new_command : String) return String is
       begin
-         Event.emit_debug (low_level, "Remote signing command: " & new_command);
+         Event.emit_debug (high_level, "Remote signing command: " & new_command);
          return new_command;
       end pass_result;
    begin
@@ -782,8 +782,8 @@ package body Raven.Cmd.Genrepo is
             declare
                sign_output : constant String := slurp_sign_output (signout);
             begin
-               Event.emit_debug (low_level, "Failed remote sign command response:");
-               Event.emit_debug (low_level, sign_output);
+               Event.emit_debug (high_level, "Failed remote sign command response:");
+               Event.emit_debug (high_level, sign_output);
             end;
             DIR.Delete_File (signout);
          end if;
