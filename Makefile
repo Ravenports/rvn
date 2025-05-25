@@ -1,7 +1,9 @@
+PROCESSORS ?= 0
+
 all: sqlite/libcustom_sqlite_pic.a
 	/bin/sh extra/set_system.sh "${PREFIX}"
-	gprbuild -p -P rvn
-	gprbuild -p -P src/rvn-format/programs/rvnprogs
+	gprbuild -j${PROCESSORS} -p -P rvn
+	gprbuild -j${PROCESSORS} -p -P src/rvn-format/programs/rvnprogs
 	gprbuild -p -P ravensign
 
 sqlite/libcustom_sqlite_pic.a:
