@@ -250,7 +250,7 @@ package body Raven.Install is
            (top_directory => extract_location,
             set_owners    => rootuser,
             set_perms     => rootuser,
-            set_modtime   => False,
+            set_modtime   => True,
             skip_scripts  => inhibit_scripts,
             upgrading     => upgrading,
             extract_log   => post_report);
