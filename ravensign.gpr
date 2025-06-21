@@ -1,12 +1,22 @@
 project Ravensign is
 
+   type OS_Type is ("solaris", "all_others");
+   opsys : OS_Type := external ("OS_TYPE", "all_others");
+
    for Source_Dirs use ("src", "src/unix", "src/rvn-format/src/blake3");
    for Object_Dir use "obj-rs";
    for Main use ("ravensign.adb");
    for Languages use ("Ada", "C");
 
+   Common_Switches := ("-lblake3_pic", "-lmbedtls", "-lmbedcrypto");
+
    package Linker is
-      for Switches ("ada") use ("-lblake3_pic", "-lmbedtls", "-lmbedcrypto");
+      case opsys is
+         when "all_others" =>
+            for Default_Switches ("ada") use Common_Switches;
+         when "solaris" =>
+            for Default_Switches ("ada") use Common_Switches & ("-lsocket");
+      end case;
    end Linker;
 
 end Ravensign;
