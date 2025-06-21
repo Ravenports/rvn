@@ -7,6 +7,11 @@
 
 #include <sys/ioctl.h>
 
+#if defined(__sun__)
+#include <unistd.h>
+#include <sys/termios.h>
+#endif
+
 unsigned short
 get_columns (void) {
 	struct winsize w;
