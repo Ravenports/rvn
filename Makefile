@@ -1,10 +1,11 @@
 PROCESSORS ?= 0
+OS_TYPE ?= all_others
 
 all: sqlite/libcustom_sqlite_pic.a
 	/bin/sh extra/set_system.sh "${PREFIX}"
-	gprbuild -j${PROCESSORS} -p -P rvn
-	gprbuild -j${PROCESSORS} -p -P src/rvn-format/programs/rvnprogs
-	gprbuild -p -P ravensign
+	gprbuild -j${PROCESSORS} -p -P rvn -XOS_TYPE=${OS_TYPE}
+	gprbuild -j${PROCESSORS} -p -P src/rvn-format/programs/rvnprogs -XOS_TYPE=${OS_TYPE}
+	gprbuild -p -P ravensign -XOS_TYPE=${OS_TYPE}
 
 sqlite/libcustom_sqlite_pic.a:
 	${MAKE} -C sqlite
