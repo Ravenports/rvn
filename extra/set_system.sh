@@ -13,14 +13,20 @@ case "${OSNAME}" in
 	NetBSD)    platform=netbsd ;;
 	OpenBSD)   platform=openbsd ;;
 	Linux)     platform=linux ;;
-	SunOS)     platform=solaris ;;   # omnios needs entry later
+	SunOS)     OSREL=$(uname -r)
+	           case "${OSREL}" in
+	             5.10) platform=solaris ;; 
+	             5.11) platform=omnios ;;
+	                *) platform=omnios ;;
+	           esac
+	           ;;
 	Midnight*) platform=midnightbsd ;;
 	*)         platform=generic ;;
 esac
 
 # only run this once
 if [ ! -f "${ADS}.bak" ]; then
-    case "${platform}" in
+	case "${platform}" in
 	generic)
 		sed -i.bak -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
@@ -28,7 +34,7 @@ if [ ! -f "${ADS}.bak" ]; then
 		sed -i.bak -e "s/Operating_System'First/${platform}/" \
 		           -e "/install_loc/ s|/raven|${1}|" "${ADS}"
 		;;
-    esac
+	esac
 
 # don't build all the archive programs, only xrvn
 sed -i.bak -e '/for Main use/ s|"packrvn.adb", "readelf.adb", ||' "${ARCGPR}"
