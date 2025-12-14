@@ -60,8 +60,9 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
     }
 
   /* The passed hash will be Blake3 which is a 256-bit hash, so sha256 should cover that case */
-  if ((ret = mbedtls_pk_sign (&pk, MBEDTLS_MD_SHA256, hash, hash_len, signature, sig_capacity,
-                              sig_len, NULL, NULL))
+  if ((ret = mbedtls_pk_sign (&pk, MBEDTLS_MD_SHA256,
+                              hash, hash_len,
+                              signature, sig_capacity, sig_len))
       != 0)
     {
       /* failed to generate the signature */
