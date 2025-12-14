@@ -10,11 +10,12 @@
 #include <mbedtls/build_info.h>
 #include <mbedtls/platform.h>
 #include <mbedtls/error.h>
-#include <mbedtls/entropy.h>
-#include <mbedtls/ctr_drbg.h>
 #include <mbedtls/pk.h>
+#include <mbedtls/private/entropy.h>
+#include <mbedtls/private/ctr_drbg.h>
 
 /*
+ * Set for mbedtls 4.0.0
  * sign hash
  * params:
  *    hash (unsigned char pointer to buffer)
