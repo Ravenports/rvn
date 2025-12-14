@@ -11,8 +11,6 @@
 #include <mbedtls/platform.h>
 #include <mbedtls/error.h>
 #include <mbedtls/pk.h>
-#include <mbedtls/private/entropy.h>
-#include <mbedtls/private/ctr_drbg.h>
 
 /*
  * Set for mbedtls 4.0.0
@@ -38,28 +36,23 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
   int ret = 0;
   int exit_code = 0;
   mbedtls_pk_context pk;
-  mbedtls_entropy_context entropy;
-  mbedtls_ctr_drbg_context ctr_drbg;
+  psa_status_t psa_status;
   const char *pers = "mbedtls_pk_sign";
 
   /* initialize */
-  mbedtls_entropy_init (&entropy);
-  mbedtls_ctr_drbg_init (&ctr_drbg);
   mbedtls_pk_init (&pk);
 
-  /* Seed the random number generator */
-  if ((ret = mbedtls_ctr_drbg_seed (&ctr_drbg, mbedtls_entropy_func, &entropy,
-                                    (const unsigned char *)pers, strlen (pers)))
-      != 0)
+  /* Required in Mbed TLS 4.x: Initialize PSA Crypto subsystem */
+  psa_status = psa_crypto_init ();
+  if (psa_status != PSA_SUCCESS)
     {
-      /* failed to seed the random number generator */
+      /* failed to initialize the PSA Crypto subsystem */
       exit_code = 1;
       goto exit;
     }
 
   /* Read private key for use */
-  if ((ret = mbedtls_pk_parse_keyfile (&pk, key_path, NULL, mbedtls_ctr_drbg_random, &ctr_drbg))
-      != 0)
+  if ((ret = mbedtls_pk_parse_keyfile (&pk, key_path, NULL)) != 0)
     {
       /* failed to parse the private key file */
       exit_code = 2;
@@ -68,7 +61,7 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
 
   /* The passed hash will be Blake3 which is a 256-bit hash, so sha256 should cover that case */
   if ((ret = mbedtls_pk_sign (&pk, MBEDTLS_MD_SHA256, hash, hash_len, signature, sig_capacity,
-                              sig_len, mbedtls_ctr_drbg_random, &ctr_drbg))
+                              sig_len, NULL, NULL))
       != 0)
     {
       /* failed to generate the signature */
@@ -80,8 +73,6 @@ sign_digest (const unsigned char *hash, const size_t hash_len, const char *key_p
 
 exit:
    mbedtls_pk_free(&pk);
-   mbedtls_ctr_drbg_free (&ctr_drbg);
-   mbedtls_entropy_free (&entropy);
    return exit_code;
 }
 
