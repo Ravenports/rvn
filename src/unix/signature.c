@@ -101,6 +101,7 @@ verify_digest (const unsigned char *hash, const size_t hash_len, const char *pub
    int exit_code = 0;
    size_t sig_len;
    unsigned char signature[1024]; /* limit used for digest */
+   psa_status_t psa_status;
    mbedtls_pk_context pk;
 
    /* initialize */
