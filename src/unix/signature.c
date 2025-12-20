@@ -89,6 +89,7 @@ exit:
  *    1 = failure - failed to parse the public key file
  *    2 = failure - failed to read in signature file data
  *    3 = failure - failed to verify signature against the given hash
+ *    4 = failure - failed to initialize PSA crypto subsystem
  */
 
 int
@@ -104,6 +105,15 @@ verify_digest (const unsigned char *hash, const size_t hash_len, const char *pub
 
    /* initialize */
    mbedtls_pk_init (&pk);
+
+   /* Required in Mbed TLS 4.x: Initialize PSA Crypto subsystem */
+   psa_status = psa_crypto_init ();
+   if (psa_status != PSA_SUCCESS)
+    {
+      /* failed to initialize the PSA Crypto subsystem */
+      exit_code = 4;
+      goto exit;
+    }
 
    /* Read public key for use */
    if ((ret = mbedtls_pk_parse_public_keyfile (&pk, public_key_path)) != 0)
@@ -127,7 +137,6 @@ verify_digest (const unsigned char *hash, const size_t hash_len, const char *pub
                                  signature, sig_len)) != 0)
     {
       exit_code = 3;
-      goto exit;
     }
 
 exit:
