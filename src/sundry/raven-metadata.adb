@@ -936,16 +936,14 @@ package body Raven.Metadata is
          elsif this_key = "perms" then
             case metatree.get_object_data_type (ondx, this_key) is
                when ThickUCL.data_boolean => null;   -- reset_perms already false
-               when ThickUCL.data_string =>
+               when ThickUCL.data_integer =>
                   declare
-                     perms     : constant String := metatree.get_object_value (ondx, this_key);
-                     converted : Boolean;
-                     filemode  : constant Archive.permissions :=
-                       Archive.Whitelist.convert_mode (perms, converted);
+                     perms : constant Ucl.ucl_integer := metatree.get_object_value (ondx, this_key);
+                     use type Ucl.ucl_integer;
                   begin
-                     if converted then
+                     if perms <= Ucl.ucl_integer (Archive.permissions'Last) then
                         isla.reset_perms := True;
-                        isla.new_perms := filemode;
+                        isla.new_perms := Archive.permissions (perms);
                      end if;
                   end;
                when others => null;
