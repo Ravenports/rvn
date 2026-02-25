@@ -941,7 +941,9 @@ package body Raven.Metadata is
                      perms : constant Ucl.ucl_integer := metatree.get_object_value (ondx, this_key);
                      use type Ucl.ucl_integer;
                   begin
-                     if perms <= Ucl.ucl_integer (Archive.permissions'Last) then
+                     if perms <= Ucl.ucl_integer (Archive.permissions'Last) and then
+                       perms >= 0
+                     then
                         isla.reset_perms := True;
                         isla.new_perms := Archive.permissions (perms);
                      end if;
