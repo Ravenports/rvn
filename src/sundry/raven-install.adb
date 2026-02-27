@@ -1737,14 +1737,17 @@ package body Raven.Install is
             features : Archive.Unix.File_Characteristics;
             try_create : Boolean := False;
             try_unlink : Boolean := False;
+            dir_exists : Boolean := False;
          begin
             --  if symlink, check target.
             --  If target does not exist, delete it.
-            --  If target does exist, and is a directory, skip creation
+            --  If target does exist, and is a directory, skip creation but adjust permissions
             features := Archive.Unix.get_charactistics (dirpath);
             case features.ftype is
                when Archive.unsupported => try_create := True;
-               when Archive.directory => null;
+               when Archive.directory =>
+                  try_create := true;
+                  dir_exists := true;
                when Archive.regular |
                     Archive.hardlink |
                     Archive.fifo =>
@@ -1781,7 +1784,9 @@ package body Raven.Install is
             if try_create then
                Event.emit_debug (moderate, "free directory: mkdir -p " & dirpath);
                begin
-                  DIR.Create_Path (dirpath);
+                  if not dir_exists then
+                     DIR.Create_Path (dirpath);
+                  end if;
                   mrc := Archive.Unix.adjust_metadata
                     (path         => dirpath,
                      reset_owngrp => isla.reset_group or else isla.reset_owner,
