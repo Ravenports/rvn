@@ -922,7 +922,7 @@ package body Raven.Metadata is
                when ThickUCL.data_string =>
                   declare
                      group : constant String := metatree.get_object_value (ondx, this_key);
-                     group_id : constant Archive.owngrp_id := Archive.Unix.lookup_user (group);
+                     group_id : constant Archive.owngrp_id := Archive.Unix.lookup_group (group);
                   begin
                      case group_id is
                         when owngrp_not_found => null;
