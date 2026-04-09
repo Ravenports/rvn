@@ -1,6 +1,7 @@
 --  SPDX-License-Identifier: ISC
 --  Reference: /License.txt
 
+with Ada.Directories;
 with Ada.Environment_Variables;
 with Raven.Repository;
 with Raven.Context;
@@ -16,6 +17,7 @@ with Ucl;
 
 package body Raven.Cmd.Unset is
 
+   package DIR renames Ada.Directories;
    package ENV renames Ada.Environment_Variables;
    package EV  renames Raven.Event;
    package OPS renames Raven.Database.Operations;
@@ -288,6 +290,7 @@ package body Raven.Cmd.Unset is
       Context.close_db_directory_fd;
       Context.close_cache_directory_fd;
       Context.close_event_pipe;
+      remove_previous_temporary_files;
    end finalize_program;
 
 
@@ -584,5 +587,49 @@ package body Raven.Cmd.Unset is
         (subpackage = "examples" and then config_setting (CFG.skip_examples));
    end subpackage_type_banned;
 
+
+   ---------------------------------------
+   --  remove_previous_temporary_files  --
+   ---------------------------------------
+   procedure remove_previous_temporary_files is
+      Search     : DIR.Search_Type;
+      Dir_Entry  : DIR.Directory_Entry_Type;
+
+      function rvn_temp_file_found (Name : String) return Boolean is
+      begin
+         if Raven.Strings.count_char (Name, '.') /= 2 then
+            return False;
+         end if;
+         declare
+            middle : constant String := Raven.Strings.specific_field (Name, 2, ".");
+         begin
+            return middle = "rvn_genrepo"     or else
+              middle = "rvn_genrepo_compress" or else
+              middle = "rvn_install"          or else
+              middle = "rvn_remove";
+         end;
+      end rvn_temp_file_found;
+   begin
+      DIR.Start_Search
+        (Search    => Search,
+         Directory => "/tmp",
+         Pattern   =>  ".rvn_*",
+         Filter    => (DIR.Ordinary_File => True, others => False));
+
+      while DIR.More_Entries (Search) loop
+         DIR.Get_Next_Entry (Search, Dir_Entry);
+
+         if rvn_temp_file_found (DIR.Simple_Name (Dir_Entry)) then
+            begin
+               DIR.Delete_File (DIR.Full_Name (Dir_Entry));
+            exception
+               when others => null;
+            end;
+         end if;
+      end loop;
+      DIR.End_Search (Search);
+   exception
+      when others => null;
+   end remove_previous_temporary_files;
 
 end Raven.Cmd.Unset;

@@ -75,4 +75,9 @@ private
    --  rvn --status-check
    function do_status_check return Boolean;
 
+   --  If rvn crashed or was stopped with control-C, temporary files matching the pattern
+   --  /tmp/.rvn_(genrepo|genrepo_compress|install|remove).<9 digits>
+   --  The next time rvn completes its run, clean these old files up.
+   procedure remove_previous_temporary_files;
+
 end Raven.Cmd.Unset;
