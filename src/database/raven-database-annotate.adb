@@ -231,7 +231,7 @@ package body Raven.Database.Annotate is
         "JOIN pkg_annotations n ON p.id = n.package_id " &
         "JOIN annotations k ON k.annotation_id = n.annotation_id " &
         "WHERE n.custom = 0 " &
-        "GROUP BY p.namebase, p.variant " &
+        "GROUP BY p.namebase, p.variant, k.note_key " &
         "ORDER by k.note_key, n.annotation, p.namebase";
    begin
       notes.Clear;
