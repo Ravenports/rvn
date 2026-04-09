@@ -52,6 +52,10 @@ package body Raven.Cmd.Audit is
       version_dir  : constant String := Context.reveal_cache_directory & "/version";
       cached_vinfo : constant String := version_dir & "/vulninfo.json";
    begin
+       if not Archive.Unix.user_is_root then
+         Event.emit_error ("The use of the audit command is restricted to the superuser.");
+         return False;
+      end if;
       Ada.Directories.Create_Path (version_dir);
       if ENV.Exists (ev1) then
          return external_test_input (comline, cached_vinfo, ENV.Value (ev1));
