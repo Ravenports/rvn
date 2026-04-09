@@ -12,6 +12,7 @@ with Raven.Database.Query;
 with Raven.Database.Operations;
 with ThickUCL.Emitter;
 with Ucl;
+with Archive.Unix;
 
  use Raven.Strings;
 
@@ -610,6 +611,10 @@ package body Raven.Cmd.Unset is
          end;
       end rvn_temp_file_found;
    begin
+      if not Archive.Unix.user_is_root then
+         return;
+      end if;
+
       DIR.Start_Search
         (Search    => Search,
          Directory => "/tmp",
