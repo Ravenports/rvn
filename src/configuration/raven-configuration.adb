@@ -206,7 +206,7 @@ package body Raven.Configuration is
          when keywords_dir   => return "/var/ravenports/conspiracy/Mk/Keywords";
          when abi            => return Archive.Misc.determine_abi;
          when user_agent     => return progname & "/" & progversion;
-         when vuln_server    => return "http://www.ravenports.com:8008";
+         when vuln_server    => return "https://www.ravenports.com:8009";
          when event_pipe     => return "";
          when restrict_dir   => return "";
          when ssh_args       => return "";
