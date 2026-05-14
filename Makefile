@@ -21,7 +21,7 @@ install:
 	${BSD_INSTALL_DATA} ${WRKSRC}/extra/rvn.conf.sample ${DESTDIR}${PREFIX}/etc/
 	mkdir -p ${DESTDIR}${PREFIX}/etc/rvn/repos
 	mkdir -p ${DESTDIR}${PREFIX}/etc/ravensign
-	mkdir -p ${DESTDIR}/var/run/ravensign
+	mkdir -p ${DESTDIR}${PREFIX}/var/run/ravensign
 
 	# generate signserver.py from template
 	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
