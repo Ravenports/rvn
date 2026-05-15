@@ -25,6 +25,7 @@ install:
 
 	# generate signserver.py from template
 	sed -e "s/%%USER%%/${RVNUSER}/; s/%%GROUP%%/${RVNGROUP}/; s|%%PYTHON_CMD%%|${PY3COMMAND}|" \
+		-e "s|%%PREFIX%%|${PREFIX}|g" \
 		${WRKSRC}/extra/signserver.py.in > ${DESTDIR}${PREFIX}/sbin/signserver.py
 	chmod 755 ${DESTDIR}${PREFIX}/sbin/signserver.py
 
